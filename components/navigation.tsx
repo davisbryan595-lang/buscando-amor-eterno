@@ -26,7 +26,6 @@ export default function Navigation() {
         <div className="hidden md:flex gap-8 items-center">
           <Link href="/" className="text-foreground hover:text-primary transition">Home</Link>
           <Link href="/browse" className="text-foreground hover:text-primary transition">Browse</Link>
-          <Link href="/stories" className="text-foreground hover:text-primary transition">Stories</Link>
           <Link href="/pricing" className="text-foreground hover:text-primary transition">Pricing</Link>
           <Link href="/chat-room" className="text-foreground hover:text-primary transition">Lounge</Link>
 
