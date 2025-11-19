@@ -1,0 +1,154 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  /* Updated color scheme for Buscando Amor Eterno dating website - deep red, rose gold, white, soft pink */
+  --background: #FFFFFF;
+  --foreground: #1a1a1a;
+  --card: #FFFFFF;
+  --card-foreground: #1a1a1a;
+  --popover: #FFFFFF;
+  --popover-foreground: #1a1a1a;
+  --primary: #BE123C;
+  --primary-foreground: #FFFFFF;
+  --secondary: #F4C2C2;
+  --secondary-foreground: #1a1a1a;
+  --muted: #FFF0F6;
+  --muted-foreground: #666666;
+  --accent: #F4C2C2;
+  --accent-foreground: #BE123C;
+  --destructive: #BE123C;
+  --destructive-foreground: #FFFFFF;
+  --border: #F0E0E0;
+  --input: #FFF5F8;
+  --ring: #BE123C;
+  --chart-1: #BE123C;
+  --chart-2: #F4C2C2;
+  --chart-3: #FFF0F6;
+  --chart-4: #FF69B4;
+  --chart-5: #FFB6D9;
+  --radius: 0.625rem;
+  --sidebar: #FFFFFF;
+  --sidebar-foreground: #1a1a1a;
+  --sidebar-primary: #BE123C;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #F4C2C2;
+  --sidebar-accent-foreground: #BE123C;
+  --sidebar-border: #F0E0E0;
+  --sidebar-ring: #BE123C;
+}
+
+.dark {
+  --background: #0a0a0a;
+  --foreground: #FFFFFF;
+  --card: #1a1a1a;
+  --card-foreground: #FFFFFF;
+  --popover: #1a1a1a;
+  --popover-foreground: #FFFFFF;
+  --primary: #FF69B4;
+  --primary-foreground: #0a0a0a;
+  --secondary: #8B4A5C;
+  --secondary-foreground: #FFFFFF;
+  --muted: #333333;
+  --muted-foreground: #AAAAAA;
+  --accent: #F4C2C2;
+  --accent-foreground: #1a1a1a;
+  --destructive: #FF69B4;
+  --destructive-foreground: #0a0a0a;
+  --border: #333333;
+  --input: #1a1a1a;
+  --ring: #FF69B4;
+  --chart-1: #FF69B4;
+  --chart-2: #F4C2C2;
+  --chart-3: #BE123C;
+  --chart-4: #FFB6D9;
+  --chart-5: #8B4A5C;
+  --sidebar: #0a0a0a;
+  --sidebar-foreground: #FFFFFF;
+  --sidebar-primary: #FF69B4;
+  --sidebar-primary-foreground: #0a0a0a;
+  --sidebar-accent: #8B4A5C;
+  --sidebar-accent-foreground: #FFFFFF;
+  --sidebar-border: #333333;
+  --sidebar-ring: #FF69B4;
+}
+
+@theme inline {
+  --font-sans: var(--font-inter);
+  --font-playfair: var(--font-playfair);
+  
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  
+  /* Removed invalid @import and manual font classes. Using Next.js font loader instead. */
+  
+  /* Added floating hearts animation */
+  @keyframes float-hearts {
+    0% {
+      transform: translateY(0px) translateX(0px);
+      opacity: 1;
+    }
+    100% {
+      transform: translateY(-100vh) translateX(20px);
+      opacity: 0;
+    }
+  }
+  
+  .animate-float-hearts {
+    animation: float-hearts 6s ease-in infinite;
+  }
+  
+  /* Added soft glow effect */
+  .soft-glow {
+    box-shadow: 0 0 30px rgba(190, 18, 60, 0.1);
+  }
+  
+  .soft-glow-lg {
+    box-shadow: 0 0 60px rgba(190, 18, 60, 0.15);
+  }
+}
