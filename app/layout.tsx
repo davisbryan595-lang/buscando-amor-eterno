@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Geist, Geist_Mono, Inter, Playfair_Display } from 'next/font/google'
 import './globals.css'
+import { LanguageProvider } from '@/context/language-context'
 
 const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
@@ -73,7 +74,9 @@ export default function RootLayout({
         }} />
       </head>
       <body className={`${inter.variable} ${playfair.variable} font-sans antialiased bg-white text-slate-900`}>
-        {children}
+        <LanguageProvider>
+          {children}
+        </LanguageProvider>
       </body>
     </html>
   )
