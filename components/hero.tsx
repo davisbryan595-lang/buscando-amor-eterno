@@ -2,25 +2,38 @@
 
 import React from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 
 export default function Hero() {
   return (
-    <section className="pt-32 pb-16 px-4 relative overflow-hidden">
-      {/* Video background placeholder */}
+    <section className="pt-32 pb-16 px-4 relative overflow-hidden min-h-[90vh] flex items-center">
+      {/* Video background */}
       <div className="absolute inset-0 -z-10">
-        <div
-          className="w-full h-full bg-cover bg-center"
-          style={{
-            backgroundImage:
-              'url(https://images.unsplash.com/photo-1522252234503-8d0324a4f8e0?w=1200&h=600&fit=crop)',
-            opacity: 0.2,
-          }}
-        />
+        <div className="absolute inset-0 bg-gradient-to-b from-white/80 via-white/60 to-rose-50/90 z-10" />
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="absolute inset-0 w-full h-full object-cover"
+          poster="/romantic-couple-sunset-beach-luxury.jpg"
+        >
+          <source
+            src="https://cdn.pixabay.com/video/2022/11/23/140115-774468479_large.mp4"
+            type="video/mp4"
+          />
+          Your browser does not support the video tag.
+        </video>
       </div>
 
-      <div className="max-w-4xl mx-auto text-center pt-20">
-        <h1 className="text-5xl md:text-7xl font-playfair font-bold mb-6 text-slate-900 leading-tight">
-          <span className="text-primary">Nearly 50%</span> of the world is single.
+      <div className="max-w-5xl mx-auto text-center relative z-20">
+        <h1 className="text-5xl md:text-7xl lg:text-8xl font-playfair font-bold mb-8 text-slate-900 leading-tight tracking-tight">
+          <span className="text-primary relative inline-block">
+            Nearly 50%
+            <svg className="absolute -bottom-2 left-0 w-full h-3 text-rose-200 -z-10" viewBox="0 0 100 10" preserveAspectRatio="none">
+              <path d="M0 5 Q 50 10 100 5" stroke="currentColor" strokeWidth="8" fill="none" />
+            </svg>
+          </span> of the world is single.
         </h1>
         <h2 className="text-2xl md:text-4xl font-playfair font-bold mb-8 text-rose-600">
           You deserve eternal love.

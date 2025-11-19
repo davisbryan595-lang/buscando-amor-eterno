@@ -3,6 +3,7 @@
 import React, { useState } from 'react'
 import { X, Heart, MessageCircle, Video } from 'lucide-react'
 import Link from 'next/link'
+import Image from 'next/image'
 
 interface Profile {
   id: number
@@ -24,10 +25,10 @@ export default function ProfileModal({
   const [isLiked, setIsLiked] = useState(false)
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto soft-glow-lg">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto soft-glow-lg animate-in fade-in zoom-in duration-300">
         {/* Header */}
-        <div className="flex justify-between items-center p-6 border-b border-rose-100">
+        <div className="flex justify-between items-center p-6 border-b border-rose-100 sticky top-0 bg-white z-20">
           <h2 className="text-2xl font-playfair font-bold text-slate-900">
             {profile.name}, {profile.age}
           </h2>
@@ -41,11 +42,15 @@ export default function ProfileModal({
         </div>
 
         {/* Image */}
-        <img
-          src={profile.image || "/placeholder.svg"}
-          alt={profile.name}
-          className="w-full h-96 object-cover"
-        />
+        <div className="relative w-full h-96">
+          <Image
+            src={profile.image || "/placeholder.svg"}
+            alt={profile.name}
+            fill
+            className="object-cover"
+            priority
+          />
+        </div>
 
         {/* Content */}
         <div className="p-6 space-y-4">
