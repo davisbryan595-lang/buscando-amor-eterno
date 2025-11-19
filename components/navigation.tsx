@@ -2,10 +2,13 @@
 
 import React, { useState } from 'react'
 import Link from 'next/link'
-import { Menu, X, Bell } from 'lucide-react'
+import { Menu, X, Bell, Globe } from 'lucide-react'
+import { useLanguage } from '@/context/language-context'
 
 export default function Navigation() {
   const [menuOpen, setMenuOpen] = useState(false)
+  const [langDropdown, setLangDropdown] = useState(false)
+  const { language, setLanguage, t } = useLanguage()
 
   const toggleOneSignal = () => {
     if (typeof window !== 'undefined' && window.OneSignal) {
@@ -15,19 +18,24 @@ export default function Navigation() {
     }
   }
 
+  const handleLanguageChange = (lang: 'en' | 'es') => {
+    setLanguage(lang)
+    setLangDropdown(false)
+  }
+
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-b border-rose-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
         <Link href="/" className="text-2xl font-playfair font-bold text-rose-600">
-          ♥ Buscando Amor Eterno
+          {t.nav.logo}
         </Link>
 
         {/* Desktop Menu */}
         <div className="hidden md:flex gap-8 items-center">
-          <Link href="/" className="text-foreground hover:text-primary transition">Home</Link>
-          <Link href="/browse" className="text-foreground hover:text-primary transition">Browse</Link>
-          <Link href="/pricing" className="text-foreground hover:text-primary transition">Pricing</Link>
-          <Link href="/chat-room" className="text-foreground hover:text-primary transition">Lounge</Link>
+          <Link href="/" className="text-foreground hover:text-primary transition">{t.nav.home}</Link>
+          <Link href="/browse" className="text-foreground hover:text-primary transition">{t.nav.browse}</Link>
+          <Link href="/pricing" className="text-foreground hover:text-primary transition">{t.nav.pricing}</Link>
+          <Link href="/chat-room" className="text-foreground hover:text-primary transition">{t.nav.lounge}</Link>
 
           <button
             onClick={toggleOneSignal}
@@ -37,14 +45,41 @@ export default function Navigation() {
             <Bell size={20} className="text-primary" />
           </button>
 
+          <div className="relative">
+            <button
+              onClick={() => setLangDropdown(!langDropdown)}
+              className="p-2 hover:bg-rose-50 rounded-full transition flex items-center gap-1"
+              aria-label="Language"
+            >
+              <Globe size={20} className="text-primary" />
+              <span className="text-sm font-semibold text-primary uppercase">{language}</span>
+            </button>
+            {langDropdown && (
+              <div className="absolute right-0 mt-2 bg-white border border-rose-100 rounded-lg shadow-lg z-50">
+                <button
+                  onClick={() => handleLanguageChange('en')}
+                  className={`block w-full text-left px-4 py-2 hover:bg-rose-50 ${language === 'en' ? 'bg-rose-50 text-primary font-semibold' : 'text-foreground'}`}
+                >
+                  English
+                </button>
+                <button
+                  onClick={() => handleLanguageChange('es')}
+                  className={`block w-full text-left px-4 py-2 hover:bg-rose-50 ${language === 'es' ? 'bg-rose-50 text-primary font-semibold' : 'text-foreground'}`}
+                >
+                  Español
+                </button>
+              </div>
+            )}
+          </div>
+
           <Link href="/login" className="px-4 py-2 text-foreground hover:text-primary transition">
-            Log In
+            {t.nav.login}
           </Link>
           <Link
             href="/signup"
             className="px-6 py-2 bg-primary text-white rounded-full hover:bg-rose-700 transition font-semibold"
           >
-            Join for $12/month
+            {t.nav.join}
           </Link>
         </div>
 
@@ -56,6 +91,30 @@ export default function Navigation() {
           >
             <Bell size={20} className="text-primary" />
           </button>
+          <div className="relative">
+            <button
+              onClick={() => setLangDropdown(!langDropdown)}
+              className="p-2 hover:bg-rose-50 rounded-full transition"
+            >
+              <Globe size={20} className="text-primary" />
+            </button>
+            {langDropdown && (
+              <div className="absolute right-0 mt-2 bg-white border border-rose-100 rounded-lg shadow-lg z-50">
+                <button
+                  onClick={() => handleLanguageChange('en')}
+                  className={`block w-full text-left px-4 py-2 hover:bg-rose-50 ${language === 'en' ? 'bg-rose-50 text-primary font-semibold' : 'text-foreground'}`}
+                >
+                  English
+                </button>
+                <button
+                  onClick={() => handleLanguageChange('es')}
+                  className={`block w-full text-left px-4 py-2 hover:bg-rose-50 ${language === 'es' ? 'bg-rose-50 text-primary font-semibold' : 'text-foreground'}`}
+                >
+                  Español
+                </button>
+              </div>
+            )}
+          </div>
           <button
             onClick={() => setMenuOpen(!menuOpen)}
             className="p-2 hover:bg-rose-50 rounded-lg transition"
@@ -69,28 +128,25 @@ export default function Navigation() {
       {menuOpen && (
         <div className="md:hidden bg-white border-t border-rose-100 py-4 px-4 space-y-3">
           <Link href="/" className="block text-foreground hover:text-primary transition py-2">
-            Home
+            {t.nav.home}
           </Link>
           <Link href="/browse" className="block text-foreground hover:text-primary transition py-2">
-            Browse
-          </Link>
-          <Link href="/stories" className="block text-foreground hover:text-primary transition py-2">
-            Stories
+            {t.nav.browse}
           </Link>
           <Link href="/pricing" className="block text-foreground hover:text-primary transition py-2">
-            Pricing
+            {t.nav.pricing}
           </Link>
           <Link href="/chat-room" className="block text-foreground hover:text-primary transition py-2">
-            Lounge
+            {t.nav.lounge}
           </Link>
           <Link href="/login" className="block text-foreground hover:text-primary transition py-2">
-            Log In
+            {t.nav.login}
           </Link>
           <Link
             href="/signup"
             className="block px-6 py-2 bg-primary text-white rounded-full hover:bg-rose-700 transition font-semibold text-center"
           >
-            Join for $12/month
+            {t.nav.join}
           </Link>
         </div>
       )}
