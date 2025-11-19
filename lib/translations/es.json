@@ -1,0 +1,44 @@
+{
+  "nav": {
+    "logo": "♥ Buscando Amor Eterno",
+    "home": "Inicio",
+    "browse": "Explorar",
+    "pricing": "Precios",
+    "lounge": "Salón",
+    "login": "Iniciar Sesión",
+    "join": "Unirse por $12/mes"
+  },
+  "hero": {
+    "title": "Casi el 50% del mundo es soltero.",
+    "subtitle": "Mereces amor eterno.",
+    "description": "Conecta con almas genuinas en todo el mundo. Perfiles premium, conversaciones reales y conexiones significativas.",
+    "cta_primary": "Unirse por $12/mes",
+    "cta_secondary": "Explorar Miembros",
+    "stat_members": "Miembros Activos",
+    "stat_matches": "Parejas Diarias",
+    "stat_countries": "Países"
+  },
+  "features": {
+    "title": "Todo Lo Que Necesitas",
+    "subtitle": "Características premium diseñadas para relaciones serias",
+    "smart_matching_title": "Coincidencias Inteligentes",
+    "smart_matching_desc": "Algoritmo impulsado por IA encuentra tu pareja perfecta basado en valores e intereses",
+    "real_conversations_title": "Conversaciones Reales",
+    "real_conversations_desc": "Mensajería ilimitada con miembros verificados en nuestra plataforma segura",
+    "video_dates_title": "Citas por Video",
+    "video_dates_desc": "Conecta cara a cara antes de conocerse en persona. Siente la conexión real.",
+    "global_community_title": "Comunidad Global",
+    "global_community_desc": "Conoce almas gemelas de más de 100 países. El amor no tiene fronteras.",
+    "verified_profiles_title": "Perfiles Verificados",
+    "verified_profiles_desc": "Todos los miembros están verificados. Tu seguridad es nuestra prioridad.",
+    "instant_notifications_title": "Notificaciones Instantáneas",
+    "instant_notifications_desc": "Nunca pierdas una coincidencia. Recibe notificaciones en tiempo real de nuevas conexiones."
+  },
+  "stories": {
+    "title": "Historias de Amor",
+    "subtitle": "Conexiones reales, amor real, para siempre real"
+  },
+  "footer": {
+    "rights": "Todos los derechos reservados"
+  }
+}
