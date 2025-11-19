@@ -3,6 +3,7 @@
 import React, { useState } from 'react'
 import { ChevronLeft, ChevronRight, Heart } from 'lucide-react'
 import Image from 'next/image'
+import { useLanguage } from '@/context/language-context'
 
 const stories = [
   {
@@ -37,6 +38,7 @@ const stories = [
 
 export default function SuccessStories() {
   const [currentIndex, setCurrentIndex] = useState(0)
+  const { t } = useLanguage()
 
   const next = () => {
     setCurrentIndex((currentIndex + 1) % stories.length)
@@ -52,10 +54,10 @@ export default function SuccessStories() {
     <section className="py-20 px-4 bg-gradient-to-b from-white to-rose-50">
       <div className="max-w-4xl mx-auto">
         <h2 className="text-4xl md:text-5xl font-playfair font-bold text-center mb-4 text-slate-900">
-          Love Stories
+          {t.stories.title}
         </h2>
         <p className="text-center text-slate-600 mb-12 text-lg">
-          Real connections, real love, real forever
+          {t.stories.subtitle}
         </p>
 
         <div className="relative soft-glow rounded-2xl overflow-hidden bg-white">
