@@ -3,6 +3,7 @@
 import React, { useState } from 'react'
 import { Send, Phone, Video } from 'lucide-react'
 import Link from 'next/link'
+import Image from 'next/image'
 
 interface Conversation {
   id: number
@@ -37,14 +38,15 @@ export default function ChatWindow({ conversation }: { conversation: Conversatio
       {/* Header */}
       <div className="p-4 border-b border-rose-100 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="relative">
-            <img
+          <div className="relative w-12 h-12">
+            <Image
               src={conversation.image || "/placeholder.svg"}
               alt={conversation.name}
-              className="w-12 h-12 rounded-full object-cover"
+              fill
+              className="rounded-full object-cover"
             />
             {conversation.isOnline && (
-              <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white" />
+              <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white z-10" />
             )}
           </div>
           <div>

@@ -10,28 +10,28 @@ const stories = [
     couple: 'Maria & Carlos',
     location: 'Barcelona, Spain',
     story: 'Met on Buscando Amor Eterno in March. Engaged in December. True soulmates.',
-    image: 'https://images.unsplash.com/photo-1511379938547-c1f69b13d835?w=400&h=400&fit=crop',
+    image: '/happy-couple-wedding-day-love.jpg',
   },
   {
     id: 2,
     couple: 'Sophie & Luis',
     location: 'Mexico City, Mexico',
     story: 'Found each other across continents. Now married for 3 years.',
-    image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop',
+    image: '/romantic-couple-dinner-date.jpg',
   },
   {
     id: 3,
     couple: 'Isabella & Marco',
     location: 'Buenos Aires, Argentina',
     story: 'From first message to wedding day. Our forever love story.',
-    image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&h=400&fit=crop',
+    image: '/couple-hugging-sunset-beach.jpg',
   },
   {
     id: 4,
     couple: 'Elena & Diego',
     location: 'Madrid, Spain',
     story: 'Two years together and growing stronger every day.',
-    image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=400&fit=crop',
+    image: '/couple-laughing-park-happy.jpg',
   },
 ]
 
@@ -58,40 +58,46 @@ export default function SuccessStories() {
           Real connections, real love, real forever
         </p>
 
-        <div className="relative soft-glow rounded-2xl overflow-hidden">
-          <div className="bg-white p-8 md:p-12">
+        <div className="relative soft-glow rounded-2xl overflow-hidden bg-white">
+          <div className="p-6 md:p-12">
             <div className="flex flex-col md:flex-row gap-8 items-center">
-              <div className="flex-1">
-                <img
+              <div className="w-full md:w-1/2 relative h-64 md:h-96 rounded-xl overflow-hidden shadow-lg">
+                <Image
                   src={story.image || "/placeholder.svg"}
                   alt={story.couple}
-                  className="w-full h-64 object-cover rounded-xl soft-glow"
+                  fill
+                  className="object-cover hover:scale-105 transition-transform duration-700"
+                  sizes="(max-width: 768px) 100vw, 50vw"
+                  priority
                 />
               </div>
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-4">
+              <div className="flex-1 w-full text-center md:text-left">
+                <div className="flex items-center justify-center md:justify-start gap-2 mb-4">
                   <Heart className="text-primary fill-primary" size={24} />
-                  <p className="text-primary font-semibold">{story.couple}</p>
+                  <p className="text-primary font-semibold text-lg">{story.couple}</p>
                 </div>
-                <p className="text-slate-600 mb-2">{story.location}</p>
-                <p className="text-xl md:text-2xl font-playfair text-slate-900 mb-6 leading-relaxed">
+                <p className="text-slate-600 mb-4 flex items-center justify-center md:justify-start gap-2">
+                  <span className="inline-block w-2 h-2 rounded-full bg-rose-400"></span>
+                  {story.location}
+                </p>
+                <p className="text-xl md:text-3xl font-playfair text-slate-900 mb-8 leading-relaxed italic">
                   "{story.story}"
                 </p>
 
-                <div className="flex gap-2">
+                <div className="flex gap-4 justify-center md:justify-start">
                   <button
                     onClick={prev}
-                    className="p-3 bg-rose-100 hover:bg-primary hover:text-white text-primary rounded-full transition"
+                    className="p-4 bg-rose-50 hover:bg-primary hover:text-white text-primary rounded-full transition-all duration-300 shadow-sm hover:shadow-md"
                     aria-label="Previous story"
                   >
-                    <ChevronLeft size={20} />
+                    <ChevronLeft size={24} />
                   </button>
                   <button
                     onClick={next}
-                    className="p-3 bg-rose-100 hover:bg-primary hover:text-white text-primary rounded-full transition"
+                    className="p-4 bg-rose-50 hover:bg-primary hover:text-white text-primary rounded-full transition-all duration-300 shadow-sm hover:shadow-md"
                     aria-label="Next story"
                   >
-                    <ChevronRight size={20} />
+                    <ChevronRight size={24} />
                   </button>
                 </div>
               </div>
@@ -99,7 +105,7 @@ export default function SuccessStories() {
           </div>
 
           {/* Carousel indicators */}
-          <div className="flex justify-center gap-2 mt-6">
+          <div className="flex justify-center gap-2 pb-6">
             {stories.map((_, index) => (
               <button
                 key={index}
