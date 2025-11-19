@@ -1,0 +1,44 @@
+{
+  "nav": {
+    "logo": "♥ Buscando Amor Eterno",
+    "home": "Home",
+    "browse": "Browse",
+    "pricing": "Pricing",
+    "lounge": "Lounge",
+    "login": "Log In",
+    "join": "Join for $12/month"
+  },
+  "hero": {
+    "title": "Nearly 50% of the world is single.",
+    "subtitle": "You deserve eternal love.",
+    "description": "Connect with genuine souls worldwide. Premium profiles, real conversations, and meaningful connections.",
+    "cta_primary": "Join for $12/month",
+    "cta_secondary": "Browse Members",
+    "stat_members": "Active Members",
+    "stat_matches": "Matches Daily",
+    "stat_countries": "Countries"
+  },
+  "features": {
+    "title": "Everything You Need",
+    "subtitle": "Premium features designed for serious relationships",
+    "smart_matching_title": "Smart Matching",
+    "smart_matching_desc": "AI-powered algorithm finds your perfect match based on values and interests",
+    "real_conversations_title": "Real Conversations",
+    "real_conversations_desc": "Unlimited messaging with verified members in our secure platform",
+    "video_dates_title": "Video Dates",
+    "video_dates_desc": "Connect face-to-face before meeting in person. Feel the real connection.",
+    "global_community_title": "Global Community",
+    "global_community_desc": "Meet soulmates from 100+ countries. Love knows no borders.",
+    "verified_profiles_title": "Verified Profiles",
+    "verified_profiles_desc": "All members are verified. Your safety is our priority.",
+    "instant_notifications_title": "Instant Notifications",
+    "instant_notifications_desc": "Never miss a match. Get real-time notifications of new connections."
+  },
+  "stories": {
+    "title": "Love Stories",
+    "subtitle": "Real connections, real love, real forever"
+  },
+  "footer": {
+    "rights": "All rights reserved"
+  }
+}
