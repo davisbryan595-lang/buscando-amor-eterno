@@ -4,6 +4,7 @@ import React, { useState } from 'react'
 import Navigation from '@/components/navigation'
 import Footer from '@/components/footer'
 import { Heart, X, Star, Info } from 'lucide-react'
+import Image from 'next/image'
 
 const profiles = [
   {
@@ -12,7 +13,7 @@ const profiles = [
     age: 26,
     location: 'Barcelona, Spain',
     lookingFor: 'Someone who believes in true love',
-    image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=600&h=800&fit=crop',
+    image: '/beautiful-spanish-woman-portrait-smiling.jpg',
     bio: 'Artist, dreamer, and hopeless romantic. Love travel, wine, and long conversations.',
     interests: ['Art', 'Travel', 'Wine']
   },
@@ -22,7 +23,7 @@ const profiles = [
     age: 28,
     location: 'Madrid, Spain',
     lookingFor: 'A genuine connection',
-    image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&h=800&fit=crop',
+    image: '/elegant-woman-coffee-shop-portrait.jpg',
     bio: 'Professional woman looking for someone authentic. Coffee lover, weekend traveler.',
     interests: ['Coffee', 'Travel', 'Career']
   },
@@ -32,7 +33,7 @@ const profiles = [
     age: 25,
     location: 'Buenos Aires, Argentina',
     lookingFor: 'My soulmate',
-    image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=600&h=800&fit=crop',
+    image: '/latina-woman-smiling-sunlight.jpg',
     bio: 'Passionate about life, family-oriented, and seeking a long-term commitment.',
     interests: ['Family', 'Dancing', 'Cooking']
   },
@@ -42,7 +43,7 @@ const profiles = [
     age: 29,
     location: 'Mexico City, Mexico',
     lookingFor: 'True love and adventure',
-    image: 'https://images.unsplash.com/photo-1534528741775-53a8682fde92?w=600&h=800&fit=crop',
+    image: '/adventurous-woman-hiking-nature.jpg',
     bio: 'Adventurous spirit, yoga enthusiast, always up for spontaneous trips.',
     interests: ['Yoga', 'Adventure', 'Travel']
   },
@@ -52,7 +53,7 @@ const profiles = [
     age: 27,
     location: 'Lisbon, Portugal',
     lookingFor: 'Someone kind and thoughtful',
-    image: 'https://images.unsplash.com/photo-1506276590553-0c3688c8e6ca?w=600&h=800&fit=crop',
+    image: '/woman-reading-book-library.jpg',
     bio: 'Teacher, book lover, and believer in destiny. Looking for my forever person.',
     interests: ['Reading', 'Teaching', 'Destiny']
   },
@@ -62,7 +63,7 @@ const profiles = [
     age: 26,
     location: 'Rio de Janeiro, Brazil',
     lookingFor: 'A partner for life',
-    image: 'https://images.unsplash.com/photo-1502230917128-1aa500764cbd?w=600&h=800&fit=crop',
+    image: '/brazilian-woman-beach-portrait.jpg',
     bio: 'Free spirit, nature lover, passionate about helping others.',
     interests: ['Nature', 'Volunteering', 'Beach']
   },
@@ -72,7 +73,7 @@ const profiles = [
     age: 28,
     location: 'Santiago, Chile',
     lookingFor: 'Real connection and love',
-    image: 'https://images.unsplash.com/photo-1517457373614-b7152f800fd1?w=600&h=800&fit=crop',
+    image: '/professional-woman-portrait.png',
     bio: 'Professional achiever seeking balance and meaningful relationships.',
     interests: ['Business', 'Balance', 'Wine']
   },
@@ -82,7 +83,7 @@ const profiles = [
     age: 25,
     location: 'Valencia, Spain',
     lookingFor: 'Someone who gets me',
-    image: 'https://images.unsplash.com/photo-1488426862026-56bde9d879af?w=600&h=800&fit=crop',
+    image: '/creative-woman-painting-art.jpg',
     bio: 'Creative, empathetic, and searching for my soulmate.',
     interests: ['Art', 'Music', 'Poetry']
   },
@@ -92,7 +93,7 @@ const profiles = [
     age: 27,
     location: 'São Paulo, Brazil',
     lookingFor: 'Forever love',
-    image: 'https://images.unsplash.com/photo-1530268729831-4ca8167eac3f?w=600&h=800&fit=crop',
+    image: '/fitness-woman-gym-portrait.jpg',
     bio: 'Determined, ambitious, and ready for the right relationship.',
     interests: ['Fitness', 'Career', 'Travel']
   },
@@ -102,7 +103,7 @@ const profiles = [
     age: 26,
     location: 'Bogotá, Colombia',
     lookingFor: 'A true soulmate',
-    image: 'https://images.unsplash.com/photo-1505252585461-04db1267ae5e?w=600&h=800&fit=crop',
+    image: '/woman-cooking-kitchen-happy.jpg',
     bio: 'Warm-hearted, genuine, and looking for lasting love.',
     interests: ['Cooking', 'Family', 'Music']
   },
@@ -112,7 +113,7 @@ const profiles = [
     age: 29,
     location: 'Lima, Peru',
     lookingFor: 'Someone special',
-    image: 'https://images.unsplash.com/photo-1485521585311-56f3a5ff17b7?w=600&h=800&fit=crop',
+    image: '/business-woman-city-portrait.jpg',
     bio: 'Independent woman seeking partnership and mutual growth.',
     interests: ['Business', 'Growth', 'Travel']
   },
@@ -122,7 +123,7 @@ const profiles = [
     age: 25,
     location: 'Havana, Cuba',
     lookingFor: 'Everlasting love',
-    image: 'https://images.unsplash.com/photo-1524634126442-357e0ebbffa4?w=600&h=800&fit=crop',
+    image: '/placeholder.svg?height=1000&width=800',
     bio: 'Joyful, optimistic, and ready to meet my match.',
     interests: ['Dancing', 'Music', 'Culture']
   },
@@ -200,20 +201,21 @@ export default function BrowsePage() {
   const opacity = isDragging ? Math.max(0.5, 1 - Math.abs(dragOffset) / 200) : swipeDirection ? 0 : 1
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-rose-50 to-pink-50">
+    <main className="min-h-screen bg-gradient-to-br from-rose-50 to-pink-50 overflow-hidden">
       <Navigation />
       
-      <div className="pt-24 pb-12 px-4 flex items-center justify-center min-h-[80vh]">
-        <div className="w-full max-w-md">
+      <div className="pt-24 pb-12 px-4 flex items-center justify-center min-h-[90vh]">
+        <div className="w-full max-w-md relative">
           {/* Card Container */}
-          <div className="relative h-[600px] mb-6">
+          <div className="relative h-[65vh] min-h-[500px] mb-8">
             {/* Current Card */}
             <div
-              className="absolute inset-0 rounded-3xl overflow-hidden shadow-2xl transition-all cursor-grab active:cursor-grabbing"
+              className="absolute inset-0 rounded-3xl overflow-hidden shadow-2xl transition-all cursor-grab active:cursor-grabbing bg-white"
               style={{
                 transform: `translateX(${translateX}px) rotate(${rotation}deg)`,
                 opacity: opacity,
                 transition: isDragging ? 'none' : 'all 0.3s ease-out',
+                zIndex: 10
               }}
               onMouseDown={(e) => {
                 const startX = e.clientX
@@ -242,10 +244,13 @@ export default function BrowsePage() {
             >
               {/* Profile Image */}
               <div className="relative h-full w-full">
-                <img
+                <Image
                   src={currentProfile.image || "/placeholder.svg"}
                   alt={currentProfile.name}
-                  className="w-full h-full object-cover"
+                  fill
+                  className="object-cover pointer-events-none"
+                  priority
+                  sizes="(max-width: 768px) 100vw, 500px"
                 />
                 
                 {/* Gradient Overlay */}
@@ -326,11 +331,13 @@ export default function BrowsePage() {
 
             {/* Next Card Preview */}
             {hasMoreProfiles && (
-              <div className="absolute inset-0 rounded-3xl overflow-hidden shadow-xl -z-10 scale-95 opacity-50">
-                <img
+              <div className="absolute inset-0 rounded-3xl overflow-hidden shadow-xl -z-10 scale-95 translate-y-4 opacity-60 bg-white">
+                <Image
                   src={profiles[currentIndex + 1].image || "/placeholder.svg"}
                   alt={profiles[currentIndex + 1].name}
-                  className="w-full h-full object-cover"
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 768px) 100vw, 500px"
                 />
               </div>
             )}

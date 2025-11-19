@@ -4,6 +4,7 @@ import React, { useState } from 'react'
 import Navigation from '@/components/navigation'
 import Footer from '@/components/footer'
 import ChatWindow from '@/components/chat-window'
+import Image from 'next/image'
 
 const conversations = [
   {
@@ -11,21 +12,21 @@ const conversations = [
     name: 'Sofia',
     lastMessage: 'I love traveling too! Have you been to Portugal?',
     isOnline: true,
-    image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop',
+    image: '/placeholder.svg?height=200&width=200',
   },
   {
     id: 2,
     name: 'Isabella',
     lastMessage: 'That sounds amazing! When are you free?',
     isOnline: false,
-    image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop',
+    image: '/placeholder.svg?height=200&width=200',
   },
   {
     id: 3,
     name: 'Elena',
     lastMessage: 'Coffee date this weekend? ☕',
     isOnline: true,
-    image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop',
+    image: '/placeholder.svg?height=200&width=200',
   },
 ]
 
@@ -53,14 +54,15 @@ export default function MessagesPage() {
                   }`}
                 >
                   <div className="flex gap-3 items-center">
-                    <div className="relative">
-                      <img
+                    <div className="relative w-12 h-12">
+                      <Image
                         src={conv.image || "/placeholder.svg"}
                         alt={conv.name}
-                        className="w-12 h-12 rounded-full object-cover"
+                        fill
+                        className="rounded-full object-cover"
                       />
                       {conv.isOnline && (
-                        <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white" />
+                        <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white z-10" />
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
