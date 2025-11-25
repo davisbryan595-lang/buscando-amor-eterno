@@ -75,9 +75,11 @@ export default function RootLayout({
         }} />
       </head>
       <body className={`${inter.variable} ${playfair.variable} font-sans antialiased bg-white text-slate-900`}>
-        <LanguageProvider>
-          {children}
-        </LanguageProvider>
+        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
+          <LanguageProvider>
+            {children}
+          </LanguageProvider>
+        </ThemeProvider>
       </body>
     </html>
   )
