@@ -162,9 +162,10 @@ export default function SignupPage() {
 
               <button
                 type="submit"
-                className="w-full py-3 bg-primary text-white rounded-full font-semibold hover:bg-rose-700 transition"
+                disabled={loading}
+                className="w-full py-3 bg-primary text-white rounded-full font-semibold hover:bg-rose-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Continue
+                {loading ? 'Saving...' : 'Continue'}
               </button>
             </form>
           )}
@@ -198,9 +199,10 @@ export default function SignupPage() {
 
               <button
                 type="submit"
-                className="w-full py-3 bg-primary text-white rounded-full font-semibold hover:bg-rose-700 transition"
+                disabled={loading}
+                className="w-full py-3 bg-primary text-white rounded-full font-semibold hover:bg-rose-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Proceed to Payment
+                {loading ? 'Processing...' : 'Proceed to Payment'}
               </button>
 
               <p className="text-center text-xs text-slate-600">
