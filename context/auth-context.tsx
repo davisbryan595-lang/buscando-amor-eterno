@@ -41,16 +41,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     initializeAuth()
 
-    const { data: authListener } = supabase.auth.onAuthStateChanged((session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (isMounted) {
         setSession(session)
         setUser(session?.user ?? null)
+        setLoading(false)
       }
     })
 
     return () => {
       isMounted = false
-      authListener?.subscription.unsubscribe()
+      subscription?.unsubscribe()
     }
   }, [])
 
