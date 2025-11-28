@@ -59,7 +59,7 @@ export default function OnboardingPage() {
   const router = useRouter()
   const { user, loading: authLoading } = useAuth()
   const { t, language, setLanguage } = useLanguage()
-  const { createProfile, profile, loading: profileLoading } = useProfile()
+  const { createProfile, profile, loading: profileLoading, uploadPhoto } = useProfile()
 
   const [currentStep, setCurrentStep] = useState<OnboardingStep>(1)
   const [loading, setLoading] = useState(false)
@@ -113,7 +113,6 @@ export default function OnboardingPage() {
       if (data.photos && data.photos.length > 0) {
         for (let i = 0; i < data.photos.length; i++) {
           try {
-            const { uploadPhoto } = useProfile()
             const url = await uploadPhoto(data.photos[i], i)
             photoUrls.push(url)
           } catch (error) {
