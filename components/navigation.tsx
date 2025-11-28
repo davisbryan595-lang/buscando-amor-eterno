@@ -3,7 +3,7 @@
 import React, { useState } from 'react'
 import Link from 'next/link'
 import { Menu, X, Bell, Globe } from 'lucide-react'
-import { useLanguage } from '@/context/language-context'
+import { useLanguage } from '@/lib/i18n-context'
 
 export default function Navigation() {
   const [menuOpen, setMenuOpen] = useState(false)
@@ -27,15 +27,15 @@ export default function Navigation() {
     <nav className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-b border-rose-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
         <Link href="/" className="text-2xl font-playfair font-bold text-rose-600">
-          {t.nav.logo}
+          Buscando Amor Eterno
         </Link>
 
         {/* Desktop Menu */}
         <div className="hidden md:flex gap-8 items-center">
-          <Link href="/" className="text-foreground hover:text-primary transition">{t.nav.home}</Link>
-          <Link href="/browse" className="text-foreground hover:text-primary transition">{t.nav.browse}</Link>
-          <Link href="/pricing" className="text-foreground hover:text-primary transition">{t.nav.pricing}</Link>
-          <Link href="/chat-room" className="text-foreground hover:text-primary transition">{t.nav.lounge}</Link>
+          <Link href="/" className="text-foreground hover:text-primary transition">Home</Link>
+          <Link href="/browse" className="text-foreground hover:text-primary transition">Browse</Link>
+          <Link href="/pricing" className="text-foreground hover:text-primary transition">Pricing</Link>
+          <Link href="/chat-room" className="text-foreground hover:text-primary transition">Lounge</Link>
 
           <button
             onClick={toggleOneSignal}
@@ -73,13 +73,13 @@ export default function Navigation() {
           </div>
 
           <Link href="/login" className="px-4 py-2 text-foreground hover:text-primary transition">
-            {t.nav.login}
+            Log in
           </Link>
           <Link
             href="/signup"
             className="px-6 py-2 bg-primary text-white rounded-full hover:bg-rose-700 transition font-semibold"
           >
-            {t.nav.join}
+            Join for $12/month
           </Link>
         </div>
 
@@ -128,25 +128,25 @@ export default function Navigation() {
       {menuOpen && (
         <div className="md:hidden bg-white border-t border-rose-100 py-4 px-4 space-y-3">
           <Link href="/" className="block text-foreground hover:text-primary transition py-2">
-            {t.nav.home}
+            Home
           </Link>
           <Link href="/browse" className="block text-foreground hover:text-primary transition py-2">
-            {t.nav.browse}
+            Browse
           </Link>
           <Link href="/pricing" className="block text-foreground hover:text-primary transition py-2">
-            {t.nav.pricing}
+            Pricing
           </Link>
           <Link href="/chat-room" className="block text-foreground hover:text-primary transition py-2">
-            {t.nav.lounge}
+            Lounge
           </Link>
           <Link href="/login" className="block text-foreground hover:text-primary transition py-2">
-            {t.nav.login}
+            Log in
           </Link>
           <Link
             href="/signup"
             className="block px-6 py-2 bg-primary text-white rounded-full hover:bg-rose-700 transition font-semibold text-center"
           >
-            {t.nav.join}
+            Join for $12/month
           </Link>
         </div>
       )}
