@@ -2,16 +2,32 @@
 
 import React, { useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import Navigation from '@/components/navigation'
 import Footer from '@/components/footer'
+import { useAuth } from '@/context/auth-context'
+import { toast } from 'sonner'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [loading, setLoading] = useState(false)
+  const { signIn } = useAuth()
+  const router = useRouter()
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    alert('✨ Logging in... (Mock login)\n\nWelcome back to Buscando Amor Eterno!')
+    setLoading(true)
+
+    try {
+      await signIn(email, password)
+      toast.success('Logged in successfully!')
+      router.push('/browse')
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to log in')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -49,9 +65,10 @@ export default function LoginPage() {
 
             <button
               type="submit"
-              className="w-full py-3 bg-primary text-white rounded-full font-semibold hover:bg-rose-700 transition"
+              disabled={loading}
+              className="w-full py-3 bg-primary text-white rounded-full font-semibold hover:bg-rose-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Log In
+              {loading ? 'Logging in...' : 'Log In'}
             </button>
 
             <div className="text-center">

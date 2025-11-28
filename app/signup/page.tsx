@@ -2,32 +2,66 @@
 
 import React, { useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import Navigation from '@/components/navigation'
 import Footer from '@/components/footer'
+import { useAuth } from '@/context/auth-context'
 import { Check } from 'lucide-react'
+import { toast } from 'sonner'
+import { supabase } from '@/lib/supabase'
 
 type SignUpStep = 'email' | 'profile' | 'payment' | 'success'
 
 export default function SignupPage() {
   const [step, setStep] = useState<SignUpStep>('email')
+  const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
     email: '',
     password: '',
     name: '',
     bio: '',
   })
+  const { signUp } = useAuth()
+  const router = useRouter()
 
-  const handleEmailSubmit = (e: React.FormEvent) => {
+  const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setStep('profile')
+    setLoading(true)
+
+    try {
+      await signUp(formData.email, formData.password)
+      toast.success('Account created! Check your email to confirm.')
+      setStep('profile')
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to create account')
+    } finally {
+      setLoading(false)
+    }
   }
 
-  const handleProfileSubmit = (e: React.FormEvent) => {
+  const handleProfileSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setStep('payment')
+    setLoading(true)
+
+    try {
+      const { data: session } = await supabase.auth.getSession()
+      if (session?.session?.user) {
+        await supabase.auth.updateUser({
+          data: {
+            name: formData.name,
+            bio: formData.bio,
+          }
+        })
+      }
+      setStep('payment')
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to save profile')
+    } finally {
+      setLoading(false)
+    }
   }
 
-  const handlePaymentSubmit = (e: React.FormEvent) => {
+  const handlePaymentSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setStep('success')
   }
@@ -87,9 +121,10 @@ export default function SignupPage() {
 
               <button
                 type="submit"
-                className="w-full py-3 bg-primary text-white rounded-full font-semibold hover:bg-rose-700 transition"
+                disabled={loading}
+                className="w-full py-3 bg-primary text-white rounded-full font-semibold hover:bg-rose-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Continue
+                {loading ? 'Creating account...' : 'Continue'}
               </button>
             </form>
           )}
@@ -128,9 +163,10 @@ export default function SignupPage() {
 
               <button
                 type="submit"
-                className="w-full py-3 bg-primary text-white rounded-full font-semibold hover:bg-rose-700 transition"
+                disabled={loading}
+                className="w-full py-3 bg-primary text-white rounded-full font-semibold hover:bg-rose-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Continue
+                {loading ? 'Saving...' : 'Continue'}
               </button>
             </form>
           )}
@@ -164,9 +200,10 @@ export default function SignupPage() {
 
               <button
                 type="submit"
-                className="w-full py-3 bg-primary text-white rounded-full font-semibold hover:bg-rose-700 transition"
+                disabled={loading}
+                className="w-full py-3 bg-primary text-white rounded-full font-semibold hover:bg-rose-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Proceed to Payment
+                {loading ? 'Processing...' : 'Proceed to Payment'}
               </button>
 
               <p className="text-center text-xs text-slate-600">

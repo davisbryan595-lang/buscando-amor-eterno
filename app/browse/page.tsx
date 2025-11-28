@@ -3,7 +3,8 @@
 import React, { useState } from 'react'
 import Navigation from '@/components/navigation'
 import Footer from '@/components/footer'
-import { Heart, X, Star, Info } from 'lucide-react'
+import { useProfileProtection } from '@/hooks/useProfileProtection'
+import { Heart, X, Star, Info, Loader } from 'lucide-react'
 import Image from 'next/image'
 
 const profiles = [
@@ -130,11 +131,22 @@ const profiles = [
 ]
 
 export default function BrowsePage() {
+  // Protect this route - require complete profile
+  const { isLoading } = useProfileProtection(true, '/onboarding')
+
   const [currentIndex, setCurrentIndex] = useState(0)
   const [showInfo, setShowInfo] = useState(false)
   const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | 'super' | null>(null)
   const [dragOffset, setDragOffset] = useState(0)
   const [isDragging, setIsDragging] = useState(false)
+
+  if (isLoading) {
+    return (
+      <main className="min-h-screen flex items-center justify-center">
+        <Loader className="animate-spin" size={40} />
+      </main>
+    )
+  }
 
   const currentProfile = profiles[currentIndex]
   const hasMoreProfiles = currentIndex < profiles.length - 1
