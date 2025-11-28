@@ -108,6 +108,20 @@ export default function OnboardingPage() {
   const handleComplete = async () => {
     setLoading(true)
     try {
+      // First upload photos if any
+      const photoUrls: string[] = []
+      if (data.photos && data.photos.length > 0) {
+        for (let i = 0; i < data.photos.length; i++) {
+          try {
+            const { uploadPhoto } = useProfile()
+            const url = await uploadPhoto(data.photos[i], i)
+            photoUrls.push(url)
+          } catch (error) {
+            console.error('Failed to upload photo', error)
+          }
+        }
+      }
+
       await createProfile({
         full_name: data.fullName,
         birthday: data.birthday,
@@ -117,6 +131,8 @@ export default function OnboardingPage() {
         country: data.country,
         latitude: data.latitude || 0,
         longitude: data.longitude || 0,
+        photos: photoUrls.length > 0 ? photoUrls : null,
+        main_photo_index: photoUrls.length > 0 ? 0 : null,
         prompt_1: data.prompt1,
         prompt_2: data.prompt2,
         prompt_3: data.prompt3,
