@@ -19,16 +19,12 @@ export function Preloader() {
     <div className="preloader-container">
       <div className="preloader-content">
         <div className="logo-wrapper">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="128"
-            height="128"
-            viewBox="0 0 215 48"
-            className="logo-animated"
-            fill="none"
-          >
-            <path fill="#BE123C" d="M57.588 9.6h6L73.828 38h-5.2l-2.36-6.88h-11.36L52.548 38h-5.2l10.24-28.4Zm7.16 17.16-4.16-12.16-4.16 12.16h8.32Zm23.694-2.24c-.186-1.307-.706-2.32-1.56-3.04-.853-.72-1.866-1.08-3.04-1.08-1.68 0-2.986.613-3.92 1.84-.906 1.227-1.36 2.947-1.36 5.16s.454 3.933 1.36 5.16c.934 1.227 2.24 1.84 3.92 1.84 1.254 0 2.307-.373 3.16-1.12.854-.773 1.387-1.867 1.6-3.28l5.12.24c-.186 1.68-.733 3.147-1.64 4.4-.906 1.227-2.08 2.173-3.52 2.84-1.413.667-2.986 1-4.72 1-2.08 0-3.906-.453-5.48-1.36-1.546-.907-2.76-2.2-3.64-3.88-.853-1.68-1.28-3.627-1.28-5.84 0-2.24.427-4.187 1.28-5.84.88-1.68 2.094-2.973 3.64-3.88 1.574-.907 3.4-1.36 5.48-1.36 1.68 0 3.227.32 4.64.96 1.414.64 2.56 1.56 3.44 2.76.907 1.2 1.454 2.6 1.64 4.2l-5.12.28Z" />
-          </svg>
+          <div className="glow-background"></div>
+          <img
+            src="https://cdn.builder.io/api/v1/image/assets%2Fc70ebb3e5225486399c19406cd27bb43%2F59a2eada7b8c4e53bd373097c8e4162d?format=webp&width=800"
+            alt="Buscando Amor Eterno"
+            className="rose-image"
+          />
         </div>
 
         <div className="business-name">
@@ -85,19 +81,32 @@ export function Preloader() {
 
         .logo-wrapper {
           position: relative;
-          width: 128px;
-          height: 128px;
+          width: 160px;
+          height: 160px;
           display: flex;
           align-items: center;
           justify-content: center;
           animation: pulse-scale 2.5s ease-in-out infinite;
         }
 
-        .logo-animated {
-          width: 100%;
-          height: 100%;
-          filter: drop-shadow(0 8px 24px rgba(190, 18, 60, 0.15));
-          animation: subtle-glow 2.5s ease-in-out infinite;
+        .glow-background {
+          position: absolute;
+          width: 160px;
+          height: 160px;
+          border-radius: 50%;
+          background: radial-gradient(circle, rgba(190, 18, 60, 0.3) 0%, rgba(190, 18, 60, 0.1) 100%);
+          animation: glow-pulse 2.5s ease-in-out infinite;
+          z-index: 1;
+        }
+
+        .rose-image {
+          position: relative;
+          width: 140px;
+          height: 140px;
+          object-fit: contain;
+          z-index: 2;
+          filter: drop-shadow(0 0 20px rgba(190, 18, 60, 0.4)) drop-shadow(0 0 40px rgba(255, 105, 180, 0.3));
+          animation: rose-glow 2.5s ease-in-out infinite;
         }
 
         .business-name {
@@ -180,12 +189,21 @@ export function Preloader() {
           }
         }
 
-        @keyframes subtle-glow {
+        @keyframes rose-glow {
           0%, 100% {
-            filter: drop-shadow(0 8px 24px rgba(190, 18, 60, 0.15));
+            filter: drop-shadow(0 0 20px rgba(190, 18, 60, 0.4)) drop-shadow(0 0 40px rgba(255, 105, 180, 0.3));
           }
           50% {
-            filter: drop-shadow(0 12px 32px rgba(190, 18, 60, 0.25));
+            filter: drop-shadow(0 0 30px rgba(190, 18, 60, 0.6)) drop-shadow(0 0 60px rgba(255, 105, 180, 0.4));
+          }
+        }
+
+        @keyframes glow-pulse {
+          0%, 100% {
+            box-shadow: 0 0 30px rgba(190, 18, 60, 0.3), 0 0 60px rgba(255, 105, 180, 0.2);
+          }
+          50% {
+            box-shadow: 0 0 50px rgba(190, 18, 60, 0.5), 0 0 80px rgba(255, 105, 180, 0.3);
           }
         }
 
