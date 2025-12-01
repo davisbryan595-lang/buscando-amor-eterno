@@ -78,9 +78,7 @@ export default function RootLayout({
       <body className={`${inter.variable} ${playfair.variable} font-sans antialiased bg-white text-slate-900`}>
         <I18nProvider>
           <AuthProvider>
-            <LanguageProvider>
-              {children}
-            </LanguageProvider>
+            {children}
           </AuthProvider>
         </I18nProvider>
       </body>
