@@ -11,14 +11,14 @@ export default function Hero() {
       <div className="absolute inset-0 -z-10">
         {/* Couple background image */}
         <img
-          src="/code/public/couple-laughing-park-happy.jpg"
+          src="/couple-laughing-park-happy.jpg"
           alt="Happy couple"
-          className="absolute inset-0 w-full h-full object-cover opacity-30"
+          className="absolute inset-0 w-full h-full object-cover opacity-40"
         />
 
         {/* Rose logo watermark */}
-        <div className="absolute inset-0 flex items-center justify-center opacity-20 pointer-events-none">
-          <svg className="h-96 w-96 text-rose-600" viewBox="0 0 200 280" fill="currentColor">
+        <div className="absolute inset-0 flex items-center justify-center opacity-25 pointer-events-none">
+          <svg className="h-80 w-80 text-rose-500" viewBox="0 0 200 280" fill="currentColor">
             {/* Petals */}
             <ellipse cx="100" cy="60" rx="25" ry="35" fill="currentColor" opacity="0.9"/>
             <ellipse cx="65" cy="75" rx="20" ry="38" transform="rotate(-45 65 75)" fill="currentColor" opacity="0.85"/>
