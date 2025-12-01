@@ -47,17 +47,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     initializeAuth()
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (isMounted) {
-        setSession(session)
-        setUser(session?.user ?? null)
-        setLoading(false)
-      }
-    })
-
+    // For mock auth, we don't need continuous subscription
+    // Session changes are handled immediately after signin/signup
     return () => {
       isMounted = false
-      subscription?.unsubscribe()
     }
   }, [])
 
