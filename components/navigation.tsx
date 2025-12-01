@@ -136,8 +136,8 @@ export default function Navigation() {
           <Link href="/pricing" className="block text-foreground hover:text-primary transition py-2">
             Pricing
           </Link>
-          <Link href="/chat-room" className="block text-foreground hover:text-primary transition py-2">
-            Lounge
+          <Link href="/messages" className="block text-foreground hover:text-primary transition py-2">
+            Messages
           </Link>
           <Link href="/login" className="block text-foreground hover:text-primary transition py-2">
             Log in
