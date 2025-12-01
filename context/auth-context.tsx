@@ -1,8 +1,13 @@
 'use client'
 
 import React, { createContext, useContext, useEffect, useState } from 'react'
-import { User, Session } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
+import type { User } from '@/lib/mock-db'
+
+interface Session {
+  user: User
+  access_token: string
+}
 
 interface AuthContextType {
   user: User | null
