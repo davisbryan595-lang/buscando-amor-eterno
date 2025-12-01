@@ -1,8 +1,13 @@
 'use client'
 
 import React, { createContext, useContext, useEffect, useState } from 'react'
-import { User, Session } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
+import type { User } from '@/lib/mock-db'
+
+interface Session {
+  user: User
+  access_token: string
+}
 
 interface AuthContextType {
   user: User | null
@@ -42,34 +47,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     initializeAuth()
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (isMounted) {
-        setSession(session)
-        setUser(session?.user ?? null)
-        setLoading(false)
-      }
-    })
-
+    // For mock auth, we don't need continuous subscription
+    // Session changes are handled immediately after signin/signup
     return () => {
       isMounted = false
-      subscription?.unsubscribe()
     }
   }, [])
 
   const signUp = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
     })
     if (error) throw error
+    if (data?.session) {
+      setSession(data.session)
+      setUser(data.session.user)
+    }
   }
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     })
     if (error) throw error
+    if (data?.session) {
+      setSession(data.session)
+      setUser(data.session.user)
+    }
   }
 
   const signOut = async () => {

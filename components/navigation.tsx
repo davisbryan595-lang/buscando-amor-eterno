@@ -35,6 +35,7 @@ export default function Navigation() {
           <Link href="/" className="text-foreground hover:text-primary transition">Home</Link>
           <Link href="/browse" className="text-foreground hover:text-primary transition">Browse</Link>
           <Link href="/pricing" className="text-foreground hover:text-primary transition">Pricing</Link>
+          <Link href="/messages" className="text-foreground hover:text-primary transition">Messages</Link>
           <Link href="/chat-room" className="text-foreground hover:text-primary transition">Lounge</Link>
 
           <button
@@ -135,6 +136,9 @@ export default function Navigation() {
           </Link>
           <Link href="/pricing" className="block text-foreground hover:text-primary transition py-2">
             Pricing
+          </Link>
+          <Link href="/messages" className="block text-foreground hover:text-primary transition py-2">
+            Messages
           </Link>
           <Link href="/chat-room" className="block text-foreground hover:text-primary transition py-2">
             Lounge
