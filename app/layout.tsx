@@ -1,7 +1,6 @@
 import type { Metadata } from 'next'
 import { Geist, Geist_Mono, Inter, Playfair_Display } from 'next/font/google'
 import './globals.css'
-import { LanguageProvider } from '@/context/language-context'
 import { AuthProvider } from '@/context/auth-context'
 import { I18nProvider } from '@/lib/i18n-context'
 
@@ -78,9 +77,7 @@ export default function RootLayout({
       <body className={`${inter.variable} ${playfair.variable} font-sans antialiased bg-white text-slate-900`}>
         <I18nProvider>
           <AuthProvider>
-            <LanguageProvider>
-              {children}
-            </LanguageProvider>
+            {children}
           </AuthProvider>
         </I18nProvider>
       </body>
