@@ -7,22 +7,17 @@ import Image from 'next/image'
 export default function Hero() {
   return (
     <section className="pt-32 pb-16 px-4 relative overflow-hidden min-h-[90vh] flex items-center bg-gradient-to-b from-rose-50 via-white to-rose-50">
-      {/* Background image with rose logo overlay */}
+      {/* Background with couple image and rose accent */}
       <div className="absolute inset-0 -z-10">
-        {/* Background image */}
-        <div className="absolute inset-0 w-full h-full opacity-40">
-          <Image
-            src="/couple-laughing-park-happy.jpg"
-            alt="Happy couple"
-            fill
-            className="object-cover"
-            priority
-            quality={90}
-          />
-        </div>
+        {/* Couple background image */}
+        <img
+          src="/couple-laughing-park-happy.jpg"
+          alt="Happy couple"
+          className="absolute inset-0 w-full h-full object-cover opacity-30"
+        />
 
-        {/* Rose logo as background accent */}
-        <div className="absolute inset-0 flex items-center justify-center opacity-10 pointer-events-none">
+        {/* Rose logo watermark */}
+        <div className="absolute inset-0 flex items-center justify-center opacity-20 pointer-events-none">
           <svg className="h-96 w-96 text-rose-600" viewBox="0 0 200 280" fill="currentColor">
             {/* Petals */}
             <ellipse cx="100" cy="60" rx="25" ry="35" fill="currentColor" opacity="0.9"/>
