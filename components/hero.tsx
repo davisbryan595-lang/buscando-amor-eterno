@@ -6,20 +6,38 @@ import Image from 'next/image'
 
 export default function Hero() {
   return (
-    <section className="pt-32 pb-16 px-4 relative overflow-hidden min-h-[90vh] flex items-center">
-      {/* Background image */}
+    <section
+      className="pt-32 pb-16 px-4 relative overflow-hidden min-h-[90vh] flex items-center"
+      style={{
+        backgroundImage: `linear-gradient(to bottom, rgba(245, 165, 180, 0.65), rgba(255, 255, 255, 0.5), rgba(245, 165, 180, 0.75)), url(/romantic-couple-sunset-beach-luxury.jpg)`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundAttachment: 'fixed',
+      }}
+    >
+      {/* Background overlay */}
       <div className="absolute inset-0 -z-10">
-        <div className="absolute inset-0 w-full h-full">
-          <Image
-            src="/couple-laughing-park-happy.jpg"
-            alt="Happy couple"
-            fill
-            className="object-cover"
-            priority
-            quality={90}
-          />
+
+        {/* Rose logo watermark */}
+        <div className="absolute inset-0 flex items-center justify-center opacity-25 pointer-events-none">
+          <svg className="h-80 w-80 text-rose-500" viewBox="0 0 200 280" fill="currentColor">
+            {/* Petals */}
+            <ellipse cx="100" cy="60" rx="25" ry="35" fill="currentColor" opacity="0.9"/>
+            <ellipse cx="65" cy="75" rx="20" ry="38" transform="rotate(-45 65 75)" fill="currentColor" opacity="0.85"/>
+            <ellipse cx="135" cy="75" rx="20" ry="38" transform="rotate(45 135 75)" fill="currentColor" opacity="0.85"/>
+            <ellipse cx="50" cy="110" rx="22" ry="35" transform="rotate(-70 50 110)" fill="currentColor" opacity="0.75"/>
+            <ellipse cx="150" cy="110" rx="22" ry="35" transform="rotate(70 150 110)" fill="currentColor" opacity="0.75"/>
+            <ellipse cx="40" cy="155" rx="20" ry="32" transform="rotate(-90 40 155)" fill="currentColor" opacity="0.7"/>
+            <ellipse cx="160" cy="155" rx="20" ry="32" transform="rotate(90 160 155)" fill="currentColor" opacity="0.7"/>
+            <circle cx="100" cy="100" r="40" fill="currentColor" opacity="0.8"/>
+            <circle cx="100" cy="90" r="28" fill="#fda4af" opacity="0.9"/>
+            {/* Stem */}
+            <path d="M 100 140 Q 95 180 90 220" stroke="currentColor" strokeWidth="3" fill="none"/>
+            {/* Leaves */}
+            <ellipse cx="75" cy="180" rx="12" ry="25" transform="rotate(-45 75 180)" fill="currentColor" opacity="0.6"/>
+            <ellipse cx="125" cy="200" rx="12" ry="25" transform="rotate(45 125 200)" fill="currentColor" opacity="0.6"/>
+          </svg>
         </div>
-        <div className="absolute inset-0 bg-gradient-to-b from-white/70 via-white/50 to-rose-50/85 z-10" />
       </div>
 
       <div className="max-w-5xl mx-auto text-center relative z-20">
