@@ -23,6 +23,11 @@ export default function Hero() {
       </div>
 
       <div className="max-w-5xl mx-auto text-center relative z-20">
+        <img
+          src="https://cdn.builder.io/api/v1/image/assets%2F5517f718aa7348e88214250292563028%2F09ca0588ac3741678f0d49e142dede0b?format=webp&width=800"
+          alt="Buscando Amor Eterno Logo"
+          className="h-24 w-24 object-contain mx-auto mb-6"
+        />
         <h1 className="text-5xl md:text-7xl lg:text-8xl font-playfair font-bold mb-8 text-slate-900 leading-tight tracking-tight">
           <span className="text-primary relative inline-block">
             Buscando Amor
