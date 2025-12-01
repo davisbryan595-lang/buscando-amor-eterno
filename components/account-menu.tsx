@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/auth-context'
@@ -18,10 +18,16 @@ import { toast } from 'sonner'
 
 export function AccountMenu() {
   const [menuOpen, setMenuOpen] = useState(false)
+  const [isMounted, setIsMounted] = useState(false)
   const router = useRouter()
   const { user, signOut } = useAuth()
 
-  if (!user) return null
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
+
+  // Don't render until mounted to avoid hydration issues
+  if (!isMounted || !user) return null
 
   const handleSignOut = async () => {
     try {
