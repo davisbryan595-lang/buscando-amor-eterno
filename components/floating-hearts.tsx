@@ -24,7 +24,7 @@ export default function FloatingHearts() {
       {hearts.map((heart) => (
         <div
           key={heart}
-          className="fixed pointer-events-none animate-float-hearts text-rose-400 opacity-60"
+          className="fixed pointer-events-none animate-float-hearts text-rose-400 opacity-60 z-50"
           style={{
             left: Math.random() * 100 + '%',
             top: '100vh',
