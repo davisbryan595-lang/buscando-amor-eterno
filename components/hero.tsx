@@ -9,7 +9,7 @@ export default function Hero() {
     <section
       className="pt-32 pb-16 px-4 relative overflow-hidden min-h-[90vh] flex items-center"
       style={{
-        backgroundImage: `linear-gradient(to bottom, rgba(245, 165, 180, 0.5), rgba(255, 255, 255, 0.4), rgba(245, 165, 180, 0.6)), url(/romantic-couple-sunset-beach-luxury.jpg)`,
+        backgroundImage: `linear-gradient(to bottom, rgba(245, 165, 180, 0.65), rgba(255, 255, 255, 0.5), rgba(245, 165, 180, 0.75)), url(/romantic-couple-sunset-beach-luxury.jpg)`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundAttachment: 'fixed',
