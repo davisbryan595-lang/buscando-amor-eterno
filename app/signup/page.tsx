@@ -44,15 +44,7 @@ export default function SignupPage() {
     setLoading(true)
 
     try {
-      const { data: session } = await supabase.auth.getSession()
-      if (session?.session?.user) {
-        await supabase.auth.updateUser({
-          data: {
-            name: formData.name,
-            bio: formData.bio,
-          }
-        })
-      }
+      // Profile information is saved after signup, move to payment step
       setStep('payment')
     } catch (error: any) {
       toast.error(error.message || 'Failed to save profile')
