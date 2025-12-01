@@ -4,11 +4,14 @@ import React, { useState } from 'react'
 import Link from 'next/link'
 import { Menu, X, Bell, Globe } from 'lucide-react'
 import { useLanguage } from '@/lib/i18n-context'
+import { useAuth } from '@/context/auth-context'
+import { AccountMenu } from '@/components/account-menu'
 
 export default function Navigation() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [langDropdown, setLangDropdown] = useState(false)
   const { language, setLanguage, t } = useLanguage()
+  const { user } = useAuth()
 
   const toggleOneSignal = () => {
     if (typeof window !== 'undefined' && window.OneSignal) {
@@ -78,15 +81,21 @@ export default function Navigation() {
             )}
           </div>
 
-          <Link href="/login" className="px-4 py-2 text-foreground hover:text-primary transition">
-            Log in
-          </Link>
-          <Link
-            href="/signup"
-            className="px-6 py-2 bg-primary text-white rounded-full hover:bg-rose-700 transition font-semibold"
-          >
-            Join for $12/month
-          </Link>
+          {user ? (
+            <AccountMenu />
+          ) : (
+            <>
+              <Link href="/login" className="px-4 py-2 text-foreground hover:text-primary transition">
+                Log in
+              </Link>
+              <Link
+                href="/signup"
+                className="px-6 py-2 bg-primary text-white rounded-full hover:bg-rose-700 transition font-semibold"
+              >
+                Join for $12/month
+              </Link>
+            </>
+          )}
         </div>
 
         {/* Mobile Menu Button */}
@@ -121,17 +130,21 @@ export default function Navigation() {
               </div>
             )}
           </div>
-          <button
-            onClick={() => setMenuOpen(!menuOpen)}
-            className="p-2 hover:bg-rose-50 rounded-lg transition"
-          >
-            {menuOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
+          {user ? (
+            <AccountMenu />
+          ) : (
+            <button
+              onClick={() => setMenuOpen(!menuOpen)}
+              className="p-2 hover:bg-rose-50 rounded-lg transition"
+            >
+              {menuOpen ? <X size={24} /> : <Menu size={24} />}
+            </button>
+          )}
         </div>
       </div>
 
       {/* Mobile Menu */}
-      {menuOpen && (
+      {menuOpen && !user && (
         <div className="md:hidden bg-white border-t border-rose-100 py-4 px-4 space-y-3">
           <Link href="/" className="block text-foreground hover:text-primary transition py-2">
             Home
