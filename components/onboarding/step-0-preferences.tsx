@@ -14,7 +14,7 @@ import {
 import { Checkbox } from '@/components/ui/checkbox'
 import { Sparkles, Target, Heart, Lightbulb } from 'lucide-react'
 
-interface Step0PreferencesProps {
+interface StepPersonalityProps {
   onNext: () => void
   onSkip: () => void
   initialData?: {
@@ -31,12 +31,12 @@ interface Step0PreferencesProps {
   }) => void
 }
 
-export function Step0Preferences({
+export function StepPersonality({
   onNext,
   onSkip,
   initialData,
   onDataChange,
-}: Step0PreferencesProps) {
+}: StepPersonalityProps) {
   const { t } = useLanguage()
   const [personality, setPersonality] = useState(initialData?.personality || '')
   const [relationshipGoal, setRelationshipGoal] = useState(initialData?.relationshipGoal || '')
