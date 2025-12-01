@@ -21,12 +21,10 @@ export default function Hero() {
         </div>
 
         {/* Rose logo as background accent */}
-        <div className="absolute inset-0 flex items-center justify-center opacity-15 pointer-events-none">
-          <img
-            src="https://cdn.builder.io/api/v1/image/assets%2F5517f718aa7348e88214250292563028%2F09ca0588ac3741678f0d49e142dede0b?format=webp&width=800"
-            alt=""
-            className="h-96 w-96 object-contain"
-          />
+        <div className="absolute inset-0 flex items-center justify-center opacity-20 pointer-events-none">
+          <svg className="h-96 w-96 text-rose-400" viewBox="0 0 100 100" fill="currentColor">
+            <path d="M50 10 C 50 10 60 20 60 30 C 60 40 55 45 50 45 C 45 45 40 40 40 30 C 40 20 50 10 50 10 M 45 45 C 40 50 35 60 35 70 C 35 80 40 85 50 85 C 60 85 65 80 65 70 C 65 60 60 50 55 45 M 30 60 C 25 65 20 70 20 75 C 20 80 25 85 30 85 M 70 60 C 75 65 80 70 80 75 C 80 80 75 85 70 85" stroke="currentColor" strokeWidth="2" fill="none" />
+          </svg>
         </div>
 
         {/* Rose-tinted gradient overlay */}
