@@ -8,7 +8,6 @@ import Footer from '@/components/footer'
 import { useAuth } from '@/context/auth-context'
 import { Check } from 'lucide-react'
 import { toast } from 'sonner'
-import { supabase } from '@/lib/supabase'
 
 type SignUpStep = 'email' | 'profile' | 'payment' | 'success'
 
