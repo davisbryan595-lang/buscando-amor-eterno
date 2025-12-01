@@ -10,8 +10,13 @@ import { AccountMenu } from '@/components/account-menu'
 export default function Navigation() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [langDropdown, setLangDropdown] = useState(false)
+  const [isMounted, setIsMounted] = useState(false)
   const { language, setLanguage, t } = useLanguage()
   const { user } = useAuth()
+
+  React.useEffect(() => {
+    setIsMounted(true)
+  }, [])
 
   const toggleOneSignal = () => {
     if (typeof window !== 'undefined' && window.OneSignal) {
@@ -81,9 +86,9 @@ export default function Navigation() {
             )}
           </div>
 
-          {user ? (
+          {isMounted && user ? (
             <AccountMenu />
-          ) : (
+          ) : isMounted ? (
             <>
               <Link href="/login" className="px-4 py-2 text-foreground hover:text-primary transition">
                 Log in
@@ -95,7 +100,7 @@ export default function Navigation() {
                 Join for $12/month
               </Link>
             </>
-          )}
+          ) : null}
         </div>
 
         {/* Mobile Menu Button */}
@@ -130,21 +135,21 @@ export default function Navigation() {
               </div>
             )}
           </div>
-          {user ? (
+          {isMounted && user ? (
             <AccountMenu />
-          ) : (
+          ) : isMounted ? (
             <button
               onClick={() => setMenuOpen(!menuOpen)}
               className="p-2 hover:bg-rose-50 rounded-lg transition"
             >
               {menuOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
-          )}
+          ) : null}
         </div>
       </div>
 
       {/* Mobile Menu */}
-      {menuOpen && !user && (
+      {menuOpen && isMounted && !user && (
         <div className="md:hidden bg-white border-t border-rose-100 py-4 px-4 space-y-3">
           <Link href="/" className="block text-foreground hover:text-primary transition py-2">
             Home
