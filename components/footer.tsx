@@ -5,14 +5,10 @@ import Link from 'next/link'
 import { Heart } from 'lucide-react'
 
 export default function Footer() {
-  const openTawkDashboard = () => {
-    window.open('https://dashboard.tawk.to', '_blank')
-  }
-
   return (
     <footer className="bg-slate-900 text-white py-12 px-4">
       <div className="max-w-6xl mx-auto">
-        <div className="grid md:grid-cols-4 gap-8 mb-8">
+        <div className="grid md:grid-cols-3 gap-8 mb-8">
           <div>
             <h3 className="text-2xl font-playfair font-bold mb-4 flex items-center gap-2">
               <Heart className="text-rose-400" /> Buscando Amor Eterno
@@ -41,15 +37,6 @@ export default function Footer() {
             </ul>
           </div>
 
-          <div>
-            <h4 className="font-bold mb-4">Admin</h4>
-            <button
-              onClick={openTawkDashboard}
-              className="px-4 py-2 bg-rose-600 hover:bg-rose-700 rounded transition text-sm"
-            >
-              Agent Login
-            </button>
-          </div>
         </div>
 
         <div className="border-t border-slate-700 pt-8 text-center text-gray-400">

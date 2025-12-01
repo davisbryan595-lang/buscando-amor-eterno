@@ -7,6 +7,7 @@ import { useLanguage } from '@/lib/i18n-context'
 import { useProfile } from '@/hooks/useProfile'
 import { Step1Auth } from '@/components/onboarding/step-1-auth'
 import { Step2Profile } from '@/components/onboarding/step-2-profile'
+import { StepPersonality } from '@/components/onboarding/step-0-preferences'
 import { Step3Location } from '@/components/onboarding/step-3-location'
 import { Step4Photos } from '@/components/onboarding/step-4-photos'
 import { Step5Prompts } from '@/components/onboarding/step-5-prompts'
@@ -17,7 +18,7 @@ import { Loader, ChevronLeft, Globe } from 'lucide-react'
 import { toast } from 'sonner'
 import confetti from 'canvas-confetti'
 
-type OnboardingStep = 1 | 2 | 3 | 4 | 5 | 6 | 'complete'
+type OnboardingStep = 1 | 2 | 'personality' | 3 | 4 | 5 | 6 | 'complete'
 
 interface OnboardingData {
   // Step 2
@@ -25,6 +26,11 @@ interface OnboardingData {
   birthday: string
   gender: string
   lookingFor: string
+  // Personality
+  personality: string
+  relationshipGoal: string
+  interests: string[]
+  values: string[]
   // Step 3
   city: string
   country: string
@@ -53,7 +59,7 @@ interface OnboardingData {
   dealbreakers: string[]
 }
 
-const TOTAL_STEPS = 6
+const TOTAL_STEPS = 7
 
 export default function OnboardingPage() {
   const router = useRouter()
@@ -83,20 +89,41 @@ export default function OnboardingPage() {
     return null
   }
 
-  const progressPercent = currentStep === 'complete' ? 100 : (currentStep / TOTAL_STEPS) * 100
+  const getProgressPercent = (step: OnboardingStep) => {
+    const stepOrder: Record<OnboardingStep, number> = {
+      1: 1,
+      2: 2,
+      'personality': 3,
+      3: 4,
+      4: 5,
+      5: 6,
+      6: 7,
+      'complete': TOTAL_STEPS,
+    }
+    return step === 'complete' ? 100 : (stepOrder[step] / TOTAL_STEPS) * 100
+  }
+
+  const progressPercent = getProgressPercent(currentStep)
 
   const handleNext = () => {
-    if (currentStep === TOTAL_STEPS) {
+    const stepSequence: OnboardingStep[] = [1, 2, 'personality', 3, 4, 5, 6, 'complete']
+    const currentIndex = stepSequence.indexOf(currentStep)
+
+    if (currentStep === 6) {
       handleComplete()
     } else {
-      setCurrentStep((currentStep + 1) as OnboardingStep)
+      const nextIndex = Math.min(currentIndex + 1, stepSequence.length - 1)
+      setCurrentStep(stepSequence[nextIndex])
       window.scrollTo(0, 0)
     }
   }
 
   const handleBack = () => {
-    if (currentStep > 1 && currentStep !== 'complete') {
-      setCurrentStep((currentStep - 1) as OnboardingStep)
+    const stepSequence: OnboardingStep[] = [1, 2, 'personality', 3, 4, 5, 6, 'complete']
+    const currentIndex = stepSequence.indexOf(currentStep)
+
+    if (currentStep > 1 && currentStep !== 'complete' && currentIndex > 0) {
+      setCurrentStep(stepSequence[currentIndex - 1])
       window.scrollTo(0, 0)
     }
   }
@@ -126,6 +153,10 @@ export default function OnboardingPage() {
         birthday: data.birthday,
         gender: data.gender,
         looking_for: data.lookingFor,
+        personality: data.personality,
+        relationship_goal: data.relationshipGoal,
+        interests: data.interests,
+        values: data.values,
         city: data.city,
         country: data.country,
         latitude: data.latitude || 0,
@@ -211,6 +242,9 @@ export default function OnboardingPage() {
         {currentStep !== 'complete' && (
           <div className="max-w-2xl mx-auto px-4 pb-4">
             <Progress value={progressPercent} className="h-1 rounded-full" />
+            <p className="text-xs text-muted-foreground mt-2 text-center">
+              Step {currentStep === 'personality' ? 3 : (typeof currentStep === 'number' && currentStep > 2 ? currentStep + 1 : currentStep)} of {TOTAL_STEPS}
+            </p>
           </div>
         )}
       </div>
@@ -228,6 +262,20 @@ export default function OnboardingPage() {
               birthday: data.birthday || '',
               gender: data.gender || '',
               lookingFor: data.lookingFor || '',
+            }}
+            onDataChange={(stepData) => setData({ ...data, ...stepData })}
+          />
+        )}
+
+        {currentStep === 'personality' && (
+          <StepPersonality
+            onNext={handleNext}
+            onSkip={handleSkip}
+            initialData={{
+              personality: data.personality || '',
+              relationshipGoal: data.relationshipGoal || '',
+              interests: data.interests || [],
+              values: data.values || [],
             }}
             onDataChange={(stepData) => setData({ ...data, ...stepData })}
           />
