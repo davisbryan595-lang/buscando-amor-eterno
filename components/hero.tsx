@@ -21,9 +21,23 @@ export default function Hero() {
         </div>
 
         {/* Rose logo as background accent */}
-        <div className="absolute inset-0 flex items-center justify-center opacity-20 pointer-events-none">
-          <svg className="h-96 w-96 text-rose-400" viewBox="0 0 100 100" fill="currentColor">
-            <path d="M50 10 C 50 10 60 20 60 30 C 60 40 55 45 50 45 C 45 45 40 40 40 30 C 40 20 50 10 50 10 M 45 45 C 40 50 35 60 35 70 C 35 80 40 85 50 85 C 60 85 65 80 65 70 C 65 60 60 50 55 45 M 30 60 C 25 65 20 70 20 75 C 20 80 25 85 30 85 M 70 60 C 75 65 80 70 80 75 C 80 80 75 85 70 85" stroke="currentColor" strokeWidth="2" fill="none" />
+        <div className="absolute inset-0 flex items-center justify-center opacity-15 pointer-events-none">
+          <svg className="h-96 w-96 text-rose-500" viewBox="0 0 200 280" fill="currentColor">
+            {/* Petals */}
+            <ellipse cx="100" cy="60" rx="25" ry="35" fill="currentColor" opacity="0.9"/>
+            <ellipse cx="65" cy="75" rx="20" ry="38" transform="rotate(-45 65 75)" fill="currentColor" opacity="0.85"/>
+            <ellipse cx="135" cy="75" rx="20" ry="38" transform="rotate(45 135 75)" fill="currentColor" opacity="0.85"/>
+            <ellipse cx="50" cy="110" rx="22" ry="35" transform="rotate(-70 50 110)" fill="currentColor" opacity="0.75"/>
+            <ellipse cx="150" cy="110" rx="22" ry="35" transform="rotate(70 150 110)" fill="currentColor" opacity="0.75"/>
+            <ellipse cx="40" cy="155" rx="20" ry="32" transform="rotate(-90 40 155)" fill="currentColor" opacity="0.7"/>
+            <ellipse cx="160" cy="155" rx="20" ry="32" transform="rotate(90 160 155)" fill="currentColor" opacity="0.7"/>
+            <circle cx="100" cy="100" r="40" fill="currentColor" opacity="0.8"/>
+            <circle cx="100" cy="90" r="28" fill="#fda4af" opacity="0.9"/>
+            {/* Stem */}
+            <path d="M 100 140 Q 95 180 90 220" stroke="currentColor" strokeWidth="3" fill="none"/>
+            {/* Leaves */}
+            <ellipse cx="75" cy="180" rx="12" ry="25" transform="rotate(-45 75 180)" fill="currentColor" opacity="0.6"/>
+            <ellipse cx="125" cy="200" rx="12" ry="25" transform="rotate(45 125 200)" fill="currentColor" opacity="0.6"/>
           </svg>
         </div>
 
