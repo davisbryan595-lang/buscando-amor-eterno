@@ -106,17 +106,24 @@ export default function OnboardingPage() {
   const progressPercent = getProgressPercent(currentStep)
 
   const handleNext = () => {
-    if (currentStep === TOTAL_STEPS) {
+    const stepSequence: OnboardingStep[] = [1, 2, 'personality', 3, 4, 5, 6, 'complete']
+    const currentIndex = stepSequence.indexOf(currentStep)
+
+    if (currentStep === 6) {
       handleComplete()
     } else {
-      setCurrentStep((currentStep + 1) as OnboardingStep)
+      const nextIndex = Math.min(currentIndex + 1, stepSequence.length - 1)
+      setCurrentStep(stepSequence[nextIndex])
       window.scrollTo(0, 0)
     }
   }
 
   const handleBack = () => {
-    if (currentStep > 1 && currentStep !== 'complete') {
-      setCurrentStep((currentStep - 1) as OnboardingStep)
+    const stepSequence: OnboardingStep[] = [1, 2, 'personality', 3, 4, 5, 6, 'complete']
+    const currentIndex = stepSequence.indexOf(currentStep)
+
+    if (currentStep > 1 && currentStep !== 'complete' && currentIndex > 0) {
+      setCurrentStep(stepSequence[currentIndex - 1])
       window.scrollTo(0, 0)
     }
   }
