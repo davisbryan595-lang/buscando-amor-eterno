@@ -41,15 +41,6 @@ export default function Footer() {
             </ul>
           </div>
 
-          <div>
-            <h4 className="font-bold mb-4">Admin</h4>
-            <button
-              onClick={openTawkDashboard}
-              className="px-4 py-2 bg-rose-600 hover:bg-rose-700 rounded transition text-sm"
-            >
-              Agent Login
-            </button>
-          </div>
         </div>
 
         <div className="border-t border-slate-700 pt-8 text-center text-gray-400">
