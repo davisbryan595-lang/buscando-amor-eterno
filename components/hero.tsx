@@ -9,7 +9,7 @@ export default function Hero() {
     <section
       className="pt-32 pb-16 px-4 relative overflow-hidden min-h-[90vh] flex items-center"
       style={{
-        backgroundImage: 'url(/romantic-couple-sunset-beach-luxury.jpg)',
+        backgroundImage: `linear-gradient(to bottom, rgba(245, 165, 180, 0.5), rgba(255, 255, 255, 0.4), rgba(245, 165, 180, 0.6)), url(/romantic-couple-sunset-beach-luxury.jpg)`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundAttachment: 'fixed',
@@ -17,8 +17,6 @@ export default function Hero() {
     >
       {/* Background overlay */}
       <div className="absolute inset-0 -z-10">
-        {/* Gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-b from-rose-50/70 via-white/60 to-rose-50/80"></div>
 
         {/* Rose logo watermark */}
         <div className="absolute inset-0 flex items-center justify-center opacity-25 pointer-events-none">
