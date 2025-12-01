@@ -23,11 +23,18 @@ export default function Hero() {
       </div>
 
       <div className="max-w-5xl mx-auto text-center relative z-20">
-        <img
-          src="https://cdn.builder.io/api/v1/image/assets%2F5517f718aa7348e88214250292563028%2F09ca0588ac3741678f0d49e142dede0b?format=webp&width=800"
-          alt="Buscando Amor Eterno Logo"
-          className="h-24 w-24 object-contain mx-auto mb-6"
-        />
+        <div className="flex justify-center mb-8">
+          <div className="relative inline-block">
+            <div className="absolute inset-0 bg-gradient-to-br from-rose-400/30 via-rose-300/20 to-rose-200/10 rounded-full blur-3xl"></div>
+            <div className="relative bg-gradient-to-br from-rose-50 to-rose-100/50 rounded-full p-6 backdrop-blur-sm border border-rose-200/40 shadow-2xl">
+              <img
+                src="https://cdn.builder.io/api/v1/image/assets%2F5517f718aa7348e88214250292563028%2F09ca0588ac3741678f0d49e142dede0b?format=webp&width=800"
+                alt="Buscando Amor Eterno Logo"
+                className="h-32 w-32 object-contain drop-shadow-lg"
+              />
+            </div>
+          </div>
+        </div>
         <h1 className="text-5xl md:text-7xl lg:text-8xl font-playfair font-bold mb-8 text-slate-900 leading-tight tracking-tight">
           <span className="text-primary relative inline-block">
             Buscando Amor
