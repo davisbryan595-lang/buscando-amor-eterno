@@ -6,15 +6,19 @@ import Image from 'next/image'
 
 export default function Hero() {
   return (
-    <section className="pt-32 pb-16 px-4 relative overflow-hidden min-h-[90vh] flex items-center bg-gradient-to-b from-rose-50 via-white to-rose-50">
-      {/* Background with couple image and rose accent */}
+    <section
+      className="pt-32 pb-16 px-4 relative overflow-hidden min-h-[90vh] flex items-center"
+      style={{
+        backgroundImage: 'url(/romantic-couple-sunset-beach-luxury.jpg)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundAttachment: 'fixed',
+      }}
+    >
+      {/* Background overlay */}
       <div className="absolute inset-0 -z-10">
-        {/* Couple background image */}
-        <img
-          src="/romantic-couple-sunset-beach-luxury.jpg"
-          alt="Happy couple"
-          className="absolute inset-0 w-full h-full object-cover opacity-40"
-        />
+        {/* Gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-b from-rose-50/70 via-white/60 to-rose-50/80"></div>
 
         {/* Rose logo watermark */}
         <div className="absolute inset-0 flex items-center justify-center opacity-25 pointer-events-none">
