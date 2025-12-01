@@ -35,7 +35,7 @@ export default function Navigation() {
           <Link href="/" className="text-foreground hover:text-primary transition">Home</Link>
           <Link href="/browse" className="text-foreground hover:text-primary transition">Browse</Link>
           <Link href="/pricing" className="text-foreground hover:text-primary transition">Pricing</Link>
-          <Link href="/chat-room" className="text-foreground hover:text-primary transition">Lounge</Link>
+          <Link href="/messages" className="text-foreground hover:text-primary transition">Messages</Link>
 
           <button
             onClick={toggleOneSignal}
