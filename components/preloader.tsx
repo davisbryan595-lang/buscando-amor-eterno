@@ -4,8 +4,11 @@ import { useEffect, useState } from 'react';
 
 export function Preloader() {
   const [isLoading, setIsLoading] = useState(true);
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
+    setIsMounted(true);
+
     const timer = setTimeout(() => {
       setIsLoading(false);
     }, 3000);
@@ -13,7 +16,8 @@ export function Preloader() {
     return () => clearTimeout(timer);
   }, []);
 
-  if (!isLoading) return null;
+  // Don't render anything until mounted on client to avoid hydration mismatch
+  if (!isMounted || !isLoading) return null;
 
   return (
     <div className="preloader-container">
