@@ -6,10 +6,11 @@ import Image from 'next/image'
 
 export default function Hero() {
   return (
-    <section className="pt-32 pb-16 px-4 relative overflow-hidden min-h-[90vh] flex items-center">
+    <section className="pt-32 pb-16 px-4 relative overflow-hidden min-h-[90vh] flex items-center bg-gradient-to-b from-rose-50 via-white to-rose-50">
       {/* Background image with rose logo overlay */}
       <div className="absolute inset-0 -z-10">
-        <div className="absolute inset-0 w-full h-full">
+        {/* Background image */}
+        <div className="absolute inset-0 w-full h-full opacity-40">
           <Image
             src="/couple-laughing-park-happy.jpg"
             alt="Happy couple"
@@ -21,8 +22,8 @@ export default function Hero() {
         </div>
 
         {/* Rose logo as background accent */}
-        <div className="absolute inset-0 flex items-center justify-center opacity-15 pointer-events-none">
-          <svg className="h-96 w-96 text-rose-500" viewBox="0 0 200 280" fill="currentColor">
+        <div className="absolute inset-0 flex items-center justify-center opacity-10 pointer-events-none">
+          <svg className="h-96 w-96 text-rose-600" viewBox="0 0 200 280" fill="currentColor">
             {/* Petals */}
             <ellipse cx="100" cy="60" rx="25" ry="35" fill="currentColor" opacity="0.9"/>
             <ellipse cx="65" cy="75" rx="20" ry="38" transform="rotate(-45 65 75)" fill="currentColor" opacity="0.85"/>
@@ -40,9 +41,6 @@ export default function Hero() {
             <ellipse cx="125" cy="200" rx="12" ry="25" transform="rotate(45 125 200)" fill="currentColor" opacity="0.6"/>
           </svg>
         </div>
-
-        {/* Rose-tinted gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-b from-white/60 via-rose-50/40 to-rose-100/70 z-10" />
       </div>
 
       <div className="max-w-5xl mx-auto text-center relative z-20">
