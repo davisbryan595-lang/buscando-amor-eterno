@@ -17,6 +17,7 @@ import {
   AlertDialogDescription,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
+import { AccountMenu } from '@/components/account-menu'
 import { Loader, LogOut, Trash2, Download, Camera, X, Plus } from 'lucide-react'
 import { toast } from 'sonner'
 import { ProfilePhotosTab } from '@/components/profile/photos-tab'
@@ -124,15 +125,18 @@ export default function ProfilePage() {
               </h1>
               <p className="text-muted-foreground">{profile.full_name || user.email}</p>
             </div>
-            <Button
-              onClick={handleSignOut}
-              variant="outline"
-              size="lg"
-              className="border-secondary gap-2"
-            >
-              <LogOut size={20} />
-              Sign out
-            </Button>
+            <div className="flex items-center gap-4">
+              <AccountMenu />
+              <Button
+                onClick={handleSignOut}
+                variant="outline"
+                size="lg"
+                className="border-secondary gap-2"
+              >
+                <LogOut size={20} />
+                Sign out
+              </Button>
+            </div>
           </div>
 
           {/* Tabs */}
