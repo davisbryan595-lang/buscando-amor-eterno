@@ -4,135 +4,14 @@ import React, { useState } from 'react'
 import Navigation from '@/components/navigation'
 import Footer from '@/components/footer'
 import { useProfileProtection } from '@/hooks/useProfileProtection'
+import { useBrowseProfiles } from '@/hooks/useBrowseProfiles'
 import { Heart, X, Star, Info, Loader } from 'lucide-react'
 import Image from 'next/image'
-
-const profiles = [
-  {
-    id: 1,
-    name: 'Sofia',
-    age: 26,
-    location: 'Barcelona, Spain',
-    lookingFor: 'Someone who believes in true love',
-    image: '/beautiful-spanish-woman-portrait-smiling.jpg',
-    bio: 'Artist, dreamer, and hopeless romantic. Love travel, wine, and long conversations.',
-    interests: ['Art', 'Travel', 'Wine']
-  },
-  {
-    id: 2,
-    name: 'Isabella',
-    age: 28,
-    location: 'Madrid, Spain',
-    lookingFor: 'A genuine connection',
-    image: '/elegant-woman-coffee-shop-portrait.jpg',
-    bio: 'Professional woman looking for someone authentic. Coffee lover, weekend traveler.',
-    interests: ['Coffee', 'Travel', 'Career']
-  },
-  {
-    id: 3,
-    name: 'Elena',
-    age: 25,
-    location: 'Buenos Aires, Argentina',
-    lookingFor: 'My soulmate',
-    image: '/latina-woman-smiling-sunlight.jpg',
-    bio: 'Passionate about life, family-oriented, and seeking a long-term commitment.',
-    interests: ['Family', 'Dancing', 'Cooking']
-  },
-  {
-    id: 4,
-    name: 'Lucia',
-    age: 29,
-    location: 'Mexico City, Mexico',
-    lookingFor: 'True love and adventure',
-    image: '/adventurous-woman-hiking-nature.jpg',
-    bio: 'Adventurous spirit, yoga enthusiast, always up for spontaneous trips.',
-    interests: ['Yoga', 'Adventure', 'Travel']
-  },
-  {
-    id: 5,
-    name: 'Mariana',
-    age: 27,
-    location: 'Lisbon, Portugal',
-    lookingFor: 'Someone kind and thoughtful',
-    image: '/woman-reading-book-library.jpg',
-    bio: 'Teacher, book lover, and believer in destiny. Looking for my forever person.',
-    interests: ['Reading', 'Teaching', 'Destiny']
-  },
-  {
-    id: 6,
-    name: 'Valentina',
-    age: 26,
-    location: 'Rio de Janeiro, Brazil',
-    lookingFor: 'A partner for life',
-    image: '/brazilian-woman-beach-portrait.jpg',
-    bio: 'Free spirit, nature lover, passionate about helping others.',
-    interests: ['Nature', 'Volunteering', 'Beach']
-  },
-  {
-    id: 7,
-    name: 'Catalina',
-    age: 28,
-    location: 'Santiago, Chile',
-    lookingFor: 'Real connection and love',
-    image: '/professional-woman-portrait.png',
-    bio: 'Professional achiever seeking balance and meaningful relationships.',
-    interests: ['Business', 'Balance', 'Wine']
-  },
-  {
-    id: 8,
-    name: 'Rosa',
-    age: 25,
-    location: 'Valencia, Spain',
-    lookingFor: 'Someone who gets me',
-    image: '/creative-woman-painting-art.jpg',
-    bio: 'Creative, empathetic, and searching for my soulmate.',
-    interests: ['Art', 'Music', 'Poetry']
-  },
-  {
-    id: 9,
-    name: 'Gabriela',
-    age: 27,
-    location: 'São Paulo, Brazil',
-    lookingFor: 'Forever love',
-    image: '/fitness-woman-gym-portrait.jpg',
-    bio: 'Determined, ambitious, and ready for the right relationship.',
-    interests: ['Fitness', 'Career', 'Travel']
-  },
-  {
-    id: 10,
-    name: 'Alejandra',
-    age: 26,
-    location: 'Bogotá, Colombia',
-    lookingFor: 'A true soulmate',
-    image: '/woman-cooking-kitchen-happy.jpg',
-    bio: 'Warm-hearted, genuine, and looking for lasting love.',
-    interests: ['Cooking', 'Family', 'Music']
-  },
-  {
-    id: 11,
-    name: 'Manuela',
-    age: 29,
-    location: 'Lima, Peru',
-    lookingFor: 'Someone special',
-    image: '/business-woman-city-portrait.jpg',
-    bio: 'Independent woman seeking partnership and mutual growth.',
-    interests: ['Business', 'Growth', 'Travel']
-  },
-  {
-    id: 12,
-    name: 'Claudia',
-    age: 25,
-    location: 'Havana, Cuba',
-    lookingFor: 'Everlasting love',
-    image: '/placeholder.svg?height=1000&width=800',
-    bio: 'Joyful, optimistic, and ready to meet my match.',
-    interests: ['Dancing', 'Music', 'Culture']
-  },
-]
 
 export default function BrowsePage() {
   // Protect this route - require complete profile
   const { isLoading } = useProfileProtection(true, '/onboarding')
+  const { profiles, loading: profilesLoading, likeProfile, dislikeProfile, superLikeProfile } = useBrowseProfiles()
 
   const [currentIndex, setCurrentIndex] = useState(0)
   const [showInfo, setShowInfo] = useState(false)
@@ -140,7 +19,7 @@ export default function BrowsePage() {
   const [dragOffset, setDragOffset] = useState(0)
   const [isDragging, setIsDragging] = useState(false)
 
-  if (isLoading) {
+  if (isLoading || profilesLoading) {
     return (
       <main className="min-h-screen flex items-center justify-center">
         <Loader className="animate-spin" size={40} />
@@ -151,7 +30,19 @@ export default function BrowsePage() {
   const currentProfile = profiles[currentIndex]
   const hasMoreProfiles = currentIndex < profiles.length - 1
 
-  const handleSwipe = (direction: 'left' | 'right' | 'super') => {
+  const handleSwipe = async (direction: 'left' | 'right' | 'super') => {
+    if (!currentProfile) return
+
+    try {
+      if (direction === 'left') {
+        await dislikeProfile(currentProfile.id)
+      } else if (direction === 'right' || direction === 'super') {
+        await likeProfile(currentProfile.id)
+      }
+    } catch (err) {
+      console.error('Error swiping:', err)
+    }
+
     setSwipeDirection(direction)
     setTimeout(() => {
       if (currentIndex < profiles.length - 1) {
@@ -257,8 +148,8 @@ export default function BrowsePage() {
               {/* Profile Image */}
               <div className="relative h-full w-full">
                 <Image
-                  src={currentProfile.image || "/placeholder.svg"}
-                  alt={currentProfile.name}
+                  src={currentProfile.photos?.[currentProfile.main_photo_index || 0] || "/placeholder.svg"}
+                  alt={currentProfile.full_name || 'User'}
                   fill
                   className="object-cover pointer-events-none"
                   priority
@@ -291,9 +182,9 @@ export default function BrowsePage() {
                       <div className="flex items-center justify-between mb-2">
                         <div>
                           <h2 className="text-4xl font-playfair font-bold mb-1">
-                            {currentProfile.name}, {currentProfile.age}
+                            {currentProfile.full_name || 'User'}, {currentProfile.age || '?'}
                           </h2>
-                          <p className="text-white/90 text-lg">{currentProfile.location}</p>
+                          <p className="text-white/90 text-lg">{currentProfile.city || 'Location not set'}</p>
                         </div>
                         <button
                           onClick={() => setShowInfo(true)}
@@ -302,22 +193,12 @@ export default function BrowsePage() {
                           <Info className="w-6 h-6" />
                         </button>
                       </div>
-                      <div className="flex gap-2 flex-wrap">
-                        {currentProfile.interests.map((interest) => (
-                          <span
-                            key={interest}
-                            className="px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full text-sm"
-                          >
-                            {interest}
-                          </span>
-                        ))}
-                      </div>
                     </>
                   ) : (
                     <div className="space-y-4">
                       <div className="flex items-center justify-between">
                         <h2 className="text-3xl font-playfair font-bold">
-                          {currentProfile.name}, {currentProfile.age}
+                          {currentProfile.full_name || 'User'}, {currentProfile.age || '?'}
                         </h2>
                         <button
                           onClick={() => setShowInfo(false)}
@@ -326,15 +207,17 @@ export default function BrowsePage() {
                           <X className="w-5 h-5" />
                         </button>
                       </div>
-                      <p className="text-white/90 text-lg">{currentProfile.location}</p>
-                      <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4">
-                        <p className="text-sm text-white/80 mb-2">Looking for</p>
-                        <p className="text-lg">{currentProfile.lookingFor}</p>
-                      </div>
+                      <p className="text-white/90 text-lg">{currentProfile.city || 'Location not set'}</p>
                       <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4">
                         <p className="text-sm text-white/80 mb-2">About</p>
-                        <p>{currentProfile.bio}</p>
+                        <p>{currentProfile.bio || 'No bio yet'}</p>
                       </div>
+                      {currentProfile.prompt_1 && (
+                        <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4">
+                          <p className="text-sm text-white/80 mb-2">Interests</p>
+                          <p>{currentProfile.prompt_1}</p>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -345,8 +228,8 @@ export default function BrowsePage() {
             {hasMoreProfiles && (
               <div className="absolute inset-0 rounded-3xl overflow-hidden shadow-xl -z-10 scale-95 translate-y-4 opacity-60 bg-white">
                 <Image
-                  src={profiles[currentIndex + 1].image || "/placeholder.svg"}
-                  alt={profiles[currentIndex + 1].name}
+                  src={profiles[currentIndex + 1].photos?.[profiles[currentIndex + 1].main_photo_index || 0] || "/placeholder.svg"}
+                  alt={profiles[currentIndex + 1].full_name || 'User'}
                   fill
                   className="object-cover"
                   sizes="(max-width: 768px) 100vw, 500px"
