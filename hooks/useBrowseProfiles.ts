@@ -93,6 +93,7 @@ export function useBrowseProfiles() {
   const superLikeProfile = useCallback(
     async (profileId: string) => {
       if (!user) throw new Error('No user logged in')
+      if (!isPremium) throw new Error('Premium subscription required to super like profiles')
 
       try {
         const { error: err } = await supabase
@@ -109,7 +110,7 @@ export function useBrowseProfiles() {
         throw err
       }
     },
-    [user]
+    [user, isPremium]
   )
 
   return {
