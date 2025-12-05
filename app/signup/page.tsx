@@ -161,48 +161,7 @@ export default function SignupPage() {
             </form>
           )}
 
-          {/* Step 3: Payment */}
-          {step === 'payment' && (
-            <form onSubmit={handlePaymentSubmit} className="space-y-6">
-              <div>
-                <h2 className="text-3xl font-playfair font-bold text-slate-900 mb-2">
-                  Choose Plan
-                </h2>
-                <p className="text-slate-600">$12/month, cancel anytime</p>
-              </div>
-
-              <div className="bg-gradient-to-br from-white to-rose-50 border-2 border-primary rounded-2xl p-6">
-                <p className="text-5xl font-playfair font-bold text-primary mb-2">
-                  $12<span className="text-lg text-slate-600">/mo</span>
-                </p>
-                <ul className="space-y-2 text-slate-700 mb-6 text-sm">
-                  <li className="flex items-center gap-2">
-                    <Check size={16} className="text-primary" /> Unlimited messages
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Check size={16} className="text-primary" /> Video calls
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Check size={16} className="text-primary" /> See who liked you
-                  </li>
-                </ul>
-              </div>
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full py-3 bg-primary text-white rounded-full font-semibold hover:bg-rose-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {loading ? 'Processing...' : 'Proceed to Payment'}
-              </button>
-
-              <p className="text-center text-xs text-slate-600">
-                We use Stripe for secure payments
-              </p>
-            </form>
-          )}
-
-          {/* Step 4: Success */}
+          {/* Step 3: Success */}
           {step === 'success' && (
             <div className="space-y-6 text-center">
               <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center mx-auto">
