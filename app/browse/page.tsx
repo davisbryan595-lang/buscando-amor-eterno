@@ -15,9 +15,11 @@ export default function BrowsePage() {
   // Protect this route - require complete profile
   const { isLoading } = useProfileProtection(true, '/onboarding')
   const { profiles, loading: profilesLoading, likeProfile, dislikeProfile, superLikeProfile } = useBrowseProfiles()
+  const { isPremium, loading: subLoading } = useSubscription()
 
   const [currentIndex, setCurrentIndex] = useState(0)
   const [showInfo, setShowInfo] = useState(false)
+  const [showPaywall, setShowPaywall] = useState(false)
   const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | 'super' | null>(null)
   const [dragOffset, setDragOffset] = useState(0)
   const [isDragging, setIsDragging] = useState(false)
