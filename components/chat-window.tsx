@@ -37,8 +37,13 @@ export default function ChatWindow({ conversation }: { conversation: Conversatio
       setLoading(true)
       await sendMessage(conversation.id, newMessage)
       setNewMessage('')
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error sending message:', err)
+      if (err.message?.includes('Premium subscription required')) {
+        setShowPaywall(true)
+      } else {
+        toast.error(err.message || 'Error sending message')
+      }
     } finally {
       setLoading(false)
     }
