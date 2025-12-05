@@ -9,7 +9,7 @@ import { useAuth } from '@/context/auth-context'
 import { Check } from 'lucide-react'
 import { toast } from 'sonner'
 
-type SignUpStep = 'email' | 'profile' | 'payment' | 'success'
+type SignUpStep = 'email' | 'profile' | 'success'
 
 export default function SignupPage() {
   const [step, setStep] = useState<SignUpStep>('email')
@@ -43,18 +43,17 @@ export default function SignupPage() {
     setLoading(true)
 
     try {
-      // Profile information is saved after signup, move to payment step
-      setStep('payment')
+      // Profile information is saved, proceed to success
+      setStep('success')
+      // Redirect to onboarding after a short delay
+      setTimeout(() => {
+        router.push('/onboarding')
+      }, 2000)
     } catch (error: any) {
       toast.error(error.message || 'Failed to save profile')
     } finally {
       setLoading(false)
     }
-  }
-
-  const handlePaymentSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setStep('success')
   }
 
   return (
