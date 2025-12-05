@@ -60,6 +60,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       password,
     })
     if (error) throw error
+
+    // Create user record and free subscription in database
+    if (data.user) {
+      try {
+        // Create user record
+        await supabase.from('users').insert({
+          id: data.user.id,
+          email: email,
+        })
+
+        // Create free subscription
+        await supabase.from('subscriptions').insert({
+          user_id: data.user.id,
+          plan: 'free',
+          status: 'active',
+        })
+      } catch (err) {
+        console.error('Error creating user profile:', err)
+      }
+    }
   }
 
   const signIn = async (email: string, password: string) => {
