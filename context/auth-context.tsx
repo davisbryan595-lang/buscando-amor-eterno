@@ -2,16 +2,10 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
-import type { User } from '@/lib/mock-db'
-
-interface Session {
-  user: User
-  access_token: string
-}
 
 interface AuthContextType {
-  user: User | null
-  session: Session | null
+  user: any | null
+  session: any | null
   loading: boolean
   signUp: (email: string, password: string) => Promise<void>
   signIn: (email: string, password: string) => Promise<void>
@@ -22,8 +16,8 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null)
-  const [session, setSession] = useState<Session | null>(null)
+  const [user, setUser] = useState<any | null>(null)
+  const [session, setSession] = useState<any | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -31,10 +25,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const initializeAuth = async () => {
       try {
-        const { data: sessionData } = await supabase.auth.getSession()
+        const { data: { session: sessionData } } = await supabase.auth.getSession()
         if (isMounted) {
-          setSession(sessionData?.session ?? null)
-          setUser(sessionData?.session?.user ?? null)
+          setSession(sessionData)
+          setUser(sessionData?.user ?? null)
         }
       } catch (error) {
         console.error('Error initializing auth:', error)
@@ -47,10 +41,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     initializeAuth()
 
-    // For mock auth, we don't need continuous subscription
-    // Session changes are handled immediately after signin/signup
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, sessionData) => {
+      if (isMounted) {
+        setSession(sessionData)
+        setUser(sessionData?.user ?? null)
+      }
+    })
+
     return () => {
       isMounted = false
+      subscription?.unsubscribe()
     }
   }, [])
 
@@ -60,10 +60,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       password,
     })
     if (error) throw error
-    if (data?.session) {
-      setSession(data.session)
-      setUser(data.session.user)
-    }
   }
 
   const signIn = async (email: string, password: string) => {
@@ -72,10 +68,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       password,
     })
     if (error) throw error
-    if (data?.session) {
-      setSession(data.session)
-      setUser(data.session.user)
-    }
   }
 
   const signOut = async () => {
@@ -84,10 +76,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const signInWithOAuth = async (provider: 'google' | 'apple') => {
-    const { error } = await supabase.auth.signInWithOAuth({
+    const { data, error } = await supabase.auth.signInWithOAuth({
       provider,
       options: {
-        redirectTo: `${window.location.origin}/onboarding`,
+        redirectTo: `${typeof window !== 'undefined' ? window.location.origin : ''}/onboarding`,
       },
     })
     if (error) throw error
