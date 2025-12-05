@@ -41,10 +41,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     initializeAuth()
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, sessionData) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, sessionData) => {
       if (isMounted) {
         setSession(sessionData)
         setUser(sessionData?.user ?? null)
+
+        // Create user record and subscription if signing in and user record doesn't exist
+        if ((event === 'SIGNED_IN' || event === 'USER_UPDATED') && sessionData?.user) {
+          try {
+            // Check if user record exists
+            const { data: existingUser } = await supabase
+              .from('users')
+              .select('id')
+              .eq('id', sessionData.user.id)
+              .single()
+
+            if (!existingUser) {
+              // Create user record
+              await supabase.from('users').insert({
+                id: sessionData.user.id,
+                email: sessionData.user.email || '',
+              })
+
+              // Create free subscription
+              await supabase.from('subscriptions').insert({
+                user_id: sessionData.user.id,
+                plan: 'free',
+                status: 'active',
+              })
+            }
+          } catch (err) {
+            console.error('Error creating user profile:', err)
+          }
+        }
       }
     })
 
@@ -60,6 +89,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       password,
     })
     if (error) throw error
+
+    // Create user record and free subscription in database
+    if (data.user) {
+      try {
+        // Create user record
+        await supabase.from('users').insert({
+          id: data.user.id,
+          email: email,
+        })
+
+        // Create free subscription
+        await supabase.from('subscriptions').insert({
+          user_id: data.user.id,
+          plan: 'free',
+          status: 'active',
+        })
+      } catch (err) {
+        console.error('Error creating user profile:', err)
+      }
+    }
   }
 
   const signIn = async (email: string, password: string) => {
@@ -83,6 +132,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       },
     })
     if (error) throw error
+
+    // OAuth sign in will redirect, but we should ensure user record exists
+    // This will be handled in the useEffect when auth state changes
   }
 
   return (

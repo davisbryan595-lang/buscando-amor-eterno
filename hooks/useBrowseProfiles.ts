@@ -1,10 +1,12 @@
 import { useCallback, useState, useEffect } from 'react'
 import { useAuth } from '@/context/auth-context'
 import { supabase } from '@/lib/supabase'
+import { useSubscription } from './useSubscription'
 import type { ProfileData } from './useProfile'
 
 export function useBrowseProfiles() {
   const { user } = useAuth()
+  const { isPremium } = useSubscription()
   const [profiles, setProfiles] = useState<ProfileData[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -46,6 +48,7 @@ export function useBrowseProfiles() {
   const likeProfile = useCallback(
     async (profileId: string) => {
       if (!user) throw new Error('No user logged in')
+      if (!isPremium) throw new Error('Premium subscription required to like profiles')
 
       try {
         const { error: err } = await supabase
@@ -62,7 +65,7 @@ export function useBrowseProfiles() {
         throw err
       }
     },
-    [user]
+    [user, isPremium]
   )
 
   const dislikeProfile = useCallback(
@@ -90,6 +93,7 @@ export function useBrowseProfiles() {
   const superLikeProfile = useCallback(
     async (profileId: string) => {
       if (!user) throw new Error('No user logged in')
+      if (!isPremium) throw new Error('Premium subscription required to super like profiles')
 
       try {
         const { error: err } = await supabase
@@ -106,7 +110,7 @@ export function useBrowseProfiles() {
         throw err
       }
     },
-    [user]
+    [user, isPremium]
   )
 
   return {

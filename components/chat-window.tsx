@@ -1,11 +1,12 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { Send, Phone, Video } from 'lucide-react'
+import { Send, Phone, Video, Lock } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useMessages } from '@/hooks/useMessages'
 import { useAuth } from '@/context/auth-context'
+import { toast } from 'sonner'
 
 interface Conversation {
   id: string
@@ -35,8 +36,9 @@ export default function ChatWindow({ conversation }: { conversation: Conversatio
       setLoading(true)
       await sendMessage(conversation.id, newMessage)
       setNewMessage('')
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error sending message:', err)
+      toast.error(err.message || 'Error sending message')
     } finally {
       setLoading(false)
     }

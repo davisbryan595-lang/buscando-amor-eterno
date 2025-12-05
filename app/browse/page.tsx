@@ -1,20 +1,25 @@
 'use client'
 
 import React, { useState } from 'react'
+import Link from 'next/link'
 import Navigation from '@/components/navigation'
 import Footer from '@/components/footer'
 import { useProfileProtection } from '@/hooks/useProfileProtection'
 import { useBrowseProfiles } from '@/hooks/useBrowseProfiles'
-import { Heart, X, Star, Info, Loader } from 'lucide-react'
+import { useSubscription } from '@/hooks/useSubscription'
+import { Heart, X, Star, Info, Loader, Lock } from 'lucide-react'
 import Image from 'next/image'
+import { toast } from 'sonner'
 
 export default function BrowsePage() {
   // Protect this route - require complete profile
   const { isLoading } = useProfileProtection(true, '/onboarding')
   const { profiles, loading: profilesLoading, likeProfile, dislikeProfile, superLikeProfile } = useBrowseProfiles()
+  const { isPremium, loading: subLoading } = useSubscription()
 
   const [currentIndex, setCurrentIndex] = useState(0)
   const [showInfo, setShowInfo] = useState(false)
+  const [showPaywall, setShowPaywall] = useState(false)
   const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | 'super' | null>(null)
   const [dragOffset, setDragOffset] = useState(0)
   const [isDragging, setIsDragging] = useState(false)
@@ -33,24 +38,38 @@ export default function BrowsePage() {
   const handleSwipe = async (direction: 'left' | 'right' | 'super') => {
     if (!currentProfile) return
 
+    // Check if trying to like without premium
+    if ((direction === 'right' || direction === 'super') && !isPremium) {
+      setShowPaywall(true)
+      return
+    }
+
     try {
       if (direction === 'left') {
         await dislikeProfile(currentProfile.id)
       } else if (direction === 'right' || direction === 'super') {
         await likeProfile(currentProfile.id)
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error swiping:', err)
+      if (err.message?.includes('Premium subscription required')) {
+        setShowPaywall(true)
+      } else {
+        toast.error(err.message || 'Error liking profile')
+      }
     }
 
-    setSwipeDirection(direction)
-    setTimeout(() => {
-      if (currentIndex < profiles.length - 1) {
-        setCurrentIndex(currentIndex + 1)
-      }
-      setSwipeDirection(null)
-      setShowInfo(false)
-    }, 300)
+    // Only animate if action succeeded
+    if (direction === 'left') {
+      setSwipeDirection(direction)
+      setTimeout(() => {
+        if (currentIndex < profiles.length - 1) {
+          setCurrentIndex(currentIndex + 1)
+        }
+        setSwipeDirection(null)
+        setShowInfo(false)
+      }, 300)
+    }
   }
 
   const handleDragStart = (clientX: number) => {
@@ -273,6 +292,59 @@ export default function BrowsePage() {
       </div>
 
       <Footer />
+
+      {/* Paywall Modal */}
+      {showPaywall && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
+          <div className="bg-white rounded-3xl max-w-md w-full p-8 space-y-6">
+            <div className="w-16 h-16 bg-rose-100 rounded-full flex items-center justify-center mx-auto">
+              <Lock className="w-8 h-8 text-primary" />
+            </div>
+
+            <div>
+              <h2 className="text-2xl font-playfair font-bold text-slate-900 mb-2">
+                Unlock Liking
+              </h2>
+              <p className="text-slate-600">
+                Upgrade to premium to like and connect with profiles.
+              </p>
+            </div>
+
+            <div className="bg-gradient-to-br from-white to-rose-50 border-2 border-primary rounded-2xl p-4">
+              <p className="text-4xl font-playfair font-bold text-primary mb-2">
+                $12<span className="text-sm text-slate-600">/mo</span>
+              </p>
+              <ul className="space-y-2 text-slate-700 mb-4 text-sm">
+                <li className="flex items-center gap-2">
+                  ✓ Unlimited likes
+                </li>
+                <li className="flex items-center gap-2">
+                  ✓ Send messages
+                </li>
+                <li className="flex items-center gap-2">
+                  ✓ See who liked you
+                </li>
+              </ul>
+            </div>
+
+            <div className="space-y-3">
+              <Link
+                href="/pricing"
+                className="block py-3 bg-primary text-white rounded-full font-semibold hover:bg-rose-700 transition text-center"
+              >
+                Upgrade to Premium
+              </Link>
+
+              <button
+                onClick={() => setShowPaywall(false)}
+                className="w-full py-3 border-2 border-slate-300 text-slate-700 rounded-full font-semibold hover:bg-slate-50 transition"
+              >
+                Not Now
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   )
 }

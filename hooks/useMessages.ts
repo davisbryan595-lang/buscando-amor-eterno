@@ -1,6 +1,7 @@
 import { useCallback, useState, useEffect } from 'react'
 import { useAuth } from '@/context/auth-context'
 import { supabase } from '@/lib/supabase'
+import { useSubscription } from './useSubscription'
 
 export interface Message {
   id: string
@@ -25,6 +26,7 @@ export interface Conversation {
 
 export function useMessages() {
   const { user } = useAuth()
+  const { isPremium } = useSubscription()
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [messages, setMessages] = useState<Message[]>([])
   const [loading, setLoading] = useState(true)
@@ -131,6 +133,7 @@ export function useMessages() {
   const sendMessage = useCallback(
     async (recipientId: string, content: string) => {
       if (!user) throw new Error('No user logged in')
+      if (!isPremium) throw new Error('Premium subscription required to send messages')
 
       try {
         const { data, error: err } = await supabase
@@ -152,7 +155,7 @@ export function useMessages() {
         throw err
       }
     },
-    [user]
+    [user, isPremium]
   )
 
   const markAsRead = useCallback(
