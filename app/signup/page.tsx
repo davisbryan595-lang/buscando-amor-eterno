@@ -29,10 +29,18 @@ export default function SignupPage() {
 
     try {
       await signUp(formData.email, formData.password)
-      toast.success('Account created! Check your email to confirm.')
+      // Track signup event
+      if (typeof window !== 'undefined' && window.gtag) {
+        window.gtag('event', 'sign_up', {
+          method: 'email'
+        })
+      }
+      toast.success('Account created! Setting up your profile...')
       setStep('profile')
     } catch (error: any) {
-      toast.error(error.message || 'Failed to create account')
+      const errorMessage = error.message || 'Failed to create account'
+      console.error('Signup error:', error)
+      toast.error(errorMessage)
     } finally {
       setLoading(false)
     }
@@ -45,12 +53,19 @@ export default function SignupPage() {
     try {
       // Profile information is saved, proceed to success
       setStep('success')
+      // Track profile completion event
+      if (typeof window !== 'undefined' && window.gtag) {
+        window.gtag('event', 'profile_setup_started')
+      }
+      toast.success('Profile setup in progress...')
       // Redirect to onboarding after a short delay
       setTimeout(() => {
         router.push('/onboarding')
       }, 2000)
     } catch (error: any) {
-      toast.error(error.message || 'Failed to save profile')
+      const errorMessage = error.message || 'Failed to save profile'
+      console.error('Profile save error:', error)
+      toast.error(errorMessage)
     } finally {
       setLoading(false)
     }
