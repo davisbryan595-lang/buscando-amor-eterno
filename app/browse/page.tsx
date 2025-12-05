@@ -1,12 +1,15 @@
 'use client'
 
 import React, { useState } from 'react'
+import Link from 'next/link'
 import Navigation from '@/components/navigation'
 import Footer from '@/components/footer'
 import { useProfileProtection } from '@/hooks/useProfileProtection'
 import { useBrowseProfiles } from '@/hooks/useBrowseProfiles'
-import { Heart, X, Star, Info, Loader } from 'lucide-react'
+import { useSubscription } from '@/hooks/useSubscription'
+import { Heart, X, Star, Info, Loader, Lock } from 'lucide-react'
 import Image from 'next/image'
+import { toast } from 'sonner'
 
 export default function BrowsePage() {
   // Protect this route - require complete profile
