@@ -13,6 +13,7 @@ import { Lock } from 'lucide-react'
 
 export default function MessagesPage() {
   const { user } = useAuth()
+  const { isPremium, loading: subLoading } = useSubscription()
   const { conversations, loading } = useMessages()
   const [selectedConversation, setSelectedConversation] = useState<any>(conversations[0])
 
