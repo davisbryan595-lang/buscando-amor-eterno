@@ -44,11 +44,14 @@ export default function BrowsePage() {
       return
     }
 
+    let actionSucceeded = false
     try {
       if (direction === 'left') {
         await dislikeProfile(currentProfile.id)
+        actionSucceeded = true
       } else if (direction === 'right' || direction === 'super') {
         await likeProfile(currentProfile.id)
+        actionSucceeded = true
       }
     } catch (err: any) {
       console.error('Error swiping:', err)
@@ -59,9 +62,9 @@ export default function BrowsePage() {
       }
     }
 
-    // Only animate if action succeeded
-    if (direction === 'left') {
-      setSwipeDirection(direction)
+    // Animate and move to next profile if action succeeded
+    if (actionSucceeded) {
+      setSwipeDirection(direction === 'left' ? 'left' : direction === 'right' ? 'right' : 'super')
       setTimeout(() => {
         if (currentIndex < profiles.length - 1) {
           setCurrentIndex(currentIndex + 1)
