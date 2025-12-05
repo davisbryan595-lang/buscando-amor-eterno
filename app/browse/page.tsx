@@ -38,24 +38,38 @@ export default function BrowsePage() {
   const handleSwipe = async (direction: 'left' | 'right' | 'super') => {
     if (!currentProfile) return
 
+    // Check if trying to like without premium
+    if ((direction === 'right' || direction === 'super') && !isPremium) {
+      setShowPaywall(true)
+      return
+    }
+
     try {
       if (direction === 'left') {
         await dislikeProfile(currentProfile.id)
       } else if (direction === 'right' || direction === 'super') {
         await likeProfile(currentProfile.id)
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error swiping:', err)
+      if (err.message?.includes('Premium subscription required')) {
+        setShowPaywall(true)
+      } else {
+        toast.error(err.message || 'Error liking profile')
+      }
     }
 
-    setSwipeDirection(direction)
-    setTimeout(() => {
-      if (currentIndex < profiles.length - 1) {
-        setCurrentIndex(currentIndex + 1)
-      }
-      setSwipeDirection(null)
-      setShowInfo(false)
-    }, 300)
+    // Only animate if action succeeded
+    if (direction === 'left') {
+      setSwipeDirection(direction)
+      setTimeout(() => {
+        if (currentIndex < profiles.length - 1) {
+          setCurrentIndex(currentIndex + 1)
+        }
+        setSwipeDirection(null)
+        setShowInfo(false)
+      }, 300)
+    }
   }
 
   const handleDragStart = (clientX: number) => {
