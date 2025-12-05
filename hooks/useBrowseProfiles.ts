@@ -6,6 +6,7 @@ import type { ProfileData } from './useProfile'
 
 export function useBrowseProfiles() {
   const { user } = useAuth()
+  const { isPremium } = useSubscription()
   const [profiles, setProfiles] = useState<ProfileData[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
