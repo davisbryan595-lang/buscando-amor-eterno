@@ -26,6 +26,7 @@ export interface Conversation {
 
 export function useMessages() {
   const { user } = useAuth()
+  const { isPremium } = useSubscription()
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [messages, setMessages] = useState<Message[]>([])
   const [loading, setLoading] = useState(true)
