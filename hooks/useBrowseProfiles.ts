@@ -1,6 +1,7 @@
 import { useCallback, useState, useEffect } from 'react'
 import { useAuth } from '@/context/auth-context'
 import { supabase } from '@/lib/supabase'
+import { useSubscription } from './useSubscription'
 import type { ProfileData } from './useProfile'
 
 export function useBrowseProfiles() {
