@@ -1,6 +1,6 @@
 import { useCallback, useState, useEffect } from 'react'
 import { useAuth } from '@/context/auth-context'
-import { mockDB } from '@/lib/mock-db'
+import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
 
 export interface ProfileData {
@@ -58,45 +58,18 @@ export function useProfile() {
 
     try {
       setLoading(true)
-      const mockProfile = await mockDB.getProfile(user.id)
+      const { data, error: err } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', user.id)
+        .single()
 
-      if (mockProfile) {
-        // Convert mock profile to ProfileData format
-        const profileData: ProfileData = {
-          id: mockProfile.id,
-          user_id: mockProfile.user_id,
-          full_name: mockProfile.full_name || null,
-          birthday: null,
-          gender: null,
-          looking_for: null,
-          city: null,
-          country: null,
-          latitude: null,
-          longitude: null,
-          photos: mockProfile.photos || null,
-          main_photo_index: null,
-          prompt_1: null,
-          prompt_2: null,
-          prompt_3: null,
-          prompt_4: null,
-          prompt_5: null,
-          prompt_6: null,
-          love_language: null,
-          relationship_type: null,
-          age_range_min: mockProfile.preferences?.ageRange?.[0] || null,
-          age_range_max: mockProfile.preferences?.ageRange?.[1] || null,
-          distance_radius: null,
-          height_cm: null,
-          religion: null,
-          wants_kids: null,
-          smoking: null,
-          drinking: null,
-          dealbreakers: null,
-          profile_complete: !!mockProfile.full_name,
-          created_at: mockProfile.created_at,
-          updated_at: mockProfile.created_at,
-        }
-        setProfile(profileData)
+      if (err && err.code !== 'PGRST116') {
+        throw err
+      }
+
+      if (data) {
+        setProfile(data as ProfileData)
       } else {
         setProfile(null)
       }
@@ -114,58 +87,18 @@ export function useProfile() {
       if (!user) throw new Error('No user logged in')
 
       try {
-        const mockProfile = await mockDB.updateProfile(user.id, {
-          full_name: data.full_name || '',
-          bio: '',
-          age: 18,
-          location: '',
-          interests: [],
-          photos: data.photos || [],
-          preferences: data.age_range_min ? {
-            ageRange: [data.age_range_min, data.age_range_max || 50],
-          } : {},
-        })
+        const { data: newProfile, error: err } = await supabase
+          .from('profiles')
+          .insert({
+            user_id: user.id,
+            ...data,
+          })
+          .select()
+          .single()
 
-        if ('error' in mockProfile) {
-          throw mockProfile.error
-        }
-
-        const profileData: ProfileData = {
-          id: mockProfile.id,
-          user_id: mockProfile.user_id,
-          full_name: mockProfile.full_name || null,
-          birthday: null,
-          gender: null,
-          looking_for: null,
-          city: null,
-          country: null,
-          latitude: null,
-          longitude: null,
-          photos: mockProfile.photos || null,
-          main_photo_index: null,
-          prompt_1: null,
-          prompt_2: null,
-          prompt_3: null,
-          prompt_4: null,
-          prompt_5: null,
-          prompt_6: null,
-          love_language: null,
-          relationship_type: null,
-          age_range_min: mockProfile.preferences?.ageRange?.[0] || null,
-          age_range_max: mockProfile.preferences?.ageRange?.[1] || null,
-          distance_radius: null,
-          height_cm: null,
-          religion: null,
-          wants_kids: null,
-          smoking: null,
-          drinking: null,
-          dealbreakers: null,
-          profile_complete: !!mockProfile.full_name,
-          created_at: mockProfile.created_at,
-          updated_at: mockProfile.created_at,
-        }
-        setProfile(profileData)
-        return profileData
+        if (err) throw err
+        setProfile(newProfile as ProfileData)
+        return newProfile as ProfileData
       } catch (err: any) {
         setError(err.message)
         throw err
@@ -176,88 +109,49 @@ export function useProfile() {
 
   const updateProfile = useCallback(
     async (data: Partial<ProfileData>) => {
-      if (!user || !profile) throw new Error('No user or profile')
+      if (!user) throw new Error('No user logged in')
 
       try {
-        const mockProfile = await mockDB.updateProfile(user.id, {
-          full_name: data.full_name || profile.full_name || '',
-          bio: '',
-          age: 18,
-          location: '',
-          interests: [],
-          photos: data.photos || profile.photos || [],
-          preferences: data.age_range_min ? {
-            ageRange: [data.age_range_min, data.age_range_max || 50],
-          } : {},
-        })
+        const { data: updatedProfile, error: err } = await supabase
+          .from('profiles')
+          .update(data)
+          .eq('user_id', user.id)
+          .select()
+          .single()
 
-        if ('error' in mockProfile) {
-          throw mockProfile.error
-        }
-
-        const profileData: ProfileData = {
-          id: mockProfile.id,
-          user_id: mockProfile.user_id,
-          full_name: mockProfile.full_name || null,
-          birthday: null,
-          gender: null,
-          looking_for: null,
-          city: null,
-          country: null,
-          latitude: null,
-          longitude: null,
-          photos: mockProfile.photos || null,
-          main_photo_index: null,
-          prompt_1: null,
-          prompt_2: null,
-          prompt_3: null,
-          prompt_4: null,
-          prompt_5: null,
-          prompt_6: null,
-          love_language: null,
-          relationship_type: null,
-          age_range_min: mockProfile.preferences?.ageRange?.[0] || null,
-          age_range_max: mockProfile.preferences?.ageRange?.[1] || null,
-          distance_radius: null,
-          height_cm: null,
-          religion: null,
-          wants_kids: null,
-          smoking: null,
-          drinking: null,
-          dealbreakers: null,
-          profile_complete: !!mockProfile.full_name,
-          created_at: mockProfile.created_at,
-          updated_at: mockProfile.created_at,
-        }
-        setProfile(profileData)
-        return profileData
+        if (err) throw err
+        setProfile(updatedProfile as ProfileData)
+        return updatedProfile as ProfileData
       } catch (err: any) {
         setError(err.message)
         throw err
       }
     },
-    [user, profile]
+    [user]
   )
 
   const uploadPhoto = useCallback(
     async (file: File, index: number) => {
-      if (!user) throw new Error('No user logged in')
+      if (!user || !profile) throw new Error('No user or profile')
 
       try {
-        const reader = new FileReader()
-        const photoUrl = await new Promise<string>((resolve) => {
-          reader.onload = () => {
-            resolve(reader.result as string)
-          }
-          reader.readAsDataURL(file)
-        })
+        const fileName = `${user.id}/${Date.now()}-${file.name}`
+        const { data, error: uploadErr } = await supabase.storage
+          .from('profile-photos')
+          .upload(fileName, file, { upsert: true })
 
-        const currentPhotos = profile?.photos || []
+        if (uploadErr) throw uploadErr
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('profile-photos')
+          .getPublicUrl(fileName)
+
+        const currentPhotos = profile.photos || []
         const newPhotos = [...currentPhotos]
-        newPhotos[index] = photoUrl
+        newPhotos[index] = publicUrl
 
         await updateProfile({ photos: newPhotos } as any)
-        return photoUrl
+        return publicUrl
       } catch (err: any) {
         setError(err.message)
         throw err
