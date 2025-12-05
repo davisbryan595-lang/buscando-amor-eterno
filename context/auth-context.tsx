@@ -103,6 +103,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       },
     })
     if (error) throw error
+
+    // OAuth sign in will redirect, but we should ensure user record exists
+    // This will be handled in the useEffect when auth state changes
   }
 
   return (
