@@ -63,11 +63,11 @@ export default function SignupPage() {
         <div className="max-w-md mx-auto">
           {/* Progress */}
           <div className="flex gap-2 mb-12">
-            {(['email', 'profile', 'payment', 'success'] as const).map((s, i) => (
+            {(['email', 'profile', 'success'] as const).map((s, i) => (
               <div
                 key={s}
                 className={`h-1 flex-1 rounded-full transition ${
-                  (['email', 'profile', 'payment', 'success'] as const).indexOf(
+                  (['email', 'profile', 'success'] as const).indexOf(
                     step
                   ) >= i
                     ? 'bg-primary'
