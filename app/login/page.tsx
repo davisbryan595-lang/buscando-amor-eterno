@@ -21,10 +21,21 @@ export default function LoginPage() {
 
     try {
       await signIn(email, password)
-      toast.success('Logged in successfully!')
-      router.push('/browse')
+      // Track login event
+      if (typeof window !== 'undefined' && window.gtag) {
+        window.gtag('event', 'login', {
+          method: 'email'
+        })
+      }
+      toast.success('Logged in successfully! Redirecting...')
+      // Small delay to allow user to see success message
+      setTimeout(() => {
+        router.push('/browse')
+      }, 500)
     } catch (error: any) {
-      toast.error(error.message || 'Failed to log in')
+      const errorMessage = error.message || 'Failed to log in'
+      console.error('Login error:', error)
+      toast.error(errorMessage)
     } finally {
       setLoading(false)
     }

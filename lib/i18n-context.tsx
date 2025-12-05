@@ -27,8 +27,8 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     setIsClient(true)
     const stored = localStorage.getItem('language') as Language | null
-    const browserLang = navigator.language.split('-')[0] as Language
-    const detectedLang = stored || (browserLang === 'es' ? 'es' : 'en')
+    // Default to English, only use Spanish if explicitly set in localStorage
+    const detectedLang = stored || 'en'
     setLanguage(detectedLang)
   }, [])
 

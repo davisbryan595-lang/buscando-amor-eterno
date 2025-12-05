@@ -132,7 +132,7 @@ export function useProfile() {
 
   const uploadPhoto = useCallback(
     async (file: File, index: number) => {
-      if (!user || !profile) throw new Error('No user or profile')
+      if (!user) throw new Error('No user logged in')
 
       try {
         const fileName = `${user.id}/${Date.now()}-${file.name}`
@@ -146,11 +146,14 @@ export function useProfile() {
           .from('profile-photos')
           .getPublicUrl(fileName)
 
-        const currentPhotos = profile.photos || []
-        const newPhotos = [...currentPhotos]
-        newPhotos[index] = publicUrl
+        // If profile exists, update it with the new photo
+        if (profile) {
+          const currentPhotos = profile.photos || []
+          const newPhotos = [...currentPhotos]
+          newPhotos[index] = publicUrl
+          await updateProfile({ photos: newPhotos } as any)
+        }
 
-        await updateProfile({ photos: newPhotos } as any)
         return publicUrl
       } catch (err: any) {
         setError(err.message)
