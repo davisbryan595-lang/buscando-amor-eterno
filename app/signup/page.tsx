@@ -173,28 +173,18 @@ export default function SignupPage() {
                   Welcome! 🎉
                 </h2>
                 <p className="text-slate-600">
-                  Your premium membership is active. Start exploring profiles now!
+                  Account created successfully. Complete your profile to start browsing!
                 </p>
               </div>
 
               <div className="bg-rose-50 border border-rose-200 rounded-lg p-4 text-sm text-slate-700">
-                <p className="font-semibold mb-2">Confetti celebration! ✨</p>
-                <p>Welcome to the Buscando Amor Eterno family. True love awaits.</p>
+                <p className="font-semibold mb-2">You're in! ✨</p>
+                <p>Create your profile to connect with other members. Messaging and likes require a subscription.</p>
               </div>
 
-              <Link
-                href="/browse"
-                className="block py-3 bg-primary text-white rounded-full font-semibold hover:bg-rose-700 transition"
-              >
-                Browse Profiles
-              </Link>
-
-              <Link
-                href="/"
-                className="block py-3 border-2 border-primary text-primary rounded-full font-semibold hover:bg-rose-50 transition"
-              >
-                Back to Home
-              </Link>
+              <p className="text-slate-600 text-sm">
+                Redirecting to profile setup...
+              </p>
             </div>
           )}
         </div>
