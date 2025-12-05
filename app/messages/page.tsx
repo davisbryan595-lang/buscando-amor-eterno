@@ -1,12 +1,15 @@
 'use client'
 
 import React, { useState } from 'react'
+import Link from 'next/link'
 import Navigation from '@/components/navigation'
 import Footer from '@/components/footer'
 import ChatWindow from '@/components/chat-window'
 import Image from 'next/image'
 import { useMessages } from '@/hooks/useMessages'
 import { useAuth } from '@/context/auth-context'
+import { useSubscription } from '@/hooks/useSubscription'
+import { Lock } from 'lucide-react'
 
 export default function MessagesPage() {
   const { user } = useAuth()
