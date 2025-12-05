@@ -22,7 +22,6 @@ export default function ChatWindow({ conversation }: { conversation: Conversatio
   const { messages, sendMessage, markAsRead, fetchMessages } = useMessages()
   const [newMessage, setNewMessage] = useState('')
   const [loading, setLoading] = useState(false)
-  const [showPaywall, setShowPaywall] = useState(false)
 
   useEffect(() => {
     if (conversation?.id) {
