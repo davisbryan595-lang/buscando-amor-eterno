@@ -22,16 +22,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     let isMounted = true
+    let timeoutId: ReturnType<typeof setTimeout> | null = null
 
     const initializeAuth = async () => {
       try {
-        const { data: { session: sessionData } } = await supabase.auth.getSession()
+        // Create a promise that rejects after 15 seconds
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Auth initialization timed out')), 15000)
+        )
+
+        const sessionPromise = supabase.auth.getSession()
+        const { data: { session: sessionData } } = await Promise.race([
+          sessionPromise,
+          timeoutPromise
+        ])
+
         if (isMounted) {
           setSession(sessionData)
           setUser(sessionData?.user ?? null)
         }
       } catch (error) {
         console.error('Error initializing auth:', error)
+        if (isMounted) {
+          // Set loading to false even on error to prevent infinite loading
+          setSession(null)
+          setUser(null)
+        }
       } finally {
         if (isMounted) {
           setLoading(false)
@@ -87,6 +103,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     return () => {
       isMounted = false
+      if (timeoutId) clearTimeout(timeoutId)
       subscription?.unsubscribe()
     }
   }, [])
