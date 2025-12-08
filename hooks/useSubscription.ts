@@ -36,7 +36,11 @@ export function useSubscription() {
       try {
         setLoading(true)
 
-        // Set a timeout to prevent hanging (30 seconds for production delays)
+        // Increase timeout for development environments (60s) vs production (30s)
+        const isDev = process.env.NODE_ENV === 'development'
+        const timeout = isDev ? 60000 : 30000
+
+        // Set a timeout to prevent hanging
         timeoutId = setTimeout(() => {
           if (isMounted) {
             setLoading(false)
@@ -44,7 +48,7 @@ export function useSubscription() {
             setSubscription(null)
             setIsPremium(false)
           }
-        }, 30000)
+        }, timeout)
 
         const { data, error: err } = await supabase
           .from('subscriptions')
