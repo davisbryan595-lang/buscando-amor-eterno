@@ -103,7 +103,22 @@ export default function OnboardingPage() {
     return step === 'complete' ? 100 : (stepOrder[step] / TOTAL_STEPS) * 100
   }
 
+  const getStepNumber = (step: OnboardingStep): number => {
+    const stepOrder: Record<OnboardingStep, number> = {
+      1: 1,
+      2: 2,
+      'personality': 3,
+      3: 4,
+      4: 5,
+      5: 6,
+      6: 7,
+      'complete': TOTAL_STEPS,
+    }
+    return stepOrder[step]
+  }
+
   const progressPercent = getProgressPercent(currentStep)
+  const stepNumber = getStepNumber(currentStep)
 
   const handleNext = () => {
     const stepSequence: OnboardingStep[] = [1, 2, 'personality', 3, 4, 5, 6, 'complete']
