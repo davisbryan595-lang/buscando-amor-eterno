@@ -23,12 +23,37 @@ export default function ChatWindow({ conversation }: { conversation: Conversatio
   const { messages, sendMessage, markAsRead, fetchMessages } = useMessages()
   const [newMessage, setNewMessage] = useState('')
   const [loading, setLoading] = useState(false)
+  const [otherUserDetails, setOtherUserDetails] = useState<{ name: string; image: string | null } | null>(null)
 
   useEffect(() => {
     if (conversation?.other_user_id) {
       fetchMessages(conversation.other_user_id)
+
+      // Fetch full user details if not available in conversation
+      if (!conversation.other_user_name || !conversation.other_user_image) {
+        const { supabase } = require('@/lib/supabase')
+        const fetchUserDetails = async () => {
+          try {
+            const { data } = await supabase
+              .from('profiles')
+              .select('full_name, photos, main_photo_index')
+              .eq('user_id', conversation.other_user_id)
+              .single()
+
+            if (data) {
+              setOtherUserDetails({
+                name: data.full_name,
+                image: data.photos?.[data.main_photo_index || 0] || null,
+              })
+            }
+          } catch (err) {
+            console.error('Error fetching user details:', err)
+          }
+        }
+        fetchUserDetails()
+      }
     }
-  }, [conversation?.other_user_id, fetchMessages])
+  }, [conversation?.other_user_id, fetchMessages, conversation.other_user_name, conversation.other_user_image])
 
   const handleSend = async () => {
     if (!newMessage.trim() || !user) return
