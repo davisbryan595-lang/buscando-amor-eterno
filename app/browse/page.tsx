@@ -304,23 +304,26 @@ export default function BrowsePage() {
           <div className="flex items-center justify-center gap-6">
             <button
               onClick={() => handleSwipe('left')}
-              className="w-16 h-16 bg-white rounded-full shadow-lg flex items-center justify-center hover:scale-110 transition-transform active:scale-95"
+              disabled={isActing}
+              className="w-16 h-16 bg-white rounded-full shadow-lg flex items-center justify-center hover:scale-110 transition-transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
               aria-label="Pass"
             >
               <X className="w-8 h-8 text-rose-700" />
             </button>
-            
+
             <button
               onClick={() => handleSwipe('super')}
-              className="w-14 h-14 bg-white rounded-full shadow-lg flex items-center justify-center hover:scale-110 transition-transform active:scale-95"
+              disabled={isActing}
+              className="w-14 h-14 bg-white rounded-full shadow-lg flex items-center justify-center hover:scale-110 transition-transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
               aria-label="Super Like"
             >
               <Star className="w-6 h-6 text-blue-500 fill-blue-500" />
             </button>
-            
+
             <button
               onClick={() => handleSwipe('right')}
-              className="w-16 h-16 bg-rose-700 rounded-full shadow-lg flex items-center justify-center hover:scale-110 transition-transform active:scale-95"
+              disabled={isActing}
+              className="w-16 h-16 bg-rose-700 rounded-full shadow-lg flex items-center justify-center hover:scale-110 transition-transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
               aria-label="Like"
             >
               <Heart className="w-8 h-8 text-white fill-white" />
