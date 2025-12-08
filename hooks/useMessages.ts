@@ -232,17 +232,15 @@ export function useMessages() {
           return existingConv
         }
 
-        // Create initial empty message to establish conversation
-        const { data: messageData, error: msgErr } = await supabase
+        // Create a system message to establish the conversation
+        const { error: msgErr } = await supabase
           .from('messages')
           .insert({
             sender_id: user.id,
             recipient_id: otherUserId,
-            content: '', // Empty message just to create the conversation
+            content: '👋 Conversation started',
             read: false,
           })
-          .select()
-          .single()
 
         if (msgErr) throw msgErr
 
@@ -255,7 +253,7 @@ export function useMessages() {
           other_user_id: otherUserId,
           other_user_name: null,
           other_user_image: null,
-          last_message: '',
+          last_message: '👋 Conversation started',
           last_message_time: new Date().toISOString(),
           is_online: false,
           unread_count: 0,
