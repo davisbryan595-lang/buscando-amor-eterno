@@ -48,7 +48,7 @@ export function useBrowseProfiles() {
   }
 
   const likeProfile = useCallback(
-    async (likedUserId: string) => {
+    async (likedUserId: string, likedProfileId?: string) => {
       if (!user) throw new Error('No user logged in')
       if (!isPremium) throw new Error('Premium subscription required to like profiles')
 
@@ -63,12 +63,12 @@ export function useBrowseProfiles() {
 
         if (err) throw err
 
-        // Only create notification if user has a profile
-        if (currentProfile && currentProfile.id) {
+        // Only create notification if we have the liked profile ID
+        if (likedProfileId) {
           const { error: notifErr } = await supabase.from('notifications').insert({
             recipient_id: likedUserId,
             liker_id: user.id,
-            liked_profile_id: currentProfile.id,
+            liked_profile_id: likedProfileId,
           })
 
           if (notifErr) {
@@ -80,7 +80,7 @@ export function useBrowseProfiles() {
         throw err
       }
     },
-    [user, isPremium, currentProfile]
+    [user, isPremium]
   )
 
   const dislikeProfile = useCallback(
