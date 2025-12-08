@@ -221,6 +221,54 @@ export function useMessages() {
     []
   )
 
+  const initiateConversation = useCallback(
+    async (otherUserId: string) => {
+      if (!user) throw new Error('No user logged in')
+
+      try {
+        // Check if conversation already exists
+        const existingConv = conversations.find((c) => c.other_user_id === otherUserId)
+        if (existingConv) {
+          return existingConv
+        }
+
+        // Create initial empty message to establish conversation
+        const { data: messageData, error: msgErr } = await supabase
+          .from('messages')
+          .insert({
+            sender_id: user.id,
+            recipient_id: otherUserId,
+            content: '', // Empty message just to create the conversation
+            read: false,
+          })
+          .select()
+          .single()
+
+        if (msgErr) throw msgErr
+
+        // Fetch updated conversations
+        await fetchConversations()
+
+        return {
+          id: otherUserId,
+          user_id: user.id,
+          other_user_id: otherUserId,
+          other_user_name: null,
+          other_user_image: null,
+          last_message: '',
+          last_message_time: new Date().toISOString(),
+          is_online: false,
+          unread_count: 0,
+        }
+      } catch (err: any) {
+        setError(err.message)
+        console.error('Error initiating conversation:', err)
+        throw err
+      }
+    },
+    [user, conversations, fetchConversations]
+  )
+
   return {
     conversations,
     messages,
@@ -230,5 +278,6 @@ export function useMessages() {
     fetchMessages,
     sendMessage,
     markAsRead,
+    initiateConversation,
   }
 }
