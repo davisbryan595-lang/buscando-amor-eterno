@@ -90,25 +90,65 @@ export function useMessages() {
   const subscribeToMessages = () => {
     if (!user) return
 
-    const subscription = supabase
-      .channel(`messages:${user.id}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'messages',
-          filter: `or(sender_id.eq.${user.id},recipient_id.eq.${user.id})`,
-        },
-        (payload) => {
-          setMessages((prev) => [payload.new as Message, ...prev])
-          fetchConversations()
-        }
-      )
-      .subscribe()
+    let pollInterval: ReturnType<typeof setInterval> | null = null
+    let isMounted = true
 
-    return () => {
-      subscription.unsubscribe()
+    try {
+      const subscription = supabase
+        .channel(`messages:${user.id}`)
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'messages',
+            filter: `or(sender_id.eq.${user.id},recipient_id.eq.${user.id})`,
+          },
+          (payload) => {
+            if (isMounted) {
+              setMessages((prev) => [payload.new as Message, ...prev])
+              fetchConversations()
+            }
+          }
+        )
+        .subscribe((status) => {
+          if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+            console.warn('Message subscription error:', status)
+            // Fall back to polling if realtime fails
+            if (!pollInterval) {
+              pollInterval = setInterval(() => {
+                if (isMounted) {
+                  fetchConversations()
+                }
+              }, 5000)
+            }
+          }
+        })
+
+      return () => {
+        isMounted = false
+        subscription.unsubscribe()
+        if (pollInterval) {
+          clearInterval(pollInterval)
+        }
+      }
+    } catch (err) {
+      console.warn('Failed to setup message subscription:', err)
+      // Fall back to polling
+      if (!pollInterval) {
+        pollInterval = setInterval(() => {
+          if (isMounted) {
+            fetchConversations()
+          }
+        }, 5000)
+      }
+
+      return () => {
+        isMounted = false
+        if (pollInterval) {
+          clearInterval(pollInterval)
+        }
+      }
     }
   }
 
