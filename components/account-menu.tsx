@@ -4,6 +4,8 @@ import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/auth-context'
+import { useProfile } from '@/hooks/useProfile'
+import Image from 'next/image'
 import {
   Menu,
   X,
@@ -21,6 +23,7 @@ export function AccountMenu() {
   const [isMounted, setIsMounted] = useState(false)
   const router = useRouter()
   const { user, signOut } = useAuth()
+  const { profile } = useProfile()
 
   useEffect(() => {
     setIsMounted(true)
@@ -47,8 +50,19 @@ export function AccountMenu() {
         className="p-2 hover:bg-rose-50 rounded-full transition flex items-center gap-2"
         aria-label="Account menu"
       >
-        <div className="w-8 h-8 bg-gradient-to-br from-primary to-rose-500 rounded-full flex items-center justify-center text-white text-sm font-semibold">
-          {user.email?.[0].toUpperCase() || 'U'}
+        <div className="relative w-8 h-8 rounded-full overflow-hidden flex-shrink-0">
+          {profile?.photos?.[profile.main_photo_index || 0] ? (
+            <Image
+              src={profile.photos[profile.main_photo_index || 0]}
+              alt={profile.full_name || 'Profile'}
+              fill
+              className="object-cover"
+            />
+          ) : (
+            <div className="w-full h-full bg-gradient-to-br from-primary to-rose-500 flex items-center justify-center text-white text-sm font-semibold">
+              {user.email?.[0].toUpperCase() || 'U'}
+            </div>
+          )}
         </div>
         <ChevronDown size={18} className="text-primary" />
       </button>
