@@ -17,6 +17,13 @@ import {
 import { Loader } from 'lucide-react'
 import { toast } from 'sonner'
 
+const PreferenceSection = ({ title, children }: { title: string; children: React.ReactNode }) => (
+  <div className="space-y-3 p-4 rounded-2xl bg-muted/50">
+    <h3 className="font-semibold text-foreground">{title}</h3>
+    {children}
+  </div>
+)
+
 interface PreferencesTabProps {
   profile: ProfileData
   onUpdate: () => void
@@ -65,13 +72,6 @@ export function ProfilePreferencesTab({ profile, onUpdate }: PreferencesTabProps
       setSaving(false)
     }
   }
-
-  const PreferenceSection = ({ title, children }: { title: string; children: React.ReactNode }) => (
-    <div className="space-y-3 p-4 rounded-2xl bg-muted/50">
-      <h3 className="font-semibold text-foreground">{title}</h3>
-      {children}
-    </div>
-  )
 
   return (
     <div className="space-y-6">
