@@ -113,6 +113,12 @@ export default function SignupPage() {
                 <p className="text-slate-600">Join thousands finding love</p>
               </div>
 
+              {error && (
+                <div className="p-4 bg-rose-50 border border-rose-200 rounded-lg">
+                  <p className="text-rose-800 text-sm">{error}</p>
+                </div>
+              )}
+
               <input
                 type="email"
                 placeholder="Email"
