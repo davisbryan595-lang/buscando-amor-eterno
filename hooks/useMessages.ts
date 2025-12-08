@@ -39,7 +39,13 @@ export function useMessages() {
     }
 
     fetchConversations()
-    subscribeToMessages()
+    const unsubscribe = subscribeToMessages()
+
+    return () => {
+      if (unsubscribe) {
+        unsubscribe()
+      }
+    }
   }, [user])
 
   const fetchConversations = async () => {
