@@ -3,39 +3,41 @@
 import React, { useState } from 'react'
 import { ChevronLeft, ChevronRight, Heart } from 'lucide-react'
 import Image from 'next/image'
+import { useLanguage } from '@/lib/i18n-context'
 
 const stories = [
   {
     id: 1,
-    couple: 'Maria & Carlos',
-    location: 'Barcelona, Spain',
-    story: 'Met on Buscando Amor Eterno in March. Engaged in December. True soulmates.',
+    coupleKey: 'stories.story1Couple',
+    locationKey: 'stories.story1Location',
+    storyKey: 'stories.story1Text',
     image: '/happy-couple-wedding-day-love.jpg',
   },
   {
     id: 2,
-    couple: 'Sophie & Luis',
-    location: 'Mexico City, Mexico',
-    story: 'Found each other across continents. Now married for 3 years.',
+    coupleKey: 'stories.story2Couple',
+    locationKey: 'stories.story2Location',
+    storyKey: 'stories.story2Text',
     image: '/romantic-couple-dinner-date.jpg',
   },
   {
     id: 3,
-    couple: 'Isabella & Marco',
-    location: 'Buenos Aires, Argentina',
-    story: 'From first message to wedding day. Our forever love story.',
+    coupleKey: 'stories.story3Couple',
+    locationKey: 'stories.story3Location',
+    storyKey: 'stories.story3Text',
     image: '/couple-hugging-sunset-beach.jpg',
   },
   {
     id: 4,
-    couple: 'Elena & Diego',
-    location: 'Madrid, Spain',
-    story: 'Two years together and growing stronger every day.',
+    coupleKey: 'stories.story4Couple',
+    locationKey: 'stories.story4Location',
+    storyKey: 'stories.story4Text',
     image: '/couple-laughing-park-happy.jpg',
   },
 ]
 
 export default function SuccessStories() {
+  const { t } = useLanguage()
   const [currentIndex, setCurrentIndex] = useState(0)
 
   const next = () => {
@@ -52,10 +54,10 @@ export default function SuccessStories() {
     <section className="py-20 px-4 bg-gradient-to-b from-white to-rose-50">
       <div className="max-w-4xl mx-auto">
         <h2 className="text-4xl md:text-5xl font-playfair font-bold text-center mb-4 text-slate-900">
-          Love Stories
+          {t('stories.sectionTitle')}
         </h2>
         <p className="text-center text-slate-600 mb-12 text-lg">
-          Real couples finding their eternal love
+          {t('stories.sectionDescription')}
         </p>
 
         <div className="relative soft-glow rounded-2xl overflow-hidden bg-white">
@@ -64,7 +66,7 @@ export default function SuccessStories() {
               <div className="w-full md:w-1/2 relative h-64 md:h-96 rounded-xl overflow-hidden shadow-lg">
                 <Image
                   src={story.image || "/placeholder.svg"}
-                  alt={story.couple}
+                  alt={story.coupleKey}
                   fill
                   className="object-cover hover:scale-105 transition-transform duration-700"
                   sizes="(max-width: 768px) 100vw, 50vw"
@@ -74,28 +76,28 @@ export default function SuccessStories() {
               <div className="flex-1 w-full text-center md:text-left">
                 <div className="flex items-center justify-center md:justify-start gap-2 mb-4">
                   <Heart className="text-primary fill-primary" size={24} />
-                  <p className="text-primary font-semibold text-lg">{story.couple}</p>
+                  <p className="text-primary font-semibold text-lg">{t(story.coupleKey)}</p>
                 </div>
                 <p className="text-slate-600 mb-4 flex items-center justify-center md:justify-start gap-2">
                   <span className="inline-block w-2 h-2 rounded-full bg-rose-400"></span>
-                  {story.location}
+                  {t(story.locationKey)}
                 </p>
                 <p className="text-xl md:text-3xl font-playfair text-slate-900 mb-8 leading-relaxed italic">
-                  "{story.story}"
+                  "{t(story.storyKey)}"
                 </p>
 
                 <div className="flex gap-4 justify-center md:justify-start">
                   <button
                     onClick={prev}
                     className="p-4 bg-rose-50 hover:bg-primary hover:text-white text-primary rounded-full transition-all duration-300 shadow-sm hover:shadow-md"
-                    aria-label="Previous story"
+                    aria-label={t('stories.previousStory')}
                   >
                     <ChevronLeft size={24} />
                   </button>
                   <button
                     onClick={next}
                     className="p-4 bg-rose-50 hover:bg-primary hover:text-white text-primary rounded-full transition-all duration-300 shadow-sm hover:shadow-md"
-                    aria-label="Next story"
+                    aria-label={t('stories.nextStory')}
                   >
                     <ChevronRight size={24} />
                   </button>
@@ -113,7 +115,7 @@ export default function SuccessStories() {
                 className={`w-3 h-3 rounded-full transition ${
                   index === currentIndex ? 'bg-primary w-8' : 'bg-rose-200'
                 }`}
-                aria-label={`Go to story ${index + 1}`}
+                aria-label={`${t('stories.goToStory')} ${index + 1}`}
               />
             ))}
           </div>

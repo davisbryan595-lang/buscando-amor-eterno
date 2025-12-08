@@ -3,8 +3,11 @@
 import React from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import { useLanguage } from '@/lib/i18n-context'
 
 export default function Hero() {
+  const { t } = useLanguage()
+
   return (
     <section
       className="pt-32 pb-16 px-4 relative overflow-hidden min-h-[90vh] flex items-center"
@@ -43,18 +46,18 @@ export default function Hero() {
       <div className="max-w-5xl mx-auto text-center relative z-20">
         <h1 className="text-5xl md:text-7xl lg:text-8xl font-playfair font-bold mb-8 text-slate-900 leading-tight tracking-tight">
           <span className="text-primary relative inline-block">
-            Buscando Amor
+            {t('hero.title').split(' ').slice(0, 2).join(' ')}
             <svg className="absolute -bottom-2 left-0 w-full h-3 text-rose-200 -z-10" viewBox="0 0 100 10" preserveAspectRatio="none">
               <path d="M0 5 Q 50 10 100 5" stroke="currentColor" strokeWidth="8" fill="none" />
             </svg>
-          </span> Eterno
+          </span> {t('hero.title').split(' ').slice(2).join(' ')}
         </h1>
         <h2 className="text-2xl md:text-4xl font-playfair font-bold mb-8 text-rose-600">
-          Find Your Soulmate
+          {t('hero.subtitle')}
         </h2>
 
         <p className="text-lg md:text-xl text-slate-600 mb-12 max-w-2xl mx-auto leading-relaxed">
-          Nearly 50% of the world is single. You deserve eternal love. Join our premium soulmate dating platform with profiles, messaging, and video chat.
+          {t('hero.description')}
         </p>
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
@@ -62,28 +65,28 @@ export default function Hero() {
             href="/signup"
             className="px-8 py-4 bg-primary text-white rounded-full text-lg font-semibold hover:bg-rose-700 transition transform hover:scale-105 soft-glow"
           >
-            Join for $12/month
+            {t('common.joinForPrice')}
           </Link>
           <Link
             href="/browse"
             className="px-8 py-4 border-2 border-primary text-primary rounded-full text-lg font-semibold hover:bg-rose-50 transition"
           >
-            Browse Profiles
+            {t('common.browseProfiles')}
           </Link>
         </div>
 
         <div className="mt-16 grid grid-cols-3 gap-6 text-center">
           <div>
             <p className="text-3xl font-bold text-primary mb-2">50M+</p>
-            <p className="text-slate-600">Members Worldwide</p>
+            <p className="text-slate-600">{t('hero.membersWorldwide')}</p>
           </div>
           <div>
             <p className="text-3xl font-bold text-primary mb-2">1M+</p>
-            <p className="text-slate-600">Matches Made</p>
+            <p className="text-slate-600">{t('hero.matchesMade')}</p>
           </div>
           <div>
             <p className="text-3xl font-bold text-primary mb-2">100+</p>
-            <p className="text-slate-600">Countries</p>
+            <p className="text-slate-600">{t('hero.countries')}</p>
           </div>
         </div>
       </div>
