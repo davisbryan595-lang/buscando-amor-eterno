@@ -53,11 +53,20 @@ export function useMessages() {
 
     try {
       setLoading(true)
-      const { data, error: err } = await supabase
+
+      // Add a timeout for messages fetch (15 seconds)
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Conversations fetch timed out')), 15000)
+      )
+
+      const queryPromise = supabase
         .from('messages')
         .select('sender_id, recipient_id, content, created_at')
         .or(`sender_id.eq.${user.id},recipient_id.eq.${user.id}`)
         .order('created_at', { ascending: false })
+
+      const result = await Promise.race([queryPromise, timeoutPromise])
+      const { data, error: err } = result as any
 
       if (err) throw err
 
