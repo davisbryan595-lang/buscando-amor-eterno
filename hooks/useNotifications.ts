@@ -66,23 +66,43 @@ export function useNotifications() {
 
       if (err) throw err
 
-      const notificationsWithProfiles = await Promise.all(
-        (data || []).map(async (notif: any) => {
-          const { data: likerProfile } = await supabase
-            .from('profiles')
-            .select('full_name, photos, main_photo_index')
-            .eq('user_id', notif.liker_id)
-            .single()
+      if (!data || data.length === 0) {
+        setNotifications([])
+        setError(null)
+        return
+      }
 
-          return {
-            id: notif.id,
-            recipient_id: notif.recipient_id,
-            liker_id: notif.liker_id,
-            liker_name: likerProfile?.full_name,
-            liker_image: likerProfile?.photos?.[likerProfile?.main_photo_index || 0],
-            liked_profile_id: notif.liked_profile_id,
-            read: notif.read,
-            created_at: notif.created_at,
+      const notificationsWithProfiles = await Promise.all(
+        data.map(async (notif: any) => {
+          try {
+            const { data: likerProfile } = await supabase
+              .from('profiles')
+              .select('full_name, photos, main_photo_index')
+              .eq('user_id', notif.liker_id)
+              .single()
+
+            return {
+              id: notif.id,
+              recipient_id: notif.recipient_id,
+              liker_id: notif.liker_id,
+              liker_name: likerProfile?.full_name || null,
+              liker_image: likerProfile?.photos?.[likerProfile?.main_photo_index || 0] || null,
+              liked_profile_id: notif.liked_profile_id,
+              read: notif.read,
+              created_at: notif.created_at,
+            }
+          } catch (err: any) {
+            console.error('Error fetching liker profile:', err)
+            return {
+              id: notif.id,
+              recipient_id: notif.recipient_id,
+              liker_id: notif.liker_id,
+              liker_name: null,
+              liker_image: null,
+              liked_profile_id: notif.liked_profile_id,
+              read: notif.read,
+              created_at: notif.created_at,
+            }
           }
         })
       )
@@ -92,6 +112,7 @@ export function useNotifications() {
     } catch (err: any) {
       setError(err.message)
       console.error('Error fetching notifications:', err)
+      setNotifications([])
     } finally {
       setLoading(false)
     }
