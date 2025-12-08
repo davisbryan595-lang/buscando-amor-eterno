@@ -60,12 +60,25 @@ export function useBrowseProfiles() {
           })
 
         if (err) throw err
+
+        const currentProfile = profiles.find((p) => p.user_id === user.id)
+        if (currentProfile) {
+          const { error: notifErr } = await supabase.from('notifications').insert({
+            recipient_id: likedUserId,
+            liker_id: user.id,
+            liked_profile_id: currentProfile.id,
+          })
+
+          if (notifErr) {
+            console.error('Error creating notification:', notifErr.message)
+          }
+        }
       } catch (err: any) {
         console.error('Error liking profile:', err instanceof Error ? err.message : JSON.stringify(err))
         throw err
       }
     },
-    [user, isPremium]
+    [user, isPremium, profiles]
   )
 
   const dislikeProfile = useCallback(
