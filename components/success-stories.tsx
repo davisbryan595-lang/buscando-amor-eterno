@@ -76,14 +76,14 @@ export default function SuccessStories() {
               <div className="flex-1 w-full text-center md:text-left">
                 <div className="flex items-center justify-center md:justify-start gap-2 mb-4">
                   <Heart className="text-primary fill-primary" size={24} />
-                  <p className="text-primary font-semibold text-lg">{story.coupleKey}</p>
+                  <p className="text-primary font-semibold text-lg">{t(story.coupleKey)}</p>
                 </div>
                 <p className="text-slate-600 mb-4 flex items-center justify-center md:justify-start gap-2">
                   <span className="inline-block w-2 h-2 rounded-full bg-rose-400"></span>
-                  {story.locationKey}
+                  {t(story.locationKey)}
                 </p>
                 <p className="text-xl md:text-3xl font-playfair text-slate-900 mb-8 leading-relaxed italic">
-                  "{story.storyKey}"
+                  "{t(story.storyKey)}"
                 </p>
 
                 <div className="flex gap-4 justify-center md:justify-start">
