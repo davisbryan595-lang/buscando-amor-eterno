@@ -115,6 +115,20 @@ export default function ProfilePage() {
     <div className="min-h-screen bg-white">
       <Navigation />
 
+      {/* Hero Image Section */}
+      {profile?.photos?.[profile.main_photo_index || 0] && (
+        <div className="relative h-80 w-full overflow-hidden bg-gray-200">
+          <Image
+            src={profile.photos[profile.main_photo_index || 0]}
+            alt={profile.full_name || 'Profile'}
+            fill
+            className="object-cover"
+            priority
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+        </div>
+      )}
+
       {/* Profile Incomplete Warning Banner */}
       {!profile.profile_complete && (
         <div className="bg-red-50 border-b-2 border-red-200">
