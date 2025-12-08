@@ -2,11 +2,13 @@ import { useCallback, useState, useEffect } from 'react'
 import { useAuth } from '@/context/auth-context'
 import { supabase } from '@/lib/supabase'
 import { useSubscription } from './useSubscription'
+import { useProfile } from './useProfile'
 import type { ProfileData } from './useProfile'
 
 export function useBrowseProfiles() {
   const { user } = useAuth()
   const { isPremium } = useSubscription()
+  const { profile: currentProfile } = useProfile()
   const [profiles, setProfiles] = useState<ProfileData[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -61,7 +63,6 @@ export function useBrowseProfiles() {
 
         if (err) throw err
 
-        const currentProfile = profiles.find((p) => p.user_id === user.id)
         if (currentProfile) {
           const { error: notifErr } = await supabase.from('notifications').insert({
             recipient_id: likedUserId,
@@ -78,7 +79,7 @@ export function useBrowseProfiles() {
         throw err
       }
     },
-    [user, isPremium, profiles]
+    [user, isPremium, currentProfile]
   )
 
   const dislikeProfile = useCallback(
