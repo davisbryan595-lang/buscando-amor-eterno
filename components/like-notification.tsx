@@ -1,10 +1,12 @@
 'use client'
 
-import React from 'react'
+import React, { useState } from 'react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Heart, X } from 'lucide-react'
+import { useMessages } from '@/hooks/useMessages'
+import { toast } from 'sonner'
 
 interface LikeNotificationProps {
   notification: {
@@ -18,10 +20,21 @@ interface LikeNotificationProps {
 
 export function LikeNotification({ notification, onDismiss }: LikeNotificationProps) {
   const router = useRouter()
+  const { initiateConversation } = useMessages()
+  const [isLoading, setIsLoading] = useState(false)
 
-  const handleStartConversation = () => {
-    onDismiss()
-    router.push(`/messages?user=${notification.liker_id}`)
+  const handleStartConversation = async () => {
+    setIsLoading(true)
+    try {
+      await initiateConversation(notification.liker_id)
+      onDismiss()
+      router.push(`/messages?user=${notification.liker_id}`)
+      toast.success('Conversation started!')
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to start conversation')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
