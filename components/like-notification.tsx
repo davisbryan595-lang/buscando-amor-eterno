@@ -79,15 +79,17 @@ export function LikeNotification({ notification, onDismiss }: LikeNotificationPr
         <div className="space-y-3">
           <Button
             onClick={handleStartConversation}
-            className="w-full py-3 bg-primary text-white rounded-full font-semibold hover:bg-rose-700 transition"
+            disabled={isLoading}
+            className="w-full py-3 bg-primary text-white rounded-full font-semibold hover:bg-rose-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Start Conversation
+            {isLoading ? 'Starting...' : 'Start Conversation'}
           </Button>
 
           <Button
             onClick={onDismiss}
+            disabled={isLoading}
             variant="outline"
-            className="w-full py-3 border-2 border-slate-300 text-slate-700 rounded-full font-semibold hover:bg-slate-50 transition"
+            className="w-full py-3 border-2 border-slate-300 text-slate-700 rounded-full font-semibold hover:bg-slate-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Not Now
           </Button>
