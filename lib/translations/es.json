@@ -1,4 +1,55 @@
 {
+  "common": {
+    "home": "Inicio",
+    "browse": "Explorar",
+    "pricing": "Precios",
+    "messages": "Mensajes",
+    "lounge": "Salón",
+    "logIn": "Inicia sesión",
+    "joinForPrice": "Únete por $12/mes",
+    "browseProfiles": "Explorar Perfiles"
+  },
+  "hero": {
+    "title": "Buscando Amor Eterno",
+    "subtitle": "Encuentra Tu Alma Gemela",
+    "description": "Casi el 50% del mundo es soltero. Mereces amor eterno. Únete a nuestra plataforma de citas de almas gemelas premium con perfiles, mensajería y video chat.",
+    "membersWorldwide": "Miembros en Todo el Mundo",
+    "matchesMade": "Emparejamientos Realizados",
+    "countries": "Países"
+  },
+  "features": {
+    "sectionTitle": "¿Por Qué Elegir Buscando Amor Eterno?",
+    "sectionDescription": "La plataforma diseñada para ayudarte a encontrar tu alma gemela",
+    "smartMatching": "Emparejamiento Inteligente",
+    "smartMatchingDesc": "Nuestro algoritmo encuentra parejas compatibles basadas en tus valores e intereses.",
+    "realConversations": "Conversaciones Reales",
+    "realConversationsDesc": "Chatea con coincidencias instantáneamente y construye conexiones significativas.",
+    "videoDates": "Citas por Video",
+    "videoDatesDesc": "Conoce cara a cara virtualmente antes de decidir reunirte en persona.",
+    "globalCommunity": "Comunidad Global",
+    "globalCommunityDesc": "Conecta con solteros de más de 100 países en todo el mundo.",
+    "verifiedProfiles": "Perfiles Verificados",
+    "verifiedProfilesDesc": "Todos los miembros están verificados para garantizar autenticidad y seguridad.",
+    "instantNotifications": "Notificaciones Instantáneas",
+    "instantNotificationsDesc": "Nunca pierdas un mensaje con notificaciones en tiempo real."
+  },
+  "stories": {
+    "sectionTitle": "Historias de Amor",
+    "sectionDescription": "Parejas reales encontrando su amor eterno",
+    "previousStory": "Historia anterior",
+    "nextStory": "Siguiente historia",
+    "goToStory": "Ir a la historia"
+  },
+  "footer": {
+    "tagline": "Encontrando amor eterno en todo el mundo",
+    "platform": "Plataforma",
+    "legal": "Legal",
+    "privacy": "Privacidad",
+    "terms": "Términos",
+    "safety": "Seguridad",
+    "contact": "Contacto",
+    "copyright": "© 2025 Buscando Amor Eterno. Todos los derechos reservados con ♥"
+  },
   "onboarding": {
     "progress": "Paso {{current}} de {{total}}",
     "skipForNow": "Omitir por ahora",
