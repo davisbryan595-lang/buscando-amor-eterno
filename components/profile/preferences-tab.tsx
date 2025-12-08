@@ -5,6 +5,7 @@ import { useLanguage } from '@/lib/i18n-context'
 import { useProfile, ProfileData } from '@/hooks/useProfile'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
+import { Input } from '@/components/ui/input'
 import { Slider } from '@/components/ui/slider'
 import { Switch } from '@/components/ui/switch'
 import {
@@ -14,7 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Loader } from 'lucide-react'
+import { Loader, MapPin } from 'lucide-react'
 import { toast } from 'sonner'
 
 const PreferenceSection = ({ title, children }: { title: string; children: React.ReactNode }) => (
@@ -33,6 +34,8 @@ export function ProfilePreferencesTab({ profile, onUpdate }: PreferencesTabProps
   const { t } = useLanguage()
   const { updateProfile } = useProfile()
 
+  const [city, setCity] = useState(profile.city || '')
+  const [country, setCountry] = useState(profile.country || '')
   const [ageMin, setAgeMin] = useState(profile.age_range_min || 18)
   const [ageMax, setAgeMax] = useState(profile.age_range_max || 60)
   const [distanceRadius, setDistanceRadius] = useState(profile.distance_radius || 50)
@@ -54,6 +57,8 @@ export function ProfilePreferencesTab({ profile, onUpdate }: PreferencesTabProps
     setSaving(true)
     try {
       await updateProfile({
+        city,
+        country,
         age_range_min: ageMin,
         age_range_max: ageMax,
         distance_radius: distanceRadius,
@@ -75,6 +80,40 @@ export function ProfilePreferencesTab({ profile, onUpdate }: PreferencesTabProps
 
   return (
     <div className="space-y-6">
+      {/* Location */}
+      <PreferenceSection title="Your Location">
+        <div className="space-y-4">
+          <div className="flex items-start gap-3 mb-4">
+            <MapPin className="w-5 h-5 text-primary mt-1 flex-shrink-0" />
+            <p className="text-sm text-muted-foreground">Update your city and country to help matches find you</p>
+          </div>
+          <div>
+            <Label htmlFor="city" className="text-sm font-medium text-foreground mb-1">
+              City
+            </Label>
+            <Input
+              id="city"
+              placeholder="e.g., Barcelona"
+              value={city}
+              onChange={(e) => setCity(e.target.value)}
+              className="px-3 py-2 rounded-lg border-secondary bg-background"
+            />
+          </div>
+          <div>
+            <Label htmlFor="country" className="text-sm font-medium text-foreground mb-1">
+              Country
+            </Label>
+            <Input
+              id="country"
+              placeholder="e.g., Spain"
+              value={country}
+              onChange={(e) => setCountry(e.target.value)}
+              className="px-3 py-2 rounded-lg border-secondary bg-background"
+            />
+          </div>
+        </div>
+      </PreferenceSection>
+
       {/* Age Range */}
       <PreferenceSection title={t('onboarding.step6.ageRange')}>
         <div className="space-y-4">
