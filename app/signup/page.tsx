@@ -14,6 +14,7 @@ type SignUpStep = 'email' | 'profile' | 'success'
 export default function SignupPage() {
   const [step, setStep] = useState<SignUpStep>('email')
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -26,9 +27,18 @@ export default function SignupPage() {
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
+    setError(null)
 
     try {
-      await signUp(formData.email, formData.password)
+      // Create a timeout promise (30 seconds)
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Signup request timed out - please try again')), 30000)
+      )
+
+      const signUpPromise = signUp(formData.email, formData.password)
+
+      await Promise.race([signUpPromise, timeoutPromise])
+
       // Track signup event
       if (typeof window !== 'undefined' && window.gtag) {
         window.gtag('event', 'sign_up', {
@@ -40,6 +50,7 @@ export default function SignupPage() {
     } catch (error: any) {
       const errorMessage = error.message || 'Failed to create account'
       console.error('Signup error:', error)
+      setError(errorMessage)
       toast.error(errorMessage)
     } finally {
       setLoading(false)
