@@ -77,8 +77,8 @@ export default function ChatWindow({ conversation }: { conversation: Conversatio
         <div className="flex items-center gap-3">
           <div className="relative w-12 h-12">
             <Image
-              src={conversation.other_user_image || "/placeholder.svg"}
-              alt={conversation.other_user_name || 'User'}
+              src={otherUserDetails?.image || conversation.other_user_image || "/placeholder.svg"}
+              alt={otherUserDetails?.name || conversation.other_user_name || 'User'}
               fill
               className="rounded-full object-cover"
             />
@@ -87,9 +87,9 @@ export default function ChatWindow({ conversation }: { conversation: Conversatio
             )}
           </div>
           <div>
-            <p className="font-semibold text-slate-900">{conversation.other_user_name || 'User'}</p>
+            <p className="font-semibold text-slate-900">{otherUserDetails?.name || conversation.other_user_name || 'User'}</p>
             <p className="text-sm text-slate-600">
-              {conversation.is_online ? 'Online' : 'Offline'}
+              {conversation.is_online ? 'Online' : getLastSeenText(conversation.last_message_time)}
             </p>
           </div>
         </div>
