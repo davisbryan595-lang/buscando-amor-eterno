@@ -5,14 +5,18 @@ import Link from 'next/link'
 import { Menu, X, Bell, Globe } from 'lucide-react'
 import { useLanguage } from '@/lib/i18n-context'
 import { useAuth } from '@/context/auth-context'
+import { useNotifications } from '@/hooks/useNotifications'
 import { AccountMenu } from '@/components/account-menu'
+import { NotificationsDropdown } from '@/components/notifications-dropdown'
 
 export default function Navigation() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [langDropdown, setLangDropdown] = useState(false)
+  const [notificationsOpen, setNotificationsOpen] = useState(false)
   const [isMounted, setIsMounted] = useState(false)
   const { language, setLanguage, t } = useLanguage()
   const { user } = useAuth()
+  const { notifications, dismissNotification } = useNotifications()
 
   React.useEffect(() => {
     setIsMounted(true)
