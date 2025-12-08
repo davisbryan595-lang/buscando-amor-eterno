@@ -38,7 +38,19 @@
     "sectionDescription": "Real couples finding their eternal love",
     "previousStory": "Previous story",
     "nextStory": "Next story",
-    "goToStory": "Go to story"
+    "goToStory": "Go to story",
+    "story1Couple": "Maria & Carlos",
+    "story1Location": "Barcelona, Spain",
+    "story1Text": "Met on Buscando Amor Eterno in March. Engaged in December. True soulmates.",
+    "story2Couple": "Sophie & Luis",
+    "story2Location": "Mexico City, Mexico",
+    "story2Text": "Found each other across continents. Now married for 3 years.",
+    "story3Couple": "Isabella & Marco",
+    "story3Location": "Buenos Aires, Argentina",
+    "story3Text": "From first message to wedding day. Our forever love story.",
+    "story4Couple": "Elena & Diego",
+    "story4Location": "Madrid, Spain",
+    "story4Text": "Two years together and growing stronger every day."
   },
   "footer": {
     "tagline": "Finding eternal love worldwide",
