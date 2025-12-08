@@ -49,10 +49,10 @@ export default function BrowsePage() {
     let actionSucceeded = false
     try {
       if (direction === 'left') {
-        await dislikeProfile(currentProfile.id)
+        await dislikeProfile(currentProfile.user_id)
         actionSucceeded = true
       } else if (direction === 'right' || direction === 'super') {
-        await likeProfile(currentProfile.id)
+        await likeProfile(currentProfile.user_id)
         actionSucceeded = true
       }
     } catch (err: any) {
