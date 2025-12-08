@@ -20,15 +20,22 @@ export function useBrowseProfiles() {
     }
 
     let isMounted = true
+    let timeoutId: NodeJS.Timeout | null = null
 
-    const fetchWithTimeout = async () => {
-      const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Profile fetch timed out')), 10000)
-      )
-
+    const fetchProfiles = async () => {
       try {
         setLoading(true)
-        const fetchPromise = supabase
+
+        // Set a timeout to prevent hanging
+        timeoutId = setTimeout(() => {
+          if (isMounted) {
+            setLoading(false)
+            setError('Profile fetch timed out')
+            setProfiles([])
+          }
+        }, 10000)
+
+        const { data, error: err } = await supabase
           .from('profiles')
           .select('*')
           .neq('user_id', user.id)
@@ -36,7 +43,7 @@ export function useBrowseProfiles() {
           .order('created_at', { ascending: false })
           .limit(100)
 
-        const { data, error: err } = await Promise.race([fetchPromise, timeoutPromise as any])
+        if (timeoutId) clearTimeout(timeoutId)
 
         if (!isMounted) return
 
@@ -44,22 +51,25 @@ export function useBrowseProfiles() {
         setProfiles((data as ProfileData[]) || [])
         setError(null)
       } catch (err: any) {
+        if (timeoutId) clearTimeout(timeoutId)
         if (isMounted) {
           setError(err.message)
           console.error('Error fetching profiles:', err)
           setProfiles([])
         }
       } finally {
+        if (timeoutId) clearTimeout(timeoutId)
         if (isMounted) {
           setLoading(false)
         }
       }
     }
 
-    fetchWithTimeout()
+    fetchProfiles()
 
     return () => {
       isMounted = false
+      if (timeoutId) clearTimeout(timeoutId)
     }
   }, [user])
 
