@@ -151,6 +151,7 @@
       "deepFriendship": "Deep friendship",
       "stillExploring": "Still exploring",
       "minChars": "At least 20 characters",
+      "required": "This field is required",
       "characterCount": "{{current}}/{{max}} characters"
     },
     "step6": {

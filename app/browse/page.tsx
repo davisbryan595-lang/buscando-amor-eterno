@@ -7,7 +7,8 @@ import Footer from '@/components/footer'
 import { useProfileProtection } from '@/hooks/useProfileProtection'
 import { useBrowseProfiles } from '@/hooks/useBrowseProfiles'
 import { useSubscription } from '@/hooks/useSubscription'
-import { Heart, X, Star, Info, Loader, Lock } from 'lucide-react'
+import { useProfile } from '@/hooks/useProfile'
+import { Heart, X, Star, Info, Loader, Lock, AlertCircle } from 'lucide-react'
 import Image from 'next/image'
 import { toast } from 'sonner'
 
@@ -16,6 +17,7 @@ export default function BrowsePage() {
   const { isLoading } = useProfileProtection(true, '/onboarding')
   const { profiles, loading: profilesLoading, likeProfile, dislikeProfile, superLikeProfile } = useBrowseProfiles()
   const { isPremium, loading: subLoading } = useSubscription()
+  const { profile } = useProfile()
 
   const [currentIndex, setCurrentIndex] = useState(0)
   const [showInfo, setShowInfo] = useState(false)
@@ -128,7 +130,28 @@ export default function BrowsePage() {
   return (
     <main className="min-h-screen bg-gradient-to-br from-rose-50 to-pink-50 overflow-hidden">
       <Navigation />
-      
+
+      {/* Profile Incomplete Warning Banner */}
+      {profile && !profile.profile_complete && (
+        <div className="bg-amber-50 border-b-2 border-amber-200">
+          <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0" />
+              <div>
+                <p className="font-semibold text-amber-900">Your profile is hidden</p>
+                <p className="text-sm text-amber-700">Complete your profile setup to become visible to other members</p>
+              </div>
+            </div>
+            <Link
+              href="/onboarding"
+              className="px-4 py-2 bg-amber-600 text-white rounded-full font-semibold hover:bg-amber-700 transition whitespace-nowrap text-sm"
+            >
+              Complete Setup
+            </Link>
+          </div>
+        </div>
+      )}
+
       <div className="pt-24 pb-12 px-4 flex items-center justify-center min-h-[90vh]">
         <div className="w-full max-w-md relative">
           {/* Card Container */}
