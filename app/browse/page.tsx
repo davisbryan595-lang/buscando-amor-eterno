@@ -241,7 +241,7 @@ export default function BrowsePage() {
                 <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
                   {!showInfo ? (
                     <>
-                      <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center justify-between mb-4">
                         <div>
                           <h2 className="text-4xl font-playfair font-bold mb-1">
                             {currentProfile.full_name || 'User'}, {currentProfile.age || '?'}
@@ -254,6 +254,15 @@ export default function BrowsePage() {
                         >
                           <Info className="w-6 h-6" />
                         </button>
+                      </div>
+                      <div className="flex gap-3">
+                        <Link
+                          href={`/messages?user=${currentProfile.user_id}`}
+                          className="flex-1 py-3 bg-blue-600 text-white rounded-full font-semibold hover:bg-blue-700 transition flex items-center justify-center gap-2"
+                        >
+                          <MessageCircle className="w-5 h-5" />
+                          Message
+                        </Link>
                       </div>
                     </>
                   ) : (
