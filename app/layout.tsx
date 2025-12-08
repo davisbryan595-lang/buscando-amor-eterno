@@ -38,16 +38,21 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-
         <script async src="https://cdn.onesignal.com/sdks/onesignal.js"></script>
         <script dangerouslySetInnerHTML={{
           __html: `
             window.OneSignal = window.OneSignal || [];
-            OneSignal.push(function() {
-              OneSignal.init({
-                appId: "onesignal-app-id-12345678",
+            if (typeof window !== 'undefined' && window.OneSignal) {
+              OneSignal.push(function() {
+                try {
+                  OneSignal.init({
+                    appId: "onesignal-app-id-12345678",
+                  });
+                } catch (err) {
+                  console.warn('OneSignal initialization failed:', err);
+                }
               });
-            });
+            }
           `,
         }} />
       </head>
