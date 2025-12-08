@@ -36,6 +36,8 @@ export function AccountMenu() {
     try {
       await signOut()
       setMenuOpen(false)
+      // Add a small delay to ensure auth state is updated before routing
+      await new Promise(resolve => setTimeout(resolve, 100))
       router.push('/login')
       toast.success('Signed out successfully')
     } catch (error: any) {
