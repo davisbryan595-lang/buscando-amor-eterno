@@ -26,9 +26,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const initializeAuth = async () => {
       try {
-        // Create a promise that rejects after 15 seconds
+        // Increase timeout for development environments (45s) vs production (15s)
+        const isDev = process.env.NODE_ENV === 'development'
+        const timeout = isDev ? 45000 : 15000
+
+        // Create a promise that rejects after the timeout
         const timeoutPromise = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Auth initialization timed out')), 15000)
+          setTimeout(() => reject(new Error('Auth initialization timed out')), timeout)
         )
 
         const sessionPromise = supabase.auth.getSession()
