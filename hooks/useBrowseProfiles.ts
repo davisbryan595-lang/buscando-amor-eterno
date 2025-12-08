@@ -61,7 +61,7 @@ export function useBrowseProfiles() {
 
         if (err) throw err
       } catch (err: any) {
-        console.error('Error liking profile:', err)
+        console.error('Error liking profile:', err instanceof Error ? err.message : JSON.stringify(err))
         throw err
       }
     },
@@ -83,7 +83,7 @@ export function useBrowseProfiles() {
 
         if (err) throw err
       } catch (err: any) {
-        console.error('Error disliking profile:', err)
+        console.error('Error disliking profile:', err instanceof Error ? err.message : JSON.stringify(err))
         throw err
       }
     },
@@ -106,7 +106,7 @@ export function useBrowseProfiles() {
 
         if (err) throw err
       } catch (err: any) {
-        console.error('Error super liking profile:', err)
+        console.error('Error super liking profile:', err instanceof Error ? err.message : JSON.stringify(err))
         throw err
       }
     },
