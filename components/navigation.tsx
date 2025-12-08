@@ -30,6 +30,10 @@ export default function Navigation() {
     }
   }
 
+  const handleNotificationDismiss = (id: string) => {
+    dismissNotification(id)
+  }
+
   const handleLanguageChange = (lang: 'en' | 'es') => {
     setLanguage(lang)
     setLangDropdown(false)
