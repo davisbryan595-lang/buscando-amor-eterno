@@ -236,7 +236,7 @@ export default function OnboardingPage() {
             {currentStep !== 'complete' && (
               <span className="text-sm font-semibold text-muted-foreground">
                 {t('onboarding.progress', {
-                  current: currentStep,
+                  current: stepNumber,
                   total: TOTAL_STEPS,
                 })}
               </span>
