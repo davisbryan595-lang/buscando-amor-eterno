@@ -36,35 +36,35 @@ export function useNotifications() {
       setLoading(true)
       const { data, error: err } = await supabase
         .from('notifications')
-        .select(
-          `
-          id,
-          recipient_id,
-          liker_id,
-          liked_profile_id,
-          read,
-          created_at,
-          profiles!notifications_liker_id_fkey (full_name, photos, main_photo_index)
-        `
-        )
+        .select('id, recipient_id, liker_id, liked_profile_id, read, created_at')
         .eq('recipient_id', user.id)
         .eq('read', false)
         .order('created_at', { ascending: false })
 
       if (err) throw err
 
-      const notifications = (data || []).map((notif: any) => ({
-        id: notif.id,
-        recipient_id: notif.recipient_id,
-        liker_id: notif.liker_id,
-        liker_name: notif.profiles?.full_name,
-        liker_image: notif.profiles?.photos?.[notif.profiles?.main_photo_index || 0],
-        liked_profile_id: notif.liked_profile_id,
-        read: notif.read,
-        created_at: notif.created_at,
-      }))
+      const notificationsWithProfiles = await Promise.all(
+        (data || []).map(async (notif: any) => {
+          const { data: likerProfile } = await supabase
+            .from('profiles')
+            .select('full_name, photos, main_photo_index')
+            .eq('user_id', notif.liker_id)
+            .single()
 
-      setNotifications(notifications)
+          return {
+            id: notif.id,
+            recipient_id: notif.recipient_id,
+            liker_id: notif.liker_id,
+            liker_name: likerProfile?.full_name,
+            liker_image: likerProfile?.photos?.[likerProfile?.main_photo_index || 0],
+            liked_profile_id: notif.liked_profile_id,
+            read: notif.read,
+            created_at: notif.created_at,
+          }
+        })
+      )
+
+      setNotifications(notificationsWithProfiles)
       setError(null)
     } catch (err: any) {
       setError(err.message)
