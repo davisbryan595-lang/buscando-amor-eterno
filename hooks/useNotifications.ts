@@ -26,29 +26,61 @@ export function useNotifications() {
     }
 
     fetchNotifications()
+    let pollInterval: ReturnType<typeof setInterval> | null = null
+    let subscription: ReturnType<typeof supabase.channel> | null = null
+    let isMounted = true
 
-    const subscription = supabase
-      .channel(`notifications:${user.id}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'notifications',
-          filter: `recipient_id.eq.${user.id}`,
-        },
-        (payload) => {
-          fetchNotifications()
-        }
-      )
-      .subscribe((status) => {
-        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
-          console.error('Notification subscription error:', status)
-        }
-      })
+    // Try to subscribe to realtime updates
+    try {
+      subscription = supabase
+        .channel(`notifications:${user.id}`)
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'notifications',
+            filter: `recipient_id.eq.${user.id}`,
+          },
+          (payload) => {
+            if (isMounted) {
+              fetchNotifications()
+            }
+          }
+        )
+        .subscribe((status) => {
+          if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+            console.warn('Notification subscription error:', status)
+            // Fall back to polling if realtime fails
+            if (!pollInterval) {
+              pollInterval = setInterval(() => {
+                if (isMounted) {
+                  fetchNotifications()
+                }
+              }, 5000)
+            }
+          }
+        })
+    } catch (err) {
+      console.warn('Failed to setup realtime subscription:', err)
+      // Fall back to polling
+      if (!pollInterval) {
+        pollInterval = setInterval(() => {
+          if (isMounted) {
+            fetchNotifications()
+          }
+        }, 5000)
+      }
+    }
 
     return () => {
-      subscription.unsubscribe()
+      isMounted = false
+      if (subscription) {
+        subscription.unsubscribe()
+      }
+      if (pollInterval) {
+        clearInterval(pollInterval)
+      }
     }
   }, [user])
 
