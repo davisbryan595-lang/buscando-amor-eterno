@@ -36,15 +36,15 @@ export function useSubscription() {
       try {
         setLoading(true)
 
-        // Set a timeout to prevent hanging
+        // Set a timeout to prevent hanging (30 seconds for production delays)
         timeoutId = setTimeout(() => {
           if (isMounted) {
             setLoading(false)
-            setError('Subscription fetch timed out')
+            setError('Subscription fetch timed out - defaulting to free plan')
             setSubscription(null)
             setIsPremium(false)
           }
-        }, 10000)
+        }, 30000)
 
         const { data, error: err } = await supabase
           .from('subscriptions')

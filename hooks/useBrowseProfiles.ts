@@ -26,14 +26,14 @@ export function useBrowseProfiles() {
       try {
         setLoading(true)
 
-        // Set a timeout to prevent hanging
+        // Set a timeout to prevent hanging (30 seconds for production delays)
         timeoutId = setTimeout(() => {
           if (isMounted) {
             setLoading(false)
-            setError('Profile fetch timed out')
+            setError('Profile fetch timed out - please refresh')
             setProfiles([])
           }
-        }, 10000)
+        }, 30000)
 
         const { data, error: err } = await supabase
           .from('profiles')

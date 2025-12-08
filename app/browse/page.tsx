@@ -16,7 +16,7 @@ import { toast } from 'sonner'
 export default function BrowsePage() {
   // Protect this route - require complete profile
   const { isLoading } = useProfileProtection(true, '/onboarding')
-  const { profiles, loading: profilesLoading, likeProfile, dislikeProfile, superLikeProfile } = useBrowseProfiles()
+  const { profiles, loading: profilesLoading, error: profilesError, likeProfile, dislikeProfile, superLikeProfile } = useBrowseProfiles()
   const { isPremium, loading: subLoading } = useSubscription()
   const { profile } = useProfile()
   const { notifications, dismissNotification } = useNotifications()
@@ -33,6 +33,30 @@ export default function BrowsePage() {
     return (
       <main className="min-h-screen flex items-center justify-center">
         <Loader className="animate-spin" size={40} />
+      </main>
+    )
+  }
+
+  if (profilesError) {
+    return (
+      <main className="min-h-screen bg-gradient-to-br from-rose-50 to-pink-50">
+        <Navigation />
+        <div className="pt-24 pb-12 px-4 flex items-center justify-center min-h-[80vh]">
+          <div className="text-center max-w-md">
+            <AlertCircle className="w-16 h-16 text-rose-400 mx-auto mb-6" />
+            <h1 className="text-2xl font-playfair font-bold text-slate-900 mb-2">
+              Unable to Load Profiles
+            </h1>
+            <p className="text-slate-600 mb-6">{profilesError}</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="px-8 py-3 bg-rose-700 text-white rounded-full hover:bg-rose-800 transition-colors"
+            >
+              Try Again
+            </button>
+          </div>
+        </div>
+        <Footer />
       </main>
     )
   }

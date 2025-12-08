@@ -13,7 +13,7 @@ import { Lock } from 'lucide-react'
 function MessagesContentInner() {
   const { user } = useAuth()
   const { isPremium, loading: subLoading } = useSubscription()
-  const { conversations, loading } = useMessages()
+  const { conversations, loading, error } = useMessages()
   const searchParams = useSearchParams()
   const userIdParam = searchParams.get('user')
   const [selectedConversation, setSelectedConversation] = useState<any>(null)
@@ -46,6 +46,23 @@ function MessagesContentInner() {
     return (
       <div className="pt-24 pb-12 px-4 h-screen flex items-center justify-center">
         <p className="text-slate-600">Loading conversations...</p>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="pt-24 pb-12 px-4 h-screen flex items-center justify-center">
+        <div className="text-center max-w-md">
+          <p className="text-slate-900 font-semibold mb-3">Unable to load conversations</p>
+          <p className="text-slate-600 text-sm mb-6">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-6 py-2 bg-primary text-white rounded-full hover:bg-rose-700 transition"
+          >
+            Try Again
+          </button>
+        </div>
       </div>
     )
   }

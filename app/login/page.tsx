@@ -12,15 +12,25 @@ export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const { signIn } = useAuth()
   const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
+    setError(null)
 
     try {
-      await signIn(email, password)
+      // Create a timeout promise (30 seconds)
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Login request timed out - please try again')), 30000)
+      )
+
+      const signInPromise = signIn(email, password)
+
+      await Promise.race([signInPromise, timeoutPromise])
+
       // Track login event
       if (typeof window !== 'undefined' && window.gtag) {
         window.gtag('event', 'login', {
@@ -35,6 +45,7 @@ export default function LoginPage() {
     } catch (error: any) {
       const errorMessage = error.message || 'Failed to log in'
       console.error('Login error:', error)
+      setError(errorMessage)
       toast.error(errorMessage)
     } finally {
       setLoading(false)
@@ -55,6 +66,12 @@ export default function LoginPage() {
                 Log in to your account to continue
               </p>
             </div>
+
+            {error && (
+              <div className="p-4 bg-rose-50 border border-rose-200 rounded-lg">
+                <p className="text-rose-800 text-sm">{error}</p>
+              </div>
+            )}
 
             <input
               type="email"
