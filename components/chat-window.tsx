@@ -15,6 +15,7 @@ interface Conversation {
   other_user_image: string | null
   last_message: string
   is_online: boolean
+  last_message_time?: string
 }
 
 export default function ChatWindow({ conversation }: { conversation: Conversation }) {
