@@ -30,6 +30,13 @@ export default function BrowsePage() {
   const [isDragging, setIsDragging] = useState(false)
   const [visibleNotification, setVisibleNotification] = useState(notifications[0] || null)
 
+  // Update visible notification when notifications change
+  React.useEffect(() => {
+    if (notifications.length > 0 && !visibleNotification) {
+      setVisibleNotification(notifications[0])
+    }
+  }, [notifications, visibleNotification])
+
   if (isLoading || profilesLoading) {
     return (
       <main className="min-h-screen flex items-center justify-center">
@@ -375,6 +382,17 @@ export default function BrowsePage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Like Notification Modal */}
+      {visibleNotification && (
+        <LikeNotification
+          notification={visibleNotification}
+          onDismiss={() => {
+            dismissNotification(visibleNotification.id)
+            setVisibleNotification(null)
+          }}
+        />
       )}
     </main>
   )
