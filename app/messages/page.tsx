@@ -1,7 +1,8 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 import Navigation from '@/components/navigation'
 import Footer from '@/components/footer'
 import ChatWindow from '@/components/chat-window'
@@ -15,7 +16,33 @@ export default function MessagesPage() {
   const { user } = useAuth()
   const { isPremium, loading: subLoading } = useSubscription()
   const { conversations, loading } = useMessages()
-  const [selectedConversation, setSelectedConversation] = useState<any>(conversations[0])
+  const searchParams = useSearchParams()
+  const userIdParam = searchParams.get('user')
+  const [selectedConversation, setSelectedConversation] = useState<any>(null)
+
+  // Auto-select conversation if user_id is in query params
+  useEffect(() => {
+    if (userIdParam && conversations.length > 0) {
+      const conversation = conversations.find((c) => c.other_user_id === userIdParam)
+      if (conversation) {
+        setSelectedConversation(conversation)
+      } else {
+        setSelectedConversation({
+          id: userIdParam,
+          user_id: user?.id,
+          other_user_id: userIdParam,
+          other_user_name: 'User',
+          other_user_image: null,
+          last_message: '',
+          last_message_time: new Date().toISOString(),
+          is_online: false,
+          unread_count: 0,
+        })
+      }
+    } else if (!selectedConversation && conversations.length > 0) {
+      setSelectedConversation(conversations[0])
+    }
+  }, [conversations, userIdParam, user?.id])
 
   if (loading) {
     return (

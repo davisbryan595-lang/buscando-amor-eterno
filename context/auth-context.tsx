@@ -79,7 +79,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               if (subError) throw subError
             }
           } catch (err) {
-            console.error('Error creating user profile:', err)
+            console.error('Error creating user profile:', err instanceof Error ? err.message : JSON.stringify(err))
           }
         }
       }
@@ -108,7 +108,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         })
 
         if (userError) {
-          console.error('Error creating user profile:', userError)
+          console.error('Error creating user profile:', userError.message || JSON.stringify(userError))
           throw userError
         }
 

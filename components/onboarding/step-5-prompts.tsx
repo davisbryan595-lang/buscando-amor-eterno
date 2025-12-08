@@ -101,7 +101,6 @@ export function Step5Prompts({
       { value: prompt1, key: 'prompt1' },
       { value: prompt2, key: 'prompt2' },
       { value: prompt3, key: 'prompt3' },
-      { value: prompt4, key: 'prompt4' },
       { value: prompt5, key: 'prompt5' },
       { value: prompt6, key: 'prompt6' },
     ]
@@ -124,7 +123,7 @@ export function Step5Prompts({
     }
 
     return newErrors
-  }, [prompt1, prompt2, prompt3, prompt4, prompt5, prompt6, loveLanguage, relationshipType, t])
+  }, [prompt1, prompt2, prompt3, prompt5, prompt6, loveLanguage, relationshipType, t])
 
   const isFormValid = Object.keys(errors).length === 0
 

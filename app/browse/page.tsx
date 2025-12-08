@@ -8,6 +8,8 @@ import { useProfileProtection } from '@/hooks/useProfileProtection'
 import { useBrowseProfiles } from '@/hooks/useBrowseProfiles'
 import { useSubscription } from '@/hooks/useSubscription'
 import { useProfile } from '@/hooks/useProfile'
+import { useNotifications } from '@/hooks/useNotifications'
+import { LikeNotification } from '@/components/like-notification'
 import { Heart, X, Star, Info, Loader, Lock, AlertCircle } from 'lucide-react'
 import Image from 'next/image'
 import { toast } from 'sonner'
@@ -18,6 +20,7 @@ export default function BrowsePage() {
   const { profiles, loading: profilesLoading, likeProfile, dislikeProfile, superLikeProfile } = useBrowseProfiles()
   const { isPremium, loading: subLoading } = useSubscription()
   const { profile } = useProfile()
+  const { notifications, dismissNotification } = useNotifications()
 
   const [currentIndex, setCurrentIndex] = useState(0)
   const [showInfo, setShowInfo] = useState(false)
@@ -25,6 +28,14 @@ export default function BrowsePage() {
   const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | 'super' | null>(null)
   const [dragOffset, setDragOffset] = useState(0)
   const [isDragging, setIsDragging] = useState(false)
+  const [visibleNotification, setVisibleNotification] = useState(notifications[0] || null)
+
+  // Update visible notification when notifications change
+  React.useEffect(() => {
+    if (notifications.length > 0 && !visibleNotification) {
+      setVisibleNotification(notifications[0])
+    }
+  }, [notifications, visibleNotification])
 
   if (isLoading || profilesLoading) {
     return (
@@ -49,18 +60,19 @@ export default function BrowsePage() {
     let actionSucceeded = false
     try {
       if (direction === 'left') {
-        await dislikeProfile(currentProfile.id)
+        await dislikeProfile(currentProfile.user_id)
         actionSucceeded = true
       } else if (direction === 'right' || direction === 'super') {
-        await likeProfile(currentProfile.id)
+        await likeProfile(currentProfile.user_id)
         actionSucceeded = true
       }
     } catch (err: any) {
-      console.error('Error swiping:', err)
-      if (err.message?.includes('Premium subscription required')) {
+      const errorMessage = err instanceof Error ? err.message : JSON.stringify(err)
+      console.error('Error swiping:', errorMessage)
+      if (errorMessage?.includes('Premium subscription required')) {
         setShowPaywall(true)
       } else {
-        toast.error(err.message || 'Error liking profile')
+        toast.error(errorMessage || 'Error liking profile')
       }
     }
 
@@ -370,6 +382,17 @@ export default function BrowsePage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Like Notification Modal */}
+      {visibleNotification && (
+        <LikeNotification
+          notification={visibleNotification}
+          onDismiss={() => {
+            dismissNotification(visibleNotification.id)
+            setVisibleNotification(null)
+          }}
+        />
       )}
     </main>
   )

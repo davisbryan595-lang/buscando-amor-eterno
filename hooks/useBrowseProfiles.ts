@@ -46,7 +46,7 @@ export function useBrowseProfiles() {
   }
 
   const likeProfile = useCallback(
-    async (profileId: string) => {
+    async (likedUserId: string) => {
       if (!user) throw new Error('No user logged in')
       if (!isPremium) throw new Error('Premium subscription required to like profiles')
 
@@ -55,21 +55,34 @@ export function useBrowseProfiles() {
           .from('likes')
           .insert({
             user_id: user.id,
-            liked_user_id: profileId,
+            liked_user_id: likedUserId,
             status: 'liked',
           })
 
         if (err) throw err
+
+        const currentProfile = profiles.find((p) => p.user_id === user.id)
+        if (currentProfile) {
+          const { error: notifErr } = await supabase.from('notifications').insert({
+            recipient_id: likedUserId,
+            liker_id: user.id,
+            liked_profile_id: currentProfile.id,
+          })
+
+          if (notifErr) {
+            console.error('Error creating notification:', notifErr.message)
+          }
+        }
       } catch (err: any) {
-        console.error('Error liking profile:', err)
+        console.error('Error liking profile:', err instanceof Error ? err.message : JSON.stringify(err))
         throw err
       }
     },
-    [user, isPremium]
+    [user, isPremium, profiles]
   )
 
   const dislikeProfile = useCallback(
-    async (profileId: string) => {
+    async (likedUserId: string) => {
       if (!user) throw new Error('No user logged in')
 
       try {
@@ -77,13 +90,13 @@ export function useBrowseProfiles() {
           .from('likes')
           .insert({
             user_id: user.id,
-            liked_user_id: profileId,
+            liked_user_id: likedUserId,
             status: 'disliked',
           })
 
         if (err) throw err
       } catch (err: any) {
-        console.error('Error disliking profile:', err)
+        console.error('Error disliking profile:', err instanceof Error ? err.message : JSON.stringify(err))
         throw err
       }
     },
@@ -91,7 +104,7 @@ export function useBrowseProfiles() {
   )
 
   const superLikeProfile = useCallback(
-    async (profileId: string) => {
+    async (likedUserId: string) => {
       if (!user) throw new Error('No user logged in')
       if (!isPremium) throw new Error('Premium subscription required to super like profiles')
 
@@ -100,13 +113,13 @@ export function useBrowseProfiles() {
           .from('likes')
           .insert({
             user_id: user.id,
-            liked_user_id: profileId,
+            liked_user_id: likedUserId,
             status: 'liked',
           })
 
         if (err) throw err
       } catch (err: any) {
-        console.error('Error super liking profile:', err)
+        console.error('Error super liking profile:', err instanceof Error ? err.message : JSON.stringify(err))
         throw err
       }
     },
