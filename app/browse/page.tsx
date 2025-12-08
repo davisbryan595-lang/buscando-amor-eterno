@@ -8,6 +8,8 @@ import { useProfileProtection } from '@/hooks/useProfileProtection'
 import { useBrowseProfiles } from '@/hooks/useBrowseProfiles'
 import { useSubscription } from '@/hooks/useSubscription'
 import { useProfile } from '@/hooks/useProfile'
+import { useNotifications } from '@/hooks/useNotifications'
+import { LikeNotification } from '@/components/like-notification'
 import { Heart, X, Star, Info, Loader, Lock, AlertCircle } from 'lucide-react'
 import Image from 'next/image'
 import { toast } from 'sonner'
@@ -18,6 +20,7 @@ export default function BrowsePage() {
   const { profiles, loading: profilesLoading, likeProfile, dislikeProfile, superLikeProfile } = useBrowseProfiles()
   const { isPremium, loading: subLoading } = useSubscription()
   const { profile } = useProfile()
+  const { notifications, dismissNotification } = useNotifications()
 
   const [currentIndex, setCurrentIndex] = useState(0)
   const [showInfo, setShowInfo] = useState(false)
@@ -25,6 +28,7 @@ export default function BrowsePage() {
   const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | 'super' | null>(null)
   const [dragOffset, setDragOffset] = useState(0)
   const [isDragging, setIsDragging] = useState(false)
+  const [visibleNotification, setVisibleNotification] = useState(notifications[0] || null)
 
   if (isLoading || profilesLoading) {
     return (
