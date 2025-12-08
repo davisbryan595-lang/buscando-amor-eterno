@@ -91,13 +91,13 @@ export default function Navigation() {
           ) : isMounted ? (
             <>
               <Link href="/login" className="px-4 py-2 text-foreground hover:text-primary transition">
-                Log in
+                {t('common.logIn')}
               </Link>
               <Link
                 href="/signup"
                 className="px-6 py-2 bg-primary text-white rounded-full hover:bg-rose-700 transition font-semibold"
               >
-                Join for $12/month
+                {t('common.joinForPrice')}
               </Link>
             </>
           ) : null}
