@@ -27,15 +27,7 @@ export default function BrowsePage() {
   const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | 'super' | null>(null)
   const [dragOffset, setDragOffset] = useState(0)
   const [isDragging, setIsDragging] = useState(false)
-  const [visibleNotification, setVisibleNotification] = useState(notifications[0] || null)
   const [isActing, setIsActing] = useState(false)
-
-  // Update visible notification when notifications change
-  React.useEffect(() => {
-    if (notifications.length > 0 && !visibleNotification) {
-      setVisibleNotification(notifications[0])
-    }
-  }, [notifications, visibleNotification])
 
   if (isLoading || profilesLoading) {
     return (
