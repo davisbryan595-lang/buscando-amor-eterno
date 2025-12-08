@@ -63,7 +63,8 @@ export function useBrowseProfiles() {
 
         if (err) throw err
 
-        if (currentProfile) {
+        // Only create notification if user has a profile
+        if (currentProfile && currentProfile.id) {
           const { error: notifErr } = await supabase.from('notifications').insert({
             recipient_id: likedUserId,
             liker_id: user.id,
@@ -71,7 +72,7 @@ export function useBrowseProfiles() {
           })
 
           if (notifErr) {
-            console.error('Error creating notification:', notifErr.message)
+            console.warn('Warning: notification not created:', notifErr.message)
           }
         }
       } catch (err: any) {
