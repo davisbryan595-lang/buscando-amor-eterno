@@ -93,20 +93,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Create user record and free subscription in database
     if (data.user) {
       try {
-        // Create user record
-        await supabase.from('users').insert({
+        // Create user record with upsert to avoid conflicts
+        const { error: userError } = await supabase.from('users').upsert({
           id: data.user.id,
           email: email,
         })
 
-        // Create free subscription
-        await supabase.from('subscriptions').insert({
+        if (userError) {
+          console.error('Error creating user profile:', userError)
+          throw userError
+        }
+
+        // Create free subscription with upsert to avoid conflicts
+        const { error: subError } = await supabase.from('subscriptions').upsert({
           user_id: data.user.id,
           plan: 'free',
           status: 'active',
         })
+
+        if (subError) {
+          console.error('Error creating subscription:', subError)
+          throw subError
+        }
       } catch (err) {
-        console.error('Error creating user profile:', err)
+        console.error('Error in user setup:', err)
+        throw err
       }
     }
   }
