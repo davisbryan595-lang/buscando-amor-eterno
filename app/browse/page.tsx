@@ -56,11 +56,12 @@ export default function BrowsePage() {
         actionSucceeded = true
       }
     } catch (err: any) {
-      console.error('Error swiping:', err)
-      if (err.message?.includes('Premium subscription required')) {
+      const errorMessage = err instanceof Error ? err.message : JSON.stringify(err)
+      console.error('Error swiping:', errorMessage)
+      if (errorMessage?.includes('Premium subscription required')) {
         setShowPaywall(true)
       } else {
-        toast.error(err.message || 'Error liking profile')
+        toast.error(errorMessage || 'Error liking profile')
       }
     }
 
