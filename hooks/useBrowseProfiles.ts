@@ -115,10 +115,12 @@ export function useBrowseProfiles() {
       try {
         const { error: err } = await supabase
           .from('likes')
-          .insert({
+          .upsert({
             user_id: user.id,
             liked_user_id: likedUserId,
             status: 'liked',
+          }, {
+            onConflict: 'user_id,liked_user_id'
           })
 
         if (err) throw err
