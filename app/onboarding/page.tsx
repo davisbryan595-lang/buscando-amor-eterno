@@ -255,7 +255,7 @@ export default function OnboardingPage() {
           <div className="max-w-2xl mx-auto px-4 pb-4">
             <Progress value={progressPercent} className="h-1 rounded-full" />
             <p className="text-xs text-muted-foreground mt-2 text-center">
-              Step {currentStep === 'personality' ? 3 : (typeof currentStep === 'number' && currentStep > 2 ? currentStep + 1 : currentStep)} of {TOTAL_STEPS}
+              Step {stepNumber} of {TOTAL_STEPS}
             </p>
           </div>
         )}
