@@ -383,16 +383,6 @@ export default function BrowsePage() {
         </div>
       )}
 
-      {/* Like Notification Modal */}
-      {visibleNotification && (
-        <LikeNotification
-          notification={visibleNotification}
-          onDismiss={() => {
-            dismissNotification(visibleNotification.id)
-            setVisibleNotification(null)
-          }}
-        />
-      )}
     </main>
   )
 }
