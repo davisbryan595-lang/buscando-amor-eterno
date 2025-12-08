@@ -24,17 +24,17 @@ export default function ChatWindow({ conversation }: { conversation: Conversatio
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    if (conversation?.id) {
-      fetchMessages(conversation.id)
+    if (conversation?.other_user_id) {
+      fetchMessages(conversation.other_user_id)
     }
-  }, [conversation?.id, fetchMessages])
+  }, [conversation?.other_user_id, fetchMessages])
 
   const handleSend = async () => {
     if (!newMessage.trim() || !user) return
 
     try {
       setLoading(true)
-      await sendMessage(conversation.id, newMessage)
+      await sendMessage(conversation.other_user_id, newMessage)
       setNewMessage('')
     } catch (err: any) {
       console.error('Error sending message:', err)
