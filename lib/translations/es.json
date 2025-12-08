@@ -38,7 +38,19 @@
     "sectionDescription": "Parejas reales encontrando su amor eterno",
     "previousStory": "Historia anterior",
     "nextStory": "Siguiente historia",
-    "goToStory": "Ir a la historia"
+    "goToStory": "Ir a la historia",
+    "story1Couple": "María & Carlos",
+    "story1Location": "Barcelona, España",
+    "story1Text": "Se conocieron en Buscando Amor Eterno en marzo. Comprometidos en diciembre. Almas gemelas verdaderas.",
+    "story2Couple": "Sophie & Luis",
+    "story2Location": "Ciudad de México, México",
+    "story2Text": "Se encontraron a través de continentes. Ahora casados por 3 años.",
+    "story3Couple": "Isabella & Marco",
+    "story3Location": "Buenos Aires, Argentina",
+    "story3Text": "Desde el primer mensaje hasta el día de la boda. Nuestra historia de amor eterna.",
+    "story4Couple": "Elena & Diego",
+    "story4Location": "Madrid, España",
+    "story4Text": "Dos años juntos y cada día más fuertes."
   },
   "footer": {
     "tagline": "Encontrando amor eterno en todo el mundo",
