@@ -106,7 +106,7 @@ export function useBrowseProfiles() {
   )
 
   const superLikeProfile = useCallback(
-    async (likedUserId: string) => {
+    async (likedUserId: string, likedProfileId?: string) => {
       if (!user) throw new Error('No user logged in')
       if (!isPremium) throw new Error('Premium subscription required to super like profiles')
 
@@ -120,6 +120,19 @@ export function useBrowseProfiles() {
           })
 
         if (err) throw err
+
+        // Only create notification if we have the liked profile ID
+        if (likedProfileId) {
+          const { error: notifErr } = await supabase.from('notifications').insert({
+            recipient_id: likedUserId,
+            liker_id: user.id,
+            liked_profile_id: likedProfileId,
+          })
+
+          if (notifErr) {
+            console.warn('Warning: notification not created:', notifErr.message)
+          }
+        }
       } catch (err: any) {
         console.error('Error super liking profile:', err instanceof Error ? err.message : JSON.stringify(err))
         throw err
