@@ -29,6 +29,7 @@ export default function BrowsePage() {
   const [dragOffset, setDragOffset] = useState(0)
   const [isDragging, setIsDragging] = useState(false)
   const [visibleNotification, setVisibleNotification] = useState(notifications[0] || null)
+  const [isActing, setIsActing] = useState(false)
 
   // Update visible notification when notifications change
   React.useEffect(() => {
