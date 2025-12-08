@@ -44,6 +44,36 @@ export function useProfile() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  const fetchProfile = useCallback(async () => {
+    if (!user) return
+
+    try {
+      setLoading(true)
+
+      const { data, error: err } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', user.id)
+        .single()
+
+      if (err && err.code !== 'PGRST116') {
+        throw err
+      }
+
+      if (data) {
+        setProfile(data as ProfileData)
+      } else {
+        setProfile(null)
+      }
+      setError(null)
+    } catch (err: any) {
+      setError(err.message)
+      console.error('Error fetching profile:', err)
+    } finally {
+      setLoading(false)
+    }
+  }, [user])
+
   useEffect(() => {
     if (!user) {
       setLoading(false)
@@ -53,7 +83,7 @@ export function useProfile() {
     let isMounted = true
     let timeoutId: NodeJS.Timeout | null = null
 
-    const fetchProfile = async () => {
+    const fetchWithTimeout = async () => {
       try {
         setLoading(true)
 
@@ -100,7 +130,7 @@ export function useProfile() {
       }
     }
 
-    fetchProfile()
+    fetchWithTimeout()
 
     return () => {
       isMounted = false
