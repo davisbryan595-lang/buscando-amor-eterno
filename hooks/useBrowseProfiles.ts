@@ -46,7 +46,7 @@ export function useBrowseProfiles() {
   }
 
   const likeProfile = useCallback(
-    async (profileId: string) => {
+    async (likedUserId: string) => {
       if (!user) throw new Error('No user logged in')
       if (!isPremium) throw new Error('Premium subscription required to like profiles')
 
@@ -55,7 +55,7 @@ export function useBrowseProfiles() {
           .from('likes')
           .insert({
             user_id: user.id,
-            liked_user_id: profileId,
+            liked_user_id: likedUserId,
             status: 'liked',
           })
 
@@ -69,7 +69,7 @@ export function useBrowseProfiles() {
   )
 
   const dislikeProfile = useCallback(
-    async (profileId: string) => {
+    async (likedUserId: string) => {
       if (!user) throw new Error('No user logged in')
 
       try {
@@ -77,7 +77,7 @@ export function useBrowseProfiles() {
           .from('likes')
           .insert({
             user_id: user.id,
-            liked_user_id: profileId,
+            liked_user_id: likedUserId,
             status: 'disliked',
           })
 
@@ -91,7 +91,7 @@ export function useBrowseProfiles() {
   )
 
   const superLikeProfile = useCallback(
-    async (profileId: string) => {
+    async (likedUserId: string) => {
       if (!user) throw new Error('No user logged in')
       if (!isPremium) throw new Error('Premium subscription required to super like profiles')
 
@@ -100,7 +100,7 @@ export function useBrowseProfiles() {
           .from('likes')
           .insert({
             user_id: user.id,
-            liked_user_id: profileId,
+            liked_user_id: likedUserId,
             status: 'liked',
           })
 
