@@ -26,7 +26,26 @@ export function useNotifications() {
     }
 
     fetchNotifications()
-    subscribeToNotifications()
+
+    const subscription = supabase
+      .channel(`notifications:${user.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'notifications',
+          filter: `recipient_id.eq.${user.id}`,
+        },
+        (payload) => {
+          fetchNotifications()
+        }
+      )
+      .subscribe()
+
+    return () => {
+      subscription.unsubscribe()
+    }
   }, [user])
 
   const fetchNotifications = async () => {
@@ -71,30 +90,6 @@ export function useNotifications() {
       console.error('Error fetching notifications:', err)
     } finally {
       setLoading(false)
-    }
-  }
-
-  const subscribeToNotifications = () => {
-    if (!user) return
-
-    const subscription = supabase
-      .channel(`notifications:${user.id}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'notifications',
-          filter: `recipient_id.eq.${user.id}`,
-        },
-        (payload) => {
-          fetchNotifications()
-        }
-      )
-      .subscribe()
-
-    return () => {
-      subscription.unsubscribe()
     }
   }
 
