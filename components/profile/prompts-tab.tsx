@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useMemo } from 'react'
 import { useLanguage } from '@/lib/i18n-context'
 import { useProfile, ProfileData } from '@/hooks/useProfile'
 import { Button } from '@/components/ui/button'
@@ -18,6 +18,37 @@ import { toast } from 'sonner'
 
 const MAX_CHAR = 150
 const MIN_CHAR = 20
+
+const PromptField = ({
+  label,
+  value,
+  onChange,
+  error,
+}: {
+  label: string
+  value: string
+  onChange: (v: string) => void
+  error?: string
+}) => (
+  <div className="space-y-2">
+    <Label>{label}</Label>
+    <Textarea
+      placeholder="Type your answer..."
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      maxLength={MAX_CHAR}
+      className={`px-4 py-3 rounded-2xl min-h-[100px] resize-none ${
+        error ? 'border-destructive' : 'border-secondary'
+      }`}
+    />
+    <div className="flex items-center justify-between text-xs">
+      <span className={value.length < MIN_CHAR ? 'text-destructive' : 'text-muted-foreground'}>
+        {value.length}/{MAX_CHAR}
+      </span>
+      {error && <span className="text-destructive text-xs">{error}</span>}
+    </div>
+  </div>
+)
 
 interface PromptsTabProps {
   profile: ProfileData
@@ -37,9 +68,8 @@ export function ProfilePromptsTab({ profile, onUpdate }: PromptsTabProps) {
   const [prompt6, setPrompt6] = useState(profile.prompt_6 || '')
   const [relationshipType, setRelationshipType] = useState(profile.relationship_type || '')
   const [saving, setSaving] = useState(false)
-  const [errors, setErrors] = useState<Record<string, string>>({})
 
-  const validateForm = () => {
+  const errors = useMemo(() => {
     const newErrors: Record<string, string> = {}
 
     const prompts = [
@@ -52,17 +82,21 @@ export function ProfilePromptsTab({ profile, onUpdate }: PromptsTabProps) {
     ]
 
     prompts.forEach((p) => {
-      if (!p.value.trim() || p.value.trim().length < MIN_CHAR) {
+      const trimmed = p.value.trim()
+      if (!trimmed) {
+        newErrors[p.key] = t('onboarding.step5.required')
+      } else if (trimmed.length < MIN_CHAR) {
         newErrors[p.key] = t('onboarding.step5.minChars')
       }
     })
 
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
+    return newErrors
+  }, [prompt1, prompt2, prompt3, prompt4, prompt5, prompt6, t])
+
+  const isFormValid = Object.keys(errors).length === 0
 
   const handleSave = async () => {
-    if (!validateForm()) return
+    if (!isFormValid) return
 
     setSaving(true)
     try {
@@ -84,37 +118,6 @@ export function ProfilePromptsTab({ profile, onUpdate }: PromptsTabProps) {
       setSaving(false)
     }
   }
-
-  const PromptField = ({
-    label,
-    value,
-    onChange,
-    error,
-  }: {
-    label: string
-    value: string
-    onChange: (v: string) => void
-    error?: string
-  }) => (
-    <div className="space-y-2">
-      <Label>{label}</Label>
-      <Textarea
-        placeholder="Type your answer..."
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        maxLength={MAX_CHAR}
-        className={`px-4 py-3 rounded-2xl min-h-[100px] resize-none ${
-          error ? 'border-destructive' : 'border-secondary'
-        }`}
-      />
-      <div className="flex items-center justify-between text-xs">
-        <span className={value.length < MIN_CHAR ? 'text-destructive' : 'text-muted-foreground'}>
-          {value.length}/{MAX_CHAR}
-        </span>
-        {error && <span className="text-destructive">{error}</span>}
-      </div>
-    </div>
-  )
 
   return (
     <div className="space-y-6">
@@ -186,9 +189,9 @@ export function ProfilePromptsTab({ profile, onUpdate }: PromptsTabProps) {
 
       <Button
         onClick={handleSave}
-        disabled={saving}
+        disabled={saving || !isFormValid}
         size="lg"
-        className="w-full rounded-full bg-primary text-white hover:bg-rose-700 font-semibold py-6"
+        className="w-full rounded-full bg-primary text-white hover:bg-rose-700 font-semibold py-6 disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {saving && <Loader className="animate-spin mr-2" size={20} />}
         {t('profile.save')}
