@@ -1,10 +1,12 @@
 'use client'
 
-import React from 'react'
+import React, { useState } from 'react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Heart, X } from 'lucide-react'
+import { useMessages } from '@/hooks/useMessages'
+import { toast } from 'sonner'
 
 interface LikeNotificationProps {
   notification: {
@@ -18,10 +20,21 @@ interface LikeNotificationProps {
 
 export function LikeNotification({ notification, onDismiss }: LikeNotificationProps) {
   const router = useRouter()
+  const { initiateConversation } = useMessages()
+  const [isLoading, setIsLoading] = useState(false)
 
-  const handleStartConversation = () => {
-    onDismiss()
-    router.push(`/messages?user=${notification.liker_id}`)
+  const handleStartConversation = async () => {
+    setIsLoading(true)
+    try {
+      await initiateConversation(notification.liker_id)
+      onDismiss()
+      router.push(`/messages?user=${notification.liker_id}`)
+      toast.success('Conversation started!')
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to start conversation')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -66,15 +79,17 @@ export function LikeNotification({ notification, onDismiss }: LikeNotificationPr
         <div className="space-y-3">
           <Button
             onClick={handleStartConversation}
-            className="w-full py-3 bg-primary text-white rounded-full font-semibold hover:bg-rose-700 transition"
+            disabled={isLoading}
+            className="w-full py-3 bg-primary text-white rounded-full font-semibold hover:bg-rose-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Start Conversation
+            {isLoading ? 'Starting...' : 'Start Conversation'}
           </Button>
 
           <Button
             onClick={onDismiss}
+            disabled={isLoading}
             variant="outline"
-            className="w-full py-3 border-2 border-slate-300 text-slate-700 rounded-full font-semibold hover:bg-slate-50 transition"
+            className="w-full py-3 border-2 border-slate-300 text-slate-700 rounded-full font-semibold hover:bg-slate-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Not Now
           </Button>

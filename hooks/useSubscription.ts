@@ -29,7 +29,67 @@ export function useSubscription() {
       return
     }
 
-    fetchSubscription()
+    let isMounted = true
+    let timeoutId: NodeJS.Timeout | null = null
+
+    const fetchWithTimeout = async () => {
+      try {
+        setLoading(true)
+
+        // Set a timeout to prevent hanging
+        timeoutId = setTimeout(() => {
+          if (isMounted) {
+            setLoading(false)
+            setError('Subscription fetch timed out')
+            setSubscription(null)
+            setIsPremium(false)
+          }
+        }, 10000)
+
+        const { data, error: err } = await supabase
+          .from('subscriptions')
+          .select('*')
+          .eq('user_id', user.id)
+          .single()
+
+        if (timeoutId) clearTimeout(timeoutId)
+
+        if (!isMounted) return
+
+        if (err && err.code !== 'PGRST116') {
+          throw err
+        }
+
+        if (data) {
+          setSubscription(data as SubscriptionData)
+          setIsPremium(data.plan === 'premium' && data.status === 'active')
+        } else {
+          setSubscription(null)
+          setIsPremium(false)
+        }
+        setError(null)
+      } catch (err: any) {
+        if (timeoutId) clearTimeout(timeoutId)
+        if (isMounted) {
+          setError(err.message)
+          console.error('Error fetching subscription:', err)
+          setSubscription(null)
+          setIsPremium(false)
+        }
+      } finally {
+        if (timeoutId) clearTimeout(timeoutId)
+        if (isMounted) {
+          setLoading(false)
+        }
+      }
+    }
+
+    fetchWithTimeout()
+
+    return () => {
+      isMounted = false
+      if (timeoutId) clearTimeout(timeoutId)
+    }
   }, [user])
 
   const fetchSubscription = async () => {

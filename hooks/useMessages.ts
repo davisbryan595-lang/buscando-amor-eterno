@@ -39,7 +39,13 @@ export function useMessages() {
     }
 
     fetchConversations()
-    subscribeToMessages()
+    const unsubscribe = subscribeToMessages()
+
+    return () => {
+      if (unsubscribe) {
+        unsubscribe()
+      }
+    }
   }, [user])
 
   const fetchConversations = async () => {
@@ -84,25 +90,65 @@ export function useMessages() {
   const subscribeToMessages = () => {
     if (!user) return
 
-    const subscription = supabase
-      .channel(`messages:${user.id}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'messages',
-          filter: `or(sender_id.eq.${user.id},recipient_id.eq.${user.id})`,
-        },
-        (payload) => {
-          setMessages((prev) => [payload.new as Message, ...prev])
-          fetchConversations()
-        }
-      )
-      .subscribe()
+    let pollInterval: ReturnType<typeof setInterval> | null = null
+    let isMounted = true
 
-    return () => {
-      subscription.unsubscribe()
+    try {
+      const subscription = supabase
+        .channel(`messages:${user.id}`)
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'messages',
+            filter: `or(sender_id.eq.${user.id},recipient_id.eq.${user.id})`,
+          },
+          (payload) => {
+            if (isMounted) {
+              setMessages((prev) => [payload.new as Message, ...prev])
+              fetchConversations()
+            }
+          }
+        )
+        .subscribe((status) => {
+          if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+            console.warn('Message subscription error:', status)
+            // Fall back to polling if realtime fails
+            if (!pollInterval) {
+              pollInterval = setInterval(() => {
+                if (isMounted) {
+                  fetchConversations()
+                }
+              }, 5000)
+            }
+          }
+        })
+
+      return () => {
+        isMounted = false
+        subscription.unsubscribe()
+        if (pollInterval) {
+          clearInterval(pollInterval)
+        }
+      }
+    } catch (err) {
+      console.warn('Failed to setup message subscription:', err)
+      // Fall back to polling
+      if (!pollInterval) {
+        pollInterval = setInterval(() => {
+          if (isMounted) {
+            fetchConversations()
+          }
+        }, 5000)
+      }
+
+      return () => {
+        isMounted = false
+        if (pollInterval) {
+          clearInterval(pollInterval)
+        }
+      }
     }
   }
 
@@ -175,6 +221,52 @@ export function useMessages() {
     []
   )
 
+  const initiateConversation = useCallback(
+    async (otherUserId: string) => {
+      if (!user) throw new Error('No user logged in')
+
+      try {
+        // Check if conversation already exists
+        const existingConv = conversations.find((c) => c.other_user_id === otherUserId)
+        if (existingConv) {
+          return existingConv
+        }
+
+        // Create a system message to establish the conversation
+        const { error: msgErr } = await supabase
+          .from('messages')
+          .insert({
+            sender_id: user.id,
+            recipient_id: otherUserId,
+            content: '👋 Conversation started',
+            read: false,
+          })
+
+        if (msgErr) throw msgErr
+
+        // Fetch updated conversations
+        await fetchConversations()
+
+        return {
+          id: otherUserId,
+          user_id: user.id,
+          other_user_id: otherUserId,
+          other_user_name: null,
+          other_user_image: null,
+          last_message: '👋 Conversation started',
+          last_message_time: new Date().toISOString(),
+          is_online: false,
+          unread_count: 0,
+        }
+      } catch (err: any) {
+        setError(err.message)
+        console.error('Error initiating conversation:', err)
+        throw err
+      }
+    },
+    [user, conversations, fetchConversations]
+  )
+
   return {
     conversations,
     messages,
@@ -184,5 +276,6 @@ export function useMessages() {
     fetchMessages,
     sendMessage,
     markAsRead,
+    initiateConversation,
   }
 }

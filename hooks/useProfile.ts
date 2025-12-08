@@ -44,20 +44,12 @@ export function useProfile() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    if (!user) {
-      setLoading(false)
-      return
-    }
-
-    fetchProfile()
-  }, [user])
-
-  const fetchProfile = async () => {
+  const fetchProfile = useCallback(async () => {
     if (!user) return
 
     try {
       setLoading(true)
+
       const { data, error: err } = await supabase
         .from('profiles')
         .select('*')
@@ -80,7 +72,71 @@ export function useProfile() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [user])
+
+  useEffect(() => {
+    if (!user) {
+      setLoading(false)
+      return
+    }
+
+    let isMounted = true
+    let timeoutId: NodeJS.Timeout | null = null
+
+    const fetchWithTimeout = async () => {
+      try {
+        setLoading(true)
+
+        // Set a timeout to prevent hanging
+        timeoutId = setTimeout(() => {
+          if (isMounted) {
+            setLoading(false)
+            setError('Profile fetch timed out')
+            setProfile(null)
+          }
+        }, 10000)
+
+        const { data, error: err } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('user_id', user.id)
+          .single()
+
+        if (timeoutId) clearTimeout(timeoutId)
+
+        if (!isMounted) return
+
+        if (err && err.code !== 'PGRST116') {
+          throw err
+        }
+
+        if (data) {
+          setProfile(data as ProfileData)
+        } else {
+          setProfile(null)
+        }
+        setError(null)
+      } catch (err: any) {
+        if (timeoutId) clearTimeout(timeoutId)
+        if (isMounted) {
+          setError(err.message)
+          console.error('Error fetching profile:', err)
+        }
+      } finally {
+        if (timeoutId) clearTimeout(timeoutId)
+        if (isMounted) {
+          setLoading(false)
+        }
+      }
+    }
+
+    fetchWithTimeout()
+
+    return () => {
+      isMounted = false
+      if (timeoutId) clearTimeout(timeoutId)
+    }
+  }, [user])
 
   const createProfile = useCallback(
     async (data: Partial<ProfileData>) => {

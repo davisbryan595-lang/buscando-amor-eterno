@@ -8,6 +8,25 @@ import { useMessages } from '@/hooks/useMessages'
 import { useAuth } from '@/context/auth-context'
 import { toast } from 'sonner'
 
+const getLastSeenText = (timestamp?: string): string => {
+  if (!timestamp) return 'Offline'
+
+  const date = new Date(timestamp)
+  const now = new Date()
+  const diffMs = now.getTime() - date.getTime()
+  const diffMins = Math.floor(diffMs / 60000)
+  const diffHours = Math.floor(diffMs / 3600000)
+  const diffDays = Math.floor(diffMs / 86400000)
+
+  if (diffMins < 1) return 'Just now'
+  if (diffMins < 60) return `${diffMins}m ago`
+  if (diffHours < 24) return `${diffHours}h ago`
+  if (diffDays === 1) return 'Yesterday'
+  if (diffDays < 7) return `${diffDays}d ago`
+
+  return date.toLocaleDateString()
+}
+
 interface Conversation {
   id: string
   other_user_id: string
@@ -15,6 +34,7 @@ interface Conversation {
   other_user_image: string | null
   last_message: string
   is_online: boolean
+  last_message_time?: string
 }
 
 export default function ChatWindow({ conversation }: { conversation: Conversation }) {
@@ -22,19 +42,44 @@ export default function ChatWindow({ conversation }: { conversation: Conversatio
   const { messages, sendMessage, markAsRead, fetchMessages } = useMessages()
   const [newMessage, setNewMessage] = useState('')
   const [loading, setLoading] = useState(false)
+  const [otherUserDetails, setOtherUserDetails] = useState<{ name: string; image: string | null } | null>(null)
 
   useEffect(() => {
-    if (conversation?.id) {
-      fetchMessages(conversation.id)
+    if (conversation?.other_user_id) {
+      fetchMessages(conversation.other_user_id)
+
+      // Fetch full user details if not available in conversation
+      if (!conversation.other_user_name || !conversation.other_user_image) {
+        const { supabase } = require('@/lib/supabase')
+        const fetchUserDetails = async () => {
+          try {
+            const { data } = await supabase
+              .from('profiles')
+              .select('full_name, photos, main_photo_index')
+              .eq('user_id', conversation.other_user_id)
+              .single()
+
+            if (data) {
+              setOtherUserDetails({
+                name: data.full_name,
+                image: data.photos?.[data.main_photo_index || 0] || null,
+              })
+            }
+          } catch (err) {
+            console.error('Error fetching user details:', err)
+          }
+        }
+        fetchUserDetails()
+      }
     }
-  }, [conversation?.id, fetchMessages])
+  }, [conversation?.other_user_id, fetchMessages, conversation.other_user_name, conversation.other_user_image])
 
   const handleSend = async () => {
     if (!newMessage.trim() || !user) return
 
     try {
       setLoading(true)
-      await sendMessage(conversation.id, newMessage)
+      await sendMessage(conversation.other_user_id, newMessage)
       setNewMessage('')
     } catch (err: any) {
       console.error('Error sending message:', err)
@@ -51,8 +96,8 @@ export default function ChatWindow({ conversation }: { conversation: Conversatio
         <div className="flex items-center gap-3">
           <div className="relative w-12 h-12">
             <Image
-              src={conversation.other_user_image || "/placeholder.svg"}
-              alt={conversation.other_user_name || 'User'}
+              src={otherUserDetails?.image || conversation.other_user_image || "/placeholder.svg"}
+              alt={otherUserDetails?.name || conversation.other_user_name || 'User'}
               fill
               className="rounded-full object-cover"
             />
@@ -61,9 +106,9 @@ export default function ChatWindow({ conversation }: { conversation: Conversatio
             )}
           </div>
           <div>
-            <p className="font-semibold text-slate-900">{conversation.other_user_name || 'User'}</p>
+            <p className="font-semibold text-slate-900">{otherUserDetails?.name || conversation.other_user_name || 'User'}</p>
             <p className="text-sm text-slate-600">
-              {conversation.is_online ? 'Online' : 'Offline'}
+              {conversation.is_online ? 'Online' : getLastSeenText(conversation.last_message_time)}
             </p>
           </div>
         </div>

@@ -5,14 +5,18 @@ import Link from 'next/link'
 import { Menu, X, Bell, Globe } from 'lucide-react'
 import { useLanguage } from '@/lib/i18n-context'
 import { useAuth } from '@/context/auth-context'
+import { useNotifications } from '@/hooks/useNotifications'
 import { AccountMenu } from '@/components/account-menu'
+import { NotificationsDropdown } from '@/components/notifications-dropdown'
 
 export default function Navigation() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [langDropdown, setLangDropdown] = useState(false)
+  const [notificationsOpen, setNotificationsOpen] = useState(false)
   const [isMounted, setIsMounted] = useState(false)
   const { language, setLanguage, t } = useLanguage()
   const { user } = useAuth()
+  const { notifications, dismissNotification } = useNotifications()
 
   React.useEffect(() => {
     setIsMounted(true)
@@ -24,6 +28,10 @@ export default function Navigation() {
         window.OneSignal.showSlidedownPrompt();
       });
     }
+  }
+
+  const handleNotificationDismiss = (id: string) => {
+    dismissNotification(id)
   }
 
   const handleLanguageChange = (lang: 'en' | 'es') => {
@@ -51,13 +59,26 @@ export default function Navigation() {
           <Link href="/messages" className="text-foreground hover:text-primary transition">{t('common.messages')}</Link>
           <Link href="/chat-room" className="text-foreground hover:text-primary transition">{t('common.lounge')}</Link>
 
-          <button
-            onClick={toggleOneSignal}
-            className="p-2 hover:bg-rose-50 rounded-full transition"
-            aria-label="Notifications"
-          >
-            <Bell size={20} className="text-primary" />
-          </button>
+          <div className="relative">
+            <button
+              onClick={() => setNotificationsOpen(!notificationsOpen)}
+              className="p-2 hover:bg-rose-50 rounded-full transition relative"
+              aria-label="Notifications"
+            >
+              <Bell size={20} className="text-primary" />
+              {notifications.length > 0 && (
+                <span className="absolute top-1 right-1 bg-rose-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-semibold">
+                  {notifications.length > 9 ? '9+' : notifications.length}
+                </span>
+              )}
+            </button>
+            {notificationsOpen && (
+              <NotificationsDropdown
+                notifications={notifications}
+                onDismiss={handleNotificationDismiss}
+              />
+            )}
+          </div>
 
           <div className="relative">
             <button
@@ -105,12 +126,25 @@ export default function Navigation() {
 
         {/* Mobile Menu Button */}
         <div className="md:hidden flex items-center gap-4">
-          <button
-            onClick={toggleOneSignal}
-            className="p-2 hover:bg-rose-50 rounded-full transition"
-          >
-            <Bell size={20} className="text-primary" />
-          </button>
+          <div className="relative">
+            <button
+              onClick={() => setNotificationsOpen(!notificationsOpen)}
+              className="p-2 hover:bg-rose-50 rounded-full transition relative"
+            >
+              <Bell size={20} className="text-primary" />
+              {notifications.length > 0 && (
+                <span className="absolute top-1 right-1 bg-rose-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-semibold">
+                  {notifications.length > 9 ? '9+' : notifications.length}
+                </span>
+              )}
+            </button>
+            {notificationsOpen && (
+              <NotificationsDropdown
+                notifications={notifications}
+                onDismiss={handleNotificationDismiss}
+              />
+            )}
+          </div>
           <div className="relative">
             <button
               onClick={() => setLangDropdown(!langDropdown)}

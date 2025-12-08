@@ -9,7 +9,6 @@ import { useBrowseProfiles } from '@/hooks/useBrowseProfiles'
 import { useSubscription } from '@/hooks/useSubscription'
 import { useProfile } from '@/hooks/useProfile'
 import { useNotifications } from '@/hooks/useNotifications'
-import { LikeNotification } from '@/components/like-notification'
 import { Heart, X, Star, Info, Loader, Lock, AlertCircle } from 'lucide-react'
 import Image from 'next/image'
 import { toast } from 'sonner'
@@ -28,14 +27,7 @@ export default function BrowsePage() {
   const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | 'super' | null>(null)
   const [dragOffset, setDragOffset] = useState(0)
   const [isDragging, setIsDragging] = useState(false)
-  const [visibleNotification, setVisibleNotification] = useState(notifications[0] || null)
-
-  // Update visible notification when notifications change
-  React.useEffect(() => {
-    if (notifications.length > 0 && !visibleNotification) {
-      setVisibleNotification(notifications[0])
-    }
-  }, [notifications, visibleNotification])
+  const [isActing, setIsActing] = useState(false)
 
   if (isLoading || profilesLoading) {
     return (
@@ -49,7 +41,7 @@ export default function BrowsePage() {
   const hasMoreProfiles = currentIndex < profiles.length - 1
 
   const handleSwipe = async (direction: 'left' | 'right' | 'super') => {
-    if (!currentProfile) return
+    if (!currentProfile || isActing) return
 
     // Check if trying to like without premium
     if ((direction === 'right' || direction === 'super') && !isPremium) {
@@ -57,13 +49,14 @@ export default function BrowsePage() {
       return
     }
 
+    setIsActing(true)
     let actionSucceeded = false
     try {
       if (direction === 'left') {
         await dislikeProfile(currentProfile.user_id)
         actionSucceeded = true
       } else if (direction === 'right' || direction === 'super') {
-        await likeProfile(currentProfile.user_id)
+        await likeProfile(currentProfile.user_id, currentProfile.id)
         actionSucceeded = true
       }
     } catch (err: any) {
@@ -85,7 +78,10 @@ export default function BrowsePage() {
         }
         setSwipeDirection(null)
         setShowInfo(false)
+        setIsActing(false)
       }, 300)
+    } else {
+      setIsActing(false)
     }
   }
 
@@ -299,23 +295,26 @@ export default function BrowsePage() {
           <div className="flex items-center justify-center gap-6">
             <button
               onClick={() => handleSwipe('left')}
-              className="w-16 h-16 bg-white rounded-full shadow-lg flex items-center justify-center hover:scale-110 transition-transform active:scale-95"
+              disabled={isActing}
+              className="w-16 h-16 bg-white rounded-full shadow-lg flex items-center justify-center hover:scale-110 transition-transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
               aria-label="Pass"
             >
               <X className="w-8 h-8 text-rose-700" />
             </button>
-            
+
             <button
               onClick={() => handleSwipe('super')}
-              className="w-14 h-14 bg-white rounded-full shadow-lg flex items-center justify-center hover:scale-110 transition-transform active:scale-95"
+              disabled={isActing}
+              className="w-14 h-14 bg-white rounded-full shadow-lg flex items-center justify-center hover:scale-110 transition-transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
               aria-label="Super Like"
             >
               <Star className="w-6 h-6 text-blue-500 fill-blue-500" />
             </button>
-            
+
             <button
               onClick={() => handleSwipe('right')}
-              className="w-16 h-16 bg-rose-700 rounded-full shadow-lg flex items-center justify-center hover:scale-110 transition-transform active:scale-95"
+              disabled={isActing}
+              className="w-16 h-16 bg-rose-700 rounded-full shadow-lg flex items-center justify-center hover:scale-110 transition-transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
               aria-label="Like"
             >
               <Heart className="w-8 h-8 text-white fill-white" />
@@ -384,16 +383,6 @@ export default function BrowsePage() {
         </div>
       )}
 
-      {/* Like Notification Modal */}
-      {visibleNotification && (
-        <LikeNotification
-          notification={visibleNotification}
-          onDismiss={() => {
-            dismissNotification(visibleNotification.id)
-            setVisibleNotification(null)
-          }}
-        />
-      )}
     </main>
   )
 }
