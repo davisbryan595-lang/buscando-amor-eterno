@@ -50,7 +50,7 @@ export default function BrowsePage() {
   const hasMoreProfiles = currentIndex < profiles.length - 1
 
   const handleSwipe = async (direction: 'left' | 'right' | 'super') => {
-    if (!currentProfile) return
+    if (!currentProfile || isActing) return
 
     // Check if trying to like without premium
     if ((direction === 'right' || direction === 'super') && !isPremium) {
@@ -58,6 +58,7 @@ export default function BrowsePage() {
       return
     }
 
+    setIsActing(true)
     let actionSucceeded = false
     try {
       if (direction === 'left') {
@@ -86,7 +87,10 @@ export default function BrowsePage() {
         }
         setSwipeDirection(null)
         setShowInfo(false)
+        setIsActing(false)
       }, 300)
+    } else {
+      setIsActing(false)
     }
   }
 
