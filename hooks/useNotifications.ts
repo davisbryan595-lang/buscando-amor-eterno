@@ -41,7 +41,11 @@ export function useNotifications() {
           fetchNotifications()
         }
       )
-      .subscribe()
+      .subscribe((status) => {
+        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+          console.error('Notification subscription error:', status)
+        }
+      })
 
     return () => {
       subscription.unsubscribe()
