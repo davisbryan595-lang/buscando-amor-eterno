@@ -1,4 +1,55 @@
 {
+  "common": {
+    "home": "Home",
+    "browse": "Browse",
+    "pricing": "Pricing",
+    "messages": "Messages",
+    "lounge": "Lounge",
+    "logIn": "Log in",
+    "joinForPrice": "Join for $12/month",
+    "browseProfiles": "Browse Profiles"
+  },
+  "hero": {
+    "title": "Buscando Amor Eterno",
+    "subtitle": "Find Your Soulmate",
+    "description": "Nearly 50% of the world is single. You deserve eternal love. Join our premium soulmate dating platform with profiles, messaging, and video chat.",
+    "membersWorldwide": "Members Worldwide",
+    "matchesMade": "Matches Made",
+    "countries": "Countries"
+  },
+  "features": {
+    "sectionTitle": "Why Choose Buscando Amor Eterno",
+    "sectionDescription": "The platform designed to help you find your soulmate",
+    "smartMatching": "Smart Matching",
+    "smartMatchingDesc": "Our algorithm finds compatible partners based on your values and interests.",
+    "realConversations": "Real Conversations",
+    "realConversationsDesc": "Chat with matches instantly and build meaningful connections.",
+    "videoDates": "Video Dates",
+    "videoDatesDesc": "Meet face-to-face virtually before deciding to meet in person.",
+    "globalCommunity": "Global Community",
+    "globalCommunityDesc": "Connect with singles from over 100 countries worldwide.",
+    "verifiedProfiles": "Verified Profiles",
+    "verifiedProfilesDesc": "All members are verified to ensure authenticity and safety.",
+    "instantNotifications": "Instant Notifications",
+    "instantNotificationsDesc": "Never miss a message with real-time notifications."
+  },
+  "stories": {
+    "sectionTitle": "Love Stories",
+    "sectionDescription": "Real couples finding their eternal love",
+    "previousStory": "Previous story",
+    "nextStory": "Next story",
+    "goToStory": "Go to story"
+  },
+  "footer": {
+    "tagline": "Finding eternal love worldwide",
+    "platform": "Platform",
+    "legal": "Legal",
+    "privacy": "Privacy",
+    "terms": "Terms",
+    "safety": "Safety",
+    "contact": "Contact",
+    "copyright": "© 2025 Buscando Amor Eterno. All rights reserved with ♥"
+  },
   "onboarding": {
     "progress": "Step {{current}} of {{total}}",
     "skipForNow": "Skip for now",
