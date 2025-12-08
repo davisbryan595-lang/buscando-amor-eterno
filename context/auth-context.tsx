@@ -50,25 +50,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if ((event === 'SIGNED_IN' || event === 'USER_UPDATED') && sessionData?.user) {
           try {
             // Check if user record exists
-            const { data: existingUser } = await supabase
+            const { data: existingUser, error: checkError } = await supabase
               .from('users')
               .select('id')
               .eq('id', sessionData.user.id)
-              .single()
+              .maybeSingle()
+
+            if (checkError && checkError.code !== 'PGRST116') {
+              throw checkError
+            }
 
             if (!existingUser) {
               // Create user record
-              await supabase.from('users').insert({
+              const { error: userError } = await supabase.from('users').insert({
                 id: sessionData.user.id,
                 email: sessionData.user.email || '',
               })
 
+              if (userError) throw userError
+
               // Create free subscription
-              await supabase.from('subscriptions').insert({
+              const { error: subError } = await supabase.from('subscriptions').insert({
                 user_id: sessionData.user.id,
                 plan: 'free',
                 status: 'active',
               })
+
+              if (subError) throw subError
             }
           } catch (err) {
             console.error('Error creating user profile:', err)
