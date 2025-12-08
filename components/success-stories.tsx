@@ -3,39 +3,41 @@
 import React, { useState } from 'react'
 import { ChevronLeft, ChevronRight, Heart } from 'lucide-react'
 import Image from 'next/image'
+import { useLanguage } from '@/lib/i18n-context'
 
 const stories = [
   {
     id: 1,
-    couple: 'Maria & Carlos',
-    location: 'Barcelona, Spain',
-    story: 'Met on Buscando Amor Eterno in March. Engaged in December. True soulmates.',
+    coupleKey: 'Maria & Carlos',
+    locationKey: 'Barcelona, Spain',
+    storyKey: 'Met on Buscando Amor Eterno in March. Engaged in December. True soulmates.',
     image: '/happy-couple-wedding-day-love.jpg',
   },
   {
     id: 2,
-    couple: 'Sophie & Luis',
-    location: 'Mexico City, Mexico',
-    story: 'Found each other across continents. Now married for 3 years.',
+    coupleKey: 'Sophie & Luis',
+    locationKey: 'Mexico City, Mexico',
+    storyKey: 'Found each other across continents. Now married for 3 years.',
     image: '/romantic-couple-dinner-date.jpg',
   },
   {
     id: 3,
-    couple: 'Isabella & Marco',
-    location: 'Buenos Aires, Argentina',
-    story: 'From first message to wedding day. Our forever love story.',
+    coupleKey: 'Isabella & Marco',
+    locationKey: 'Buenos Aires, Argentina',
+    storyKey: 'From first message to wedding day. Our forever love story.',
     image: '/couple-hugging-sunset-beach.jpg',
   },
   {
     id: 4,
-    couple: 'Elena & Diego',
-    location: 'Madrid, Spain',
-    story: 'Two years together and growing stronger every day.',
+    coupleKey: 'Elena & Diego',
+    locationKey: 'Madrid, Spain',
+    storyKey: 'Two years together and growing stronger every day.',
     image: '/couple-laughing-park-happy.jpg',
   },
 ]
 
 export default function SuccessStories() {
+  const { t } = useLanguage()
   const [currentIndex, setCurrentIndex] = useState(0)
 
   const next = () => {
