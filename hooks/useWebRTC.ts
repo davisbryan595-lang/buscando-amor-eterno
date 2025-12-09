@@ -227,8 +227,9 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
     })
 
     call.on('error', (err: any) => {
-      console.error('Call error:', err)
-      setError(err.message)
+      const errorMessage = err?.message || (typeof err === 'string' ? err : 'Call error')
+      console.error('Call error:', errorMessage, err)
+      setError(errorMessage)
       endCall()
     })
   }, [endCall])
