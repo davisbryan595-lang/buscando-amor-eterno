@@ -12,6 +12,7 @@ export interface CallState {
   status: 'idle' | 'calling' | 'ringing' | 'active' | 'ended'
   callType?: CallType
   remoteUserId?: string
+  remotePeerId?: string
   callStartTime?: number
 }
 
