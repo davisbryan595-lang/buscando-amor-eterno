@@ -113,8 +113,9 @@ export function useMessages() {
       lastFetchRef.current = Date.now()
       pollAttemptsRef.current = 0
     } catch (err: any) {
-      setError(err.message)
-      console.error('Error fetching conversations:', err)
+      const errorMessage = err?.message || (typeof err === 'string' ? err : 'Failed to fetch conversations')
+      setError(errorMessage)
+      console.error('Error fetching conversations:', errorMessage, err)
     } finally {
       setLoading(false)
     }
@@ -284,8 +285,9 @@ export function useMessages() {
         setMessages((data as Message[]) || [])
         setError(null)
       } catch (err: any) {
-        setError(err.message)
-        console.error('Error fetching messages:', err)
+        const errorMessage = err?.message || (typeof err === 'string' ? err : 'Failed to fetch messages')
+        setError(errorMessage)
+        console.error('Error fetching messages:', errorMessage, err)
       }
     },
     [user]
@@ -321,7 +323,8 @@ export function useMessages() {
 
         return message
       } catch (err: any) {
-        setError(err.message)
+        const errorMessage = err?.message || (typeof err === 'string' ? err : 'Failed to send message')
+        setError(errorMessage)
         throw err
       }
     },
@@ -338,8 +341,9 @@ export function useMessages() {
 
         if (err) throw err
       } catch (err: any) {
-        setError(err.message)
-        console.error('Error marking message as read:', err)
+        const errorMessage = err?.message || (typeof err === 'string' ? err : 'Failed to mark message as read')
+        setError(errorMessage)
+        console.error('Error marking message as read:', errorMessage, err)
       }
     },
     []
@@ -380,8 +384,9 @@ export function useMessages() {
           unread_count: 0,
         }
       } catch (err: any) {
-        setError(err.message)
-        console.error('Error initiating conversation:', err)
+        const errorMessage = err?.message || (typeof err === 'string' ? err : 'Failed to initiate conversation')
+        setError(errorMessage)
+        console.error('Error initiating conversation:', errorMessage, err)
         throw err
       }
     },
