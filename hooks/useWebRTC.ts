@@ -98,10 +98,10 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
           }))
         }
       })
-      .subscribe((status) => {
-        console.log('[WebRTC] Call channel subscription status:', status)
+      .subscribe((status, err) => {
+        console.log('[WebRTC] Call channel subscription status:', status, err)
         if (status === 'CHANNEL_ERROR') {
-          console.error('[WebRTC] Call channel error - check RLS policies and Realtime settings in Supabase dashboard')
+          console.error('[WebRTC] Call channel error details:', { status, err, userId: user?.id, isReady, peerError })
         }
       })
 
