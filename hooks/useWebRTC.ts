@@ -217,6 +217,7 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
 
         // Notify other user about incoming call via Supabase Broadcast (low-latency signaling)
         const channel = supabase.channel(`calls:${otherUserId}`)
+        await channel.subscribe()
 
         const invitePayload = {
           from: user.id,
