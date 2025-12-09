@@ -39,23 +39,39 @@ export default function AudioCall({
     return () => clearInterval(interval)
   }, [isIncoming, incomingCall, callState.status])
 
+  useEffect(() => {
+    if (!isIncoming && callState.status === 'idle') {
+      initiateCall('audio').catch((err) => console.error('Failed to initiate call:', err))
+    }
+  }, [isIncoming, callState.status, initiateCall])
+
   const formatDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60)
     const secs = seconds % 60
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
   }
 
-  const handleAccept = () => {
-    setIsCallActive(true)
+  const handleAccept = async () => {
+    await acceptCall()
     onAccept()
   }
 
+  const handleReject = () => {
+    rejectCall()
+    onReject()
+  }
+
   const handleHangup = () => {
-    setIsCallActive(false)
+    endCall()
     onHangup()
   }
 
-  if (isIncoming && !isCallActive) {
+  const handleToggleMute = () => {
+    setIsMuted(!isMuted)
+    toggleAudio(!isMuted)
+  }
+
+  if (incomingCall && callState.status !== 'active') {
     return (
       <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
         <div className="bg-white rounded-2xl p-8 max-w-sm w-full mx-4">
