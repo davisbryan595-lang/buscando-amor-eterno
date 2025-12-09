@@ -8,6 +8,7 @@ import Image from 'next/image'
 import { useMessages } from '@/hooks/useMessages'
 import { useAuth } from '@/context/auth-context'
 import { useSubscription } from '@/hooks/useSubscription'
+import { X } from 'lucide-react'
 
 function MessagesContentInner() {
   const { user } = useAuth()
@@ -16,6 +17,7 @@ function MessagesContentInner() {
   const searchParams = useSearchParams()
   const userIdParam = searchParams.get('user')
   const [selectedConversation, setSelectedConversation] = useState<any>(null)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
 
   // Auto-select conversation if user_id is in query params
   useEffect(() => {
@@ -40,6 +42,11 @@ function MessagesContentInner() {
       setSelectedConversation(conversations[0])
     }
   }, [conversations, userIdParam, user?.id, selectedConversation])
+
+  const handleSelectConversation = (conversation: any) => {
+    setSelectedConversation(conversation)
+    setSidebarOpen(false)
+  }
 
   if (loading) {
     return (
