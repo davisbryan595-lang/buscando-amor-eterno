@@ -2,8 +2,10 @@ import type { Metadata } from 'next'
 import { Geist, Geist_Mono, Inter, Playfair_Display } from 'next/font/google'
 import './globals.css'
 import { AuthProvider } from '@/context/auth-context'
+import { IncomingCallProvider } from '@/context/incoming-call-context'
 import { I18nProvider } from '@/lib/i18n-context'
 import { Preloader } from '@/components/preloader'
+import { IncomingCallNotification } from '@/components/incoming-call-notification'
 
 const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
@@ -60,7 +62,10 @@ export default function RootLayout({
         <Preloader />
         <I18nProvider>
           <AuthProvider>
-            {children}
+            <IncomingCallProvider>
+              {children}
+              <IncomingCallNotification />
+            </IncomingCallProvider>
           </AuthProvider>
         </I18nProvider>
       </body>
