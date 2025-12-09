@@ -67,8 +67,9 @@ export function useProfile() {
       }
       setError(null)
     } catch (err: any) {
-      setError(err.message)
-      console.error('Error fetching profile:', err)
+      const errorMessage = err?.message || (typeof err === 'string' ? err : 'Failed to fetch profile')
+      setError(errorMessage)
+      console.error('Error fetching profile:', errorMessage, err)
     } finally {
       setLoading(false)
     }
@@ -106,8 +107,9 @@ export function useProfile() {
         setError(null)
       } catch (err: any) {
         if (isMounted) {
-          setError(err.message)
-          console.error('Error fetching profile:', err)
+          const errorMessage = err?.message || (typeof err === 'string' ? err : 'Failed to fetch profile')
+          setError(errorMessage)
+          console.error('Error fetching profile:', errorMessage, err)
         }
       } finally {
         if (isMounted) {

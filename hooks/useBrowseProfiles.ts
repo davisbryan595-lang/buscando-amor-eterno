@@ -40,8 +40,9 @@ export function useBrowseProfiles() {
         setError(null)
       } catch (err: any) {
         if (isMounted) {
-          setError(err.message)
-          console.error('Error fetching profiles:', err)
+          const errorMessage = err?.message || (typeof err === 'string' ? err : 'Failed to fetch profiles')
+          setError(errorMessage)
+          console.error('Error fetching profiles:', errorMessage, err)
           setProfiles([])
         }
       } finally {
@@ -75,8 +76,9 @@ export function useBrowseProfiles() {
       setProfiles((data as ProfileData[]) || [])
       setError(null)
     } catch (err: any) {
-      setError(err.message)
-      console.error('Error fetching profiles:', err)
+      const errorMessage = err?.message || (typeof err === 'string' ? err : 'Failed to fetch profiles')
+      setError(errorMessage)
+      console.error('Error fetching profiles:', errorMessage, err)
       setProfiles([])
     } finally {
       setLoading(false)
