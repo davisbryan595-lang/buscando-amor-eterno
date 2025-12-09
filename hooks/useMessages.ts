@@ -188,7 +188,6 @@ export function useMessages() {
   const sendMessage = useCallback(
     async (recipientId: string, content: string) => {
       if (!user) throw new Error('No user logged in')
-      if (!isPremium) throw new Error('Premium subscription required to send messages')
 
       try {
         const { data, error: err } = await supabase
