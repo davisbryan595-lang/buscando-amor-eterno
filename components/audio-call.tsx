@@ -92,7 +92,7 @@ export default function AudioCall({
 
             <div className="flex gap-4 w-full">
               <button
-                onClick={onReject}
+                onClick={handleReject}
                 className="flex-1 px-6 py-3 bg-red-500 text-white rounded-full hover:bg-red-600 transition font-semibold flex items-center justify-center gap-2"
               >
                 <PhoneOff size={20} />
@@ -106,6 +106,7 @@ export default function AudioCall({
                 Accept
               </button>
             </div>
+            {error && <p className="text-red-500 text-sm mt-4">{error}</p>}
           </div>
         </div>
       </div>
