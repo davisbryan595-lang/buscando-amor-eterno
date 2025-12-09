@@ -93,6 +93,26 @@ export default function ChatWindow({ conversation }: { conversation: Conversatio
     }
   }
 
+  const handleStartAudioCall = () => {
+    setAudioCallActive(true)
+    toast.success(`Audio call started with ${otherUserDetails?.name || conversation.other_user_name || 'User'}`)
+  }
+
+  const handleEndAudioCall = () => {
+    setAudioCallActive(false)
+    toast.info('Audio call ended')
+  }
+
+  const handleStartVideoCall = () => {
+    setVideoCallActive(true)
+    toast.success(`Video call started with ${otherUserDetails?.name || conversation.other_user_name || 'User'}`)
+  }
+
+  const handleEndVideoCall = () => {
+    setVideoCallActive(false)
+    toast.info('Video call ended')
+  }
+
   return (
     <div className="bg-gradient-to-b from-white to-rose-50 rounded-xl border border-rose-100 flex flex-col h-full soft-glow">
       {/* Header */}
