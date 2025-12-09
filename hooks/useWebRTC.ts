@@ -322,12 +322,10 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
 
         // Set timeout for call to be accepted
         const acceptanceTimeout = setTimeout(() => {
-          if (awaitingAcceptance && callState.status === 'calling') {
-            console.error('[WebRTC] Call not accepted after 60s')
-            setError('Call not answered')
-            endCall()
-            setAwaitingAcceptance(null)
-          }
+          console.error('[WebRTC] Call not accepted after 60s')
+          setError('Call not answered')
+          endCall()
+          setAwaitingAcceptance(null)
         }, 60000)
 
         callTimeoutRef.current = acceptanceTimeout
