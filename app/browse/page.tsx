@@ -9,7 +9,7 @@ import { useBrowseProfiles } from '@/hooks/useBrowseProfiles'
 import { useSubscription } from '@/hooks/useSubscription'
 import { useProfile } from '@/hooks/useProfile'
 import { useNotifications } from '@/hooks/useNotifications'
-import { Heart, X, Star, Info, Loader, Lock, AlertCircle } from 'lucide-react'
+import { Heart, X, Star, Info, Loader, AlertCircle } from 'lucide-react'
 import Image from 'next/image'
 import { toast } from 'sonner'
 
