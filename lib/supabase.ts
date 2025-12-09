@@ -17,6 +17,21 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   },
 })
 
+// Log realtime connection state for debugging
+if (typeof window !== 'undefined') {
+  supabase.realtime.on('connect', () => {
+    console.log('[Supabase Realtime] Connected')
+  })
+
+  supabase.realtime.on('disconnect', () => {
+    console.log('[Supabase Realtime] Disconnected')
+  })
+
+  supabase.realtime.on('error', (err) => {
+    console.error('[Supabase Realtime] Error:', err)
+  })
+}
+
 // Configure realtime with extended timeouts and heartbeat
 if (typeof window !== 'undefined') {
   // Auto-reconnect on visibility change
