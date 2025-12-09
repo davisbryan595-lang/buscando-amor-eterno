@@ -110,20 +110,19 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
       .channel(`calls:${user.id}`)
       .on('broadcast', { event: 'call-invite' }, (payload) => {
         if (payload.payload.to === user.id && payload.payload.from !== user.id) {
+          console.log('[WebRTC] Incoming call received from:', payload.payload.from)
           // Handle incoming call invitation if peer connection is not already active
-          if (callState.status === 'idle' && !incomingCall) {
-            setIncomingCall({
-              from: payload.payload.from,
-              type: payload.payload.type || 'audio',
-              call: null as any,
-            })
-          }
+          setIncomingCall({
+            from: payload.payload.from,
+            type: payload.payload.type || 'audio',
+            call: null as any,
+          })
         }
       })
       .on('broadcast', { event: 'call-accepted' }, (payload) => {
-        if (payload.payload.to === user.id && awaitingAcceptance?.to === payload.payload.from) {
+        if (payload.payload.to === user.id) {
           // Remote user accepted the call, now establish peer connection
-          console.log('[WebRTC] Call accepted by remote user, establishing peer connection')
+          console.log('[WebRTC] Call accepted by remote user:', payload.payload.from)
           setAwaitingAcceptance(null)
           setCallState((prev) => ({
             ...prev,
