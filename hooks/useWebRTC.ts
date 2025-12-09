@@ -262,17 +262,33 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
 
     try {
       setError(null)
+      console.log(`[WebRTC] Accepting ${incomingCall.type} call from ${incomingCall.from}`)
+
+      setCallState({
+        status: 'active',
+        callType: incomingCall.type,
+        remoteUserId: incomingCall.from,
+        callStartTime: Date.now(),
+      })
 
       // Get local stream
       const stream = await getMediaStream(incomingCall.type)
 
-      // Answer the call (we'll create a new call since we don't have direct reference)
-      // In a real implementation, the signaling server would provide this
-      // For now, we initiate a call back to establish connection
+      // Answer the call by initiating a call back to establish connection
+      const answerTimeout = setTimeout(() => {
+        if (callRef.current && callState.status !== 'active') {
+          console.error('[WebRTC] Answer timeout - no connection after 30s')
+          setError('Answer timeout - unable to connect')
+          endCall()
+        }
+      }, 30000)
+
       const call = peerRef.current.call(incomingCall.from, stream)
       callRef.current = call
 
       call.on('stream', (remoteStream: MediaStream) => {
+        clearTimeout(answerTimeout)
+        console.log('[WebRTC] Remote stream received after accepting call')
         remoteStreamRef.current = remoteStream
         setRemoteStream(remoteStream)
         setCallState({
@@ -284,21 +300,34 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
       })
 
       call.on('close', () => {
+        clearTimeout(answerTimeout)
+        console.log('[WebRTC] Call ended')
         endCall()
       })
 
       call.on('error', (err: any) => {
-        console.error('Call error:', err)
-        setError(err.message)
-        endCall()
+        clearTimeout(answerTimeout)
+        console.error('[WebRTC] Call error during answer:', err.type, err)
+        if (err.type === 'network' || err.type === 'media') {
+          console.log('[WebRTC] Retrying answer after network/media error')
+          setTimeout(() => {
+            if (incomingCall) {
+              acceptCall()
+            }
+          }, 2000)
+        } else {
+          setError(err.message)
+          endCall()
+        }
       })
 
       setIncomingCall(null)
     } catch (err: any) {
+      console.error('[WebRTC] Failed to accept call:', err)
       setError(err.message)
       setIncomingCall(null)
     }
-  }, [incomingCall, getMediaStream])
+  }, [incomingCall, getMediaStream, callState.status, endCall])
 
   const rejectCall = useCallback(() => {
     if (callRef.current) {
