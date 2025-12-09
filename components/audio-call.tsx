@@ -16,6 +16,7 @@ interface AudioCallProps {
 }
 
 export default function AudioCall({
+  otherUserId,
   otherUserName,
   otherUserImage,
   isIncoming = false,
@@ -23,19 +24,20 @@ export default function AudioCall({
   onReject,
   onHangup,
 }: AudioCallProps) {
-  const [isCallActive, setIsCallActive] = useState(!isIncoming)
+  const { callState, error, initiateCall, acceptCall, rejectCall, endCall, toggleAudio, incomingCall } = useWebRTC(otherUserId, 'audio')
   const [isMuted, setIsMuted] = useState(false)
   const [callDuration, setCallDuration] = useState(0)
 
   useEffect(() => {
-    if (!isCallActive) return
+    if (isIncoming && !incomingCall) return
+    if (!isIncoming && callState.status !== 'active') return
 
     const interval = setInterval(() => {
       setCallDuration((prev) => prev + 1)
     }, 1000)
 
     return () => clearInterval(interval)
-  }, [isCallActive])
+  }, [isIncoming, incomingCall, callState.status])
 
   const formatDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60)
