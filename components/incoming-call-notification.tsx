@@ -17,8 +17,13 @@ export function IncomingCallNotification() {
   const router = useRouter()
   const { user } = useAuth()
   const { incomingCall, dismissCall } = useIncomingCall()
-  const { callState, acceptCall, rejectCall, incomingCall: webrtcIncomingCall } = useWebRTC(incomingCall?.from || null, (incomingCall?.type as CallType) || 'audio')
   const [isRinging, setIsRinging] = useState(true)
+
+  // Only initialize WebRTC when there's an incoming call
+  const { callState, acceptCall, rejectCall, incomingCall: webrtcIncomingCall } = useWebRTC(
+    incomingCall?.from || null,
+    (incomingCall?.type as CallType) || 'audio'
+  )
   const audioRef = useRef<HTMLAudioElement>(null)
 
   // Auto-dismiss after 60 seconds if not answered
