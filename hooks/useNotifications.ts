@@ -146,8 +146,9 @@ export function useNotifications() {
       setNotifications(notificationsWithProfiles)
       setError(null)
     } catch (err: any) {
-      setError(err.message)
-      console.error('Error fetching notifications:', err)
+      const errorMessage = err?.message || (typeof err === 'string' ? err : 'Failed to fetch notifications')
+      setError(errorMessage)
+      console.error('Error fetching notifications:', errorMessage, err)
       setNotifications([])
     } finally {
       setLoading(false)
@@ -165,8 +166,9 @@ export function useNotifications() {
         if (err) throw err
         setNotifications((prev) => prev.filter((n) => n.id !== notificationId))
       } catch (err: any) {
-        setError(err.message)
-        console.error('Error marking notification as read:', err)
+        const errorMessage = err?.message || (typeof err === 'string' ? err : 'Failed to mark notification as read')
+        setError(errorMessage)
+        console.error('Error marking notification as read:', errorMessage, err)
       }
     },
     []

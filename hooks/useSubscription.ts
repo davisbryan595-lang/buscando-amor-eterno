@@ -57,8 +57,9 @@ export function useSubscription() {
         setError(null)
       } catch (err: any) {
         if (isMounted) {
-          setError(err.message)
-          console.error('Error fetching subscription:', err)
+          const errorMessage = err?.message || (typeof err === 'string' ? err : 'Failed to fetch subscription')
+          setError(errorMessage)
+          console.error('Error fetching subscription:', errorMessage, err)
           setSubscription(null)
           setIsPremium(false)
         }
@@ -100,8 +101,9 @@ export function useSubscription() {
       }
       setError(null)
     } catch (err: any) {
-      setError(err.message)
-      console.error('Error fetching subscription:', err)
+      const errorMessage = err?.message || (typeof err === 'string' ? err : 'Failed to fetch subscription')
+      setError(errorMessage)
+      console.error('Error fetching subscription:', errorMessage, err)
       setSubscription(null)
       setIsPremium(false)
     } finally {
@@ -132,7 +134,8 @@ export function useSubscription() {
         setIsPremium(true)
         return data as SubscriptionData
       } catch (err: any) {
-        setError(err.message)
+        const errorMessage = err?.message || (typeof err === 'string' ? err : 'Failed to upgrade subscription')
+        setError(errorMessage)
         throw err
       }
     },
@@ -160,7 +163,8 @@ export function useSubscription() {
         setIsPremium(false)
         return data as SubscriptionData
       } catch (err: any) {
-        setError(err.message)
+        const errorMessage = err?.message || (typeof err === 'string' ? err : 'Failed to cancel subscription')
+        setError(errorMessage)
         throw err
       }
     },

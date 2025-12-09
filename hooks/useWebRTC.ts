@@ -93,8 +93,9 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
 
         peerRef.current = peer
       } catch (err: any) {
-        console.error('[WebRTC] Peer initialization error:', err)
-        setError(err.message)
+        const errorMessage = err?.message || (typeof err === 'string' ? err : 'Failed to initialize peer connection')
+        console.error('[WebRTC] Peer initialization error:', errorMessage, err)
+        setError(errorMessage)
       }
     }
 
@@ -159,7 +160,8 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
         setLocalStream(stream)
         return stream
       } catch (err: any) {
-        const errorMsg = `Failed to access ${type === 'audio' ? 'microphone' : 'camera'}: ${err.message}`
+        const baseMessage = err?.message || (typeof err === 'string' ? err : 'Unknown error')
+        const errorMsg = `Failed to access ${type === 'audio' ? 'microphone' : 'camera'}: ${baseMessage}`
         setError(errorMsg)
         throw new Error(errorMsg)
       }
@@ -225,8 +227,9 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
     })
 
     call.on('error', (err: any) => {
-      console.error('Call error:', err)
-      setError(err.message)
+      const errorMessage = err?.message || (typeof err === 'string' ? err : 'Call error')
+      console.error('Call error:', errorMessage, err)
+      setError(errorMessage)
       endCall()
     })
   }, [endCall])
@@ -275,13 +278,15 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
         call.on('error', (err: any) => {
           clearTimeout(callTimeout)
           callTimeoutRef.current = null
-          console.error('[WebRTC] Call error:', err.type, err)
-          setError(err.message)
+          const errorMessage = err?.message || (typeof err === 'string' ? err : 'Call error')
+          console.error('[WebRTC] Call error:', err.type, errorMessage, err)
+          setError(errorMessage)
           endCall()
         })
       } catch (err: any) {
-        console.error('[WebRTC] Failed to establish peer connection:', err)
-        setError(err.message)
+        const errorMessage = err?.message || (typeof err === 'string' ? err : 'Failed to establish peer connection')
+        console.error('[WebRTC] Failed to establish peer connection:', errorMessage, err)
+        setError(errorMessage)
         endCall()
       }
     },
@@ -341,8 +346,9 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
 
         callTimeoutRef.current = acceptanceTimeout
       } catch (err: any) {
-        console.error('[WebRTC] Failed to initiate call:', err)
-        setError(err.message)
+        const errorMessage = err?.message || (typeof err === 'string' ? err : 'Failed to initiate call')
+        console.error('[WebRTC] Failed to initiate call:', errorMessage, err)
+        setError(errorMessage)
         setCallState({ status: 'idle' })
         setAwaitingAcceptance(null)
       }
@@ -408,8 +414,9 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
       callTimeoutRef.current = connectionTimeout
       setIncomingCall(null)
     } catch (err: any) {
-      console.error('[WebRTC] Failed to accept call:', err)
-      setError(err.message)
+      const errorMessage = err?.message || (typeof err === 'string' ? err : 'Failed to accept call')
+      console.error('[WebRTC] Failed to accept call:', errorMessage, err)
+      setError(errorMessage)
       setIncomingCall(null)
     }
   }, [incomingCall, user, getMediaStream, endCall])
