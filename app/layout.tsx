@@ -63,10 +63,12 @@ export default function RootLayout({
         <Preloader />
         <I18nProvider>
           <AuthProvider>
-            <IncomingCallProvider>
-              {children}
-              <IncomingCallNotification />
-            </IncomingCallProvider>
+            <PeerProvider>
+              <IncomingCallProvider>
+                {children}
+                <IncomingCallNotification />
+              </IncomingCallProvider>
+            </PeerProvider>
           </AuthProvider>
         </I18nProvider>
       </body>
