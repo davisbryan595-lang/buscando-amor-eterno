@@ -232,6 +232,12 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
       setError(errorMessage)
       endCall()
     })
+
+    // Actually answer the peer connection with local stream
+    if (localStreamRef.current) {
+      call.answer(localStreamRef.current)
+      console.log('[WebRTC] Peer call answered with local stream')
+    }
   }, [endCall])
 
   const establishPeerConnection = useCallback(
