@@ -230,7 +230,7 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
         console.log(`[WebRTC] Establishing peer connection with ${remoteId}`)
 
         const callTimeout = setTimeout(() => {
-          if (callRef.current && (callState.status === 'calling' || callState.status === 'ringing')) {
+          if (callRef.current) {
             console.error('[WebRTC] Call timeout - no connection after 30s')
             setError('Call timeout - unable to connect')
             endCall()
@@ -276,7 +276,7 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
         endCall()
       }
     },
-    [callState.status, endCall]
+    [endCall]
   )
 
   const initiateCall = useCallback(
