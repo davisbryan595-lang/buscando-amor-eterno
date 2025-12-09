@@ -110,40 +110,38 @@ export function useNotifications() {
         return
       }
 
-      const notificationsWithProfiles = await Promise.all(
-        data.map(async (notif: any) => {
-          try {
-            const { data: likerProfile } = await supabase
-              .from('profiles')
-              .select('full_name, photos, main_photo_index')
-              .eq('user_id', notif.liker_id)
-              .single()
+      // Extract unique liker IDs
+      const uniqueLikerIds = Array.from(new Set(data.map((n: any) => n.liker_id)))
 
-            return {
-              id: notif.id,
-              recipient_id: notif.recipient_id,
-              liker_id: notif.liker_id,
-              liker_name: likerProfile?.full_name || null,
-              liker_image: likerProfile?.photos?.[likerProfile?.main_photo_index || 0] || null,
-              liked_profile_id: notif.liked_profile_id,
-              read: notif.read,
-              created_at: notif.created_at,
-            }
-          } catch (err: any) {
-            console.error('Error fetching liker profile:', err)
-            return {
-              id: notif.id,
-              recipient_id: notif.recipient_id,
-              liker_id: notif.liker_id,
-              liker_name: null,
-              liker_image: null,
-              liked_profile_id: notif.liked_profile_id,
-              read: notif.read,
-              created_at: notif.created_at,
-            }
-          }
-        })
+      // Batch fetch all liker profiles with a single query
+      const { data: likerProfiles, error: profileErr } = await supabase
+        .from('profiles')
+        .select('user_id, full_name, photos, main_photo_index')
+        .in('user_id', uniqueLikerIds)
+
+      if (profileErr) {
+        console.warn('Error fetching liker profiles:', profileErr)
+      }
+
+      // Create a map for quick lookup
+      const profileMap = new Map(
+        (likerProfiles || []).map((p: any) => [p.user_id, p])
       )
+
+      // Map notifications with their profiles
+      const notificationsWithProfiles = data.map((notif: any) => {
+        const likerProfile = profileMap.get(notif.liker_id)
+        return {
+          id: notif.id,
+          recipient_id: notif.recipient_id,
+          liker_id: notif.liker_id,
+          liker_name: likerProfile?.full_name || null,
+          liker_image: likerProfile?.photos?.[likerProfile?.main_photo_index || 0] || null,
+          liked_profile_id: notif.liked_profile_id,
+          read: notif.read,
+          created_at: notif.created_at,
+        }
+      })
 
       setNotifications(notificationsWithProfiles)
       setError(null)
