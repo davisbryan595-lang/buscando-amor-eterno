@@ -20,7 +20,8 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
   const callRef = useRef<Peer.MediaConnection | null>(null)
   const localStreamRef = useRef<MediaStream | null>(null)
   const remoteStreamRef = useRef<MediaStream | null>(null)
-  
+  const callTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+
   const [callState, setCallState] = useState<CallState>({ status: 'idle' })
   const [localStream, setLocalStream] = useState<MediaStream | null>(null)
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null)
@@ -29,6 +30,10 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
     from: string
     type: CallType
     call: Peer.MediaConnection
+  } | null>(null)
+  const [awaitingAcceptance, setAwaitingAcceptance] = useState<{
+    to: string
+    type: CallType
   } | null>(null)
 
   // Initialize PeerJS connection
