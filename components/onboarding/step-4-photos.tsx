@@ -36,6 +36,12 @@ export function Step4Photos({
     initialPhotos.map((f) => URL.createObjectURL(f))
   )
 
+  React.useEffect(() => {
+    return () => {
+      previewUrlsRef.current.forEach((url) => URL.revokeObjectURL(url))
+    }
+  }, [])
+
   const handleFiles = useCallback(
     (newFiles: File[]) => {
       if (files.length + newFiles.length > 6) {
@@ -56,6 +62,7 @@ export function Step4Photos({
       })
 
       const newPreviews = validFiles.map((file) => URL.createObjectURL(file))
+      previewUrlsRef.current.push(...newPreviews)
       setFiles([...files, ...validFiles])
       setPreviews([...previews, ...newPreviews])
       onDataChange([...files, ...validFiles])
