@@ -330,8 +330,14 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
   }, [incomingCall, getMediaStream, callState.status, endCall])
 
   const rejectCall = useCallback(() => {
+    console.log('[WebRTC] Rejecting incoming call')
     if (callRef.current) {
-      callRef.current.close()
+      try {
+        callRef.current.close()
+      } catch (err) {
+        console.warn('[WebRTC] Error closing rejected call:', err)
+      }
+      callRef.current = null
     }
     setIncomingCall(null)
     setCallState({ status: 'idle' })
