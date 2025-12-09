@@ -142,8 +142,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const signOut = async () => {
-    const { error } = await supabase.auth.signOut({ scope: 'local' })
-    if (error) throw error
+    try {
+      const { error } = await supabase.auth.signOut({ scope: 'local' })
+      if (error) throw error
+      setSession(null)
+      setUser(null)
+    } catch (err) {
+      console.error('Error signing out:', err)
+      setSession(null)
+      setUser(null)
+    }
   }
 
   const signInWithOAuth = async (provider: 'google' | 'apple') => {
