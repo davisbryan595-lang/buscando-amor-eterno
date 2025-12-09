@@ -3,6 +3,7 @@ import { Geist, Geist_Mono, Inter, Playfair_Display } from 'next/font/google'
 import './globals.css'
 import { AuthProvider } from '@/context/auth-context'
 import { IncomingCallProvider } from '@/context/incoming-call-context'
+import { PeerProvider } from '@/context/peer-context'
 import { I18nProvider } from '@/lib/i18n-context'
 import { Preloader } from '@/components/preloader'
 import { IncomingCallNotification } from '@/components/incoming-call-notification'
@@ -62,10 +63,12 @@ export default function RootLayout({
         <Preloader />
         <I18nProvider>
           <AuthProvider>
-            <IncomingCallProvider>
-              {children}
-              <IncomingCallNotification />
-            </IncomingCallProvider>
+            <PeerProvider>
+              <IncomingCallProvider>
+                {children}
+                <IncomingCallNotification />
+              </IncomingCallProvider>
+            </PeerProvider>
           </AuthProvider>
         </I18nProvider>
       </body>

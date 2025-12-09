@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import Peer from 'peerjs'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/context/auth-context'
+import { usePeer } from '@/context/peer-context'
 
 export type CallType = 'audio' | 'video'
 
@@ -16,12 +17,12 @@ export interface CallState {
 
 export function useWebRTC(otherUserId: string | null, callType: CallType = 'audio') {
   const { user } = useAuth()
+  const { peer, error: peerError, isReady } = usePeer()
   const peerRef = useRef<Peer | null>(null)
   const callRef = useRef<Peer.MediaConnection | null>(null)
   const localStreamRef = useRef<MediaStream | null>(null)
   const remoteStreamRef = useRef<MediaStream | null>(null)
   const callTimeoutRef = useRef<NodeJS.Timeout | null>(null)
-  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   const [callState, setCallState] = useState<CallState>({ status: 'idle' })
   const [localStream, setLocalStream] = useState<MediaStream | null>(null)
@@ -37,80 +38,33 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
     type: CallType
   } | null>(null)
 
-  // Initialize PeerJS connection
+  // Use the peer from context
   useEffect(() => {
-    if (!user) return
+    peerRef.current = peer
+    if (peerError) {
+      setError(peerError)
+    } else if (isReady) {
+      setError(null)
+    }
+  }, [peer, peerError, isReady])
 
-    const initPeer = async () => {
-      try {
-        const peer = new Peer(user.id, {
-          iceServers: [
-            { urls: 'stun:stun.l.google.com:19302' },
-            { urls: 'stun:stun1.l.google.com:19302' },
-            { urls: 'stun:stun2.l.google.com:19302' },
-            { urls: 'stun:stun3.l.google.com:19302' },
-            { urls: 'stun:stun4.l.google.com:19302' },
-          ],
-          config: {
-            iceTransportPolicy: 'all',
-            bundlePolicy: 'max-bundle',
-            rtcpMuxPolicy: 'require',
-          },
-          debug: process.env.NODE_ENV === 'development' ? 2 : 0,
-          ping: 30000,
-        })
+  // Setup peer call listener
+  useEffect(() => {
+    if (!peerRef.current) return
 
-        peer.on('open', () => {
-          console.log('[WebRTC] Peer connection established')
-          setError(null)
-        })
-
-        peer.on('error', (err: any) => {
-          console.error('[WebRTC] Peer error:', err.type, err.message)
-          // Don't set error on connection errors during initialization
-          if (err.type !== 'peer-unavailable' && err.type !== 'network') {
-            setError(`Connection error: ${err.message}`)
-          }
-        })
-
-        peer.on('call', (call: Peer.MediaConnection) => {
-          console.log('[WebRTC] Incoming call received')
-          handleIncomingCall(call)
-        })
-
-        peer.on('disconnected', () => {
-          console.log('[WebRTC] Peer disconnected - attempting reconnect')
-          if (reconnectTimeoutRef.current) {
-            clearTimeout(reconnectTimeoutRef.current)
-          }
-          reconnectTimeoutRef.current = setTimeout(() => {
-            if (peerRef.current && peerRef.current.disconnected && !peerRef.current.destroyed) {
-              peerRef.current.reconnect()
-            }
-            reconnectTimeoutRef.current = null
-          }, 1000)
-        })
-
-        peerRef.current = peer
-      } catch (err: any) {
-        const errorMessage = err?.message || (typeof err === 'string' ? err : 'Failed to initialize peer connection')
-        console.error('[WebRTC] Peer initialization error:', errorMessage, err)
-        setError(errorMessage)
-      }
+    const handlePeerCall = (call: Peer.MediaConnection) => {
+      console.log('[WebRTC] Incoming call received')
+      handleIncomingCall(call)
     }
 
-    initPeer()
+    peerRef.current.on('call', handlePeerCall)
 
     return () => {
-      if (reconnectTimeoutRef.current) {
-        clearTimeout(reconnectTimeoutRef.current)
-        reconnectTimeoutRef.current = null
-      }
-      if (peerRef.current && !peerRef.current.destroyed) {
-        peerRef.current.destroy()
+      if (peerRef.current) {
+        peerRef.current.off('call', handlePeerCall)
       }
     }
-  }, [user])
+  }, [])
 
   // Subscribe to call signaling via Supabase Realtime
   useEffect(() => {
@@ -242,7 +196,11 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
 
   const establishPeerConnection = useCallback(
     async (remoteId: string, type: CallType) => {
-      if (!peerRef.current) return
+      const peer = peerRef.current
+      if (!peer || peer.destroyed) {
+        setError('Peer connection not available')
+        return
+      }
 
       try {
         console.log(`[WebRTC] Establishing peer connection with ${remoteId}`)
@@ -257,7 +215,7 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
 
         callTimeoutRef.current = callTimeout
 
-        const call = peerRef.current.call(remoteId, localStreamRef.current!)
+        const call = peer.call(remoteId, localStreamRef.current!)
         callRef.current = call
 
         call.on('stream', (remoteStream: MediaStream) => {
