@@ -316,10 +316,12 @@ export function useMessages() {
 
         // Broadcast message for instant delivery via Broadcast (low-latency)
         const broadcastChannel = supabase.channel(`messages:${recipientId}`)
+        await broadcastChannel.subscribe()
         await broadcastChannel.send('broadcast', {
           event: 'message-sent',
           payload: message,
         })
+        await broadcastChannel.unsubscribe()
 
         return message
       } catch (err: any) {
