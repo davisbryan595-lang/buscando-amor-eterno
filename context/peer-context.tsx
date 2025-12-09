@@ -63,7 +63,8 @@ export function PeerProvider({ children }: { children: React.ReactNode }) {
       destroyPeer()
 
       // Use user ID with session suffix to support multiple tabs
-      const peerId = `${user.id}__${sessionIdRef.current}`
+      // Sanitize to ensure PeerJS compatibility (alphanumeric only, max 64 chars)
+      const peerId = sanitizePeerId(`${user.id}${sessionIdRef.current}`)
       console.log('[PeerContext] Initializing peer with ID:', peerId)
 
       const peer = new Peer(peerId, {
