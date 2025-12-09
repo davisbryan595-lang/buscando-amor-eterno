@@ -100,10 +100,12 @@ export function PeerProvider({ children }: { children: React.ReactNode }) {
       })
 
       peer.on('error', (err: any) => {
-        console.error('[PeerContext] Peer error:', err.type, err.message)
+        const errorType = err?.type || 'UNKNOWN'
+        const errorMessage = err?.message || 'Unknown error'
+        console.error('[PeerContext] Peer error:', { type: errorType, message: errorMessage, fullError: err })
 
         // Handle ID taken error with exponential backoff retry
-        if (err.type === 'unavailable-id') {
+        if (errorType === 'unavailable-id') {
           setIsReady(false)
           if (retryCountRef.current < maxRetriesRef.current) {
             retryCountRef.current++
@@ -124,8 +126,30 @@ export function PeerProvider({ children }: { children: React.ReactNode }) {
             setError(errorMsg)
             initializingRef.current = false
           }
-        } else if (err.type !== 'peer-unavailable' && err.type !== 'network') {
-          setError(`Connection error: ${err.message}`)
+        } else if (errorType === 'server-error' || errorType === 'socket-error' || errorType === 'webrtc' || errorType === 'browser-incompatible') {
+          // Server/connectivity errors - retry with exponential backoff
+          setIsReady(false)
+          if (retryCountRef.current < maxRetriesRef.current) {
+            retryCountRef.current++
+            const delay = Math.min(1000 * Math.pow(2, retryCountRef.current - 1), 30000)
+            console.log(`[PeerContext] Connection error (${errorType}), retrying in ${delay}ms (attempt ${retryCountRef.current}/${maxRetriesRef.current})`)
+
+            if (retryTimeoutRef.current) {
+              clearTimeout(retryTimeoutRef.current)
+            }
+
+            retryTimeoutRef.current = setTimeout(() => {
+              if (!destroyingRef.current) {
+                initPeer()
+              }
+            }, delay)
+          } else {
+            const errorMsg = `Connection failed: ${errorMessage}. Please check your internet and refresh.`
+            setError(errorMsg)
+            initializingRef.current = false
+          }
+        } else if (errorType !== 'peer-unavailable' && errorType !== 'network') {
+          setError(`Connection error: ${errorMessage}`)
           initializingRef.current = false
         }
       })
