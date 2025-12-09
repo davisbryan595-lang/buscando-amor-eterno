@@ -1,5 +1,7 @@
 'use client'
 
+'use client'
+
 import React, { useState, useRef, useEffect } from 'react'
 import Image from 'next/image'
 import { Phone, PhoneOff, Mic, MicOff } from 'lucide-react'
