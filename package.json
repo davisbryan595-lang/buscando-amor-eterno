@@ -5,6 +5,7 @@
   "scripts": {
     "build": "next build",
     "dev": "next dev",
+    "dev:peer": "cd peer-server && npm install && npm run dev",
     "lint": "eslint .",
     "start": "next start"
   },
