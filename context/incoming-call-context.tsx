@@ -34,8 +34,16 @@ export function IncomingCallProvider({ children }: { children: React.ReactNode }
 
     let channel: ReturnType<typeof supabase.channel> | null = null
     let isMounted = true
+    let reconnectAttempts = 0
+    const maxReconnectAttempts = 5
+    const timeoutsRef = new Set<ReturnType<typeof setTimeout>>()
 
-    const setupCallListener = async () => {
+    const clearAllTimeouts = () => {
+      timeoutsRef.forEach(timeout => clearTimeout(timeout))
+      timeoutsRef.clear()
+    }
+
+    const setupCallListener = () => {
       try {
         channel = supabase
           .channel(`calls:${user.id}`)
@@ -86,12 +94,38 @@ export function IncomingCallProvider({ children }: { children: React.ReactNode }
           .subscribe((status) => {
             if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
               console.warn('[IncomingCallContext] Channel subscription error:', status)
+              if (isMounted && reconnectAttempts < maxReconnectAttempts) {
+                reconnectAttempts++
+                const delay = Math.min(1000 * Math.pow(2, reconnectAttempts - 1), 30000)
+                console.log(`[IncomingCallContext] Attempting reconnect in ${delay}ms (attempt ${reconnectAttempts}/${maxReconnectAttempts})`)
+                const timeout = setTimeout(() => {
+                  if (isMounted) {
+                    if (channel) {
+                      channel.unsubscribe()
+                    }
+                    setupCallListener()
+                  }
+                }, delay)
+                timeoutsRef.add(timeout)
+              }
             } else if (status === 'SUBSCRIBED') {
               console.log('[IncomingCallContext] Call listener subscribed')
+              reconnectAttempts = 0
             }
           })
       } catch (err) {
         console.error('[IncomingCallContext] Error setting up call listener:', err)
+        if (isMounted && reconnectAttempts < maxReconnectAttempts) {
+          reconnectAttempts++
+          const delay = Math.min(1000 * Math.pow(2, reconnectAttempts - 1), 30000)
+          console.log(`[IncomingCallContext] Retrying setup in ${delay}ms`)
+          const timeout = setTimeout(() => {
+            if (isMounted) {
+              setupCallListener()
+            }
+          }, delay)
+          timeoutsRef.add(timeout)
+        }
       }
     }
 
@@ -99,6 +133,7 @@ export function IncomingCallProvider({ children }: { children: React.ReactNode }
 
     return () => {
       isMounted = false
+      clearAllTimeouts()
       if (channel) {
         channel.unsubscribe()
       }
