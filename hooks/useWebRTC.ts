@@ -291,10 +291,15 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
           peerId: peer.id,
         }
 
-        await channel.send('broadcast', {
+        const sendResult = await channel.send('broadcast', {
           event: 'call-invite',
           payload: invitePayload,
         })
+
+        console.log('[WebRTC] Call invite broadcast sent:', { sendResult })
+
+        // Add small delay to ensure broadcast is delivered before unsubscribing
+        await new Promise(resolve => setTimeout(resolve, 100))
 
         // Cleanup: unsubscribe from the broadcast channel after sending
         await channel.unsubscribe()
