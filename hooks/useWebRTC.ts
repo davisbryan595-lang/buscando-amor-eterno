@@ -397,7 +397,7 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
       setError(err.message)
       setIncomingCall(null)
     }
-  }, [incomingCall, user, getMediaStream, callState.status, endCall])
+  }, [incomingCall, user, getMediaStream, endCall])
 
   const rejectCall = useCallback(() => {
     console.log('[WebRTC] Rejecting incoming call')
