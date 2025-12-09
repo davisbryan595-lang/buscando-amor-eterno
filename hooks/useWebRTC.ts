@@ -385,11 +385,9 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
 
       // Set timeout for initiator to establish connection
       const connectionTimeout = setTimeout(() => {
-        if (callState.status === 'ringing') {
-          console.error('[WebRTC] No incoming connection after 30s')
-          setError('Connection failed - no incoming call detected')
-          endCall()
-        }
+        console.error('[WebRTC] No incoming connection after 30s')
+        setError('Connection failed - no incoming call detected')
+        endCall()
       }, 30000)
 
       callTimeoutRef.current = connectionTimeout
