@@ -335,7 +335,7 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
   }, [callState.status, awaitingAcceptance, otherUserId, establishPeerConnection])
 
   const acceptCall = useCallback(async () => {
-    if (!incomingCall || !user) return
+    if (!incomingCall || !user || !peer) return
 
     try {
       setError(null)
@@ -355,6 +355,7 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
           to: incomingCall.from,
           type: incomingCall.type,
           timestamp: Date.now(),
+          peerId: peer.id,
         },
       })
 
@@ -384,7 +385,7 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
       setError(errorMessage)
       setIncomingCall(null)
     }
-  }, [incomingCall, user, getMediaStream, endCall])
+  }, [incomingCall, user, peer, getMediaStream, endCall])
 
   const rejectCall = useCallback(() => {
     console.log('[WebRTC] Rejecting incoming call')
