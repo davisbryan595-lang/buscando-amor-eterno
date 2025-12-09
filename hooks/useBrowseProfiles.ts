@@ -20,20 +20,10 @@ export function useBrowseProfiles() {
     }
 
     let isMounted = true
-    let timeoutId: NodeJS.Timeout | null = null
 
-    const fetchProfiles = async () => {
+    const fetchProfilesData = async () => {
       try {
         setLoading(true)
-
-        // Set a timeout to prevent hanging (30 seconds for production delays)
-        timeoutId = setTimeout(() => {
-          if (isMounted) {
-            setLoading(false)
-            setError('Profile fetch timed out - please refresh')
-            setProfiles([])
-          }
-        }, 30000)
 
         const { data, error: err } = await supabase
           .from('profiles')
@@ -43,33 +33,28 @@ export function useBrowseProfiles() {
           .order('created_at', { ascending: false })
           .limit(100)
 
-        if (timeoutId) clearTimeout(timeoutId)
-
         if (!isMounted) return
 
         if (err) throw err
         setProfiles((data as ProfileData[]) || [])
         setError(null)
       } catch (err: any) {
-        if (timeoutId) clearTimeout(timeoutId)
         if (isMounted) {
           setError(err.message)
           console.error('Error fetching profiles:', err)
           setProfiles([])
         }
       } finally {
-        if (timeoutId) clearTimeout(timeoutId)
         if (isMounted) {
           setLoading(false)
         }
       }
     }
 
-    fetchProfiles()
+    fetchProfilesData()
 
     return () => {
       isMounted = false
-      if (timeoutId) clearTimeout(timeoutId)
     }
   }, [user])
 
