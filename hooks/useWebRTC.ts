@@ -12,6 +12,7 @@ export interface CallState {
   status: 'idle' | 'calling' | 'ringing' | 'active' | 'ended'
   callType?: CallType
   remoteUserId?: string
+  remotePeerId?: string
   callStartTime?: number
 }
 
@@ -32,6 +33,7 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
     from: string
     type: CallType
     call: Peer.MediaConnection
+    remotePeerId?: string
   } | null>(null)
   const [awaitingAcceptance, setAwaitingAcceptance] = useState<{
     to: string
@@ -80,6 +82,7 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
             from: payload.payload.from,
             type: payload.payload.type || 'audio',
             call: null as any,
+            remotePeerId: payload.payload.peerId,
           })
         }
       })
@@ -91,6 +94,7 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
           setCallState((prev) => ({
             ...prev,
             status: 'ringing',
+            remotePeerId: payload.payload.peerId,
           }))
         }
       })
@@ -259,7 +263,7 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
 
   const initiateCall = useCallback(
     async (type: CallType) => {
-      if (!otherUserId || !user) return
+      if (!otherUserId || !user || !peer) return
 
       try {
         setError(null)
@@ -284,6 +288,7 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
           type,
           timestamp: Date.now(),
           callId: `${user.id}-${otherUserId}-${Date.now()}`,
+          peerId: peer.id,
         }
 
         await channel.send('broadcast', {
@@ -317,24 +322,25 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
         setAwaitingAcceptance(null)
       }
     },
-    [otherUserId, user, getMediaStream, endCall]
+    [otherUserId, user, peer, getMediaStream, endCall]
   )
 
   // When call is accepted by remote user, establish peer connection
   useEffect(() => {
     if (callState.status === 'ringing' && awaitingAcceptance === null && otherUserId) {
       const callType = callState.callType as CallType
+      const remoteId = callState.remotePeerId || otherUserId
       // Clear the acceptance timeout since we got acceptance
       if (callTimeoutRef.current) {
         clearTimeout(callTimeoutRef.current)
         callTimeoutRef.current = null
       }
-      establishPeerConnection(otherUserId, callType)
+      establishPeerConnection(remoteId, callType)
     }
-  }, [callState.status, awaitingAcceptance, otherUserId, establishPeerConnection])
+  }, [callState.status, callState.remotePeerId, awaitingAcceptance, otherUserId, establishPeerConnection])
 
   const acceptCall = useCallback(async () => {
-    if (!incomingCall || !user) return
+    if (!incomingCall || !user || !peer) return
 
     try {
       setError(null)
@@ -354,6 +360,7 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
           to: incomingCall.from,
           type: incomingCall.type,
           timestamp: Date.now(),
+          peerId: peer.id,
         },
       })
 
@@ -383,7 +390,7 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
       setError(errorMessage)
       setIncomingCall(null)
     }
-  }, [incomingCall, user, getMediaStream, endCall])
+  }, [incomingCall, user, peer, getMediaStream, endCall])
 
   const rejectCall = useCallback(() => {
     console.log('[WebRTC] Rejecting incoming call')
