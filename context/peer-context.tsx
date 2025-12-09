@@ -154,7 +154,7 @@ export function PeerProvider({ children }: { children: React.ReactNode }) {
       setIsReady(false)
       initializingRef.current = false
     }
-  }, [user, destroyPeer])
+  }, [user, destroyPeer, sanitizePeerId])
 
   useEffect(() => {
     if (!user) {
