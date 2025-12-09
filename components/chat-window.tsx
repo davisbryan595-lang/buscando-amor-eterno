@@ -7,6 +7,8 @@ import Image from 'next/image'
 import { useMessages } from '@/hooks/useMessages'
 import { useAuth } from '@/context/auth-context'
 import { toast } from 'sonner'
+import AudioCall from '@/components/audio-call'
+import VideoCall from '@/components/video-call'
 
 const getLastSeenText = (timestamp?: string): string => {
   if (!timestamp) return 'Offline'
