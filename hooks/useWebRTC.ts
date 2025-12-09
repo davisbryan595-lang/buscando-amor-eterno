@@ -76,7 +76,7 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
       .channel(`calls:${user.id}`)
       .on('broadcast', { event: 'call-invite' }, (payload) => {
         if (payload.payload.to === user.id && payload.payload.from !== user.id) {
-          console.log('[WebRTC] Incoming call received from:', payload.payload.from)
+          console.log('[WebRTC] Incoming call received from:', payload.payload.from, payload.payload)
           // Handle incoming call invitation if peer connection is not already active
           setIncomingCall({
             from: payload.payload.from,
@@ -89,7 +89,7 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
       .on('broadcast', { event: 'call-accepted' }, (payload) => {
         if (payload.payload.to === user.id) {
           // Remote user accepted the call, now establish peer connection
-          console.log('[WebRTC] Call accepted by remote user:', payload.payload.from)
+          console.log('[WebRTC] Call accepted by remote user:', payload.payload.from, payload.payload)
           setAwaitingAcceptance(null)
           setCallState((prev) => ({
             ...prev,
@@ -98,7 +98,12 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
           }))
         }
       })
-      .subscribe()
+      .subscribe((status, err) => {
+        console.log('[WebRTC] Call channel subscription status:', status, err)
+        if (status === 'CHANNEL_ERROR') {
+          console.error('[WebRTC] Call channel error details:', { status, err, userId: user?.id, isReady, peerError })
+        }
+      })
 
     return () => {
       channel.unsubscribe()
@@ -291,10 +296,15 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
           peerId: peer.id,
         }
 
-        await channel.send('broadcast', {
+        const sendResult = await channel.send('broadcast', {
           event: 'call-invite',
           payload: invitePayload,
         })
+
+        console.log('[WebRTC] Call invite broadcast sent:', { sendResult })
+
+        // Add small delay to ensure broadcast is delivered before unsubscribing
+        await new Promise(resolve => setTimeout(resolve, 100))
 
         // Cleanup: unsubscribe from the broadcast channel after sending
         await channel.unsubscribe()
@@ -353,7 +363,7 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
       const channel = supabase.channel(`calls:${incomingCall.from}`)
       await channel.subscribe()
 
-      await channel.send('broadcast', {
+      const acceptResult = await channel.send('broadcast', {
         event: 'call-accepted',
         payload: {
           from: user.id,
@@ -363,6 +373,11 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
           peerId: peer.id,
         },
       })
+
+      console.log('[WebRTC] Call acceptance broadcast sent:', { acceptResult })
+
+      // Add small delay to ensure broadcast is delivered before unsubscribing
+      await new Promise(resolve => setTimeout(resolve, 100))
 
       // Cleanup: unsubscribe from the broadcast channel after sending
       await channel.unsubscribe()

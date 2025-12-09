@@ -202,7 +202,7 @@ export function useMessages() {
               reconnectAttempts = 0
               stopPolling()
             } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
-              console.warn('[Messages] Subscription error:', status)
+              console.warn('[Messages] Subscription error:', status, '- Check RLS policies on messages table in Supabase dashboard')
               subscriptionActive = false
               if (isMounted && reconnectAttempts < maxReconnectAttempts) {
                 reconnectAttempts++
@@ -306,10 +306,15 @@ export function useMessages() {
         // Broadcast message for instant delivery via Broadcast (low-latency)
         const broadcastChannel = supabase.channel(`messages:${recipientId}`)
         await broadcastChannel.subscribe()
-        await broadcastChannel.send('broadcast', {
+        const broadcastResult = await broadcastChannel.send('broadcast', {
           event: 'message-sent',
           payload: message,
         })
+        console.log('[Messages] Broadcast sent:', { broadcastResult })
+
+        // Add small delay to ensure broadcast is delivered before unsubscribing
+        await new Promise(resolve => setTimeout(resolve, 100))
+
         await broadcastChannel.unsubscribe()
 
         return message

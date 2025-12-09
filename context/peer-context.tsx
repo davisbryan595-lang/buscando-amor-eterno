@@ -28,6 +28,12 @@ export function PeerProvider({ children }: { children: React.ReactNode }) {
   const maxRetriesRef = useRef(5)
   const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
+  const sanitizePeerId = useCallback((id: string): string => {
+    // Remove hyphens and any non-alphanumeric characters (except underscore)
+    // PeerJS only accepts alphanumeric characters
+    return id.replace(/[^a-zA-Z0-9]/g, '').substring(0, 64)
+  }, [])
+
   const destroyPeer = useCallback(() => {
     if (peerRef.current && !peerRef.current.destroyed) {
       try {
@@ -57,7 +63,8 @@ export function PeerProvider({ children }: { children: React.ReactNode }) {
       destroyPeer()
 
       // Use user ID with session suffix to support multiple tabs
-      const peerId = `${user.id}__${sessionIdRef.current}`
+      // Sanitize to ensure PeerJS compatibility (alphanumeric only, max 64 chars)
+      const peerId = sanitizePeerId(`${user.id}${sessionIdRef.current}`)
       console.log('[PeerContext] Initializing peer with ID:', peerId)
 
       const peer = new Peer(peerId, {
@@ -147,7 +154,7 @@ export function PeerProvider({ children }: { children: React.ReactNode }) {
       setIsReady(false)
       initializingRef.current = false
     }
-  }, [user, destroyPeer])
+  }, [user, destroyPeer, sanitizePeerId])
 
   useEffect(() => {
     if (!user) {

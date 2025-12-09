@@ -92,7 +92,7 @@ export function useNotifications() {
                 reconnectAttempts = 0
                 stopPolling()
               } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
-                console.warn('[Notifications] Subscription error:', status)
+                console.warn('[Notifications] Subscription error:', status, '- Check RLS policies on notifications table in Supabase dashboard')
                 subscriptionActive = false
                 if (isMounted && reconnectAttempts < maxReconnectAttempts) {
                   reconnectAttempts++
