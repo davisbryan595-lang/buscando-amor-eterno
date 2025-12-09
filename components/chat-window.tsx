@@ -45,6 +45,8 @@ export default function ChatWindow({ conversation }: { conversation: Conversatio
   const [newMessage, setNewMessage] = useState('')
   const [loading, setLoading] = useState(false)
   const [otherUserDetails, setOtherUserDetails] = useState<{ name: string; image: string | null } | null>(null)
+  const [audioCallActive, setAudioCallActive] = useState(false)
+  const [videoCallActive, setVideoCallActive] = useState(false)
 
   useEffect(() => {
     if (conversation?.other_user_id) {
