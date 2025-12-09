@@ -67,21 +67,28 @@ export function PeerProvider({ children }: { children: React.ReactNode }) {
       const peerId = sanitizePeerId(`${user.id}${sessionIdRef.current}`)
       console.log('[PeerContext] Initializing peer with ID:', peerId)
 
+      const peerServerUrl = process.env.NEXT_PUBLIC_PEER_SERVER_URL || 'peer-server-buscando.vercel.app'
+      const peerServerPort = process.env.NEXT_PUBLIC_PEER_SERVER_PORT || 443
+
       const peer = new Peer(peerId, {
-        iceServers: [
-          { urls: 'stun:stun.l.google.com:19302' },
-          { urls: 'stun:stun1.l.google.com:19302' },
-          { urls: 'stun:stun2.l.google.com:19302' },
-          { urls: 'stun:stun3.l.google.com:19302' },
-          { urls: 'stun:stun4.l.google.com:19302' },
-        ],
+        host: peerServerUrl,
+        port: peerServerPort,
+        path: '/peerjs',
+        secure: true,
         config: {
+          iceServers: [
+            { urls: 'stun:stun.l.google.com:19302' },
+            { urls: 'stun:stun1.l.google.com:19302' },
+            { urls: 'stun:stun2.l.google.com:19302' },
+            { urls: 'stun:stun3.l.google.com:19302' },
+            { urls: 'stun:stun4.l.google.com:19302' },
+          ],
           iceTransportPolicy: 'all',
           bundlePolicy: 'max-bundle',
           rtcpMuxPolicy: 'require',
+          sdpSemantics: 'unified-plan',
         },
         debug: process.env.NODE_ENV === 'development' ? 2 : 0,
-        ping: 30000,
       })
 
       peer.on('open', () => {
