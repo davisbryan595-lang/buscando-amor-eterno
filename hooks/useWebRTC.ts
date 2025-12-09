@@ -322,6 +322,9 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
           payload: invitePayload,
         })
 
+        // Cleanup: unsubscribe from the broadcast channel after sending
+        await channel.unsubscribe()
+
         console.log('[WebRTC] Call invite sent, waiting for acceptance...')
         setAwaitingAcceptance({
           to: otherUserId,
