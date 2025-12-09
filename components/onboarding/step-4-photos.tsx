@@ -82,6 +82,11 @@ export function Step4Photos({
   }
 
   const removePhoto = (index: number) => {
+    const removedUrl = previews[index]
+    if (removedUrl) {
+      URL.revokeObjectURL(removedUrl)
+      previewUrlsRef.current = previewUrlsRef.current.filter((url) => url !== removedUrl)
+    }
     const newFiles = files.filter((_, i) => i !== index)
     const newPreviews = previews.filter((_, i) => i !== index)
     setFiles(newFiles)
