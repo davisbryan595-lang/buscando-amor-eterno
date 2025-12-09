@@ -16,6 +16,7 @@ interface VideoCallProps {
 }
 
 export default function VideoCall({
+  otherUserId,
   otherUserName,
   otherUserImage,
   isIncoming = false,
@@ -23,20 +24,23 @@ export default function VideoCall({
   onReject,
   onHangup,
 }: VideoCallProps) {
-  const [isCallActive, setIsCallActive] = useState(!isIncoming)
+  const { callState, error, initiateCall, acceptCall, rejectCall, endCall, toggleAudio, toggleVideo, incomingCall, remoteStream, localStream } = useWebRTC(otherUserId, 'video')
   const [isMuted, setIsMuted] = useState(false)
   const [isVideoOn, setIsVideoOn] = useState(true)
   const [callDuration, setCallDuration] = useState(0)
+  const remoteVideoRef = React.useRef<HTMLVideoElement>(null)
+  const localVideoRef = React.useRef<HTMLVideoElement>(null)
 
   useEffect(() => {
-    if (!isCallActive) return
+    if (!isIncoming && callState.status !== 'active') return
+    if (isIncoming && !incomingCall) return
 
     const interval = setInterval(() => {
       setCallDuration((prev) => prev + 1)
     }, 1000)
 
     return () => clearInterval(interval)
-  }, [isCallActive])
+  }, [isIncoming, incomingCall, callState.status])
 
   const formatDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60)
