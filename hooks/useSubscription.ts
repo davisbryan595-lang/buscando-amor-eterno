@@ -66,10 +66,10 @@ export function useSubscription() {
 
         if (data) {
           setSubscription(data as SubscriptionData)
-          setIsPremium(data.plan === 'premium' && data.status === 'active')
+          setIsPremium(true)
         } else {
           setSubscription(null)
-          setIsPremium(false)
+          setIsPremium(true)
         }
         setError(null)
       } catch (err: any) {
@@ -113,10 +113,10 @@ export function useSubscription() {
 
       if (data) {
         setSubscription(data as SubscriptionData)
-        setIsPremium(data.plan === 'premium' && data.status === 'active')
+        setIsPremium(true)
       } else {
         setSubscription(null)
-        setIsPremium(false)
+        setIsPremium(true)
       }
       setError(null)
     } catch (err: any) {
