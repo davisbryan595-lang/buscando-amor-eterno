@@ -336,7 +336,7 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
         setAwaitingAcceptance(null)
       }
     },
-    [otherUserId, user, getMediaStream, awaitingAcceptance, callState.status, endCall]
+    [otherUserId, user, getMediaStream, endCall]
   )
 
   // When call is accepted by remote user, establish peer connection
