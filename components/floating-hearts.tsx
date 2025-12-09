@@ -1,9 +1,10 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 
 export default function FloatingHearts() {
   const [hearts, setHearts] = useState<number[]>([])
+  const heartTimeoutsRef = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map())
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -11,12 +12,19 @@ export default function FloatingHearts() {
       setHearts((prev) => [...prev, newHeart])
 
       // Remove heart after animation completes
-      setTimeout(() => {
+      const timeout = setTimeout(() => {
         setHearts((prev) => prev.filter((heart) => heart !== newHeart))
+        heartTimeoutsRef.current.delete(newHeart)
       }, 6000)
+
+      heartTimeoutsRef.current.set(newHeart, timeout)
     }, 800)
 
-    return () => clearInterval(interval)
+    return () => {
+      clearInterval(interval)
+      heartTimeoutsRef.current.forEach((timeout) => clearTimeout(timeout))
+      heartTimeoutsRef.current.clear()
+    }
   }, [])
 
   return (

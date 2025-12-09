@@ -136,6 +136,12 @@ export function useMessages() {
     let isMounted = true
     let reconnectAttempts = 0
     const maxReconnectAttempts = 5
+    const timeoutsRef = new Set<ReturnType<typeof setTimeout>>()
+
+    const clearAllTimeouts = () => {
+      timeoutsRef.forEach(timeout => clearTimeout(timeout))
+      timeoutsRef.clear()
+    }
 
     const setupSubscription = () => {
       try {
@@ -195,12 +201,13 @@ export function useMessages() {
                 reconnectAttempts++
                 const delay = Math.min(1000 * Math.pow(2, reconnectAttempts - 1), 30000)
                 console.log(`[Messages] Attempting reconnect in ${delay}ms (attempt ${reconnectAttempts}/${maxReconnectAttempts})`)
-                setTimeout(() => {
+                const timeout = setTimeout(() => {
                   if (isMounted) {
                     subscription.unsubscribe()
                     setupSubscription()
                   }
                 }, delay)
+                timeoutsRef.add(timeout)
               } else if (!pollInterval && isMounted) {
                 startPolling()
               }
@@ -210,6 +217,11 @@ export function useMessages() {
         return () => {
           isMounted = false
           subscription.unsubscribe()
+          clearAllTimeouts()
+          if (pollInterval) {
+            clearInterval(pollInterval)
+            pollInterval = null
+          }
         }
       } catch (err) {
         console.warn('[Messages] Failed to setup subscription:', err)
@@ -217,17 +229,23 @@ export function useMessages() {
           reconnectAttempts++
           const delay = Math.min(1000 * Math.pow(2, reconnectAttempts - 1), 30000)
           console.log(`[Messages] Retrying setup in ${delay}ms`)
-          setTimeout(() => {
+          const timeout = setTimeout(() => {
             if (isMounted) {
               setupSubscription()
             }
           }, delay)
+          timeoutsRef.add(timeout)
         } else if (!pollInterval && isMounted) {
           startPolling()
         }
 
         return () => {
           isMounted = false
+          clearAllTimeouts()
+          if (pollInterval) {
+            clearInterval(pollInterval)
+            pollInterval = null
+          }
         }
       }
     }
@@ -256,7 +274,7 @@ export function useMessages() {
       try {
         const { data, error: err } = await supabase
           .from('messages')
-          .select('*')
+          .select('id,sender_id,recipient_id,content,read,created_at')
           .or(
             `and(sender_id.eq.${user.id},recipient_id.eq.${otherUserId}),and(sender_id.eq.${otherUserId},recipient_id.eq.${user.id})`
           )

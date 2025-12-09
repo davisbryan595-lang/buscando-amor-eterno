@@ -21,6 +21,7 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
   const localStreamRef = useRef<MediaStream | null>(null)
   const remoteStreamRef = useRef<MediaStream | null>(null)
   const callTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   const [callState, setCallState] = useState<CallState>({ status: 'idle' })
   const [localStream, setLocalStream] = useState<MediaStream | null>(null)
@@ -79,10 +80,14 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
 
         peer.on('disconnected', () => {
           console.log('[WebRTC] Peer disconnected - attempting reconnect')
-          setTimeout(() => {
-            if (peerRef.current && peerRef.current.disconnected) {
+          if (reconnectTimeoutRef.current) {
+            clearTimeout(reconnectTimeoutRef.current)
+          }
+          reconnectTimeoutRef.current = setTimeout(() => {
+            if (peerRef.current && peerRef.current.disconnected && !peerRef.current.destroyed) {
               peerRef.current.reconnect()
             }
+            reconnectTimeoutRef.current = null
           }, 1000)
         })
 
@@ -96,6 +101,10 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
     initPeer()
 
     return () => {
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current)
+        reconnectTimeoutRef.current = null
+      }
       if (peerRef.current && !peerRef.current.destroyed) {
         peerRef.current.destroy()
       }
@@ -313,6 +322,9 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
           payload: invitePayload,
         })
 
+        // Cleanup: unsubscribe from the broadcast channel after sending
+        await channel.unsubscribe()
+
         console.log('[WebRTC] Call invite sent, waiting for acceptance...')
         setAwaitingAcceptance({
           to: otherUserId,
@@ -374,6 +386,9 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
           timestamp: Date.now(),
         },
       })
+
+      // Cleanup: unsubscribe from the broadcast channel after sending
+      await channel.unsubscribe()
 
       console.log('[WebRTC] Call acceptance sent to initiator, waiting for peer connection...')
 
