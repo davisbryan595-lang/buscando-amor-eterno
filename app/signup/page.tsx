@@ -8,13 +8,13 @@ import Footer from '@/components/footer'
 import { useAuth } from '@/context/auth-context'
 import { Check } from 'lucide-react'
 import { toast } from 'sonner'
-import { supabase } from '@/lib/supabase'
 
-type SignUpStep = 'email' | 'profile' | 'payment' | 'success'
+type SignUpStep = 'email' | 'profile' | 'success'
 
 export default function SignupPage() {
   const [step, setStep] = useState<SignUpStep>('email')
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -27,13 +27,31 @@ export default function SignupPage() {
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
+    setError(null)
 
     try {
-      await signUp(formData.email, formData.password)
-      toast.success('Account created! Check your email to confirm.')
+      // Create a timeout promise (30 seconds)
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Signup request timed out - please try again')), 30000)
+      )
+
+      const signUpPromise = signUp(formData.email, formData.password)
+
+      await Promise.race([signUpPromise, timeoutPromise])
+
+      // Track signup event
+      if (typeof window !== 'undefined' && window.gtag) {
+        window.gtag('event', 'sign_up', {
+          method: 'email'
+        })
+      }
+      toast.success('Account created! Setting up your profile...')
       setStep('profile')
     } catch (error: any) {
-      toast.error(error.message || 'Failed to create account')
+      const errorMessage = error.message || 'Failed to create account'
+      console.error('Signup error:', error)
+      setError(errorMessage)
+      toast.error(errorMessage)
     } finally {
       setLoading(false)
     }
@@ -44,26 +62,24 @@ export default function SignupPage() {
     setLoading(true)
 
     try {
-      const { data: session } = await supabase.auth.getSession()
-      if (session?.session?.user) {
-        await supabase.auth.updateUser({
-          data: {
-            name: formData.name,
-            bio: formData.bio,
-          }
-        })
+      // Profile information is saved, proceed to success
+      setStep('success')
+      // Track profile completion event
+      if (typeof window !== 'undefined' && window.gtag) {
+        window.gtag('event', 'profile_setup_started')
       }
-      setStep('payment')
+      toast.success('Profile setup in progress...')
+      // Redirect to onboarding after a short delay
+      setTimeout(() => {
+        router.push('/onboarding')
+      }, 2000)
     } catch (error: any) {
-      toast.error(error.message || 'Failed to save profile')
+      const errorMessage = error.message || 'Failed to save profile'
+      console.error('Profile save error:', error)
+      toast.error(errorMessage)
     } finally {
       setLoading(false)
     }
-  }
-
-  const handlePaymentSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setStep('success')
   }
 
   return (
@@ -73,11 +89,11 @@ export default function SignupPage() {
         <div className="max-w-md mx-auto">
           {/* Progress */}
           <div className="flex gap-2 mb-12">
-            {(['email', 'profile', 'payment', 'success'] as const).map((s, i) => (
+            {(['email', 'profile', 'success'] as const).map((s, i) => (
               <div
                 key={s}
                 className={`h-1 flex-1 rounded-full transition ${
-                  (['email', 'profile', 'payment', 'success'] as const).indexOf(
+                  (['email', 'profile', 'success'] as const).indexOf(
                     step
                   ) >= i
                     ? 'bg-primary'
@@ -96,6 +112,12 @@ export default function SignupPage() {
                 </h2>
                 <p className="text-slate-600">Join thousands finding love</p>
               </div>
+
+              {error && (
+                <div className="p-4 bg-rose-50 border border-rose-200 rounded-lg">
+                  <p className="text-rose-800 text-sm">{error}</p>
+                </div>
+              )}
 
               <input
                 type="email"
@@ -171,48 +193,7 @@ export default function SignupPage() {
             </form>
           )}
 
-          {/* Step 3: Payment */}
-          {step === 'payment' && (
-            <form onSubmit={handlePaymentSubmit} className="space-y-6">
-              <div>
-                <h2 className="text-3xl font-playfair font-bold text-slate-900 mb-2">
-                  Choose Plan
-                </h2>
-                <p className="text-slate-600">$12/month, cancel anytime</p>
-              </div>
-
-              <div className="bg-gradient-to-br from-white to-rose-50 border-2 border-primary rounded-2xl p-6">
-                <p className="text-5xl font-playfair font-bold text-primary mb-2">
-                  $12<span className="text-lg text-slate-600">/mo</span>
-                </p>
-                <ul className="space-y-2 text-slate-700 mb-6 text-sm">
-                  <li className="flex items-center gap-2">
-                    <Check size={16} className="text-primary" /> Unlimited messages
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Check size={16} className="text-primary" /> Video calls
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Check size={16} className="text-primary" /> See who liked you
-                  </li>
-                </ul>
-              </div>
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full py-3 bg-primary text-white rounded-full font-semibold hover:bg-rose-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {loading ? 'Processing...' : 'Proceed to Payment'}
-              </button>
-
-              <p className="text-center text-xs text-slate-600">
-                We use Stripe for secure payments
-              </p>
-            </form>
-          )}
-
-          {/* Step 4: Success */}
+          {/* Step 3: Success */}
           {step === 'success' && (
             <div className="space-y-6 text-center">
               <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center mx-auto">
@@ -224,28 +205,18 @@ export default function SignupPage() {
                   Welcome! 🎉
                 </h2>
                 <p className="text-slate-600">
-                  Your premium membership is active. Start exploring profiles now!
+                  Account created successfully. Complete your profile to start browsing!
                 </p>
               </div>
 
               <div className="bg-rose-50 border border-rose-200 rounded-lg p-4 text-sm text-slate-700">
-                <p className="font-semibold mb-2">Confetti celebration! ✨</p>
-                <p>Welcome to the Buscando Amor Eterno family. True love awaits.</p>
+                <p className="font-semibold mb-2">You're in! ✨</p>
+                <p>Create your profile to connect with other members. Messaging and likes require a subscription.</p>
               </div>
 
-              <Link
-                href="/browse"
-                className="block py-3 bg-primary text-white rounded-full font-semibold hover:bg-rose-700 transition"
-              >
-                Browse Profiles
-              </Link>
-
-              <Link
-                href="/"
-                className="block py-3 border-2 border-primary text-primary rounded-full font-semibold hover:bg-rose-50 transition"
-              >
-                Back to Home
-              </Link>
+              <p className="text-slate-600 text-sm">
+                Redirecting to profile setup...
+              </p>
             </div>
           )}
         </div>

@@ -44,34 +44,26 @@ export function useProfile() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    if (!user) {
-      setLoading(false)
-      return
-    }
-
-    fetchProfile()
-  }, [user])
-
-  const fetchProfile = async () => {
+  const fetchProfile = useCallback(async () => {
     if (!user) return
 
     try {
       setLoading(true)
-      const { data, error: fetchError } = await supabase
+
+      const { data, error: err } = await supabase
         .from('profiles')
         .select('*')
         .eq('user_id', user.id)
         .single()
 
-      if (fetchError) {
-        if (fetchError.code === 'PGRST116') {
-          setProfile(null)
-        } else {
-          throw fetchError
-        }
+      if (err && err.code !== 'PGRST116') {
+        throw err
+      }
+
+      if (data) {
+        setProfile(data as ProfileData)
       } else {
-        setProfile(data)
+        setProfile(null)
       }
       setError(null)
     } catch (err: any) {
@@ -80,27 +72,89 @@ export function useProfile() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [user])
+
+  useEffect(() => {
+    if (!user) {
+      setLoading(false)
+      return
+    }
+
+    let isMounted = true
+    let timeoutId: NodeJS.Timeout | null = null
+
+    const fetchWithTimeout = async () => {
+      try {
+        setLoading(true)
+
+        // Set a timeout to prevent hanging
+        timeoutId = setTimeout(() => {
+          if (isMounted) {
+            setLoading(false)
+            setError('Profile fetch timed out')
+            setProfile(null)
+          }
+        }, 10000)
+
+        const { data, error: err } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('user_id', user.id)
+          .single()
+
+        if (timeoutId) clearTimeout(timeoutId)
+
+        if (!isMounted) return
+
+        if (err && err.code !== 'PGRST116') {
+          throw err
+        }
+
+        if (data) {
+          setProfile(data as ProfileData)
+        } else {
+          setProfile(null)
+        }
+        setError(null)
+      } catch (err: any) {
+        if (timeoutId) clearTimeout(timeoutId)
+        if (isMounted) {
+          setError(err.message)
+          console.error('Error fetching profile:', err)
+        }
+      } finally {
+        if (timeoutId) clearTimeout(timeoutId)
+        if (isMounted) {
+          setLoading(false)
+        }
+      }
+    }
+
+    fetchWithTimeout()
+
+    return () => {
+      isMounted = false
+      if (timeoutId) clearTimeout(timeoutId)
+    }
+  }, [user])
 
   const createProfile = useCallback(
     async (data: Partial<ProfileData>) => {
       if (!user) throw new Error('No user logged in')
 
       try {
-        const { data: newProfile, error } = await supabase
+        const { data: newProfile, error: err } = await supabase
           .from('profiles')
-          .insert([
-            {
-              user_id: user.id,
-              ...data,
-            },
-          ])
+          .insert({
+            user_id: user.id,
+            ...data,
+          })
           .select()
           .single()
 
-        if (error) throw error
-        setProfile(newProfile)
-        return newProfile
+        if (err) throw err
+        setProfile(newProfile as ProfileData)
+        return newProfile as ProfileData
       } catch (err: any) {
         setError(err.message)
         throw err
@@ -111,25 +165,25 @@ export function useProfile() {
 
   const updateProfile = useCallback(
     async (data: Partial<ProfileData>) => {
-      if (!user || !profile) throw new Error('No user or profile')
+      if (!user) throw new Error('No user logged in')
 
       try {
-        const { data: updated, error } = await supabase
+        const { data: updatedProfile, error: err } = await supabase
           .from('profiles')
           .update(data)
           .eq('user_id', user.id)
           .select()
           .single()
 
-        if (error) throw error
-        setProfile(updated)
-        return updated
+        if (err) throw err
+        setProfile(updatedProfile as ProfileData)
+        return updatedProfile as ProfileData
       } catch (err: any) {
         setError(err.message)
         throw err
       }
     },
-    [user, profile]
+    [user]
   )
 
   const uploadPhoto = useCallback(
@@ -137,25 +191,25 @@ export function useProfile() {
       if (!user) throw new Error('No user logged in')
 
       try {
-        const fileName = `${user.id}/${Date.now()}-${index}-${file.name}`
-        const { error: uploadError, data } = await supabase.storage
-          .from('avatars')
-          .upload(fileName, file, {
-            cacheControl: '3600',
-            upsert: false,
-          })
+        const fileName = `${user.id}/${Date.now()}-${file.name}`
+        const { data, error: uploadErr } = await supabase.storage
+          .from('profile-photos')
+          .upload(fileName, file, { upsert: true })
 
-        if (uploadError) throw uploadError
+        if (uploadErr) throw uploadErr
 
-        const {
-          data: { publicUrl },
-        } = supabase.storage.from('avatars').getPublicUrl(fileName)
+        const { data: { publicUrl } } = supabase.storage
+          .from('profile-photos')
+          .getPublicUrl(fileName)
 
-        const currentPhotos = profile?.photos || []
-        const newPhotos = [...currentPhotos]
-        newPhotos[index] = publicUrl
+        // If profile exists, update it with the new photo
+        if (profile) {
+          const currentPhotos = profile.photos || []
+          const newPhotos = [...currentPhotos]
+          newPhotos[index] = publicUrl
+          await updateProfile({ photos: newPhotos } as any)
+        }
 
-        await updateProfile({ photos: newPhotos })
         return publicUrl
       } catch (err: any) {
         setError(err.message)
@@ -170,18 +224,12 @@ export function useProfile() {
       if (!profile?.photos || !profile.photos[index]) return
 
       try {
-        const photoUrl = profile.photos[index]
-        const fileName = photoUrl.split('/').pop()
-        if (fileName) {
-          await supabase.storage.from('avatars').remove([`${user?.id}/${fileName}`])
-        }
-
         const newPhotos = profile.photos.filter((_, i) => i !== index)
         await updateProfile({
           photos: newPhotos,
           main_photo_index:
             profile.main_photo_index === index ? 0 : profile.main_photo_index,
-        })
+        } as any)
       } catch (err: any) {
         setError(err.message)
         throw err
@@ -192,14 +240,14 @@ export function useProfile() {
 
   const reorderPhotos = useCallback(
     async (newPhotos: string[]) => {
-      await updateProfile({ photos: newPhotos })
+      await updateProfile({ photos: newPhotos } as any)
     },
     [updateProfile]
   )
 
   const setMainPhoto = useCallback(
     async (index: number) => {
-      await updateProfile({ main_photo_index: index })
+      await updateProfile({ main_photo_index: index } as any)
     },
     [updateProfile]
   )

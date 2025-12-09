@@ -1,9 +1,9 @@
 import type { Metadata } from 'next'
 import { Geist, Geist_Mono, Inter, Playfair_Display } from 'next/font/google'
 import './globals.css'
-import { LanguageProvider } from '@/context/language-context'
 import { AuthProvider } from '@/context/auth-context'
 import { I18nProvider } from '@/lib/i18n-context'
+import { Preloader } from '@/components/preloader'
 
 const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
@@ -23,19 +23,10 @@ export const metadata: Metadata = {
   icons: {
     icon: [
       {
-        url: '/icon-light-32x32.png',
-        media: '(prefers-color-scheme: light)',
-      },
-      {
-        url: '/icon-dark-32x32.png',
-        media: '(prefers-color-scheme: dark)',
-      },
-      {
-        url: '/icon.svg',
+        url: '/placeholder-logo.svg',
         type: 'image/svg+xml',
       },
     ],
-    apple: '/apple-icon.png',
   },
 }
 
@@ -47,40 +38,29 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
-              (function(){
-              var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
-              s1.async=true;
-              s1.src='https://embed.tawk.to/672c5e7a4308e9193c899eXX/1i0v5b47r';
-              s1.charset='UTF-8';
-              s1.setAttribute('crossorigin','*');
-              s0.parentNode.insertBefore(s1,s0);
-              })();
-            `,
-          }}
-        />
-
         <script async src="https://cdn.onesignal.com/sdks/onesignal.js"></script>
         <script dangerouslySetInnerHTML={{
           __html: `
             window.OneSignal = window.OneSignal || [];
-            OneSignal.push(function() {
-              OneSignal.init({
-                appId: "onesignal-app-id-12345678",
+            if (typeof window !== 'undefined' && window.OneSignal) {
+              OneSignal.push(function() {
+                try {
+                  OneSignal.init({
+                    appId: "onesignal-app-id-12345678",
+                  });
+                } catch (err) {
+                  console.warn('OneSignal initialization failed:', err);
+                }
               });
-            });
+            }
           `,
         }} />
       </head>
       <body className={`${inter.variable} ${playfair.variable} font-sans antialiased bg-white text-slate-900`}>
+        <Preloader />
         <I18nProvider>
           <AuthProvider>
-            <LanguageProvider>
-              {children}
-            </LanguageProvider>
+            {children}
           </AuthProvider>
         </I18nProvider>
       </body>

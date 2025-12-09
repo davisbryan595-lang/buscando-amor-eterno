@@ -1,15 +1,15 @@
 'use client'
 
-import React, { createContext, useContext, useState, useEffect } from 'react'
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react'
 import en from '@/lib/translations/en.json'
 import es from '@/lib/translations/es.json'
 
-type Language = 'en' | 'es'
+export type Language = 'en' | 'es'
 
 interface I18nContextType {
   language: Language
   setLanguage: (lang: Language) => void
-  t: (key: string, defaultValue?: string) => string
+  t: (key: string, variables?: Record<string, string | number>) => string
 }
 
 const I18nContext = createContext<I18nContextType | undefined>(undefined)
@@ -20,33 +20,51 @@ function getNestedValue(obj: any, path: string): any {
   return path.split('.').reduce((acc, part) => acc?.[part], obj)
 }
 
+function replaceTemplateVariables(text: string, variables?: Record<string, string | number>): string {
+  if (!variables) return text
+
+  return text.replace(/\{\{(\w+)\}\}/g, (match, key) => {
+    const value = variables[key]
+    return value !== undefined ? String(value) : match
+  })
+}
+
 export function I18nProvider({ children }: { children: React.ReactNode }) {
-  const [language, setLanguage] = useState<Language>('en')
+  const [language, setLanguageState] = useState<Language>('en')
   const [isClient, setIsClient] = useState(false)
 
   useEffect(() => {
     setIsClient(true)
     const stored = localStorage.getItem('language') as Language | null
-    const browserLang = navigator.language.split('-')[0] as Language
-    const detectedLang = stored || (browserLang === 'es' ? 'es' : 'en')
-    setLanguage(detectedLang)
+    // Default to English, only use Spanish if explicitly set in localStorage
+    const detectedLang = stored || 'en'
+    setLanguageState(detectedLang)
   }, [])
 
-  const t = (key: string, defaultValue?: string): string => {
+  const t = useCallback((key: string, variables?: Record<string, string | number>): string => {
     const value = getNestedValue(translations[language], key)
     if (value === undefined || value === null) {
-      return defaultValue || key
+      return key
     }
-    return String(value)
-  }
+    const stringValue = String(value)
+    return replaceTemplateVariables(stringValue, variables)
+  }, [language])
 
-  const handleSetLanguage = (lang: Language) => {
-    setLanguage(lang)
-    localStorage.setItem('language', lang)
-  }
+  const handleSetLanguage = useCallback((lang: Language) => {
+    setLanguageState(lang)
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('language', lang)
+    }
+  }, [])
+
+  const contextValue: I18nContextType = useMemo(() => ({
+    language,
+    setLanguage: handleSetLanguage,
+    t,
+  }), [language, handleSetLanguage, t])
 
   return (
-    <I18nContext.Provider value={{ language, setLanguage: handleSetLanguage, t }}>
+    <I18nContext.Provider value={contextValue}>
       {children}
     </I18nContext.Provider>
   )

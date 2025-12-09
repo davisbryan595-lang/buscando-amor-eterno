@@ -15,6 +15,47 @@ import {
 } from '@/components/ui/select'
 import { Heart, Flame } from 'lucide-react'
 
+const PreferenceSection = ({
+  title,
+  icon: Icon,
+  children,
+}: {
+  title: string
+  icon: React.ReactNode
+  children: React.ReactNode
+}) => (
+  <div className="space-y-3 p-4 rounded-2xl bg-muted/50">
+    <div className="flex items-center gap-2">
+      <div className="text-primary">{Icon}</div>
+      <h3 className="font-semibold text-foreground">{title}</h3>
+    </div>
+    {children}
+  </div>
+)
+
+interface DealBreakerOptionProps {
+  field: string
+  label: string
+  value: string
+  checked: boolean
+  onToggle: (field: string) => void
+}
+
+const DealBreakerOption = ({ field, label, value, checked, onToggle }: DealBreakerOptionProps) => (
+  <div className="flex items-center justify-between p-3 bg-background rounded-lg">
+    <div className="flex-1">
+      <p className="font-medium text-foreground">{label}</p>
+      <p className="text-sm text-muted-foreground">{value}</p>
+    </div>
+    <div className="flex items-center gap-2">
+      <Switch
+        checked={checked}
+        onCheckedChange={() => onToggle(field)}
+      />
+    </div>
+  </div>
+)
+
 interface Step6Props {
   onNext: () => void
   onSkip: () => void
@@ -81,47 +122,6 @@ export function Step6Preferences({
     })
     onNext()
   }
-
-  const PreferenceSection = ({
-    title,
-    icon: Icon,
-    children,
-  }: {
-    title: string
-    icon: React.ReactNode
-    children: React.ReactNode
-  }) => (
-    <div className="space-y-3 p-4 rounded-2xl bg-muted/50">
-      <div className="flex items-center gap-2">
-        <div className="text-primary">{Icon}</div>
-        <h3 className="font-semibold text-foreground">{title}</h3>
-      </div>
-      {children}
-    </div>
-  )
-
-  const DealBreakerOption = ({
-    field,
-    label,
-    value,
-  }: {
-    field: string
-    label: string
-    value: string
-  }) => (
-    <div className="flex items-center justify-between p-3 bg-background rounded-lg">
-      <div className="flex-1">
-        <p className="font-medium text-foreground">{label}</p>
-        <p className="text-sm text-muted-foreground">{value}</p>
-      </div>
-      <div className="flex items-center gap-2">
-        <Switch
-          checked={dealbreakers.includes(field)}
-          onCheckedChange={() => toggleDealbreaker(field)}
-        />
-      </div>
-    </div>
-  )
 
   return (
     <div className="space-y-8">
@@ -282,21 +282,29 @@ export function Step6Preferences({
               field="wantsKids"
               label={t('onboarding.step6.wantsKids')}
               value={wantsKids}
+              checked={dealbreakers.includes('wantsKids')}
+              onToggle={toggleDealbreaker}
             />
             <DealBreakerOption
               field="smoking"
               label={t('onboarding.step6.smoking')}
               value={smoking}
+              checked={dealbreakers.includes('smoking')}
+              onToggle={toggleDealbreaker}
             />
             <DealBreakerOption
               field="drinking"
               label={t('onboarding.step6.drinking')}
               value={drinking}
+              checked={dealbreakers.includes('drinking')}
+              onToggle={toggleDealbreaker}
             />
             <DealBreakerOption
               field="religion"
               label={t('onboarding.step6.religion')}
               value={religion}
+              checked={dealbreakers.includes('religion')}
+              onToggle={toggleDealbreaker}
             />
           </div>
         </div>

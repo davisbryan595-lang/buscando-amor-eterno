@@ -14,9 +14,10 @@ export function useProfileProtection(
 ) {
   const router = useRouter()
   const { user, loading: authLoading } = useAuth()
-  const { profile, loading: profileLoading } = useProfile()
+  const { profile, loading: profileLoading, error: profileError } = useProfile()
 
   useEffect(() => {
+    // Still loading auth or profile data
     if (authLoading || profileLoading) {
       return
     }
@@ -26,13 +27,19 @@ export function useProfileProtection(
       return
     }
 
-    // If profile protection is required and profile is not complete
-    if (requireProfile && !profile?.profile_complete) {
+    // Wait for profile data to be available before checking completion status
+    // If profile is null and not loading, it means no profile exists yet
+    if (profile === undefined) {
+      return
+    }
+
+    // If profile protection is required and profile is not complete, redirect
+    if (requireProfile && profile && !profile.profile_complete) {
       router.push(redirectTo)
     }
 
-    // If user has complete profile but is on onboarding, redirect to browse
-    if (!requireProfile && profile?.profile_complete) {
+    // If profile protection is NOT required and profile IS complete, redirect to browse
+    if (!requireProfile && profile && profile.profile_complete) {
       router.push('/browse')
     }
   }, [user, profile, authLoading, profileLoading, router, requireProfile, redirectTo])

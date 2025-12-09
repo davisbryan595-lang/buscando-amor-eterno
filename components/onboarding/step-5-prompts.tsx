@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useMemo } from 'react'
 import { useLanguage } from '@/lib/i18n-context'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
@@ -42,6 +42,40 @@ interface Step5Props {
   }) => void
 }
 
+const PromptField = ({
+  label,
+  value,
+  onChange,
+  error,
+}: {
+  label: string
+  value: string
+  onChange: (v: string) => void
+  error?: string
+}) => (
+  <div className="space-y-2">
+    <Label className="flex items-start gap-2">
+      <MessageCircle size={18} className="text-primary mt-1 flex-shrink-0" />
+      <span>{label}</span>
+    </Label>
+    <Textarea
+      placeholder="Type your answer..."
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      maxLength={MAX_CHAR}
+      className={`px-4 py-3 rounded-2xl min-h-[100px] resize-none ${
+        error ? 'border-destructive' : 'border-secondary'
+      }`}
+    />
+    <div className="flex items-center justify-between text-xs">
+      <span className={value.length < MIN_CHAR ? 'text-destructive' : 'text-muted-foreground'}>
+        {value.length}/{MAX_CHAR}
+      </span>
+      {error && <span className="text-destructive text-xs">{error}</span>}
+    </div>
+  </div>
+)
+
 export function Step5Prompts({
   onNext,
   onSkip,
@@ -59,40 +93,42 @@ export function Step5Prompts({
   const [relationshipType, setRelationshipType] = useState(
     initialData?.relationshipType || ''
   )
-  const [errors, setErrors] = useState<Record<string, string>>({})
 
-  const validateForm = () => {
+  const errors = useMemo(() => {
     const newErrors: Record<string, string> = {}
 
     const prompts = [
       { value: prompt1, key: 'prompt1' },
       { value: prompt2, key: 'prompt2' },
       { value: prompt3, key: 'prompt3' },
-      { value: prompt4, key: 'prompt4' },
       { value: prompt5, key: 'prompt5' },
       { value: prompt6, key: 'prompt6' },
     ]
 
     prompts.forEach((p) => {
-      if (!p.value.trim() || p.value.trim().length < MIN_CHAR) {
+      const trimmed = p.value.trim()
+      if (!trimmed) {
+        newErrors[p.key] = t('onboarding.step5.required')
+      } else if (trimmed.length < MIN_CHAR) {
         newErrors[p.key] = t('onboarding.step5.minChars')
       }
     })
 
     if (!loveLanguage) {
-      newErrors.loveLanguage = 'Love language is required'
+      newErrors.loveLanguage = t('onboarding.step5.required')
     }
 
     if (!relationshipType) {
-      newErrors.relationshipType = 'Relationship type is required'
+      newErrors.relationshipType = t('onboarding.step5.required')
     }
 
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
+    return newErrors
+  }, [prompt1, prompt2, prompt3, prompt5, prompt6, loveLanguage, relationshipType, t])
+
+  const isFormValid = Object.keys(errors).length === 0
 
   const handleNext = () => {
-    if (validateForm()) {
+    if (isFormValid) {
       onDataChange({
         prompt1,
         prompt2,
@@ -106,40 +142,6 @@ export function Step5Prompts({
       onNext()
     }
   }
-
-  const PromptField = ({
-    label,
-    value,
-    onChange,
-    error,
-  }: {
-    label: string
-    value: string
-    onChange: (v: string) => void
-    error?: string
-  }) => (
-    <div className="space-y-2">
-      <Label className="flex items-start gap-2">
-        <MessageCircle size={18} className="text-primary mt-1 flex-shrink-0" />
-        <span>{label}</span>
-      </Label>
-      <Textarea
-        placeholder="Type your answer..."
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        maxLength={MAX_CHAR}
-        className={`px-4 py-3 rounded-2xl min-h-[100px] resize-none ${
-          error ? 'border-destructive' : 'border-secondary'
-        }`}
-      />
-      <div className="flex items-center justify-between text-xs">
-        <span className={value.length < MIN_CHAR ? 'text-destructive' : 'text-muted-foreground'}>
-          {value.length}/{MAX_CHAR}
-        </span>
-        {error && <span className="text-destructive">{error}</span>}
-      </div>
-    </div>
-  )
 
   return (
     <div className="space-y-8">
@@ -244,7 +246,8 @@ export function Step5Prompts({
         </Button>
         <Button
           onClick={handleNext}
-          className="flex-1 py-3 rounded-full bg-primary text-white hover:bg-rose-700 font-semibold"
+          disabled={!isFormValid}
+          className="flex-1 py-3 rounded-full bg-primary text-white hover:bg-rose-700 font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {t('onboarding.nextStep')}
         </Button>
