@@ -9,7 +9,7 @@ import { useBrowseProfiles } from '@/hooks/useBrowseProfiles'
 import { useSubscription } from '@/hooks/useSubscription'
 import { useProfile } from '@/hooks/useProfile'
 import { useNotifications } from '@/hooks/useNotifications'
-import { Heart, X, Star, Info, Loader, Lock, AlertCircle } from 'lucide-react'
+import { Heart, X, Star, Info, Loader, AlertCircle } from 'lucide-react'
 import Image from 'next/image'
 import { toast } from 'sonner'
 
@@ -67,12 +67,6 @@ export default function BrowsePage() {
   const handleSwipe = async (direction: 'left' | 'right' | 'super') => {
     if (!currentProfile || isActing) return
 
-    // Check if trying to like without premium
-    if ((direction === 'right' || direction === 'super') && !isPremium) {
-      setShowPaywall(true)
-      return
-    }
-
     setIsActing(true)
     let actionSucceeded = false
     try {
@@ -86,11 +80,7 @@ export default function BrowsePage() {
     } catch (err: any) {
       const errorMessage = err instanceof Error ? err.message : JSON.stringify(err)
       console.error('Error swiping:', errorMessage)
-      if (errorMessage?.includes('Premium subscription required')) {
-        setShowPaywall(true)
-      } else {
-        toast.error(errorMessage || 'Error liking profile')
-      }
+      toast.error(errorMessage || 'Error liking profile')
     }
 
     // Animate and move to next profile if action succeeded
@@ -354,58 +344,6 @@ export default function BrowsePage() {
 
       <Footer />
 
-      {/* Paywall Modal */}
-      {showPaywall && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
-          <div className="bg-white rounded-3xl max-w-md w-full p-8 space-y-6">
-            <div className="w-16 h-16 bg-rose-100 rounded-full flex items-center justify-center mx-auto">
-              <Lock className="w-8 h-8 text-primary" />
-            </div>
-
-            <div>
-              <h2 className="text-2xl font-playfair font-bold text-slate-900 mb-2">
-                Unlock Liking
-              </h2>
-              <p className="text-slate-600">
-                Upgrade to premium to like and connect with profiles.
-              </p>
-            </div>
-
-            <div className="bg-gradient-to-br from-white to-rose-50 border-2 border-primary rounded-2xl p-4">
-              <p className="text-4xl font-playfair font-bold text-primary mb-2">
-                $12<span className="text-sm text-slate-600">/mo</span>
-              </p>
-              <ul className="space-y-2 text-slate-700 mb-4 text-sm">
-                <li className="flex items-center gap-2">
-                  ✓ Unlimited likes
-                </li>
-                <li className="flex items-center gap-2">
-                  ✓ Send messages
-                </li>
-                <li className="flex items-center gap-2">
-                  ✓ See who liked you
-                </li>
-              </ul>
-            </div>
-
-            <div className="space-y-3">
-              <Link
-                href="/pricing"
-                className="block py-3 bg-primary text-white rounded-full font-semibold hover:bg-rose-700 transition text-center"
-              >
-                Upgrade to Premium
-              </Link>
-
-              <button
-                onClick={() => setShowPaywall(false)}
-                className="w-full py-3 border-2 border-slate-300 text-slate-700 rounded-full font-semibold hover:bg-slate-50 transition"
-              >
-                Not Now
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
     </main>
   )

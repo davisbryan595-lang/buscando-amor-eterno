@@ -8,7 +8,6 @@ import Image from 'next/image'
 import { useMessages } from '@/hooks/useMessages'
 import { useAuth } from '@/context/auth-context'
 import { useSubscription } from '@/hooks/useSubscription'
-import { Lock } from 'lucide-react'
 
 function MessagesContentInner() {
   const { user } = useAuth()
@@ -75,57 +74,6 @@ function MessagesContentInner() {
     )
   }
 
-  if (!subLoading && !isPremium) {
-    return (
-      <div className="pt-24 pb-12 px-4 flex items-center justify-center min-h-[80vh]">
-        <div className="max-w-md mx-auto text-center space-y-6">
-          <div className="w-16 h-16 bg-rose-100 rounded-full flex items-center justify-center mx-auto">
-            <Lock className="w-8 h-8 text-primary" />
-          </div>
-
-          <div>
-            <h1 className="text-3xl font-playfair font-bold text-slate-900 mb-2">
-              Unlock Messaging
-            </h1>
-            <p className="text-slate-600">
-              Upgrade to premium to start conversations and connect with matches.
-            </p>
-          </div>
-
-          <div className="bg-gradient-to-br from-white to-rose-50 border-2 border-primary rounded-2xl p-6">
-            <p className="text-5xl font-playfair font-bold text-primary mb-2">
-              $12<span className="text-lg text-slate-600">/mo</span>
-            </p>
-            <ul className="space-y-2 text-slate-700 mb-6 text-sm">
-              <li className="flex items-center gap-2">
-                ✓ Unlimited messages
-              </li>
-              <li className="flex items-center gap-2">
-                ✓ See who liked you
-              </li>
-              <li className="flex items-center gap-2">
-                ✓ Video date feature
-              </li>
-            </ul>
-          </div>
-
-          <Link
-            href="/pricing"
-            className="block py-3 bg-primary text-white rounded-full font-semibold hover:bg-rose-700 transition"
-          >
-            Upgrade to Premium
-          </Link>
-
-          <Link
-            href="/browse"
-            className="block py-3 border-2 border-primary text-primary rounded-full font-semibold hover:bg-rose-50 transition"
-          >
-            Back to Browse
-          </Link>
-        </div>
-      </div>
-    )
-  }
 
   return (
     <div className="pt-24 pb-12 px-4 h-screen flex flex-col">
