@@ -162,6 +162,11 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
   const endCall = useCallback(() => {
     console.log('[WebRTC] Ending call')
 
+    if (callTimeoutRef.current) {
+      clearTimeout(callTimeoutRef.current)
+      callTimeoutRef.current = null
+    }
+
     if (callRef.current) {
       try {
         callRef.current.close()
@@ -191,6 +196,7 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
 
     setCallState({ status: 'idle' })
     setIncomingCall(null)
+    setAwaitingAcceptance(null)
   }, [])
 
   const handleIncomingCall = useCallback((call: Peer.MediaConnection) => {
