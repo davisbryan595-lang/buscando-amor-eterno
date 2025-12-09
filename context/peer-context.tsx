@@ -67,21 +67,28 @@ export function PeerProvider({ children }: { children: React.ReactNode }) {
       const peerId = sanitizePeerId(`${user.id}${sessionIdRef.current}`)
       console.log('[PeerContext] Initializing peer with ID:', peerId)
 
+      const peerServerUrl = process.env.NEXT_PUBLIC_PEER_SERVER_URL || 'peer-server-buscando.vercel.app'
+      const peerServerPort = process.env.NEXT_PUBLIC_PEER_SERVER_PORT || 443
+
       const peer = new Peer(peerId, {
-        iceServers: [
-          { urls: 'stun:stun.l.google.com:19302' },
-          { urls: 'stun:stun1.l.google.com:19302' },
-          { urls: 'stun:stun2.l.google.com:19302' },
-          { urls: 'stun:stun3.l.google.com:19302' },
-          { urls: 'stun:stun4.l.google.com:19302' },
-        ],
+        host: peerServerUrl,
+        port: peerServerPort,
+        path: '/peerjs',
+        secure: true,
         config: {
+          iceServers: [
+            { urls: 'stun:stun.l.google.com:19302' },
+            { urls: 'stun:stun1.l.google.com:19302' },
+            { urls: 'stun:stun2.l.google.com:19302' },
+            { urls: 'stun:stun3.l.google.com:19302' },
+            { urls: 'stun:stun4.l.google.com:19302' },
+          ],
           iceTransportPolicy: 'all',
           bundlePolicy: 'max-bundle',
           rtcpMuxPolicy: 'require',
+          sdpSemantics: 'unified-plan',
         },
         debug: process.env.NODE_ENV === 'development' ? 2 : 0,
-        ping: 30000,
       })
 
       peer.on('open', () => {
@@ -93,10 +100,12 @@ export function PeerProvider({ children }: { children: React.ReactNode }) {
       })
 
       peer.on('error', (err: any) => {
-        console.error('[PeerContext] Peer error:', err.type, err.message)
+        const errorType = err?.type || 'UNKNOWN'
+        const errorMessage = err?.message || 'Unknown error'
+        console.error('[PeerContext] Peer error:', { type: errorType, message: errorMessage, fullError: err })
 
         // Handle ID taken error with exponential backoff retry
-        if (err.type === 'unavailable-id') {
+        if (errorType === 'unavailable-id') {
           setIsReady(false)
           if (retryCountRef.current < maxRetriesRef.current) {
             retryCountRef.current++
@@ -117,8 +126,30 @@ export function PeerProvider({ children }: { children: React.ReactNode }) {
             setError(errorMsg)
             initializingRef.current = false
           }
-        } else if (err.type !== 'peer-unavailable' && err.type !== 'network') {
-          setError(`Connection error: ${err.message}`)
+        } else if (errorType === 'server-error' || errorType === 'socket-error' || errorType === 'webrtc' || errorType === 'browser-incompatible') {
+          // Server/connectivity errors - retry with exponential backoff
+          setIsReady(false)
+          if (retryCountRef.current < maxRetriesRef.current) {
+            retryCountRef.current++
+            const delay = Math.min(1000 * Math.pow(2, retryCountRef.current - 1), 30000)
+            console.log(`[PeerContext] Connection error (${errorType}), retrying in ${delay}ms (attempt ${retryCountRef.current}/${maxRetriesRef.current})`)
+
+            if (retryTimeoutRef.current) {
+              clearTimeout(retryTimeoutRef.current)
+            }
+
+            retryTimeoutRef.current = setTimeout(() => {
+              if (!destroyingRef.current) {
+                initPeer()
+              }
+            }, delay)
+          } else {
+            const errorMsg = `Connection failed: ${errorMessage}. Please check your internet and refresh.`
+            setError(errorMsg)
+            initializingRef.current = false
+          }
+        } else if (errorType !== 'peer-unavailable' && errorType !== 'network') {
+          setError(`Connection error: ${errorMessage}`)
           initializingRef.current = false
         }
       })
@@ -133,15 +164,17 @@ export function PeerProvider({ children }: { children: React.ReactNode }) {
             console.log('[PeerContext] Reconnect attempted')
           } catch (err) {
             console.warn('[PeerContext] Reconnect failed, will reinitialize:', err)
-            // If reconnect fails, fully reinitialize after delay
+            // If reconnect fails, fully reinitialize after delay with exponential backoff
             if (retryTimeoutRef.current) {
               clearTimeout(retryTimeoutRef.current)
             }
+            const delay = Math.min(1000 * Math.pow(2, retryCountRef.current), 30000)
             retryTimeoutRef.current = setTimeout(() => {
               if (!destroyingRef.current) {
+                retryCountRef.current++
                 initPeer()
               }
-            }, 2000)
+            }, delay)
           }
         }
       })
