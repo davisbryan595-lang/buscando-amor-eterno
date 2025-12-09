@@ -83,8 +83,8 @@ function MessagesContentInner() {
 
 
   return (
-    <div className="pt-24 pb-12 px-4 h-screen flex flex-col">
-      <div className="max-w-6xl mx-auto w-full flex-1 flex gap-6 relative">
+    <div className="pt-24 pb-12 px-3 md:px-4 h-screen flex flex-col">
+      <div className="max-w-6xl mx-auto w-full flex-1 flex gap-3 md:gap-6 relative overflow-hidden">
         {/* Mobile sidebar toggle */}
         <div className="md:hidden absolute left-0 top-0 z-30">
           {!sidebarOpen && (
@@ -101,11 +101,11 @@ function MessagesContentInner() {
         </div>
 
         {/* Sidebar */}
-        <div className={`absolute md:static inset-0 md:inset-auto w-full md:w-80 bg-gradient-to-b from-white to-rose-50 rounded-xl border border-rose-100 overflow-y-auto transition-opacity duration-300 z-20 ${
-          sidebarOpen ? 'opacity-100 pointer-events-auto' : 'md:opacity-100 md:pointer-events-auto opacity-0 pointer-events-none md:relative'
+        <div className={`absolute inset-0 md:static md:inset-auto md:w-72 lg:w-80 bg-gradient-to-b from-white to-rose-50 md:rounded-xl md:border md:border-rose-100 overflow-y-auto transition-all duration-300 z-20 ${
+          sidebarOpen ? 'opacity-100 pointer-events-auto w-full' : 'md:opacity-100 md:pointer-events-auto opacity-0 pointer-events-none'
         }`}>
-          <div className="p-4 border-b border-rose-100 sticky top-0 bg-white flex items-center justify-between rounded-t-xl">
-            <h2 className="text-xl font-bold text-slate-900">Messages</h2>
+          <div className="p-3 md:p-4 border-b border-rose-100 sticky top-0 bg-white md:rounded-t-xl flex items-center justify-between">
+            <h2 className="text-lg md:text-xl font-bold text-slate-900">Messages</h2>
             <button
               onClick={() => setSidebarOpen(false)}
               className="md:hidden p-2 hover:bg-rose-100 rounded-lg transition"
@@ -117,18 +117,18 @@ function MessagesContentInner() {
 
           <div className="divide-y">
             {conversations.length === 0 ? (
-              <div className="p-4 text-center text-slate-600">No conversations yet</div>
+              <div className="p-4 text-center text-slate-600 text-sm">No conversations yet</div>
             ) : (
               conversations.map((conv) => (
                 <button
                   key={conv.id}
                   onClick={() => handleSelectConversation(conv)}
-                  className={`w-full p-4 text-left hover:bg-rose-100 transition ${
+                  className={`w-full p-3 md:p-4 text-left hover:bg-rose-100 transition ${
                     selectedConversation?.id === conv.id ? 'bg-rose-100 border-l-4 border-primary' : ''
                   }`}
                 >
-                  <div className="flex gap-3 items-center">
-                    <div className="relative w-12 h-12 flex-shrink-0">
+                  <div className="flex gap-2 md:gap-3 items-center min-w-0">
+                    <div className="relative w-10 h-10 md:w-12 md:h-12 flex-shrink-0">
                       <Image
                         src={conv.other_user_image || '/placeholder.svg'}
                         alt={conv.other_user_name || 'User'}
@@ -136,12 +136,12 @@ function MessagesContentInner() {
                         className="rounded-full object-cover"
                       />
                       {conv.is_online && (
-                        <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white z-10" />
+                        <div className="absolute bottom-0 right-0 w-2 h-2 md:w-3 md:h-3 bg-green-500 rounded-full border-2 border-white z-10" />
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-slate-900">{conv.other_user_name || 'User'}</p>
-                      <p className="text-sm text-slate-600 truncate">{conv.last_message}</p>
+                      <p className="font-semibold text-slate-900 text-sm md:text-base truncate">{conv.other_user_name || 'User'}</p>
+                      <p className="text-xs md:text-sm text-slate-600 truncate">{conv.last_message}</p>
                     </div>
                     {conv.unread_count > 0 && (
                       <span className="bg-rose-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center flex-shrink-0">
@@ -157,14 +157,14 @@ function MessagesContentInner() {
 
         {/* Chat window */}
         {selectedConversation && (
-          <div className="flex-1 hidden md:flex">
+          <div className="hidden md:flex flex-1 overflow-hidden">
             <ChatWindow conversation={selectedConversation} />
           </div>
         )}
 
         {/* Mobile chat view */}
         {selectedConversation && !sidebarOpen && (
-          <div className="md:hidden absolute inset-0 w-full h-full">
+          <div className="md:hidden absolute inset-0 w-full h-full z-10">
             <ChatWindow conversation={selectedConversation} />
           </div>
         )}
