@@ -8,7 +8,6 @@ import Image from 'next/image'
 import { useMessages } from '@/hooks/useMessages'
 import { useAuth } from '@/context/auth-context'
 import { useSubscription } from '@/hooks/useSubscription'
-import { Lock } from 'lucide-react'
 
 function MessagesContentInner() {
   const { user } = useAuth()
