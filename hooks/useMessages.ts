@@ -1,4 +1,4 @@
-import { useCallback, useState, useEffect } from 'react'
+import { useCallback, useState, useEffect, useRef } from 'react'
 import { useAuth } from '@/context/auth-context'
 import { supabase } from '@/lib/supabase'
 import { useSubscription } from './useSubscription'
@@ -32,6 +32,10 @@ export function useMessages() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const pollAttemptsRef = useRef(0)
+  const lastFetchRef = useRef(0)
+
   useEffect(() => {
     if (!user) {
       setLoading(false)
@@ -45,6 +49,9 @@ export function useMessages() {
       if (unsubscribe) {
         unsubscribe()
       }
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current)
+      }
     }
   }, [user])
 
@@ -53,27 +60,15 @@ export function useMessages() {
 
     try {
       setLoading(true)
-      const startTime = Date.now()
 
-      // Add a timeout for messages fetch (30 seconds)
-      const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Conversations fetch timed out')), 30000)
-      )
-
-      const queryPromise = supabase
+      const { data, error: err } = await supabase
         .from('messages')
         .select('sender_id, recipient_id, content, created_at, read')
         .or(`sender_id.eq.${user.id},recipient_id.eq.${user.id}`)
         .order('created_at', { ascending: false })
-        .limit(500)
-
-      const result = await Promise.race([queryPromise, timeoutPromise])
-      const { data, error: err } = result as any
+        .limit(100)
 
       if (err) throw err
-
-      const queryTime = Date.now() - startTime
-      console.log(`Conversations query completed in ${queryTime}ms`)
 
       const conversationMap = new Map<string, any>()
 
@@ -93,6 +88,8 @@ export function useMessages() {
 
       setConversations(Array.from(conversationMap.values()))
       setError(null)
+      lastFetchRef.current = Date.now()
+      pollAttemptsRef.current = 0
     } catch (err: any) {
       setError(err.message)
       console.error('Error fetching conversations:', err)
@@ -100,6 +97,15 @@ export function useMessages() {
       setLoading(false)
     }
   }
+
+  const debouncedFetchConversations = useCallback(() => {
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current)
+    }
+    debounceTimerRef.current = setTimeout(() => {
+      fetchConversations()
+    }, 500)
+  }, [user])
 
   const subscribeToMessages = () => {
     if (!user) return
@@ -121,20 +127,28 @@ export function useMessages() {
           (payload) => {
             if (isMounted) {
               setMessages((prev) => [payload.new as Message, ...prev])
-              fetchConversations()
+              debouncedFetchConversations()
             }
           }
         )
         .subscribe((status) => {
           if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
             console.warn('Message subscription error:', status)
-            // Fall back to polling if realtime fails
-            if (!pollInterval) {
-              pollInterval = setInterval(() => {
+            if (!pollInterval && isMounted) {
+              pollAttemptsRef.current = 0
+              const startPolling = () => {
                 if (isMounted) {
-                  fetchConversations()
+                  pollInterval = setInterval(() => {
+                    if (isMounted) {
+                      const timeSinceLastFetch = Date.now() - lastFetchRef.current
+                      if (timeSinceLastFetch > 15000) {
+                        fetchConversations()
+                      }
+                    }
+                  }, 15000)
                 }
-              }, 5000)
+              }
+              startPolling()
             }
           }
         })
@@ -148,13 +162,21 @@ export function useMessages() {
       }
     } catch (err) {
       console.warn('Failed to setup message subscription:', err)
-      // Fall back to polling
-      if (!pollInterval) {
-        pollInterval = setInterval(() => {
+      if (!pollInterval && isMounted) {
+        pollAttemptsRef.current = 0
+        const startPolling = () => {
           if (isMounted) {
-            fetchConversations()
+            pollInterval = setInterval(() => {
+              if (isMounted) {
+                const timeSinceLastFetch = Date.now() - lastFetchRef.current
+                if (timeSinceLastFetch > 15000) {
+                  fetchConversations()
+                }
+              }
+            }, 15000)
           }
-        }, 5000)
+        }
+        startPolling()
       }
 
       return () => {
@@ -214,7 +236,7 @@ export function useMessages() {
         throw err
       }
     },
-    [user, isPremium]
+    [user]
   )
 
   const markAsRead = useCallback(
@@ -239,13 +261,11 @@ export function useMessages() {
       if (!user) throw new Error('No user logged in')
 
       try {
-        // Check if conversation already exists
         const existingConv = conversations.find((c) => c.other_user_id === otherUserId)
         if (existingConv) {
           return existingConv
         }
 
-        // Create a system message to establish the conversation
         const { error: msgErr } = await supabase
           .from('messages')
           .insert({
@@ -257,7 +277,6 @@ export function useMessages() {
 
         if (msgErr) throw msgErr
 
-        // Fetch updated conversations
         await fetchConversations()
 
         return {
@@ -277,7 +296,7 @@ export function useMessages() {
         throw err
       }
     },
-    [user, conversations, fetchConversations]
+    [user, conversations]
   )
 
   return {

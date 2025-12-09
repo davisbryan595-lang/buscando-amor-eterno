@@ -81,28 +81,16 @@ export function useProfile() {
     }
 
     let isMounted = true
-    let timeoutId: NodeJS.Timeout | null = null
 
-    const fetchWithTimeout = async () => {
+    const fetchProfileData = async () => {
       try {
         setLoading(true)
-
-        // Set a timeout to prevent hanging
-        timeoutId = setTimeout(() => {
-          if (isMounted) {
-            setLoading(false)
-            setError('Profile fetch timed out')
-            setProfile(null)
-          }
-        }, 10000)
 
         const { data, error: err } = await supabase
           .from('profiles')
           .select('*')
           .eq('user_id', user.id)
           .single()
-
-        if (timeoutId) clearTimeout(timeoutId)
 
         if (!isMounted) return
 
@@ -117,24 +105,21 @@ export function useProfile() {
         }
         setError(null)
       } catch (err: any) {
-        if (timeoutId) clearTimeout(timeoutId)
         if (isMounted) {
           setError(err.message)
           console.error('Error fetching profile:', err)
         }
       } finally {
-        if (timeoutId) clearTimeout(timeoutId)
         if (isMounted) {
           setLoading(false)
         }
       }
     }
 
-    fetchWithTimeout()
+    fetchProfileData()
 
     return () => {
       isMounted = false
-      if (timeoutId) clearTimeout(timeoutId)
     }
   }, [user])
 

@@ -30,33 +30,16 @@ export function useSubscription() {
     }
 
     let isMounted = true
-    let timeoutId: NodeJS.Timeout | null = null
 
-    const fetchWithTimeout = async () => {
+    const fetchSubscriptionData = async () => {
       try {
         setLoading(true)
-
-        // Increase timeout for development environments (60s) vs production (30s)
-        const isDev = process.env.NODE_ENV === 'development'
-        const timeout = isDev ? 60000 : 30000
-
-        // Set a timeout to prevent hanging
-        timeoutId = setTimeout(() => {
-          if (isMounted) {
-            setLoading(false)
-            setError('Subscription fetch timed out - defaulting to free plan')
-            setSubscription(null)
-            setIsPremium(false)
-          }
-        }, timeout)
 
         const { data, error: err } = await supabase
           .from('subscriptions')
           .select('*')
           .eq('user_id', user.id)
           .single()
-
-        if (timeoutId) clearTimeout(timeoutId)
 
         if (!isMounted) return
 
@@ -73,7 +56,6 @@ export function useSubscription() {
         }
         setError(null)
       } catch (err: any) {
-        if (timeoutId) clearTimeout(timeoutId)
         if (isMounted) {
           setError(err.message)
           console.error('Error fetching subscription:', err)
@@ -81,18 +63,16 @@ export function useSubscription() {
           setIsPremium(false)
         }
       } finally {
-        if (timeoutId) clearTimeout(timeoutId)
         if (isMounted) {
           setLoading(false)
         }
       }
     }
 
-    fetchWithTimeout()
+    fetchSubscriptionData()
 
     return () => {
       isMounted = false
-      if (timeoutId) clearTimeout(timeoutId)
     }
   }, [user])
 

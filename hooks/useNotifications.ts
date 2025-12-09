@@ -1,4 +1,4 @@
-import { useCallback, useState, useEffect } from 'react'
+import { useCallback, useState, useEffect, useRef } from 'react'
 import { useAuth } from '@/context/auth-context'
 import { supabase } from '@/lib/supabase'
 
@@ -19,6 +19,8 @@ export function useNotifications() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  const lastFetchRef = useRef(0)
+
   useEffect(() => {
     if (!user) {
       setLoading(false)
@@ -30,7 +32,6 @@ export function useNotifications() {
     let subscription: ReturnType<typeof supabase.channel> | null = null
     let isMounted = true
 
-    // Try to subscribe to realtime updates
     try {
       subscription = supabase
         .channel(`notifications:${user.id}`)
@@ -44,6 +45,7 @@ export function useNotifications() {
           },
           (payload) => {
             if (isMounted) {
+              lastFetchRef.current = Date.now()
               fetchNotifications()
             }
           }
@@ -51,25 +53,29 @@ export function useNotifications() {
         .subscribe((status) => {
           if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
             console.warn('Notification subscription error:', status)
-            // Fall back to polling if realtime fails
-            if (!pollInterval) {
+            if (!pollInterval && isMounted) {
               pollInterval = setInterval(() => {
                 if (isMounted) {
-                  fetchNotifications()
+                  const timeSinceLastFetch = Date.now() - lastFetchRef.current
+                  if (timeSinceLastFetch > 10000) {
+                    fetchNotifications()
+                  }
                 }
-              }, 5000)
+              }, 10000)
             }
           }
         })
     } catch (err) {
       console.warn('Failed to setup realtime subscription:', err)
-      // Fall back to polling
-      if (!pollInterval) {
+      if (!pollInterval && isMounted) {
         pollInterval = setInterval(() => {
           if (isMounted) {
-            fetchNotifications()
+            const timeSinceLastFetch = Date.now() - lastFetchRef.current
+            if (timeSinceLastFetch > 10000) {
+              fetchNotifications()
+            }
           }
-        }, 5000)
+        }, 10000)
       }
     }
 
