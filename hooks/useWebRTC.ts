@@ -76,7 +76,7 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
       .channel(`calls:${user.id}`)
       .on('broadcast', { event: 'call-invite' }, (payload) => {
         if (payload.payload.to === user.id && payload.payload.from !== user.id) {
-          console.log('[WebRTC] Incoming call received from:', payload.payload.from)
+          console.log('[WebRTC] Incoming call received from:', payload.payload.from, payload.payload)
           // Handle incoming call invitation if peer connection is not already active
           setIncomingCall({
             from: payload.payload.from,
@@ -89,7 +89,7 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
       .on('broadcast', { event: 'call-accepted' }, (payload) => {
         if (payload.payload.to === user.id) {
           // Remote user accepted the call, now establish peer connection
-          console.log('[WebRTC] Call accepted by remote user:', payload.payload.from)
+          console.log('[WebRTC] Call accepted by remote user:', payload.payload.from, payload.payload)
           setAwaitingAcceptance(null)
           setCallState((prev) => ({
             ...prev,
@@ -98,7 +98,12 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
           }))
         }
       })
-      .subscribe()
+      .subscribe((status) => {
+        console.log('[WebRTC] Call channel subscription status:', status)
+        if (status === 'CHANNEL_ERROR') {
+          console.error('[WebRTC] Call channel error - check RLS policies and Realtime settings in Supabase dashboard')
+        }
+      })
 
     return () => {
       channel.unsubscribe()
