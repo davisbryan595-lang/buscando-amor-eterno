@@ -84,7 +84,7 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
             clearTimeout(reconnectTimeoutRef.current)
           }
           reconnectTimeoutRef.current = setTimeout(() => {
-            if (peerRef.current && peerRef.current.disconnected) {
+            if (peerRef.current && peerRef.current.disconnected && !peerRef.current.destroyed) {
               peerRef.current.reconnect()
             }
             reconnectTimeoutRef.current = null
