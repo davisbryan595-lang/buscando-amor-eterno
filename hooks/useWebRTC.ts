@@ -93,8 +93,9 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
 
         peerRef.current = peer
       } catch (err: any) {
-        console.error('[WebRTC] Peer initialization error:', err)
-        setError(err.message)
+        const errorMessage = err?.message || (typeof err === 'string' ? err : 'Failed to initialize peer connection')
+        console.error('[WebRTC] Peer initialization error:', errorMessage, err)
+        setError(errorMessage)
       }
     }
 
@@ -159,7 +160,8 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
         setLocalStream(stream)
         return stream
       } catch (err: any) {
-        const errorMsg = `Failed to access ${type === 'audio' ? 'microphone' : 'camera'}: ${err.message}`
+        const baseMessage = err?.message || (typeof err === 'string' ? err : 'Unknown error')
+        const errorMsg = `Failed to access ${type === 'audio' ? 'microphone' : 'camera'}: ${baseMessage}`
         setError(errorMsg)
         throw new Error(errorMsg)
       }
