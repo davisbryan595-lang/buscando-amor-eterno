@@ -71,20 +71,42 @@ export function useMessages() {
       if (err) throw err
 
       const conversationMap = new Map<string, any>()
+      const userIds = new Set<string>()
 
       data?.forEach((msg: any) => {
         const otherUserId = msg.sender_id === user.id ? msg.recipient_id : msg.sender_id
+        userIds.add(otherUserId)
         if (!conversationMap.has(otherUserId)) {
           conversationMap.set(otherUserId, {
             id: otherUserId,
             user_id: user.id,
             other_user_id: otherUserId,
+            other_user_name: null,
+            other_user_image: null,
             last_message: msg.content,
             last_message_time: msg.created_at,
             unread_count: msg.recipient_id === user.id && !msg.read ? 1 : 0,
           })
         }
       })
+
+      // Fetch user profiles for all conversation partners
+      if (userIds.size > 0) {
+        const { data: profiles, error: profileErr } = await supabase
+          .from('profiles')
+          .select('user_id, full_name, photos, main_photo_index')
+          .in('user_id', Array.from(userIds))
+
+        if (!profileErr && profiles) {
+          profiles.forEach((profile: any) => {
+            const conv = conversationMap.get(profile.user_id)
+            if (conv) {
+              conv.other_user_name = profile.full_name
+              conv.other_user_image = profile.photos?.[profile.main_photo_index || 0] || null
+            }
+          })
+        }
+      }
 
       setConversations(Array.from(conversationMap.values()))
       setError(null)

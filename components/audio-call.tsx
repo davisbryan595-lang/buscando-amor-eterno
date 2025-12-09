@@ -3,8 +3,10 @@
 import React, { useState, useEffect } from 'react'
 import Image from 'next/image'
 import { Phone, PhoneOff, Mic, MicOff } from 'lucide-react'
+import { useWebRTC } from '@/hooks/useWebRTC'
 
 interface AudioCallProps {
+  otherUserId: string
   otherUserName: string | null
   otherUserImage: string | null
   isIncoming?: boolean
@@ -14,6 +16,7 @@ interface AudioCallProps {
 }
 
 export default function AudioCall({
+  otherUserId,
   otherUserName,
   otherUserImage,
   isIncoming = false,
@@ -21,19 +24,26 @@ export default function AudioCall({
   onReject,
   onHangup,
 }: AudioCallProps) {
-  const [isCallActive, setIsCallActive] = useState(!isIncoming)
+  const { callState, error, initiateCall, acceptCall, rejectCall, endCall, toggleAudio, incomingCall } = useWebRTC(otherUserId, 'audio')
   const [isMuted, setIsMuted] = useState(false)
   const [callDuration, setCallDuration] = useState(0)
 
   useEffect(() => {
-    if (!isCallActive) return
+    if (isIncoming && !incomingCall) return
+    if (!isIncoming && callState.status !== 'active') return
 
     const interval = setInterval(() => {
       setCallDuration((prev) => prev + 1)
     }, 1000)
 
     return () => clearInterval(interval)
-  }, [isCallActive])
+  }, [isIncoming, incomingCall, callState.status])
+
+  useEffect(() => {
+    if (!isIncoming && callState.status === 'idle') {
+      initiateCall('audio').catch((err) => console.error('Failed to initiate call:', err))
+    }
+  }, [isIncoming, callState.status, initiateCall])
 
   const formatDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60)
@@ -41,17 +51,27 @@ export default function AudioCall({
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
   }
 
-  const handleAccept = () => {
-    setIsCallActive(true)
+  const handleAccept = async () => {
+    await acceptCall()
     onAccept()
   }
 
+  const handleReject = () => {
+    rejectCall()
+    onReject()
+  }
+
   const handleHangup = () => {
-    setIsCallActive(false)
+    endCall()
     onHangup()
   }
 
-  if (isIncoming && !isCallActive) {
+  const handleToggleMute = () => {
+    setIsMuted(!isMuted)
+    toggleAudio(!isMuted)
+  }
+
+  if (incomingCall && callState.status !== 'active') {
     return (
       <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
         <div className="bg-white rounded-2xl p-8 max-w-sm w-full mx-4">
@@ -72,7 +92,7 @@ export default function AudioCall({
 
             <div className="flex gap-4 w-full">
               <button
-                onClick={onReject}
+                onClick={handleReject}
                 className="flex-1 px-6 py-3 bg-red-500 text-white rounded-full hover:bg-red-600 transition font-semibold flex items-center justify-center gap-2"
               >
                 <PhoneOff size={20} />
@@ -86,6 +106,7 @@ export default function AudioCall({
                 Accept
               </button>
             </div>
+            {error && <p className="text-red-500 text-sm mt-4">{error}</p>}
           </div>
         </div>
       </div>
@@ -126,7 +147,7 @@ export default function AudioCall({
       {/* Controls */}
       <div className="flex gap-6 items-center justify-center">
         <button
-          onClick={() => setIsMuted(!isMuted)}
+          onClick={handleToggleMute}
           className={`w-14 h-14 rounded-full flex items-center justify-center transition ${
             isMuted ? 'bg-red-500 hover:bg-red-600' : 'bg-slate-700 hover:bg-slate-600'
           }`}
@@ -146,6 +167,9 @@ export default function AudioCall({
 
       {/* Muted Indicator */}
       {isMuted && <p className="mt-6 text-sm text-red-400 font-semibold">Microphone muted</p>}
+
+      {/* Error Display */}
+      {error && <p className="mt-6 text-sm text-red-400 font-semibold">{error}</p>}
     </div>
   )
 }

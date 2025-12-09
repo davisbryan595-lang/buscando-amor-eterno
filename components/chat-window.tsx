@@ -116,6 +116,7 @@ export default function ChatWindow({ conversation }: { conversation: Conversatio
   if (audioCallActive) {
     return (
       <AudioCall
+        otherUserId={conversation.other_user_id}
         otherUserName={otherUserDetails?.name || conversation.other_user_name}
         otherUserImage={otherUserDetails?.image || conversation.other_user_image}
         isIncoming={false}
@@ -129,6 +130,7 @@ export default function ChatWindow({ conversation }: { conversation: Conversatio
   if (videoCallActive) {
     return (
       <VideoCall
+        otherUserId={conversation.other_user_id}
         otherUserName={otherUserDetails?.name || conversation.other_user_name}
         otherUserImage={otherUserDetails?.image || conversation.other_user_image}
         isIncoming={false}
