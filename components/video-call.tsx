@@ -3,8 +3,10 @@
 import React, { useState, useEffect } from 'react'
 import Image from 'next/image'
 import { Phone, PhoneOff, Mic, MicOff, Video, VideoOff } from 'lucide-react'
+import { useWebRTC } from '@/hooks/useWebRTC'
 
 interface VideoCallProps {
+  otherUserId: string
   otherUserName: string | null
   otherUserImage: string | null
   isIncoming?: boolean
