@@ -116,7 +116,7 @@ export function Step4Photos({
         <div className="space-y-4">
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
             {previews.map((preview, index) => (
-              <div key={index} className="relative aspect-square rounded-2xl overflow-hidden shadow-lg group">
+              <div key={preview} className="relative aspect-square rounded-2xl overflow-hidden shadow-lg group">
                 <img
                   src={preview}
                   alt={`Photo ${index + 1}`}
