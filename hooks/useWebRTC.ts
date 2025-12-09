@@ -120,12 +120,23 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
           }
         }
       })
+      .on('broadcast', { event: 'call-accepted' }, (payload) => {
+        if (payload.payload.to === user.id && awaitingAcceptance?.to === payload.payload.from) {
+          // Remote user accepted the call, now establish peer connection
+          console.log('[WebRTC] Call accepted by remote user, establishing peer connection')
+          setAwaitingAcceptance(null)
+          setCallState((prev) => ({
+            ...prev,
+            status: 'ringing',
+          }))
+        }
+      })
       .subscribe()
 
     return () => {
       channel.unsubscribe()
     }
-  }, [user, callState.status, incomingCall])
+  }, [user, callState.status, incomingCall, awaitingAcceptance])
 
   const getMediaStream = useCallback(
     async (type: CallType): Promise<MediaStream> => {
