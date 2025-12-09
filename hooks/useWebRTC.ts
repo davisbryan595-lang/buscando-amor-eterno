@@ -136,7 +136,7 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
     return () => {
       channel.unsubscribe()
     }
-  }, [user, callState.status, incomingCall, awaitingAcceptance])
+  }, [user])
 
   const getMediaStream = useCallback(
     async (type: CallType): Promise<MediaStream> => {
