@@ -38,9 +38,12 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
     const initPeer = async () => {
       try {
         const peer = new Peer(user.id, {
-          host: 'localhost',
-          port: 9000,
-          path: '/peerjs',
+          iceServers: [
+            { urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] },
+          ],
+          config: {
+            iceTransportPolicy: 'all',
+          },
           debug: process.env.NODE_ENV === 'development' ? 2 : 0,
         })
 
@@ -50,7 +53,10 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
 
         peer.on('error', (err: any) => {
           console.error('Peer error:', err)
-          setError(`Connection error: ${err.message}`)
+          // Don't set error on connection errors during initialization
+          if (err.type !== 'peer-unavailable') {
+            setError(`Connection error: ${err.message}`)
+          }
         })
 
         peer.on('call', (call: Peer.MediaConnection) => {
@@ -59,6 +65,7 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
 
         peerRef.current = peer
       } catch (err: any) {
+        console.error('Peer initialization error:', err)
         setError(err.message)
       }
     }
