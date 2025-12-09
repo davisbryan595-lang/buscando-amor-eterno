@@ -101,7 +101,13 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
       .subscribe((status, err) => {
         console.log('[WebRTC] Call channel subscription status:', status, err)
         if (status === 'CHANNEL_ERROR') {
-          console.error('[WebRTC] Call channel error details:', { status, err, userId: user?.id, isReady, peerError })
+          const errorMessage = err?.message || (typeof err === 'string' ? err : 'Unknown channel error')
+          const errorCode = err?.code || 'UNKNOWN'
+          console.error('[WebRTC] Call channel error details:', {
+            message: errorMessage,
+            code: errorCode,
+            userId: user?.id,
+          })
         }
       })
 
