@@ -164,15 +164,17 @@ export function PeerProvider({ children }: { children: React.ReactNode }) {
             console.log('[PeerContext] Reconnect attempted')
           } catch (err) {
             console.warn('[PeerContext] Reconnect failed, will reinitialize:', err)
-            // If reconnect fails, fully reinitialize after delay
+            // If reconnect fails, fully reinitialize after delay with exponential backoff
             if (retryTimeoutRef.current) {
               clearTimeout(retryTimeoutRef.current)
             }
+            const delay = Math.min(1000 * Math.pow(2, retryCountRef.current), 30000)
             retryTimeoutRef.current = setTimeout(() => {
               if (!destroyingRef.current) {
+                retryCountRef.current++
                 initPeer()
               }
-            }, 2000)
+            }, delay)
           }
         }
       })
