@@ -143,7 +143,8 @@ export function useProfile() {
         setProfile(newProfile as ProfileData)
         return newProfile as ProfileData
       } catch (err: any) {
-        setError(err.message)
+        const errorMessage = err?.message || (typeof err === 'string' ? err : 'Failed to create profile')
+        setError(errorMessage)
         throw err
       }
     },
@@ -166,7 +167,8 @@ export function useProfile() {
         setProfile(updatedProfile as ProfileData)
         return updatedProfile as ProfileData
       } catch (err: any) {
-        setError(err.message)
+        const errorMessage = err?.message || (typeof err === 'string' ? err : 'Failed to update profile')
+        setError(errorMessage)
         throw err
       }
     },
@@ -199,7 +201,8 @@ export function useProfile() {
 
         return publicUrl
       } catch (err: any) {
-        setError(err.message)
+        const errorMessage = err?.message || (typeof err === 'string' ? err : 'Failed to upload photo')
+        setError(errorMessage)
         throw err
       }
     },
@@ -218,7 +221,8 @@ export function useProfile() {
             profile.main_photo_index === index ? 0 : profile.main_photo_index,
         } as any)
       } catch (err: any) {
-        setError(err.message)
+        const errorMessage = err?.message || (typeof err === 'string' ? err : 'Failed to delete photo')
+        setError(errorMessage)
         throw err
       }
     },
