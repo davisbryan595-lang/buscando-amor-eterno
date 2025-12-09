@@ -217,9 +217,66 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
     })
   }, [endCall])
 
+  const establishPeerConnection = useCallback(
+    async (remoteId: string, type: CallType) => {
+      if (!peerRef.current) return
+
+      try {
+        console.log(`[WebRTC] Establishing peer connection with ${remoteId}`)
+
+        const callTimeout = setTimeout(() => {
+          if (callRef.current && (callState.status === 'calling' || callState.status === 'ringing')) {
+            console.error('[WebRTC] Call timeout - no connection after 30s')
+            setError('Call timeout - unable to connect')
+            endCall()
+          }
+        }, 30000)
+
+        callTimeoutRef.current = callTimeout
+
+        const call = peerRef.current.call(remoteId, localStreamRef.current!)
+        callRef.current = call
+
+        call.on('stream', (remoteStream: MediaStream) => {
+          clearTimeout(callTimeout)
+          callTimeoutRef.current = null
+          console.log('[WebRTC] Remote stream received')
+          remoteStreamRef.current = remoteStream
+          setRemoteStream(remoteStream)
+          setCallState({
+            status: 'active',
+            callType: type,
+            remoteUserId: remoteId,
+            callStartTime: Date.now(),
+          })
+        })
+
+        call.on('close', () => {
+          clearTimeout(callTimeout)
+          callTimeoutRef.current = null
+          console.log('[WebRTC] Call ended')
+          endCall()
+        })
+
+        call.on('error', (err: any) => {
+          clearTimeout(callTimeout)
+          callTimeoutRef.current = null
+          console.error('[WebRTC] Call error:', err.type, err)
+          setError(err.message)
+          endCall()
+        })
+      } catch (err: any) {
+        console.error('[WebRTC] Failed to establish peer connection:', err)
+        setError(err.message)
+        endCall()
+      }
+    },
+    [callState.status, endCall]
+  )
+
   const initiateCall = useCallback(
     async (type: CallType) => {
-      if (!otherUserId || !peerRef.current || !user) return
+      if (!otherUserId || !user) return
 
       try {
         setError(null)
@@ -230,6 +287,9 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
         })
 
         console.log(`[WebRTC] Initiating ${type} call to ${otherUserId}`)
+
+        // Get local stream first
+        const stream = await getMediaStream(type)
 
         // Notify other user about incoming call via Supabase Broadcast (low-latency signaling)
         const channel = supabase.channel(`calls:${otherUserId}`)
@@ -248,65 +308,40 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
           payload: invitePayload,
         })
 
-        console.log('[WebRTC] Call invite sent via Broadcast')
+        console.log('[WebRTC] Call invite sent, waiting for acceptance...')
+        setAwaitingAcceptance({
+          to: otherUserId,
+          type,
+        })
 
-        // Get local stream
-        const stream = await getMediaStream(type)
-
-        // Create and make the call with timeout handling
-        const callTimeout = setTimeout(() => {
-          if (callRef.current && callState.status === 'calling') {
-            console.error('[WebRTC] Call timeout - no connection after 30s')
-            setError('Call timeout - unable to connect')
+        // Set timeout for call to be accepted
+        const acceptanceTimeout = setTimeout(() => {
+          if (awaitingAcceptance && callState.status === 'calling') {
+            console.error('[WebRTC] Call not accepted after 60s')
+            setError('Call not answered')
             endCall()
+            setAwaitingAcceptance(null)
           }
-        }, 30000)
+        }, 60000)
 
-        const call = peerRef.current.call(otherUserId, stream)
-        callRef.current = call
-
-        call.on('stream', (remoteStream: MediaStream) => {
-          clearTimeout(callTimeout)
-          console.log('[WebRTC] Remote stream received')
-          remoteStreamRef.current = remoteStream
-          setRemoteStream(remoteStream)
-          setCallState({
-            status: 'active',
-            callType: type,
-            remoteUserId: otherUserId,
-            callStartTime: Date.now(),
-          })
-        })
-
-        call.on('close', () => {
-          clearTimeout(callTimeout)
-          console.log('[WebRTC] Call ended')
-          endCall()
-        })
-
-        call.on('error', (err: any) => {
-          clearTimeout(callTimeout)
-          console.error('[WebRTC] Call error:', err.type, err)
-          if (err.type === 'network' || err.type === 'media') {
-            console.log('[WebRTC] Retrying call after network/media error')
-            setTimeout(() => {
-              if (callState.status === 'calling') {
-                initiateCall(type)
-              }
-            }, 2000)
-          } else {
-            setError(err.message)
-            endCall()
-          }
-        })
+        callTimeoutRef.current = acceptanceTimeout
       } catch (err: any) {
         console.error('[WebRTC] Failed to initiate call:', err)
         setError(err.message)
         setCallState({ status: 'idle' })
+        setAwaitingAcceptance(null)
       }
     },
-    [otherUserId, user, getMediaStream, callState.status, endCall]
+    [otherUserId, user, getMediaStream, awaitingAcceptance, callState.status, endCall]
   )
+
+  // When call is accepted by remote user, establish peer connection
+  useEffect(() => {
+    if (callState.status === 'ringing' && awaitingAcceptance === null && otherUserId) {
+      const callType = callState.callType as CallType
+      establishPeerConnection(otherUserId, callType)
+    }
+  }, [callState.status, awaitingAcceptance, otherUserId, establishPeerConnection])
 
   const acceptCall = useCallback(async () => {
     if (!incomingCall || !peerRef.current) return
