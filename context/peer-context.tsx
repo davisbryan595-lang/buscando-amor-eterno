@@ -28,6 +28,12 @@ export function PeerProvider({ children }: { children: React.ReactNode }) {
   const maxRetriesRef = useRef(5)
   const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
+  const sanitizePeerId = useCallback((id: string): string => {
+    // Remove hyphens and any non-alphanumeric characters (except underscore)
+    // PeerJS only accepts alphanumeric characters
+    return id.replace(/[^a-zA-Z0-9]/g, '').substring(0, 64)
+  }, [])
+
   const destroyPeer = useCallback(() => {
     if (peerRef.current && !peerRef.current.destroyed) {
       try {
