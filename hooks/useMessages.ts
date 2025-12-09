@@ -135,6 +135,7 @@ export function useMessages() {
 
     let pollInterval: ReturnType<typeof setInterval> | null = null
     let isMounted = true
+    let subscriptionActive = false
     let reconnectAttempts = 0
     const maxReconnectAttempts = 5
     const timeoutsRef = new Set<ReturnType<typeof setTimeout>>()
@@ -142,6 +143,29 @@ export function useMessages() {
     const clearAllTimeouts = () => {
       timeoutsRef.forEach(timeout => clearTimeout(timeout))
       timeoutsRef.clear()
+    }
+
+    const stopPolling = () => {
+      if (pollInterval) {
+        clearInterval(pollInterval)
+        pollInterval = null
+        console.log('[Messages] Polling stopped')
+      }
+    }
+
+    const startPolling = () => {
+      if (isMounted && !pollInterval && !subscriptionActive) {
+        console.log('[Messages] Starting fallback polling')
+        pollInterval = setInterval(() => {
+          if (isMounted && !subscriptionActive) {
+            const timeSinceLastFetch = Date.now() - lastFetchRef.current
+            if (timeSinceLastFetch > 30000) {
+              console.log('[Messages] Polling: fetching conversations')
+              fetchConversations()
+            }
+          }
+        }, 30000)
+      }
     }
 
     const setupSubscription = () => {
@@ -153,23 +177,6 @@ export function useMessages() {
             },
           })
           .on(
-            'broadcast',
-            {
-              event: 'message-sent',
-            },
-            (payload) => {
-              if (isMounted && payload.payload) {
-                const message = payload.payload as Message
-                setMessages((prev) => {
-                  const exists = prev.some((m) => m.id === message.id)
-                  return exists ? prev : [message, ...prev]
-                })
-                debouncedFetchConversations()
-                reconnectAttempts = 0
-              }
-            }
-          )
-          .on(
             'postgres_changes',
             {
               event: 'INSERT',
@@ -178,7 +185,7 @@ export function useMessages() {
               filter: `or(sender_id.eq.${user.id},recipient_id.eq.${user.id})`,
             },
             (payload) => {
-              if (isMounted) {
+              if (isMounted && subscriptionActive) {
                 const message = payload.new as Message
                 setMessages((prev) => {
                   const exists = prev.some((m) => m.id === message.id)
@@ -191,13 +198,12 @@ export function useMessages() {
           .subscribe((status) => {
             if (status === 'SUBSCRIBED') {
               console.log('[Messages] Subscription active')
+              subscriptionActive = true
               reconnectAttempts = 0
-              if (pollInterval) {
-                clearInterval(pollInterval)
-                pollInterval = null
-              }
+              stopPolling()
             } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
               console.warn('[Messages] Subscription error:', status)
+              subscriptionActive = false
               if (isMounted && reconnectAttempts < maxReconnectAttempts) {
                 reconnectAttempts++
                 const delay = Math.min(1000 * Math.pow(2, reconnectAttempts - 1), 30000)
@@ -209,7 +215,7 @@ export function useMessages() {
                   }
                 }, delay)
                 timeoutsRef.add(timeout)
-              } else if (!pollInterval && isMounted) {
+              } else if (isMounted) {
                 startPolling()
               }
             }
@@ -217,15 +223,14 @@ export function useMessages() {
 
         return () => {
           isMounted = false
+          subscriptionActive = false
           subscription.unsubscribe()
           clearAllTimeouts()
-          if (pollInterval) {
-            clearInterval(pollInterval)
-            pollInterval = null
-          }
+          stopPolling()
         }
       } catch (err) {
         console.warn('[Messages] Failed to setup subscription:', err)
+        subscriptionActive = false
         if (isMounted && reconnectAttempts < maxReconnectAttempts) {
           reconnectAttempts++
           const delay = Math.min(1000 * Math.pow(2, reconnectAttempts - 1), 30000)
@@ -236,32 +241,16 @@ export function useMessages() {
             }
           }, delay)
           timeoutsRef.add(timeout)
-        } else if (!pollInterval && isMounted) {
+        } else if (isMounted) {
           startPolling()
         }
 
         return () => {
           isMounted = false
+          subscriptionActive = false
           clearAllTimeouts()
-          if (pollInterval) {
-            clearInterval(pollInterval)
-            pollInterval = null
-          }
+          stopPolling()
         }
-      }
-    }
-
-    const startPolling = () => {
-      if (isMounted && !pollInterval) {
-        console.log('[Messages] Starting fallback polling')
-        pollInterval = setInterval(() => {
-          if (isMounted) {
-            const timeSinceLastFetch = Date.now() - lastFetchRef.current
-            if (timeSinceLastFetch > 10000) {
-              fetchConversations()
-            }
-          }
-        }, 10000)
       }
     }
 
