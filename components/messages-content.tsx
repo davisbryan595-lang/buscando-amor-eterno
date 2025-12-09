@@ -30,7 +30,7 @@ function MessagesContentInner() {
           id: userIdParam,
           user_id: user?.id,
           other_user_id: userIdParam,
-          other_user_name: 'User',
+          other_user_name: null,
           other_user_image: null,
           last_message: '',
           last_message_time: new Date().toISOString(),
