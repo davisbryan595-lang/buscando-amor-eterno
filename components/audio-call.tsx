@@ -147,7 +147,7 @@ export default function AudioCall({
       {/* Controls */}
       <div className="flex gap-6 items-center justify-center">
         <button
-          onClick={() => setIsMuted(!isMuted)}
+          onClick={handleToggleMute}
           className={`w-14 h-14 rounded-full flex items-center justify-center transition ${
             isMuted ? 'bg-red-500 hover:bg-red-600' : 'bg-slate-700 hover:bg-slate-600'
           }`}
@@ -167,6 +167,9 @@ export default function AudioCall({
 
       {/* Muted Indicator */}
       {isMuted && <p className="mt-6 text-sm text-red-400 font-semibold">Microphone muted</p>}
+
+      {/* Error Display */}
+      {error && <p className="mt-6 text-sm text-red-400 font-semibold">{error}</p>}
     </div>
   )
 }
