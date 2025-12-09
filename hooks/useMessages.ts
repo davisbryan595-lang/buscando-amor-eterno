@@ -53,22 +53,27 @@ export function useMessages() {
 
     try {
       setLoading(true)
+      const startTime = Date.now()
 
-      // Add a timeout for messages fetch (15 seconds)
+      // Add a timeout for messages fetch (30 seconds)
       const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Conversations fetch timed out')), 15000)
+        setTimeout(() => reject(new Error('Conversations fetch timed out')), 30000)
       )
 
       const queryPromise = supabase
         .from('messages')
-        .select('sender_id, recipient_id, content, created_at')
+        .select('sender_id, recipient_id, content, created_at, read')
         .or(`sender_id.eq.${user.id},recipient_id.eq.${user.id}`)
         .order('created_at', { ascending: false })
+        .limit(500)
 
       const result = await Promise.race([queryPromise, timeoutPromise])
       const { data, error: err } = result as any
 
       if (err) throw err
+
+      const queryTime = Date.now() - startTime
+      console.log(`Conversations query completed in ${queryTime}ms`)
 
       const conversationMap = new Map<string, any>()
 
