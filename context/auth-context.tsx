@@ -22,24 +22,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     let isMounted = true
-    let timeoutId: ReturnType<typeof setTimeout> | null = null
 
     const initializeAuth = async () => {
       try {
-        // Increase timeout for development environments (45s) vs production (15s)
-        const isDev = process.env.NODE_ENV === 'development'
-        const timeout = isDev ? 45000 : 15000
+        const { data: { session: sessionData }, error } = await supabase.auth.getSession()
 
-        // Create a promise that rejects after the timeout
-        const timeoutPromise = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Auth initialization timed out')), timeout)
-        )
-
-        const sessionPromise = supabase.auth.getSession()
-        const { data: { session: sessionData } } = await Promise.race([
-          sessionPromise,
-          timeoutPromise
-        ])
+        if (error) throw error
 
         if (isMounted) {
           setSession(sessionData)
@@ -48,7 +36,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } catch (error) {
         console.error('Error initializing auth:', error)
         if (isMounted) {
-          // Set loading to false even on error to prevent infinite loading
           setSession(null)
           setUser(null)
         }
@@ -66,10 +53,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setSession(sessionData)
         setUser(sessionData?.user ?? null)
 
-        // Create user record and subscription if signing in and user record doesn't exist
         if ((event === 'SIGNED_IN' || event === 'USER_UPDATED') && sessionData?.user) {
           try {
-            // Check if user record exists
             const { data: existingUser, error: checkError } = await supabase
               .from('users')
               .select('id')
@@ -81,22 +66,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             }
 
             if (!existingUser) {
-              // Create user record
               const { error: userError } = await supabase.from('users').insert({
                 id: sessionData.user.id,
                 email: sessionData.user.email || '',
               })
 
-              if (userError) throw userError
+              if (userError && userError.code !== 'PGRST103') throw userError
 
-              // Create free subscription
               const { error: subError } = await supabase.from('subscriptions').insert({
                 user_id: sessionData.user.id,
                 plan: 'free',
                 status: 'active',
               })
 
-              if (subError) throw subError
+              if (subError && subError.code !== 'PGRST103') throw subError
             }
           } catch (err) {
             console.error('Error creating user profile:', err instanceof Error ? err.message : JSON.stringify(err))
@@ -107,7 +90,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     return () => {
       isMounted = false
-      if (timeoutId) clearTimeout(timeoutId)
       subscription?.unsubscribe()
     }
   }, [])
