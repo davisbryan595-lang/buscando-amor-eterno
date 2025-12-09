@@ -32,6 +32,9 @@ export function Step4Photos({
   const [uploadProgress, setUploadProgress] = useState(0)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const cameraInputRef = useRef<HTMLInputElement>(null)
+  const previewUrlsRef = useRef<string[]>(
+    initialPhotos.map((f) => URL.createObjectURL(f))
+  )
 
   const handleFiles = useCallback(
     (newFiles: File[]) => {
