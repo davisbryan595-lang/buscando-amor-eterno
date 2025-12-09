@@ -179,27 +179,44 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
           remoteUserId: otherUserId,
         })
 
-        // Notify other user about incoming call via Supabase
+        console.log(`[WebRTC] Initiating ${type} call to ${otherUserId}`)
+
+        // Notify other user about incoming call via Supabase Broadcast (low-latency signaling)
         const channel = supabase.channel(`calls:${otherUserId}`)
+
+        const invitePayload = {
+          from: user.id,
+          to: otherUserId,
+          type,
+          timestamp: Date.now(),
+          callId: `${user.id}-${otherUserId}-${Date.now()}`,
+        }
+
         await channel.send('broadcast', {
           event: 'call-invite',
-          payload: {
-            from: user.id,
-            to: otherUserId,
-            type,
-            timestamp: Date.now(),
-          },
+          payload: invitePayload,
         })
+
+        console.log('[WebRTC] Call invite sent via Broadcast')
 
         // Get local stream
         const stream = await getMediaStream(type)
 
-        // Create and make the call
-        const call = peerRef.current.call(otherUserId, stream)
+        // Create and make the call with timeout handling
+        const callTimeout = setTimeout(() => {
+          if (callRef.current && callState.status === 'calling') {
+            console.error('[WebRTC] Call timeout - no connection after 30s')
+            setError('Call timeout - unable to connect')
+            endCall()
+          }
+        }, 30000)
 
+        const call = peerRef.current.call(otherUserId, stream)
         callRef.current = call
 
         call.on('stream', (remoteStream: MediaStream) => {
+          clearTimeout(callTimeout)
+          console.log('[WebRTC] Remote stream received')
           remoteStreamRef.current = remoteStream
           setRemoteStream(remoteStream)
           setCallState({
@@ -211,20 +228,33 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
         })
 
         call.on('close', () => {
+          clearTimeout(callTimeout)
+          console.log('[WebRTC] Call ended')
           endCall()
         })
 
         call.on('error', (err: any) => {
-          console.error('Call error:', err)
-          setError(err.message)
-          endCall()
+          clearTimeout(callTimeout)
+          console.error('[WebRTC] Call error:', err.type, err)
+          if (err.type === 'network' || err.type === 'media') {
+            console.log('[WebRTC] Retrying call after network/media error')
+            setTimeout(() => {
+              if (callState.status === 'calling') {
+                initiateCall(type)
+              }
+            }, 2000)
+          } else {
+            setError(err.message)
+            endCall()
+          }
         })
       } catch (err: any) {
+        console.error('[WebRTC] Failed to initiate call:', err)
         setError(err.message)
         setCallState({ status: 'idle' })
       }
     },
-    [otherUserId, user, getMediaStream]
+    [otherUserId, user, getMediaStream, callState.status, endCall]
   )
 
   const acceptCall = useCallback(async () => {
