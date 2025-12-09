@@ -80,6 +80,7 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
             from: payload.payload.from,
             type: payload.payload.type || 'audio',
             call: null as any,
+            remotePeerId: payload.payload.peerId,
           })
         }
       })
@@ -91,6 +92,7 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
           setCallState((prev) => ({
             ...prev,
             status: 'ringing',
+            remotePeerId: payload.payload.peerId,
           }))
         }
       })
