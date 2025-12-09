@@ -137,28 +137,46 @@ export default function VideoCall({
 
   return (
     <div className="bg-black rounded-2xl overflow-hidden flex flex-col h-full relative">
-      {/* Remote video (placeholder) */}
+      {/* Remote video */}
       <div className="flex-1 bg-gradient-to-br from-slate-800 to-slate-900 flex items-center justify-center relative">
-        <div className="flex flex-col items-center">
-          <div className="relative w-40 h-40 mb-4">
-            <Image
-              src={otherUserImage || '/placeholder.svg'}
-              alt={otherUserName || 'User'}
-              fill
-              className="rounded-full object-cover"
-            />
-            <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 rounded-full border-4 border-black" />
+        {remoteStream ? (
+          <video
+            ref={remoteVideoRef}
+            autoPlay
+            playsInline
+            muted={false}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div className="flex flex-col items-center">
+            <div className="relative w-40 h-40 mb-4">
+              <Image
+                src={otherUserImage || '/placeholder.svg'}
+                alt={otherUserName || 'User'}
+                fill
+                className="rounded-full object-cover"
+              />
+              <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 rounded-full border-4 border-black" />
+            </div>
+            <p className="text-2xl font-bold text-white mb-2">{otherUserName || 'User'}</p>
+            <p className="text-slate-300 font-mono text-xl">{formatDuration(callDuration)}</p>
           </div>
-          <p className="text-2xl font-bold text-white mb-2">{otherUserName || 'User'}</p>
-          <p className="text-slate-300 font-mono text-xl">{formatDuration(callDuration)}</p>
-        </div>
+        )}
       </div>
 
       {/* Local video preview (bottom right) */}
       <div className="absolute bottom-6 right-6 w-32 h-40 rounded-xl overflow-hidden border-2 border-white bg-slate-900 flex items-center justify-center">
-        {isVideoOn ? (
+        {localStream && isVideoOn ? (
+          <video
+            ref={localVideoRef}
+            autoPlay
+            playsInline
+            muted
+            className="w-full h-full object-cover"
+          />
+        ) : isVideoOn ? (
           <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-center p-2">
-            <div className="text-sm font-semibold">Your Camera</div>
+            <div className="text-sm font-semibold">Waiting for camera...</div>
           </div>
         ) : (
           <div className="w-full h-full bg-slate-800 flex items-center justify-center text-slate-500">
