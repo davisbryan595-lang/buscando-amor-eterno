@@ -338,14 +338,26 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
   }, [])
 
   const endCall = useCallback(() => {
+    console.log('[WebRTC] Ending call')
+
     if (callRef.current) {
-      callRef.current.close()
+      try {
+        callRef.current.close()
+      } catch (err) {
+        console.warn('[WebRTC] Error closing call:', err)
+      }
       callRef.current = null
     }
 
     // Stop all tracks
     if (localStreamRef.current) {
-      localStreamRef.current.getTracks().forEach((track) => track.stop())
+      localStreamRef.current.getTracks().forEach((track) => {
+        try {
+          track.stop()
+        } catch (err) {
+          console.warn('[WebRTC] Error stopping track:', err)
+        }
+      })
       localStreamRef.current = null
       setLocalStream(null)
     }
