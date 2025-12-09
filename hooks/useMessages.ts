@@ -274,7 +274,7 @@ export function useMessages() {
       try {
         const { data, error: err } = await supabase
           .from('messages')
-          .select('*')
+          .select('id,sender_id,recipient_id,content,read,created_at')
           .or(
             `and(sender_id.eq.${user.id},recipient_id.eq.${otherUserId}),and(sender_id.eq.${otherUserId},recipient_id.eq.${user.id})`
           )
