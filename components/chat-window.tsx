@@ -113,6 +113,32 @@ export default function ChatWindow({ conversation }: { conversation: Conversatio
     toast.info('Video call ended')
   }
 
+  if (audioCallActive) {
+    return (
+      <AudioCall
+        otherUserName={otherUserDetails?.name || conversation.other_user_name}
+        otherUserImage={otherUserDetails?.image || conversation.other_user_image}
+        isIncoming={false}
+        onAccept={() => {}}
+        onReject={handleEndAudioCall}
+        onHangup={handleEndAudioCall}
+      />
+    )
+  }
+
+  if (videoCallActive) {
+    return (
+      <VideoCall
+        otherUserName={otherUserDetails?.name || conversation.other_user_name}
+        otherUserImage={otherUserDetails?.image || conversation.other_user_image}
+        isIncoming={false}
+        onAccept={() => {}}
+        onReject={handleEndVideoCall}
+        onHangup={handleEndVideoCall}
+      />
+    )
+  }
+
   return (
     <div className="bg-gradient-to-b from-white to-rose-50 rounded-xl border border-rose-100 flex flex-col h-full soft-glow">
       {/* Header */}
