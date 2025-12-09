@@ -27,7 +27,7 @@ export function useBrowseProfiles() {
 
         const { data, error: err } = await supabase
           .from('profiles')
-          .select('*')
+          .select('id,user_id,full_name,photos,main_photo_index,created_at,age,location,bio')
           .neq('user_id', user.id)
           .eq('profile_complete', true)
           .order('created_at', { ascending: false })
