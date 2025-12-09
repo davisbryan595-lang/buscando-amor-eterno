@@ -134,80 +134,119 @@ export function useMessages() {
 
     let pollInterval: ReturnType<typeof setInterval> | null = null
     let isMounted = true
+    let reconnectAttempts = 0
+    const maxReconnectAttempts = 5
 
-    try {
-      const subscription = supabase
-        .channel(`messages:${user.id}`)
-        .on(
-          'postgres_changes',
-          {
-            event: 'INSERT',
-            schema: 'public',
-            table: 'messages',
-            filter: `or(sender_id.eq.${user.id},recipient_id.eq.${user.id})`,
-          },
-          (payload) => {
-            if (isMounted) {
-              setMessages((prev) => [payload.new as Message, ...prev])
-              debouncedFetchConversations()
-            }
-          }
-        )
-        .subscribe((status) => {
-          if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
-            console.warn('Message subscription error:', status)
-            if (!pollInterval && isMounted) {
-              pollAttemptsRef.current = 0
-              const startPolling = () => {
-                if (isMounted) {
-                  pollInterval = setInterval(() => {
-                    if (isMounted) {
-                      const timeSinceLastFetch = Date.now() - lastFetchRef.current
-                      if (timeSinceLastFetch > 15000) {
-                        fetchConversations()
-                      }
-                    }
-                  }, 15000)
-                }
+    const setupSubscription = () => {
+      try {
+        const subscription = supabase
+          .channel(`messages:${user.id}`, {
+            config: {
+              broadcast: { self: true },
+            },
+          })
+          .on(
+            'broadcast',
+            {
+              event: 'message-sent',
+            },
+            (payload) => {
+              if (isMounted && payload.payload) {
+                const message = payload.payload as Message
+                setMessages((prev) => {
+                  const exists = prev.some((m) => m.id === message.id)
+                  return exists ? prev : [message, ...prev]
+                })
+                debouncedFetchConversations()
+                reconnectAttempts = 0
               }
-              startPolling()
             }
-          }
-        })
-
-      return () => {
-        isMounted = false
-        subscription.unsubscribe()
-        if (pollInterval) {
-          clearInterval(pollInterval)
-        }
-      }
-    } catch (err) {
-      console.warn('Failed to setup message subscription:', err)
-      if (!pollInterval && isMounted) {
-        pollAttemptsRef.current = 0
-        const startPolling = () => {
-          if (isMounted) {
-            pollInterval = setInterval(() => {
+          )
+          .on(
+            'postgres_changes',
+            {
+              event: 'INSERT',
+              schema: 'public',
+              table: 'messages',
+              filter: `or(sender_id.eq.${user.id},recipient_id.eq.${user.id})`,
+            },
+            (payload) => {
               if (isMounted) {
-                const timeSinceLastFetch = Date.now() - lastFetchRef.current
-                if (timeSinceLastFetch > 15000) {
-                  fetchConversations()
-                }
+                const message = payload.new as Message
+                setMessages((prev) => {
+                  const exists = prev.some((m) => m.id === message.id)
+                  return exists ? prev : [message, ...prev]
+                })
+                debouncedFetchConversations()
               }
-            }, 15000)
-          }
-        }
-        startPolling()
-      }
+            }
+          )
+          .subscribe((status) => {
+            if (status === 'SUBSCRIBED') {
+              console.log('[Messages] Subscription active')
+              reconnectAttempts = 0
+              if (pollInterval) {
+                clearInterval(pollInterval)
+                pollInterval = null
+              }
+            } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+              console.warn('[Messages] Subscription error:', status)
+              if (isMounted && reconnectAttempts < maxReconnectAttempts) {
+                reconnectAttempts++
+                const delay = Math.min(1000 * Math.pow(2, reconnectAttempts - 1), 30000)
+                console.log(`[Messages] Attempting reconnect in ${delay}ms (attempt ${reconnectAttempts}/${maxReconnectAttempts})`)
+                setTimeout(() => {
+                  if (isMounted) {
+                    subscription.unsubscribe()
+                    setupSubscription()
+                  }
+                }, delay)
+              } else if (!pollInterval && isMounted) {
+                startPolling()
+              }
+            }
+          })
 
-      return () => {
-        isMounted = false
-        if (pollInterval) {
-          clearInterval(pollInterval)
+        return () => {
+          isMounted = false
+          subscription.unsubscribe()
+        }
+      } catch (err) {
+        console.warn('[Messages] Failed to setup subscription:', err)
+        if (isMounted && reconnectAttempts < maxReconnectAttempts) {
+          reconnectAttempts++
+          const delay = Math.min(1000 * Math.pow(2, reconnectAttempts - 1), 30000)
+          console.log(`[Messages] Retrying setup in ${delay}ms`)
+          setTimeout(() => {
+            if (isMounted) {
+              setupSubscription()
+            }
+          }, delay)
+        } else if (!pollInterval && isMounted) {
+          startPolling()
+        }
+
+        return () => {
+          isMounted = false
         }
       }
     }
+
+    const startPolling = () => {
+      if (isMounted && !pollInterval) {
+        console.log('[Messages] Starting fallback polling')
+        pollInterval = setInterval(() => {
+          if (isMounted) {
+            const timeSinceLastFetch = Date.now() - lastFetchRef.current
+            if (timeSinceLastFetch > 10000) {
+              fetchConversations()
+            }
+          }
+        }, 10000)
+      }
+    }
+
+    return setupSubscription()
   }
 
   const fetchMessages = useCallback(
