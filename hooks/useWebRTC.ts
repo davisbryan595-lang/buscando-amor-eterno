@@ -345,6 +345,11 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
   useEffect(() => {
     if (callState.status === 'ringing' && awaitingAcceptance === null && otherUserId) {
       const callType = callState.callType as CallType
+      // Clear the acceptance timeout since we got acceptance
+      if (callTimeoutRef.current) {
+        clearTimeout(callTimeoutRef.current)
+        callTimeoutRef.current = null
+      }
       establishPeerConnection(otherUserId, callType)
     }
   }, [callState.status, awaitingAcceptance, otherUserId, establishPeerConnection])
