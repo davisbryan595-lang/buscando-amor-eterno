@@ -39,33 +39,51 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
       try {
         const peer = new Peer(user.id, {
           iceServers: [
-            { urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] },
+            { urls: 'stun:stun.l.google.com:19302' },
+            { urls: 'stun:stun1.l.google.com:19302' },
+            { urls: 'stun:stun2.l.google.com:19302' },
+            { urls: 'stun:stun3.l.google.com:19302' },
+            { urls: 'stun:stun4.l.google.com:19302' },
           ],
           config: {
             iceTransportPolicy: 'all',
+            bundlePolicy: 'max-bundle',
+            rtcpMuxPolicy: 'require',
           },
           debug: process.env.NODE_ENV === 'development' ? 2 : 0,
+          ping: 30000,
         })
 
         peer.on('open', () => {
+          console.log('[WebRTC] Peer connection established')
           setError(null)
         })
 
         peer.on('error', (err: any) => {
-          console.error('Peer error:', err)
+          console.error('[WebRTC] Peer error:', err.type, err.message)
           // Don't set error on connection errors during initialization
-          if (err.type !== 'peer-unavailable') {
+          if (err.type !== 'peer-unavailable' && err.type !== 'network') {
             setError(`Connection error: ${err.message}`)
           }
         })
 
         peer.on('call', (call: Peer.MediaConnection) => {
+          console.log('[WebRTC] Incoming call received')
           handleIncomingCall(call)
+        })
+
+        peer.on('disconnected', () => {
+          console.log('[WebRTC] Peer disconnected - attempting reconnect')
+          setTimeout(() => {
+            if (peerRef.current && peerRef.current.disconnected) {
+              peerRef.current.reconnect()
+            }
+          }, 1000)
         })
 
         peerRef.current = peer
       } catch (err: any) {
-        console.error('Peer initialization error:', err)
+        console.error('[WebRTC] Peer initialization error:', err)
         setError(err.message)
       }
     }
