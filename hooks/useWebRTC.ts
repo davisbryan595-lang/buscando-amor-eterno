@@ -196,7 +196,11 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
 
   const establishPeerConnection = useCallback(
     async (remoteId: string, type: CallType) => {
-      if (!peerRef.current) return
+      const peer = peerRef.current
+      if (!peer || peer.destroyed) {
+        setError('Peer connection not available')
+        return
+      }
 
       try {
         console.log(`[WebRTC] Establishing peer connection with ${remoteId}`)
@@ -211,7 +215,7 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
 
         callTimeoutRef.current = callTimeout
 
-        const call = peerRef.current.call(remoteId, localStreamRef.current!)
+        const call = peer.call(remoteId, localStreamRef.current!)
         callRef.current = call
 
         call.on('stream', (remoteStream: MediaStream) => {
