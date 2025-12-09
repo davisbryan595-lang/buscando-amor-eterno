@@ -290,8 +290,18 @@ export function useMessages() {
           .single()
 
         if (err) throw err
-        setMessages((prev) => [...prev, data as Message])
-        return data as Message
+
+        const message = data as Message
+        setMessages((prev) => [...prev, message])
+
+        // Broadcast message for instant delivery via Broadcast (low-latency)
+        const broadcastChannel = supabase.channel(`messages:${recipientId}`)
+        await broadcastChannel.send('broadcast', {
+          event: 'message-sent',
+          payload: message,
+        })
+
+        return message
       } catch (err: any) {
         setError(err.message)
         throw err
