@@ -259,7 +259,7 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
 
   const initiateCall = useCallback(
     async (type: CallType) => {
-      if (!otherUserId || !user) return
+      if (!otherUserId || !user || !peer) return
 
       try {
         setError(null)
@@ -284,6 +284,7 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
           type,
           timestamp: Date.now(),
           callId: `${user.id}-${otherUserId}-${Date.now()}`,
+          peerId: peer.id,
         }
 
         await channel.send('broadcast', {
@@ -317,7 +318,7 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
         setAwaitingAcceptance(null)
       }
     },
-    [otherUserId, user, getMediaStream, endCall]
+    [otherUserId, user, peer, getMediaStream, endCall]
   )
 
   // When call is accepted by remote user, establish peer connection
