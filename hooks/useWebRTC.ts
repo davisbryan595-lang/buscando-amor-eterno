@@ -387,6 +387,9 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
         },
       })
 
+      // Cleanup: unsubscribe from the broadcast channel after sending
+      await channel.unsubscribe()
+
       console.log('[WebRTC] Call acceptance sent to initiator, waiting for peer connection...')
 
       setCallState({
