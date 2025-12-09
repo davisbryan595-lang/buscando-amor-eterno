@@ -67,12 +67,6 @@ export default function BrowsePage() {
   const handleSwipe = async (direction: 'left' | 'right' | 'super') => {
     if (!currentProfile || isActing) return
 
-    // Check if trying to like without premium
-    if ((direction === 'right' || direction === 'super') && !isPremium) {
-      setShowPaywall(true)
-      return
-    }
-
     setIsActing(true)
     let actionSucceeded = false
     try {
@@ -86,11 +80,7 @@ export default function BrowsePage() {
     } catch (err: any) {
       const errorMessage = err instanceof Error ? err.message : JSON.stringify(err)
       console.error('Error swiping:', errorMessage)
-      if (errorMessage?.includes('Premium subscription required')) {
-        setShowPaywall(true)
-      } else {
-        toast.error(errorMessage || 'Error liking profile')
-      }
+      toast.error(errorMessage || 'Error liking profile')
     }
 
     // Animate and move to next profile if action succeeded
