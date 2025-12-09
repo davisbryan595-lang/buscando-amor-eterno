@@ -358,7 +358,7 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
       const channel = supabase.channel(`calls:${incomingCall.from}`)
       await channel.subscribe()
 
-      await channel.send('broadcast', {
+      const acceptResult = await channel.send('broadcast', {
         event: 'call-accepted',
         payload: {
           from: user.id,
@@ -368,6 +368,11 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
           peerId: peer.id,
         },
       })
+
+      console.log('[WebRTC] Call acceptance broadcast sent:', { acceptResult })
+
+      // Add small delay to ensure broadcast is delivered before unsubscribing
+      await new Promise(resolve => setTimeout(resolve, 100))
 
       // Cleanup: unsubscribe from the broadcast channel after sending
       await channel.unsubscribe()
