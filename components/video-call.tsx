@@ -203,7 +203,7 @@ export default function VideoCall({
       {/* Controls - Bottom */}
       <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-4 items-center justify-center">
         <button
-          onClick={() => setIsMuted(!isMuted)}
+          onClick={handleToggleMute}
           className={`w-12 h-12 rounded-full flex items-center justify-center transition ${
             isMuted ? 'bg-red-500 hover:bg-red-600' : 'bg-slate-700 hover:bg-slate-600'
           }`}
@@ -213,7 +213,7 @@ export default function VideoCall({
         </button>
 
         <button
-          onClick={() => setIsVideoOn(!isVideoOn)}
+          onClick={handleToggleVideo}
           className={`w-12 h-12 rounded-full flex items-center justify-center transition ${
             !isVideoOn ? 'bg-red-500 hover:bg-red-600' : 'bg-slate-700 hover:bg-slate-600'
           }`}
@@ -230,6 +230,9 @@ export default function VideoCall({
           <PhoneOff size={24} />
         </button>
       </div>
+
+      {/* Error Display */}
+      {error && <p className="absolute bottom-24 left-1/2 -translate-x-1/2 text-sm text-red-400 font-semibold">{error}</p>}
     </div>
   )
 }
