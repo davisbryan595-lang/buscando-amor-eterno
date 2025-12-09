@@ -42,23 +42,58 @@ export default function VideoCall({
     return () => clearInterval(interval)
   }, [isIncoming, incomingCall, callState.status])
 
+  // Attach remote stream to video element
+  useEffect(() => {
+    if (remoteVideoRef.current && remoteStream) {
+      remoteVideoRef.current.srcObject = remoteStream
+    }
+  }, [remoteStream])
+
+  // Attach local stream to video element
+  useEffect(() => {
+    if (localVideoRef.current && localStream) {
+      localVideoRef.current.srcObject = localStream
+    }
+  }, [localStream])
+
+  useEffect(() => {
+    if (!isIncoming && callState.status === 'idle') {
+      initiateCall('video').catch((err) => console.error('Failed to initiate call:', err))
+    }
+  }, [isIncoming, callState.status, initiateCall])
+
   const formatDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60)
     const secs = seconds % 60
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
   }
 
-  const handleAccept = () => {
-    setIsCallActive(true)
+  const handleAccept = async () => {
+    await acceptCall()
     onAccept()
   }
 
+  const handleReject = () => {
+    rejectCall()
+    onReject()
+  }
+
   const handleHangup = () => {
-    setIsCallActive(false)
+    endCall()
     onHangup()
   }
 
-  if (isIncoming && !isCallActive) {
+  const handleToggleMute = () => {
+    setIsMuted(!isMuted)
+    toggleAudio(!isMuted)
+  }
+
+  const handleToggleVideo = () => {
+    setIsVideoOn(!isVideoOn)
+    toggleVideo(!isVideoOn)
+  }
+
+  if (incomingCall && callState.status !== 'active') {
     return (
       <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
         <div className="bg-white rounded-2xl p-8 max-w-sm w-full mx-4">
