@@ -33,6 +33,7 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
     from: string
     type: CallType
     call: Peer.MediaConnection
+    remotePeerId?: string
   } | null>(null)
   const [awaitingAcceptance, setAwaitingAcceptance] = useState<{
     to: string
