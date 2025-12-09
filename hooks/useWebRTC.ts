@@ -99,15 +99,19 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
         }
       })
       .subscribe((status, err) => {
-        console.log('[WebRTC] Call channel subscription status:', status, err)
-        if (status === 'CHANNEL_ERROR') {
+        if (status === 'SUBSCRIBED') {
+          console.log('[WebRTC] Call channel subscribed successfully')
+        } else if (status === 'CHANNEL_ERROR') {
           const errorMessage = err?.message || (typeof err === 'string' ? err : 'Unknown channel error')
           const errorCode = err?.code || 'UNKNOWN'
-          console.error('[WebRTC] Call channel error details:', {
+          console.error('[WebRTC] Call channel error:', {
             message: errorMessage,
             code: errorCode,
+            status,
             userId: user?.id,
           })
+        } else if (status === 'TIMED_OUT') {
+          console.warn('[WebRTC] Call channel subscription timed out - will auto-retry')
         }
       })
 
