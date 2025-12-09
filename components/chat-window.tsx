@@ -138,12 +138,20 @@ export default function ChatWindow({ conversation }: { conversation: Conversatio
         </div>
 
         <div className="flex gap-2">
-          <button className="p-2 hover:bg-rose-100 rounded-full transition">
+          <button
+            onClick={handleStartAudioCall}
+            className="p-2 hover:bg-rose-100 rounded-full transition"
+            aria-label="Start audio call"
+          >
             <Phone size={20} className="text-primary" />
           </button>
-          <Link href="/video-date" className="p-2 hover:bg-rose-100 rounded-full transition">
+          <button
+            onClick={handleStartVideoCall}
+            className="p-2 hover:bg-rose-100 rounded-full transition"
+            aria-label="Start video call"
+          >
             <Video size={20} className="text-primary" />
-          </Link>
+          </button>
         </div>
       </div>
 
