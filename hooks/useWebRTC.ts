@@ -80,10 +80,14 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
 
         peer.on('disconnected', () => {
           console.log('[WebRTC] Peer disconnected - attempting reconnect')
-          setTimeout(() => {
+          if (reconnectTimeoutRef.current) {
+            clearTimeout(reconnectTimeoutRef.current)
+          }
+          reconnectTimeoutRef.current = setTimeout(() => {
             if (peerRef.current && peerRef.current.disconnected) {
               peerRef.current.reconnect()
             }
+            reconnectTimeoutRef.current = null
           }, 1000)
         })
 
@@ -97,6 +101,10 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
     initPeer()
 
     return () => {
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current)
+        reconnectTimeoutRef.current = null
+      }
       if (peerRef.current && !peerRef.current.destroyed) {
         peerRef.current.destroy()
       }
