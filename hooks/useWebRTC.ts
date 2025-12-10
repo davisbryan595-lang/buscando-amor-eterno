@@ -217,22 +217,31 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
         console.log(`[WebRTC] Initiating ${type} call to ${otherUserId}`)
 
         // Notify other user about incoming call via Supabase Broadcast (low-latency signaling)
-        const channel = supabase.channel(`calls:${otherUserId}`)
+        const channel = supabase
+          .channel(`calls:${otherUserId}`)
+          .subscribe((status) => {
+            if (status === 'SUBSCRIBED') {
+              const invitePayload = {
+                from: user.id,
+                to: otherUserId,
+                type,
+                timestamp: Date.now(),
+                callId: `${user.id}-${otherUserId}-${Date.now()}`,
+              }
 
-        const invitePayload = {
-          from: user.id,
-          to: otherUserId,
-          type,
-          timestamp: Date.now(),
-          callId: `${user.id}-${otherUserId}-${Date.now()}`,
-        }
+              channel.send('broadcast', {
+                event: 'call-invite',
+                payload: invitePayload,
+              })
 
-        await channel.send('broadcast', {
-          event: 'call-invite',
-          payload: invitePayload,
-        })
+              console.log('[WebRTC] Call invite sent via Broadcast')
+            }
+          })
 
-        console.log('[WebRTC] Call invite sent via Broadcast')
+        // Clean up channel after a short delay
+        setTimeout(() => {
+          channel.unsubscribe()
+        }, 1000)
 
         // Get local stream
         const stream = await getMediaStream(type)
