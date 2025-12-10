@@ -118,7 +118,19 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
 
     const initPeer = async () => {
       try {
-        const peer = new Peer(user.id, {
+        // Clean up any pending timeout
+        if (initPeerTimeoutRef.current) {
+          clearTimeout(initPeerTimeoutRef.current)
+        }
+
+        // Use user ID with optional retry suffix to avoid conflicts
+        const peerId = peerRetryCountRef.current > 0
+          ? `${user.id}-retry${peerRetryCountRef.current}`
+          : user.id
+
+        console.log(`[WebRTC] Initializing peer with ID: ${peerId}`)
+
+        const peer = new Peer(peerId, {
           iceServers: [
             { urls: 'stun:stun.l.google.com:19302' },
             { urls: 'stun:stun1.l.google.com:19302' },
@@ -137,6 +149,7 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
 
         peer.on('open', () => {
           console.log('[WebRTC] Peer connection established')
+          peerRetryCountRef.current = 0
           setError(null)
         })
 
@@ -144,18 +157,27 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
           console.error('[WebRTC] Peer error:', err.type, err.message)
           // Handle ID already taken error - clean up and prepare for re-initialization
           if (err.type === 'unavailable-id') {
-            console.log('[WebRTC] ID conflict detected, cleaning up peer')
+            console.log('[WebRTC] ID conflict detected, cleaning up peer and retrying with new ID')
             if (peerRef.current && !peerRef.current.destroyed) {
-              peerRef.current.destroy()
+              try {
+                peerRef.current.destroy()
+              } catch (e) {
+                console.warn('[WebRTC] Error destroying peer:', e)
+              }
             }
             peerRef.current = null
+            peerRetryCountRef.current += 1
             setError('Peer ID conflict - reconnecting...')
-            // Schedule retry
-            setTimeout(() => {
+
+            // Use exponential backoff: 5s, 10s, 15s, etc.
+            const retryDelay = Math.min(5000 + peerRetryCountRef.current * 5000, 30000)
+            console.log(`[WebRTC] Retrying in ${retryDelay}ms (attempt ${peerRetryCountRef.current})`)
+
+            initPeerTimeoutRef.current = setTimeout(() => {
               if (peerRef.current === null) {
                 initPeer()
               }
-            }, 2000)
+            }, retryDelay)
           } else if (err.type !== 'peer-unavailable' && err.type !== 'network') {
             setError(`Connection error: ${err.message}`)
           }
@@ -179,18 +201,26 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
       } catch (err: any) {
         console.error('[WebRTC] Peer initialization error:', err)
         setError(err.message)
+        peerRetryCountRef.current += 1
+
+        const retryDelay = Math.min(5000 + peerRetryCountRef.current * 5000, 30000)
+        console.log(`[WebRTC] Retrying in ${retryDelay}ms after initialization error`)
+
         // Retry initialization after delay
-        setTimeout(() => {
+        initPeerTimeoutRef.current = setTimeout(() => {
           if (peerRef.current === null) {
             initPeer()
           }
-        }, 2000)
+        }, retryDelay)
       }
     }
 
     initPeer()
 
     return () => {
+      if (initPeerTimeoutRef.current) {
+        clearTimeout(initPeerTimeoutRef.current)
+      }
       if (peerRef.current && !peerRef.current.destroyed) {
         peerRef.current.destroy()
         peerRef.current = null
