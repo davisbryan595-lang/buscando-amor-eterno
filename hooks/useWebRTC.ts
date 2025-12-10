@@ -31,6 +31,85 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
     call: Peer.MediaConnection
   } | null>(null)
 
+  const getMediaStream = useCallback(
+    async (type: CallType): Promise<MediaStream> => {
+      try {
+        const constraints =
+          type === 'audio'
+            ? { audio: true }
+            : { audio: true, video: { width: 640, height: 480 } }
+
+        const stream = await navigator.mediaDevices.getUserMedia(constraints)
+        localStreamRef.current = stream
+        setLocalStream(stream)
+        return stream
+      } catch (err: any) {
+        const errorMsg = `Failed to access ${type === 'audio' ? 'microphone' : 'camera'}: ${err.message}`
+        setError(errorMsg)
+        throw new Error(errorMsg)
+      }
+    },
+    []
+  )
+
+  const endCall = useCallback(() => {
+    console.log('[WebRTC] Ending call')
+
+    if (callRef.current) {
+      try {
+        callRef.current.close()
+      } catch (err) {
+        console.warn('[WebRTC] Error closing call:', err)
+      }
+      callRef.current = null
+    }
+
+    // Stop all tracks
+    if (localStreamRef.current) {
+      localStreamRef.current.getTracks().forEach((track) => {
+        try {
+          track.stop()
+        } catch (err) {
+          console.warn('[WebRTC] Error stopping track:', err)
+        }
+      })
+      localStreamRef.current = null
+      setLocalStream(null)
+    }
+
+    if (remoteStreamRef.current) {
+      remoteStreamRef.current = null
+      setRemoteStream(null)
+    }
+
+    setCallState({ status: 'idle' })
+    setIncomingCall(null)
+  }, [])
+
+  const handleIncomingCall = useCallback((call: Peer.MediaConnection) => {
+    callRef.current = call
+
+    call.on('stream', (remoteStream: MediaStream) => {
+      remoteStreamRef.current = remoteStream
+      setRemoteStream(remoteStream)
+      setCallState((prev) => ({
+        ...prev,
+        status: 'active',
+        callStartTime: Date.now(),
+      }))
+    })
+
+    call.on('close', () => {
+      endCall()
+    })
+
+    call.on('error', (err: any) => {
+      console.error('Call error:', err)
+      setError(err.message)
+      endCall()
+    })
+  }, [endCall])
+
   // Initialize PeerJS connection
   useEffect(() => {
     if (!user || peerRef.current) return
