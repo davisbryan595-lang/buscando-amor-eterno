@@ -27,7 +27,7 @@ export function useBrowseProfiles() {
 
         const { data, error: err } = await supabase
           .from('profiles')
-          .select('*')
+          .select('id,user_id,full_name,birthday,city,country,photos,main_photo_index,created_at,prompt_1')
           .neq('user_id', user.id)
           .eq('profile_complete', true)
           .order('created_at', { ascending: false })
@@ -40,8 +40,9 @@ export function useBrowseProfiles() {
         setError(null)
       } catch (err: any) {
         if (isMounted) {
-          setError(err.message)
-          console.error('Error fetching profiles:', err)
+          const errorMessage = err?.message || (typeof err === 'string' ? err : 'Failed to fetch profiles')
+          setError(errorMessage)
+          console.error('Error fetching profiles:', errorMessage, err)
           setProfiles([])
         }
       } finally {
@@ -65,7 +66,7 @@ export function useBrowseProfiles() {
       setLoading(true)
       const { data, error: err } = await supabase
         .from('profiles')
-        .select('*')
+        .select('id,user_id,full_name,birthday,city,country,photos,main_photo_index,created_at,prompt_1')
         .neq('user_id', user.id)
         .eq('profile_complete', true)
         .order('created_at', { ascending: false })
@@ -75,8 +76,9 @@ export function useBrowseProfiles() {
       setProfiles((data as ProfileData[]) || [])
       setError(null)
     } catch (err: any) {
-      setError(err.message)
-      console.error('Error fetching profiles:', err)
+      const errorMessage = err?.message || (typeof err === 'string' ? err : 'Failed to fetch profiles')
+      setError(errorMessage)
+      console.error('Error fetching profiles:', errorMessage, err)
       setProfiles([])
     } finally {
       setLoading(false)

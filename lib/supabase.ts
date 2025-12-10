@@ -3,11 +3,18 @@ import { createClient } from '@supabase/supabase-js'
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
 
+if (typeof window !== 'undefined') {
+  console.log('[Supabase] Client initialized with URL:', supabaseUrl ? '✓ Set' : '✗ Missing')
+  console.log('[Supabase] Client initialized with key:', supabaseAnonKey ? '✓ Set' : '✗ Missing')
+}
+
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   realtime: {
     params: {
       eventsPerSecond: 10,
     },
+    heartbeatInterval: 30000,
+    reconnectDelay: 1000,
   },
   auth: {
     persistSession: true,
@@ -17,8 +24,6 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 
 // Configure realtime with extended timeouts and heartbeat
 if (typeof window !== 'undefined') {
-  const realtimeChannel = supabase.getChannels()
-
   // Auto-reconnect on visibility change
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) {
@@ -29,11 +34,24 @@ if (typeof window !== 'undefined') {
       const channels = supabase.getChannels()
       channels.forEach(channel => {
         if (channel.state === 'CLOSED') {
+          console.log('[Supabase] Reconnecting channel:', channel.topic)
           channel.subscribe()
         }
       })
     }
   })
+
+  // Setup periodic health check for subscriptions
+  setInterval(() => {
+    const channels = supabase.getChannels()
+    const closedChannels = channels.filter(ch => ch.state === 'CLOSED')
+    if (closedChannels.length > 0) {
+      console.log(`[Supabase] Found ${closedChannels.length} closed channels, attempting to reconnect`)
+      closedChannels.forEach(channel => {
+        channel.subscribe()
+      })
+    }
+  }, 15000)
 }
 
 export type Database = {

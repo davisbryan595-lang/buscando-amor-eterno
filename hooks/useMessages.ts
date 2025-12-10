@@ -113,8 +113,9 @@ export function useMessages() {
       lastFetchRef.current = Date.now()
       pollAttemptsRef.current = 0
     } catch (err: any) {
-      setError(err.message)
-      console.error('Error fetching conversations:', err)
+      const errorMessage = err?.message || (typeof err === 'string' ? err : 'Failed to fetch conversations')
+      setError(errorMessage)
+      console.error('Error fetching conversations:', errorMessage, err)
     } finally {
       setLoading(false)
     }
@@ -134,8 +135,38 @@ export function useMessages() {
 
     let pollInterval: ReturnType<typeof setInterval> | null = null
     let isMounted = true
+    let subscriptionActive = false
     let reconnectAttempts = 0
     const maxReconnectAttempts = 5
+    const timeoutsRef = new Set<ReturnType<typeof setTimeout>>()
+
+    const clearAllTimeouts = () => {
+      timeoutsRef.forEach(timeout => clearTimeout(timeout))
+      timeoutsRef.clear()
+    }
+
+    const stopPolling = () => {
+      if (pollInterval) {
+        clearInterval(pollInterval)
+        pollInterval = null
+        console.log('[Messages] Polling stopped')
+      }
+    }
+
+    const startPolling = () => {
+      if (isMounted && !pollInterval && !subscriptionActive) {
+        console.log('[Messages] Starting fallback polling')
+        pollInterval = setInterval(() => {
+          if (isMounted && !subscriptionActive) {
+            const timeSinceLastFetch = Date.now() - lastFetchRef.current
+            if (timeSinceLastFetch > 30000) {
+              console.log('[Messages] Polling: fetching conversations')
+              fetchConversations()
+            }
+          }
+        }, 30000)
+      }
+    }
 
     const setupSubscription = () => {
       try {
@@ -146,23 +177,6 @@ export function useMessages() {
             },
           })
           .on(
-            'broadcast',
-            {
-              event: 'message-sent',
-            },
-            (payload) => {
-              if (isMounted && payload.payload) {
-                const message = payload.payload as Message
-                setMessages((prev) => {
-                  const exists = prev.some((m) => m.id === message.id)
-                  return exists ? prev : [message, ...prev]
-                })
-                debouncedFetchConversations()
-                reconnectAttempts = 0
-              }
-            }
-          )
-          .on(
             'postgres_changes',
             {
               event: 'INSERT',
@@ -171,7 +185,7 @@ export function useMessages() {
               filter: `or(sender_id.eq.${user.id},recipient_id.eq.${user.id})`,
             },
             (payload) => {
-              if (isMounted) {
+              if (isMounted && subscriptionActive) {
                 const message = payload.new as Message
                 setMessages((prev) => {
                   const exists = prev.some((m) => m.id === message.id)
@@ -184,24 +198,24 @@ export function useMessages() {
           .subscribe((status) => {
             if (status === 'SUBSCRIBED') {
               console.log('[Messages] Subscription active')
+              subscriptionActive = true
               reconnectAttempts = 0
-              if (pollInterval) {
-                clearInterval(pollInterval)
-                pollInterval = null
-              }
+              stopPolling()
             } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
-              console.warn('[Messages] Subscription error:', status)
+              console.warn('[Messages] Subscription error:', status, '- Check RLS policies on messages table in Supabase dashboard')
+              subscriptionActive = false
               if (isMounted && reconnectAttempts < maxReconnectAttempts) {
                 reconnectAttempts++
                 const delay = Math.min(1000 * Math.pow(2, reconnectAttempts - 1), 30000)
                 console.log(`[Messages] Attempting reconnect in ${delay}ms (attempt ${reconnectAttempts}/${maxReconnectAttempts})`)
-                setTimeout(() => {
+                const timeout = setTimeout(() => {
                   if (isMounted) {
                     subscription.unsubscribe()
                     setupSubscription()
                   }
                 }, delay)
-              } else if (!pollInterval && isMounted) {
+                timeoutsRef.add(timeout)
+              } else if (isMounted) {
                 startPolling()
               }
             }
@@ -209,40 +223,34 @@ export function useMessages() {
 
         return () => {
           isMounted = false
+          subscriptionActive = false
           subscription.unsubscribe()
+          clearAllTimeouts()
+          stopPolling()
         }
       } catch (err) {
         console.warn('[Messages] Failed to setup subscription:', err)
+        subscriptionActive = false
         if (isMounted && reconnectAttempts < maxReconnectAttempts) {
           reconnectAttempts++
           const delay = Math.min(1000 * Math.pow(2, reconnectAttempts - 1), 30000)
           console.log(`[Messages] Retrying setup in ${delay}ms`)
-          setTimeout(() => {
+          const timeout = setTimeout(() => {
             if (isMounted) {
               setupSubscription()
             }
           }, delay)
-        } else if (!pollInterval && isMounted) {
+          timeoutsRef.add(timeout)
+        } else if (isMounted) {
           startPolling()
         }
 
         return () => {
           isMounted = false
+          subscriptionActive = false
+          clearAllTimeouts()
+          stopPolling()
         }
-      }
-    }
-
-    const startPolling = () => {
-      if (isMounted && !pollInterval) {
-        console.log('[Messages] Starting fallback polling')
-        pollInterval = setInterval(() => {
-          if (isMounted) {
-            const timeSinceLastFetch = Date.now() - lastFetchRef.current
-            if (timeSinceLastFetch > 10000) {
-              fetchConversations()
-            }
-          }
-        }, 10000)
       }
     }
 
@@ -256,7 +264,7 @@ export function useMessages() {
       try {
         const { data, error: err } = await supabase
           .from('messages')
-          .select('*')
+          .select('id,sender_id,recipient_id,content,read,created_at')
           .or(
             `and(sender_id.eq.${user.id},recipient_id.eq.${otherUserId}),and(sender_id.eq.${otherUserId},recipient_id.eq.${user.id})`
           )
@@ -266,8 +274,9 @@ export function useMessages() {
         setMessages((data as Message[]) || [])
         setError(null)
       } catch (err: any) {
-        setError(err.message)
-        console.error('Error fetching messages:', err)
+        const errorMessage = err?.message || (typeof err === 'string' ? err : 'Failed to fetch messages')
+        setError(errorMessage)
+        console.error('Error fetching messages:', errorMessage, err)
       }
     },
     [user]
@@ -296,14 +305,22 @@ export function useMessages() {
 
         // Broadcast message for instant delivery via Broadcast (low-latency)
         const broadcastChannel = supabase.channel(`messages:${recipientId}`)
-        await broadcastChannel.send('broadcast', {
+        await broadcastChannel.subscribe()
+        const broadcastResult = await broadcastChannel.send('broadcast', {
           event: 'message-sent',
           payload: message,
         })
+        console.log('[Messages] Broadcast sent:', { broadcastResult })
+
+        // Add small delay to ensure broadcast is delivered before unsubscribing
+        await new Promise(resolve => setTimeout(resolve, 100))
+
+        await broadcastChannel.unsubscribe()
 
         return message
       } catch (err: any) {
-        setError(err.message)
+        const errorMessage = err?.message || (typeof err === 'string' ? err : 'Failed to send message')
+        setError(errorMessage)
         throw err
       }
     },
@@ -320,8 +337,9 @@ export function useMessages() {
 
         if (err) throw err
       } catch (err: any) {
-        setError(err.message)
-        console.error('Error marking message as read:', err)
+        const errorMessage = err?.message || (typeof err === 'string' ? err : 'Failed to mark message as read')
+        setError(errorMessage)
+        console.error('Error marking message as read:', errorMessage, err)
       }
     },
     []
@@ -362,8 +380,9 @@ export function useMessages() {
           unread_count: 0,
         }
       } catch (err: any) {
-        setError(err.message)
-        console.error('Error initiating conversation:', err)
+        const errorMessage = err?.message || (typeof err === 'string' ? err : 'Failed to initiate conversation')
+        setError(errorMessage)
+        console.error('Error initiating conversation:', errorMessage, err)
         throw err
       }
     },

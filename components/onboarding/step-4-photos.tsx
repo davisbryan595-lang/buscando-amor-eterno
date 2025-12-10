@@ -32,6 +32,15 @@ export function Step4Photos({
   const [uploadProgress, setUploadProgress] = useState(0)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const cameraInputRef = useRef<HTMLInputElement>(null)
+  const previewUrlsRef = useRef<string[]>(
+    initialPhotos.map((f) => URL.createObjectURL(f))
+  )
+
+  React.useEffect(() => {
+    return () => {
+      previewUrlsRef.current.forEach((url) => URL.revokeObjectURL(url))
+    }
+  }, [])
 
   const handleFiles = useCallback(
     (newFiles: File[]) => {
@@ -53,6 +62,7 @@ export function Step4Photos({
       })
 
       const newPreviews = validFiles.map((file) => URL.createObjectURL(file))
+      previewUrlsRef.current.push(...newPreviews)
       setFiles([...files, ...validFiles])
       setPreviews([...previews, ...newPreviews])
       onDataChange([...files, ...validFiles])
@@ -72,6 +82,11 @@ export function Step4Photos({
   }
 
   const removePhoto = (index: number) => {
+    const removedUrl = previews[index]
+    if (removedUrl) {
+      URL.revokeObjectURL(removedUrl)
+      previewUrlsRef.current = previewUrlsRef.current.filter((url) => url !== removedUrl)
+    }
     const newFiles = files.filter((_, i) => i !== index)
     const newPreviews = previews.filter((_, i) => i !== index)
     setFiles(newFiles)
@@ -101,7 +116,7 @@ export function Step4Photos({
         <div className="space-y-4">
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
             {previews.map((preview, index) => (
-              <div key={index} className="relative aspect-square rounded-2xl overflow-hidden shadow-lg group">
+              <div key={preview} className="relative aspect-square rounded-2xl overflow-hidden shadow-lg group">
                 <img
                   src={preview}
                   alt={`Photo ${index + 1}`}
