@@ -88,6 +88,11 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
     setIncomingCall(null)
   }, [])
 
+  // Reset retry count when user changes
+  useEffect(() => {
+    peerRetryCountRef.current = 0
+  }, [user?.id])
+
   const handleIncomingCall = useCallback((call: Peer.MediaConnection) => {
     callRef.current = call
 
