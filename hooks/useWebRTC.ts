@@ -61,19 +61,14 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
 
         peer.on('error', (err: any) => {
           console.error('[WebRTC] Peer error:', err.type, err.message)
-          // Handle ID already taken error - destroy and recreate
+          // Handle ID already taken error - clean up and prepare for re-initialization
           if (err.type === 'unavailable-id') {
-            console.log('[WebRTC] ID conflict detected, destroying peer and attempting to reinitialize')
+            console.log('[WebRTC] ID conflict detected, cleaning up peer')
             if (peerRef.current && !peerRef.current.destroyed) {
               peerRef.current.destroy()
             }
             peerRef.current = null
-            // Retry initialization after delay
-            setTimeout(() => {
-              if (peerRef.current === null) {
-                initPeer()
-              }
-            }, 2000)
+            setError('Peer ID conflict - reconnecting...')
           } else if (err.type !== 'peer-unavailable' && err.type !== 'network') {
             setError(`Connection error: ${err.message}`)
           }
