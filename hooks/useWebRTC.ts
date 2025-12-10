@@ -20,6 +20,8 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
   const callRef = useRef<Peer.MediaConnection | null>(null)
   const localStreamRef = useRef<MediaStream | null>(null)
   const remoteStreamRef = useRef<MediaStream | null>(null)
+  const peerRetryCountRef = useRef(0)
+  const initPeerTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   
   const [callState, setCallState] = useState<CallState>({ status: 'idle' })
   const [localStream, setLocalStream] = useState<MediaStream | null>(null)
