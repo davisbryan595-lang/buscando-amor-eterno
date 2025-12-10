@@ -75,7 +75,7 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
         peer.on('disconnected', () => {
           console.log('[WebRTC] Peer disconnected - attempting reconnect')
           setTimeout(() => {
-            if (peerRef.current && peerRef.current.disconnected) {
+            if (peerRef.current && peerRef.current.disconnected && !peerRef.current.destroyed) {
               peerRef.current.reconnect()
             }
           }, 1000)
