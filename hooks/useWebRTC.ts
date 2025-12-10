@@ -144,6 +144,64 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
     []
   )
 
+  const endCall = useCallback(() => {
+    console.log('[WebRTC] Ending call')
+
+    if (callRef.current) {
+      try {
+        callRef.current.close()
+      } catch (err) {
+        console.warn('[WebRTC] Error closing call:', err)
+      }
+      callRef.current = null
+    }
+
+    // Stop all tracks
+    if (localStreamRef.current) {
+      localStreamRef.current.getTracks().forEach((track) => {
+        try {
+          track.stop()
+        } catch (err) {
+          console.warn('[WebRTC] Error stopping track:', err)
+        }
+      })
+      localStreamRef.current = null
+      setLocalStream(null)
+    }
+
+    if (remoteStreamRef.current) {
+      remoteStreamRef.current = null
+      setRemoteStream(null)
+    }
+
+    setCallState({ status: 'idle' })
+    setIncomingCall(null)
+  }, [])
+
+  const handleIncomingCall = useCallback((call: Peer.MediaConnection) => {
+    callRef.current = call
+
+    call.on('stream', (remoteStream: MediaStream) => {
+      remoteStreamRef.current = remoteStream
+      setRemoteStream(remoteStream)
+      setCallState((prev) => ({
+        ...prev,
+        status: 'active',
+        callStartTime: Date.now(),
+      }))
+    })
+
+    call.on('close', () => {
+      endCall()
+    })
+
+    call.on('error', (err: any) => {
+      console.error('Call error:', err)
+      setError(err.message)
+      endCall()
+    })
+  }, [endCall])
+
   const initiateCall = useCallback(
     async (type: CallType) => {
       if (!otherUserId || !peerRef.current || !user) return
