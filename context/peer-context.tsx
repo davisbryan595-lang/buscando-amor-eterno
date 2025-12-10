@@ -67,8 +67,8 @@ export function PeerProvider({ children }: { children: React.ReactNode }) {
       const peerId = sanitizePeerId(`${user.id}${sessionIdRef.current}`)
       console.log('[PeerContext] Initializing peer with ID:', peerId)
 
-      const peerServerUrl = process.env.NEXT_PUBLIC_PEER_SERVER_URL || 'peer-server-buscando.vercel.app'
-      const peerServerPort = process.env.NEXT_PUBLIC_PEER_SERVER_PORT || 443
+      const peerServerUrl = (process.env.NEXT_PUBLIC_PEER_SERVER_URL || 'peer-server-buscando.vercel.app').replace('https://', '')
+      const peerServerPort = Number(process.env.NEXT_PUBLIC_PEER_SERVER_PORT || 443)
 
       const peer = new Peer(peerId, {
         host: peerServerUrl,
