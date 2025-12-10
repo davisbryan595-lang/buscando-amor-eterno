@@ -23,6 +23,9 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
   const callRef = useRef<Peer.MediaConnection | null>(null)
   const localStreamRef = useRef<MediaStream | null>(null)
   const remoteStreamRef = useRef<MediaStream | null>(null)
+  const peerRetryCountRef = useRef(0)
+  const initPeerTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  
   const callTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   const [callState, setCallState] = useState<CallState>({ status: 'idle' })
@@ -40,6 +43,191 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
     type: CallType
   } | null>(null)
 
+  const getMediaStream = useCallback(
+    async (type: CallType): Promise<MediaStream> => {
+      try {
+        const constraints =
+          type === 'audio'
+            ? { audio: true }
+            : { audio: true, video: { width: 640, height: 480 } }
+
+        const stream = await navigator.mediaDevices.getUserMedia(constraints)
+        localStreamRef.current = stream
+        setLocalStream(stream)
+        return stream
+      } catch (err: any) {
+        const errorMsg = `Failed to access ${type === 'audio' ? 'microphone' : 'camera'}: ${err.message}`
+        setError(errorMsg)
+        throw new Error(errorMsg)
+      }
+    },
+    []
+  )
+
+  const endCall = useCallback(() => {
+    console.log('[WebRTC] Ending call')
+
+    if (callRef.current) {
+      try {
+        callRef.current.close()
+      } catch (err) {
+        console.warn('[WebRTC] Error closing call:', err)
+      }
+      callRef.current = null
+    }
+
+    // Stop all tracks
+    if (localStreamRef.current) {
+      localStreamRef.current.getTracks().forEach((track) => {
+        try {
+          track.stop()
+        } catch (err) {
+          console.warn('[WebRTC] Error stopping track:', err)
+        }
+      })
+      localStreamRef.current = null
+      setLocalStream(null)
+    }
+
+    if (remoteStreamRef.current) {
+      remoteStreamRef.current = null
+      setRemoteStream(null)
+    }
+
+    setCallState({ status: 'idle' })
+    setIncomingCall(null)
+  }, [])
+
+  // Reset retry count when user changes
+  useEffect(() => {
+    peerRetryCountRef.current = 0
+  }, [user?.id])
+
+  const handleIncomingCall = useCallback((call: Peer.MediaConnection) => {
+    callRef.current = call
+
+    call.on('stream', (remoteStream: MediaStream) => {
+      remoteStreamRef.current = remoteStream
+      setRemoteStream(remoteStream)
+      setCallState((prev) => ({
+        ...prev,
+        status: 'active',
+        callStartTime: Date.now(),
+      }))
+    })
+
+    call.on('close', () => {
+      endCall()
+    })
+
+    call.on('error', (err: any) => {
+      console.error('Call error:', err)
+      setError(err.message)
+      endCall()
+    })
+  }, [endCall])
+
+  // Initialize PeerJS connection
+  useEffect(() => {
+    if (!user || peerRef.current) return
+
+    const initPeer = async () => {
+      try {
+        // Clean up any pending timeout
+        if (initPeerTimeoutRef.current) {
+          clearTimeout(initPeerTimeoutRef.current)
+        }
+
+        // Use user ID with optional retry suffix to avoid conflicts
+        const peerId = peerRetryCountRef.current > 0
+          ? `${user.id}-retry${peerRetryCountRef.current}`
+          : user.id
+
+        console.log(`[WebRTC] Initializing peer with ID: ${peerId}`)
+
+        const peer = new Peer(peerId, {
+          iceServers: [
+            { urls: 'stun:stun.l.google.com:19302' },
+            { urls: 'stun:stun1.l.google.com:19302' },
+            { urls: 'stun:stun2.l.google.com:19302' },
+            { urls: 'stun:stun3.l.google.com:19302' },
+            { urls: 'stun:stun4.l.google.com:19302' },
+          ],
+          config: {
+            iceTransportPolicy: 'all',
+            bundlePolicy: 'max-bundle',
+            rtcpMuxPolicy: 'require',
+          },
+          debug: process.env.NODE_ENV === 'development' ? 2 : 0,
+          ping: 30000,
+        })
+
+        peer.on('open', () => {
+          console.log('[WebRTC] Peer connection established')
+          peerRetryCountRef.current = 0
+          setError(null)
+        })
+
+        peer.on('error', (err: any) => {
+          console.error('[WebRTC] Peer error:', err.type, err.message)
+          // Handle ID already taken error - clean up and prepare for re-initialization
+          if (err.type === 'unavailable-id') {
+            console.log('[WebRTC] ID conflict detected, cleaning up peer and retrying with new ID')
+            if (peerRef.current && !peerRef.current.destroyed) {
+              try {
+                peerRef.current.destroy()
+              } catch (e) {
+                console.warn('[WebRTC] Error destroying peer:', e)
+              }
+            }
+            peerRef.current = null
+            peerRetryCountRef.current += 1
+            setError('Peer ID conflict - reconnecting...')
+
+            // Use exponential backoff: 5s, 10s, 15s, etc.
+            const retryDelay = Math.min(5000 + peerRetryCountRef.current * 5000, 30000)
+            console.log(`[WebRTC] Retrying in ${retryDelay}ms (attempt ${peerRetryCountRef.current})`)
+
+            initPeerTimeoutRef.current = setTimeout(() => {
+              if (peerRef.current === null) {
+                initPeer()
+              }
+            }, retryDelay)
+          } else if (err.type !== 'peer-unavailable' && err.type !== 'network') {
+            setError(`Connection error: ${err.message}`)
+          }
+        })
+
+        peer.on('call', (call: Peer.MediaConnection) => {
+          console.log('[WebRTC] Incoming call received')
+          handleIncomingCall(call)
+        })
+
+        peer.on('disconnected', () => {
+          console.log('[WebRTC] Peer disconnected - attempting reconnect')
+          setTimeout(() => {
+            if (peerRef.current && peerRef.current.disconnected && !peerRef.current.destroyed) {
+              peerRef.current.reconnect()
+            }
+          }, 1000)
+        })
+
+        peerRef.current = peer
+      } catch (err: any) {
+        console.error('[WebRTC] Peer initialization error:', err)
+        setError(err.message)
+        peerRetryCountRef.current += 1
+
+        const retryDelay = Math.min(5000 + peerRetryCountRef.current * 5000, 30000)
+        console.log(`[WebRTC] Retrying in ${retryDelay}ms after initialization error`)
+
+        // Retry initialization after delay
+        initPeerTimeoutRef.current = setTimeout(() => {
+          if (peerRef.current === null) {
+            initPeer()
+          }
+        }, retryDelay)
+      }
   // Use the peer from context
   useEffect(() => {
     peerRef.current = peer
@@ -62,6 +250,15 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
     peerRef.current.on('call', handlePeerCall)
 
     return () => {
+      if (initPeerTimeoutRef.current) {
+        clearTimeout(initPeerTimeoutRef.current)
+      }
+      if (peerRef.current && !peerRef.current.destroyed) {
+        peerRef.current.destroy()
+        peerRef.current = null
+      }
+    }
+  }, [user, handleIncomingCall])
       if (peerRef.current) {
         peerRef.current.off('call', handlePeerCall)
       }
@@ -182,6 +379,9 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
     setAwaitingAcceptance(null)
   }, [])
 
+  const initiateCall = useCallback(
+    async (type: CallType) => {
+      if (!otherUserId || !peerRef.current || peerRef.current.destroyed || !user) return
   const handleIncomingCall = useCallback((call: Peer.MediaConnection) => {
     callRef.current = call
 
@@ -294,6 +494,31 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
         const stream = await getMediaStream(type)
 
         // Notify other user about incoming call via Supabase Broadcast (low-latency signaling)
+        const channel = supabase
+          .channel(`calls:${otherUserId}`)
+          .subscribe((status) => {
+            if (status === 'SUBSCRIBED') {
+              const invitePayload = {
+                from: user.id,
+                to: otherUserId,
+                type,
+                timestamp: Date.now(),
+                callId: `${user.id}-${otherUserId}-${Date.now()}`,
+              }
+
+              channel.send('broadcast', {
+                event: 'call-invite',
+                payload: invitePayload,
+              })
+
+              console.log('[WebRTC] Call invite sent via Broadcast')
+            }
+          })
+
+        // Clean up channel after a short delay
+        setTimeout(() => {
+          channel.unsubscribe()
+        }, 1000)
         const channel = supabase.channel(`calls:${otherUserId}`)
         await channel.subscribe()
 
@@ -360,6 +585,7 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
   }, [callState.status, callState.remotePeerId, awaitingAcceptance, otherUserId, establishPeerConnection])
 
   const acceptCall = useCallback(async () => {
+    if (!incomingCall || !peerRef.current || peerRef.current.destroyed) return
     if (!incomingCall || !user || !peer) return
 
     try {
