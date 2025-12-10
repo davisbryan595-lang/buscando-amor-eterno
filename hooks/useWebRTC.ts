@@ -322,7 +322,7 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
   )
 
   const acceptCall = useCallback(async () => {
-    if (!incomingCall || !peerRef.current) return
+    if (!incomingCall || !peerRef.current || peerRef.current.destroyed) return
 
     try {
       setError(null)
