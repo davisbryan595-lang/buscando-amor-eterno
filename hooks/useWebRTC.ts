@@ -33,7 +33,7 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
 
   // Initialize PeerJS connection
   useEffect(() => {
-    if (!user) return
+    if (!user || peerRef.current) return
 
     const initPeer = async () => {
       try {
@@ -69,6 +69,12 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
             }
             peerRef.current = null
             setError('Peer ID conflict - reconnecting...')
+            // Schedule retry
+            setTimeout(() => {
+              if (peerRef.current === null) {
+                initPeer()
+              }
+            }, 2000)
           } else if (err.type !== 'peer-unavailable' && err.type !== 'network') {
             setError(`Connection error: ${err.message}`)
           }
@@ -92,6 +98,12 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
       } catch (err: any) {
         console.error('[WebRTC] Peer initialization error:', err)
         setError(err.message)
+        // Retry initialization after delay
+        setTimeout(() => {
+          if (peerRef.current === null) {
+            initPeer()
+          }
+        }, 2000)
       }
     }
 
@@ -100,9 +112,10 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
     return () => {
       if (peerRef.current && !peerRef.current.destroyed) {
         peerRef.current.destroy()
+        peerRef.current = null
       }
     }
-  }, [user])
+  }, [user, handleIncomingCall])
 
   // Subscribe to call signaling via Supabase Realtime
   useEffect(() => {
