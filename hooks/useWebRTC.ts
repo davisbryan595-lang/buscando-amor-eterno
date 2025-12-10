@@ -378,40 +378,6 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
     setCallState({ status: 'idle' })
   }, [])
 
-  const endCall = useCallback(() => {
-    console.log('[WebRTC] Ending call')
-
-    if (callRef.current) {
-      try {
-        callRef.current.close()
-      } catch (err) {
-        console.warn('[WebRTC] Error closing call:', err)
-      }
-      callRef.current = null
-    }
-
-    // Stop all tracks
-    if (localStreamRef.current) {
-      localStreamRef.current.getTracks().forEach((track) => {
-        try {
-          track.stop()
-        } catch (err) {
-          console.warn('[WebRTC] Error stopping track:', err)
-        }
-      })
-      localStreamRef.current = null
-      setLocalStream(null)
-    }
-
-    if (remoteStreamRef.current) {
-      remoteStreamRef.current = null
-      setRemoteStream(null)
-    }
-
-    setCallState({ status: 'idle' })
-    setIncomingCall(null)
-  }, [])
-
   const toggleAudio = useCallback(
     (enabled: boolean) => {
       if (localStreamRef.current) {
