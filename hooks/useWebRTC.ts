@@ -122,29 +122,6 @@ export function useWebRTC(otherUserId: string | null, callType: CallType = 'audi
     }
   }, [user, callState.status, incomingCall])
 
-  const handleIncomingCall = useCallback((call: Peer.MediaConnection) => {
-    callRef.current = call
-
-    call.on('stream', (remoteStream: MediaStream) => {
-      remoteStreamRef.current = remoteStream
-      setRemoteStream(remoteStream)
-      setCallState((prev) => ({
-        ...prev,
-        status: 'active',
-        callStartTime: Date.now(),
-      }))
-    })
-
-    call.on('close', () => {
-      endCall()
-    })
-
-    call.on('error', (err: any) => {
-      console.error('Call error:', err)
-      setError(err.message)
-      endCall()
-    })
-  }, [])
 
   const getMediaStream = useCallback(
     async (type: CallType): Promise<MediaStream> => {
