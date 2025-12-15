@@ -176,12 +176,12 @@ export default function ChatWindow({ conversation }: { conversation: Conversatio
       </div>
 
       {/* Messages */}
-      <div ref={messagesContainerRef} className="flex-1 overflow-y-auto px-4 sm:px-5 md:px-8 py-5 md:py-7 space-y-5 md:space-y-6 bg-white w-full">
+      <div ref={messagesContainerRef} className="flex-1 overflow-y-auto px-4 sm:px-5 md:px-6 py-3 md:py-4 space-y-3 md:space-y-4 bg-white w-full">
         {messages.length === 0 ? (
           <div className="flex items-center justify-center h-full text-slate-400">
             <div className="text-center">
-              <p className="text-lg md:text-xl font-semibold mb-3">No messages yet</p>
-              <p className="text-base md:text-lg">Start a conversation with {otherUserDetails?.name || conversation.other_user_name}!</p>
+              <p className="text-base md:text-lg font-semibold mb-2">No messages yet</p>
+              <p className="text-sm md:text-base">Start a conversation with {otherUserDetails?.name || conversation.other_user_name}!</p>
             </div>
           </div>
         ) : (
@@ -211,7 +211,7 @@ export default function ChatWindow({ conversation }: { conversation: Conversatio
             ))}
             {showTypingIndicator && (
               <div className="flex justify-start">
-                <div className="px-8 md:px-10 py-6 md:py-8 rounded-3xl rounded-bl-none bg-gradient-to-r from-slate-100 to-slate-50">
+                <div className="px-5 md:px-6 py-3 md:py-4 rounded-3xl rounded-bl-none bg-gradient-to-r from-slate-100 to-slate-50">
                   <TypingIndicator />
                 </div>
               </div>
