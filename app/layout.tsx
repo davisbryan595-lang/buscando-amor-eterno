@@ -4,6 +4,7 @@ import './globals.css'
 import { AuthProvider } from '@/context/auth-context'
 import { I18nProvider } from '@/lib/i18n-context'
 import { Preloader } from '@/components/preloader'
+import CallManager from '@/components/call-manager'
 
 const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
@@ -60,7 +61,9 @@ export default function RootLayout({
         <Preloader />
         <I18nProvider>
           <AuthProvider>
-            {children}
+            <CallManager>
+              {children}
+            </CallManager>
           </AuthProvider>
         </I18nProvider>
       </body>
