@@ -21,16 +21,10 @@ export default function VideoCallModal({
   otherUserId,
   callType,
 }: VideoCallModalProps) {
-  const { joinCall, leaveCall, isConnected, isConnecting, error, participants } =
+  const { joinCall, leaveCall, isConnected, isConnecting, error, participants, localParticipant } =
     useLiveKitCall()
   const [audioEnabled, setAudioEnabled] = useState(true)
   const [videoEnabled, setVideoEnabled] = useState(callType === 'video')
-  const [remoteVideoTrack, setRemoteVideoTrack] = useState<HTMLVideoElement | null>(
-    null
-  )
-  const [localVideoTrack, setLocalVideoTrack] = useState<HTMLVideoElement | null>(
-    null
-  )
   const isMobile = useIsMobile()
   const remoteVideoRef = React.useRef<HTMLVideoElement>(null)
   const localVideoRef = React.useRef<HTMLVideoElement>(null)
