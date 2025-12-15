@@ -2,8 +2,11 @@
 
 import React, { useMemo, useEffect, useRef } from 'react'
 import gsap from 'gsap'
+import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { Heart, MessageCircle, Video, Users, Lock, Zap } from 'lucide-react'
 import { useLanguage } from '@/lib/i18n-context'
+
+gsap.registerPlugin(ScrollTrigger)
 
 export default function Features() {
   const { t } = useLanguage()
