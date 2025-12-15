@@ -40,7 +40,7 @@ export default function LoginPage() {
       toast.success('Logged in successfully! Redirecting...')
       // Small delay to allow user to see success message
       setTimeout(() => {
-        router.push('/browse')
+        router.push('/')
       }, 500)
     } catch (error: any) {
       const errorMessage = error.message || 'Failed to log in'

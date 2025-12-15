@@ -42,10 +42,19 @@ export function useMessages() {
       return
     }
 
-    fetchConversations()
+    let isMounted = true
+
+    const initialize = async () => {
+      if (isMounted) {
+        await fetchConversations()
+      }
+    }
+
+    initialize()
     const unsubscribe = subscribeToMessages()
 
     return () => {
+      isMounted = false
       if (unsubscribe) {
         unsubscribe()
       }
@@ -53,7 +62,7 @@ export function useMessages() {
         clearTimeout(debounceTimerRef.current)
       }
     }
-  }, [user])
+  }, [user?.id])
 
   const fetchConversations = async () => {
     if (!user) return
@@ -128,7 +137,7 @@ export function useMessages() {
     debounceTimerRef.current = setTimeout(() => {
       fetchConversations()
     }, 500)
-  }, [user])
+  }, [])
 
   const subscribeToMessages = () => {
     if (!user) return
@@ -259,7 +268,7 @@ export function useMessages() {
 
   const fetchMessages = useCallback(
     async (otherUserId: string) => {
-      if (!user) return
+      if (!user?.id) return
 
       try {
         const { data, error: err } = await supabase
@@ -279,7 +288,7 @@ export function useMessages() {
         console.error('Error fetching messages:', errorMessage, err)
       }
     },
-    [user]
+    [user?.id]
   )
 
   const sendMessage = useCallback(
