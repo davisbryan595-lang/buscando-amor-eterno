@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useRef } from 'react'
-import { Send, Lock, ArrowLeft } from 'lucide-react'
+import { Send, Lock, ArrowLeft, Mic, Video } from 'lucide-react'
 import gsap from 'gsap'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -11,6 +11,7 @@ import { toast } from 'sonner'
 import MessageBubble from '@/components/message-bubble'
 import MessageContextMenu from '@/components/message-context-menu'
 import TypingIndicator from '@/components/typing-indicator'
+import VideoCallModal from '@/components/video-call-modal'
 
 const getLastSeenText = (timestamp?: string): string => {
   if (!timestamp) return 'Offline'
