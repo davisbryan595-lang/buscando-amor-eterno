@@ -36,7 +36,23 @@ export default function VideoCallModal({
     }
   }, [isOpen, isConnected, isConnecting, otherUserId, callType, joinCall])
 
-  // Handle participant video tracks
+  // Handle local video track
+  useEffect(() => {
+    if (isConnected && localParticipant && callType === 'video' && localVideoRef.current) {
+      const videoTracks = localParticipant.videoTracks
+      if (videoTracks && videoTracks.size > 0) {
+        const videoTrack = Array.from(videoTracks.values())[0]
+        if (videoTrack && videoTrack.track) {
+          videoTrack.track.attach(localVideoRef.current)
+          return () => {
+            videoTrack.track.detach()
+          }
+        }
+      }
+    }
+  }, [isConnected, localParticipant, callType])
+
+  // Handle remote participant video tracks
   useEffect(() => {
     if (participants.length > 0 && remoteVideoRef.current) {
       const participant = participants[0]
@@ -48,14 +64,10 @@ export default function VideoCallModal({
           const videoTrack = Array.from(videoTracks.values())[0]
           if (videoTrack && videoTrack.track) {
             videoTrack.track.attach(remoteVideoRef.current)
+            return () => {
+              videoTrack.track.detach()
+            }
           }
-        }
-      }
-
-      return () => {
-        if (remoteVideoRef.current && remoteVideoRef.current.srcObject) {
-          const stream = remoteVideoRef.current.srcObject as MediaStream
-          stream.getTracks().forEach((track) => track.stop())
         }
       }
     }
