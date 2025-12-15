@@ -50,6 +50,8 @@ export default function ChatWindow({ conversation, onBack }: { conversation: Con
   const [otherUserDetails, setOtherUserDetails] = useState<{ name: string; image: string | null } | null>(null)
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; messageId: string; content: string; isOwn: boolean } | null>(null)
   const [showTypingIndicator, setShowTypingIndicator] = useState(false)
+  const [callModalOpen, setCallModalOpen] = useState(false)
+  const [callType, setCallType] = useState<'audio' | 'video'>('video')
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const messagesContainerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
