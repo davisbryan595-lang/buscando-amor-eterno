@@ -83,8 +83,8 @@ function MessagesContentInner() {
 
 
   return (
-    <div className="pt-20 md:pt-24 pb-12 px-3 sm:px-4 md:px-6 lg:px-8 h-screen flex flex-col bg-white">
-      <div className="w-full max-w-7xl mx-auto flex-1 flex gap-0 md:gap-4 lg:gap-6 relative overflow-hidden">
+    <div className="pt-20 md:pt-24 pb-12 h-screen flex flex-col bg-white">
+      <div className="flex-1 flex gap-0 md:gap-4 lg:gap-6 relative overflow-hidden px-3 sm:px-4 md:px-6 lg:px-8">
         {/* Mobile back button */}
         <div className="md:hidden absolute left-0 top-0 z-30">
           {selectedConversation && sidebarOpen === false ? (
@@ -157,7 +157,7 @@ function MessagesContentInner() {
         {selectedConversation ? (
           <>
             {/* Desktop chat view */}
-            <div className="hidden md:flex flex-1 overflow-hidden rounded-xl border border-rose-100">
+            <div className="hidden md:flex flex-1 overflow-hidden">
               <ChatWindow conversation={selectedConversation} />
             </div>
 
@@ -169,7 +169,7 @@ function MessagesContentInner() {
             )}
           </>
         ) : (
-          <div className="hidden md:flex flex-1 items-center justify-center bg-gradient-to-br from-rose-50 to-white rounded-xl border border-rose-100">
+          <div className="hidden md:flex flex-1 items-center justify-center bg-gradient-to-br from-rose-50 to-white">
             <div className="text-center">
               <p className="text-slate-600 text-lg">Select a conversation to start messaging</p>
             </div>
