@@ -100,10 +100,10 @@ export function useSubscription() {
 
       if (data) {
         setSubscription(data as SubscriptionData)
-        setIsPremium(true)
+        setIsPremium(data.plan === 'premium')
       } else {
         setSubscription(null)
-        setIsPremium(true)
+        setIsPremium(false)
       }
       setError(null)
     } catch (err: any) {

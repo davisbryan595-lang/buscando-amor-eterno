@@ -9,7 +9,7 @@ import Image from 'next/image'
 import { useMessages } from '@/hooks/useMessages'
 import { useAuth } from '@/context/auth-context'
 import { useSubscription } from '@/hooks/useSubscription'
-import { X, ArrowLeft } from 'lucide-react'
+import { X, ArrowLeft, Menu } from 'lucide-react'
 
 function MessagesContentInner() {
   const { user } = useAuth()
@@ -102,6 +102,20 @@ function MessagesContentInner() {
 
   return (
     <div className="pt-20 md:pt-24 pb-12 h-screen flex flex-col bg-white">
+      {/* Mobile menu button - shown when sidebar is closed and no chat selected */}
+      {!sidebarOpen && !selectedConversation && (
+        <div className="md:hidden px-3 sm:px-4 py-3 border-b border-rose-100">
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-rose-700 transition w-full justify-center"
+            aria-label="Open conversations"
+          >
+            <Menu size={20} />
+            <span>Open Conversations</span>
+          </button>
+        </div>
+      )}
+
       <div className="flex-1 flex gap-0 md:gap-4 lg:gap-6 relative overflow-hidden px-3 sm:px-4 md:px-6 lg:px-8">
         {/* Sidebar */}
         <div className={`absolute inset-0 md:static md:inset-auto w-full md:w-72 lg:w-96 bg-gradient-to-b from-white to-rose-50 md:rounded-xl md:border md:border-rose-100 overflow-y-auto transition-all duration-300 flex flex-col ${

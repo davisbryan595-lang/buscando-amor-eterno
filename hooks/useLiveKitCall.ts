@@ -48,7 +48,14 @@ export function useLiveKitCall() {
         })
 
         if (!tokenResponse.ok) {
-          throw new Error('Failed to get access token')
+          let errorMessage = 'Failed to generate call token'
+          try {
+            const errorData = await tokenResponse.json()
+            errorMessage = errorData.error || errorMessage
+          } catch (e) {
+            errorMessage = `Failed to generate call token (HTTP ${tokenResponse.status})`
+          }
+          throw new Error(errorMessage)
         }
 
         const { token } = await tokenResponse.json()

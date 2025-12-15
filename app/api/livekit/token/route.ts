@@ -16,8 +16,12 @@ export async function POST(req: NextRequest) {
     const apiSecret = process.env.LIVEKIT_API_SECRET
 
     if (!apiKey || !apiSecret) {
+      console.error('[LiveKit Token] Missing credentials:', {
+        hasApiKey: !!apiKey,
+        hasApiSecret: !!apiSecret,
+      })
       return NextResponse.json(
-        { error: 'LiveKit credentials not configured' },
+        { error: 'LiveKit credentials not configured. Please check environment variables on your deployment platform.' },
         { status: 500 }
       )
     }
