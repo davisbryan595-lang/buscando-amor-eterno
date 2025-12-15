@@ -99,8 +99,8 @@ function MessagesContentInner() {
         </div>
 
         {/* Sidebar */}
-        <div className={`absolute inset-0 md:static md:inset-auto w-full md:w-72 lg:w-96 bg-gradient-to-b from-white to-rose-50 md:rounded-xl md:border md:border-rose-100 overflow-y-auto transition-all duration-300 z-20 flex flex-col ${
-          sidebarOpen ? 'opacity-100 pointer-events-auto' : 'md:opacity-100 md:pointer-events-auto opacity-0 pointer-events-none md:flex'
+        <div className={`absolute inset-0 md:static md:inset-auto w-full md:w-72 lg:w-96 bg-gradient-to-b from-white to-rose-50 md:rounded-xl md:border md:border-rose-100 overflow-y-auto transition-all duration-300 flex flex-col ${
+          sidebarOpen ? 'opacity-100 pointer-events-auto z-20' : 'md:opacity-100 md:pointer-events-auto md:z-auto opacity-0 pointer-events-none md:flex z-0'
         }`}>
           <div className="p-3 md:p-4 border-b border-rose-100 sticky top-0 bg-white md:rounded-t-xl flex items-center justify-between">
             <h2 className="text-lg md:text-xl font-bold text-slate-900">Messages</h2>
