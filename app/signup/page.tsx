@@ -199,7 +199,7 @@ export default function SignupPage() {
           {step === 'success' && (
             <div className="space-y-4 md:space-y-6 text-center">
               <div className="w-12 md:w-16 h-12 md:h-16 bg-primary rounded-full flex items-center justify-center mx-auto">
-                <Check size={24} md:size={32} className="text-white" />
+                <Check size={isMobile ? 24 : 32} className="text-white" />
               </div>
 
               <div>
