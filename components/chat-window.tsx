@@ -146,9 +146,9 @@ export default function ChatWindow({ conversation }: { conversation: Conversatio
   return (
     <div className="bg-white flex flex-col h-full overflow-hidden">
       {/* Header */}
-      <div className="px-4 sm:px-5 md:px-8 py-5 md:py-7 border-b border-rose-100 flex items-center justify-between flex-shrink-0 bg-gradient-to-r from-white to-rose-50/50">
-        <div className="flex items-center gap-3 md:gap-5 min-w-0">
-          <div className="relative w-12 h-12 md:w-16 md:h-16 flex-shrink-0">
+      <div className="px-4 sm:px-5 md:px-6 py-3 md:py-4 border-b border-rose-100 flex items-center justify-between flex-shrink-0 bg-gradient-to-r from-white to-rose-50/50">
+        <div className="flex items-center gap-3 md:gap-4 min-w-0">
+          <div className="relative w-10 h-10 md:w-12 md:h-12 flex-shrink-0">
             <Image
               src={otherUserDetails?.image || conversation.other_user_image || "/placeholder.svg"}
               alt={otherUserDetails?.name || conversation.other_user_name || 'User'}
@@ -156,15 +156,15 @@ export default function ChatWindow({ conversation }: { conversation: Conversatio
               className="rounded-full object-cover border-2 border-rose-100"
             />
             {conversation.is_online && (
-              <div className="absolute bottom-0 right-0 w-4 h-4 md:w-5 md:h-5 bg-green-500 rounded-full border-3 border-white z-10" />
+              <div className="absolute bottom-0 right-0 w-3 h-3 md:w-4 md:h-4 bg-green-500 rounded-full border-3 border-white z-10" />
             )}
           </div>
           <div className="min-w-0 flex-1">
-            <p className="font-bold text-slate-900 text-base md:text-2xl truncate">{otherUserDetails?.name || conversation.other_user_name || 'User'}</p>
-            <p className="text-sm md:text-base text-slate-600 mt-1">
+            <p className="font-bold text-slate-900 text-sm md:text-lg truncate">{otherUserDetails?.name || conversation.other_user_name || 'User'}</p>
+            <p className="text-xs md:text-sm text-slate-600 mt-0.5">
               {conversation.is_online ? (
                 <span className="flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 bg-green-500 rounded-full inline-block"></span>
+                  <span className="w-2 h-2 bg-green-500 rounded-full inline-block"></span>
                   Active now
                 </span>
               ) : (
