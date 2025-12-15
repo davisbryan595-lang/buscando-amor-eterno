@@ -118,14 +118,14 @@ export default function SuccessStories() {
                     className="p-3 md:p-4 bg-rose-50 hover:bg-primary hover:text-white text-primary rounded-full transition-all duration-300 shadow-sm hover:shadow-md"
                     aria-label={t('stories.previousStory')}
                   >
-                    <ChevronLeft size={20} className="md:w-6 md:h-6" />
+                    <ChevronLeft className="w-5 h-5 md:w-6 md:h-6" />
                   </button>
                   <button
                     onClick={next}
                     className="p-3 md:p-4 bg-rose-50 hover:bg-primary hover:text-white text-primary rounded-full transition-all duration-300 shadow-sm hover:shadow-md"
                     aria-label={t('stories.nextStory')}
                   >
-                    <ChevronRight size={20} className="md:w-6 md:h-6" />
+                    <ChevronRight className="w-5 h-5 md:w-6 md:h-6" />
                   </button>
                 </div>
               </div>
