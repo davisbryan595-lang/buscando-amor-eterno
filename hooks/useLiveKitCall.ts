@@ -103,7 +103,7 @@ export function useLiveKitCall() {
           localParticipant: room.localParticipant,
           isConnected: true,
           isConnecting: false,
-          participants: Array.from(room.participants.values()),
+          participants: room.participants ? Array.from(room.participants.values()) : [],
         }))
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Failed to join call'
