@@ -85,19 +85,6 @@ function MessagesContentInner() {
   return (
     <div className="pt-20 md:pt-24 pb-12 h-screen flex flex-col bg-white">
       <div className="flex-1 flex gap-0 md:gap-4 lg:gap-6 relative overflow-hidden px-3 sm:px-4 md:px-6 lg:px-8">
-        {/* Mobile back button */}
-        <div className="md:hidden absolute left-0 top-0 z-30">
-          {selectedConversation && sidebarOpen === false ? (
-            <button
-              onClick={() => setSelectedConversation(null)}
-              className="p-2 hover:bg-rose-100 rounded-lg transition"
-              aria-label="Back to conversations"
-            >
-              <ArrowLeft size={24} className="text-primary" />
-            </button>
-          ) : null}
-        </div>
-
         {/* Sidebar */}
         <div className={`absolute inset-0 md:static md:inset-auto w-full md:w-72 lg:w-96 bg-gradient-to-b from-white to-rose-50 md:rounded-xl md:border md:border-rose-100 overflow-y-auto transition-all duration-300 flex flex-col ${
           sidebarOpen ? 'opacity-100 pointer-events-auto z-20' : 'md:opacity-100 md:pointer-events-auto md:z-auto opacity-0 pointer-events-none md:flex z-0'
