@@ -137,9 +137,15 @@ export default function VideoCallModal({
           )}
 
           {error && (
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="text-center bg-red-500/20 border border-red-500 rounded-lg p-6 max-w-sm">
-                <p className="text-red-100 mb-4">{error}</p>
+            <div className="absolute inset-0 flex items-center justify-center bg-black/70">
+              <div className="text-center bg-red-500/20 border border-red-500 rounded-lg p-6 max-w-sm mx-4">
+                <p className="text-red-100 mb-2 font-semibold">Call Error</p>
+                <p className="text-red-100 text-sm mb-4">{error}</p>
+                <p className="text-gray-300 text-xs mb-4">
+                  {error.includes('credentials') && 'Check that LiveKit environment variables are set on your deployment platform.'}
+                  {error.includes('token') && 'Failed to generate call token. Please refresh and try again.'}
+                  {error.includes('URL') && 'LiveKit service is not configured. Please contact support.'}
+                </p>
                 <button
                   onClick={handleEndCall}
                   className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition"
