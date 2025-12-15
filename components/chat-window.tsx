@@ -176,7 +176,7 @@ export default function ChatWindow({ conversation }: { conversation: Conversatio
       </div>
 
       {/* Messages */}
-      <div ref={messagesContainerRef} className="flex-1 overflow-y-auto px-4 sm:px-5 md:px-8 py-5 md:py-7 space-y-5 md:space-y-6 bg-white">
+      <div ref={messagesContainerRef} className="flex-1 overflow-y-auto px-4 sm:px-5 md:px-8 py-5 md:py-7 space-y-5 md:space-y-6 bg-white w-full">
         {messages.length === 0 ? (
           <div className="flex items-center justify-center h-full text-slate-400">
             <div className="text-center">
