@@ -123,8 +123,9 @@ export function useMessages() {
       pollAttemptsRef.current = 0
     } catch (err: any) {
       const errorMessage = err?.message || (typeof err === 'string' ? err : 'Failed to fetch conversations')
+      const errorDetails = err?.code ? ` (Code: ${err.code})` : err?.status ? ` (Status: ${err.status})` : ''
       setError(errorMessage)
-      console.error('Error fetching conversations:', errorMessage, err)
+      console.error('Error fetching conversations:', errorMessage + errorDetails, err)
     } finally {
       setLoading(false)
     }
