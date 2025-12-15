@@ -8,11 +8,13 @@ import Footer from '@/components/footer'
 import { useAuth } from '@/context/auth-context'
 import { Check } from 'lucide-react'
 import { toast } from 'sonner'
+import { useIsMobile } from '@/hooks/use-mobile'
 
 type SignUpStep = 'email' | 'profile' | 'success'
 
 export default function SignupPage() {
   const [step, setStep] = useState<SignUpStep>('email')
+  const isMobile = useIsMobile()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [formData, setFormData] = useState({
