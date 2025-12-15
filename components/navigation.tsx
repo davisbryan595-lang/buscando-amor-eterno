@@ -1,7 +1,8 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
+import gsap from 'gsap'
 import { Menu, X, Bell, Globe } from 'lucide-react'
 import { useLanguage } from '@/lib/i18n-context'
 import { useAuth } from '@/context/auth-context'
@@ -14,12 +15,23 @@ export default function Navigation() {
   const [langDropdown, setLangDropdown] = useState(false)
   const [notificationsOpen, setNotificationsOpen] = useState(false)
   const [isMounted, setIsMounted] = useState(false)
+  const navRef = useRef<HTMLDivElement>(null)
   const { language, setLanguage, t } = useLanguage()
   const { user } = useAuth()
   const { notifications, dismissNotification } = useNotifications()
 
   React.useEffect(() => {
     setIsMounted(true)
+  }, [])
+
+  useEffect(() => {
+    if (navRef.current) {
+      gsap.from(navRef.current, {
+        opacity: 0,
+        y: -20,
+        duration: 0.6,
+      })
+    }
   }, [])
 
   const toggleOneSignal = () => {
