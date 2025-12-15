@@ -85,7 +85,7 @@ export default function MessageBubble({
       onTouchEnd={handleTouchEnd}
     >
       <div
-        className={`relative max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg px-4 md:px-6 py-3 md:py-4 rounded-3xl text-sm sm:text-base md:text-lg break-words shadow-md transition-all duration-200 hover:shadow-lg ${
+        className={`relative max-w-xs sm:max-w-sm md:max-w-2xl lg:max-w-3xl px-5 sm:px-6 md:px-8 py-4 sm:py-5 md:py-6 rounded-3xl text-base sm:text-lg md:text-xl break-words shadow-md transition-all duration-200 hover:shadow-lg ${
           isOwn
             ? 'bg-primary text-white rounded-br-none'
             : 'bg-gradient-to-r from-slate-100 to-slate-50 text-slate-900 rounded-bl-none border border-slate-200'
@@ -93,7 +93,7 @@ export default function MessageBubble({
       >
         <p className="leading-relaxed">{content}</p>
         <span
-          className={`text-xs mt-2 block opacity-70 ${
+          className={`text-sm mt-3 block opacity-70 ${
             isOwn ? 'text-white/70' : 'text-slate-500'
           }`}
         >
