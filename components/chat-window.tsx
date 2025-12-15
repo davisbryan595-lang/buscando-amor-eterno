@@ -1,12 +1,16 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { Send, Lock } from 'lucide-react'
+import gsap from 'gsap'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useMessages } from '@/hooks/useMessages'
 import { useAuth } from '@/context/auth-context'
 import { toast } from 'sonner'
+import MessageBubble from '@/components/message-bubble'
+import MessageContextMenu from '@/components/message-context-menu'
+import TypingIndicator from '@/components/typing-indicator'
 
 const getLastSeenText = (timestamp?: string): string => {
   if (!timestamp) return 'Offline'
@@ -43,6 +47,11 @@ export default function ChatWindow({ conversation }: { conversation: Conversatio
   const [newMessage, setNewMessage] = useState('')
   const [loading, setLoading] = useState(false)
   const [otherUserDetails, setOtherUserDetails] = useState<{ name: string; image: string | null } | null>(null)
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; messageId: string; content: string; isOwn: boolean } | null>(null)
+  const [showTypingIndicator, setShowTypingIndicator] = useState(false)
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+  const messagesContainerRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     if (conversation?.other_user_id) {
@@ -74,6 +83,17 @@ export default function ChatWindow({ conversation }: { conversation: Conversatio
     }
   }, [conversation?.other_user_id, fetchMessages, conversation.other_user_name, conversation.other_user_image])
 
+  // Scroll to bottom when messages change
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      gsap.to(messagesContainerRef.current, {
+        scrollTop: messagesContainerRef.current?.scrollHeight,
+        duration: 0.5,
+        ease: 'power2.out',
+      })
+    }
+  }, [messages])
+
   const handleSend = async () => {
     if (!newMessage.trim() || !user) return
 
@@ -81,11 +101,45 @@ export default function ChatWindow({ conversation }: { conversation: Conversatio
       setLoading(true)
       await sendMessage(conversation.other_user_id, newMessage)
       setNewMessage('')
+      inputRef.current?.focus()
     } catch (err: any) {
       console.error('Error sending message:', err)
       toast.error(err.message || 'Error sending message')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleContextMenu = (e: React.MouseEvent | React.TouchEvent, messageId: string, content: string, isOwn: boolean) => {
+    e.preventDefault()
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
+    setContextMenu({
+      x: e instanceof MouseEvent ? e.clientX : rect.left,
+      y: e instanceof MouseEvent ? e.clientY : rect.bottom,
+      messageId,
+      content,
+      isOwn,
+    })
+  }
+
+  const handleDeleteMessage = (messageId: string) => {
+    // TODO: Implement message deletion
+    toast.info('Message deletion coming soon!')
+  }
+
+  const handleMessageLongPress = (messageId: string) => {
+    const message = messages.find((m) => m.id === messageId)
+    if (message) {
+      const element = document.getElementById(`message-${messageId}`)
+      if (element) {
+        const rect = element.getBoundingClientRect()
+        handleContextMenu(
+          { currentTarget: element } as unknown as React.MouseEvent,
+          messageId,
+          message.content,
+          message.sender_id === user?.id
+        )
+      }
     }
   }
 
@@ -122,54 +176,85 @@ export default function ChatWindow({ conversation }: { conversation: Conversatio
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 md:space-y-5 bg-white">
+      <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 md:space-y-5 bg-white">
         {messages.length === 0 ? (
           <div className="flex items-center justify-center h-full text-slate-400">
             <div className="text-center">
               <p className="text-base md:text-lg font-medium mb-2">No messages yet</p>
-              <p className="text-sm md:text-base">Start the conversation!</p>
+              <p className="text-sm md:text-base">Start the conversation with {otherUserDetails?.name || conversation.other_user_name}!</p>
             </div>
           </div>
         ) : (
-          messages.map((msg) => (
-            <div
-              key={msg.id}
-              className={`flex ${msg.sender_id === user?.id ? 'justify-end' : 'justify-start'}`}
-            >
+          <>
+            {messages.map((msg) => (
               <div
-                className={`max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg px-4 md:px-5 py-2 md:py-3 rounded-2xl text-sm md:text-base break-words shadow-sm ${
-                  msg.sender_id === user?.id
-                    ? 'bg-primary text-white rounded-br-none'
-                    : 'bg-slate-100 text-slate-900 rounded-bl-none'
-                }`}
+                key={msg.id}
+                id={`message-${msg.id}`}
+                onClick={(e) => {
+                  // Prevent context menu from opening on normal click
+                  if (e.detail === 1) {
+                    setContextMenu(null)
+                  }
+                }}
               >
-                <p>{msg.content}</p>
+                <MessageBubble
+                  id={msg.id}
+                  content={msg.content}
+                  isOwn={msg.sender_id === user?.id}
+                  timestamp={msg.created_at}
+                  onContextMenu={(e) =>
+                    handleContextMenu(e, msg.id, msg.content, msg.sender_id === user?.id)
+                  }
+                  onLongPress={handleMessageLongPress}
+                />
               </div>
-            </div>
-          ))
+            ))}
+            {showTypingIndicator && (
+              <div className="flex justify-start">
+                <div className="px-4 md:px-5 py-3 md:py-4 rounded-3xl rounded-bl-none bg-gradient-to-r from-slate-100 to-slate-50">
+                  <TypingIndicator />
+                </div>
+              </div>
+            )}
+            <div ref={messagesEndRef} />
+          </>
         )}
       </div>
 
       {/* Input */}
       <div className="p-4 md:p-6 border-t border-rose-100 flex gap-2 md:gap-3 flex-shrink-0 bg-gradient-to-r from-white to-rose-50">
         <input
+          ref={inputRef}
           type="text"
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
           onKeyPress={(e) => e.key === 'Enter' && handleSend()}
           placeholder="Type your message..."
           disabled={loading}
-          className="flex-1 px-4 md:px-5 py-3 md:py-4 bg-white border border-rose-200 rounded-full text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 transition"
+          className="flex-1 px-4 md:px-5 py-3 md:py-4 bg-white border border-rose-200 rounded-full text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 transition shadow-sm"
         />
         <button
           onClick={handleSend}
           disabled={loading}
-          className="p-3 md:p-4 bg-primary text-white rounded-full hover:bg-rose-700 transition disabled:opacity-50 flex-shrink-0 shadow-sm hover:shadow-md"
+          className="p-3 md:p-4 bg-primary text-white rounded-full hover:bg-rose-700 transition disabled:opacity-50 flex-shrink-0 shadow-sm hover:shadow-md active:scale-95 transform duration-75"
           aria-label="Send message"
         >
           <Send size={20} className="md:w-6 md:h-6" />
         </button>
       </div>
+
+      {/* Context Menu */}
+      {contextMenu && (
+        <MessageContextMenu
+          messageId={contextMenu.messageId}
+          content={contextMenu.content}
+          isOwn={contextMenu.isOwn}
+          x={contextMenu.x}
+          y={contextMenu.y}
+          onClose={() => setContextMenu(null)}
+          onDelete={handleDeleteMessage}
+        />
+      )}
     </div>
   )
 }
