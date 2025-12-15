@@ -289,7 +289,7 @@ export function useMessages() {
         console.error('Error fetching messages:', errorMessage, err)
       }
     },
-    [user?.id]
+    [user]
   )
 
   const sendMessage = useCallback(
