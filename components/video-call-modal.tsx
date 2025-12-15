@@ -73,16 +73,18 @@ export default function VideoCallModal({
     }
   }, [participants, callType])
 
-  // Update local video when videoEnabled changes
+  // Update video when toggled
   const toggleVideoClick = async () => {
     const newState = !videoEnabled
     setVideoEnabled(newState)
-    // Note: mute/unmute happens in the hook
+    await toggleVideo(newState)
   }
 
+  // Update audio when toggled
   const toggleAudioClick = async () => {
     const newState = !audioEnabled
     setAudioEnabled(newState)
+    await toggleAudio(newState)
   }
 
   const handleEndCall = async () => {
