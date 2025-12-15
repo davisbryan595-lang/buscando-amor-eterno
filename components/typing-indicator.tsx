@@ -35,24 +35,24 @@ export default function TypingIndicator() {
   }, [])
 
   return (
-    <div className="flex gap-1 items-center">
+    <div className="flex gap-2 items-center">
       <div
         ref={(el) => {
           if (el) dotsRef.current[0] = el
         }}
-        className="w-2 h-2 bg-slate-400 rounded-full"
+        className="w-3 h-3 bg-slate-400 rounded-full"
       />
       <div
         ref={(el) => {
           if (el) dotsRef.current[1] = el
         }}
-        className="w-2 h-2 bg-slate-400 rounded-full"
+        className="w-3 h-3 bg-slate-400 rounded-full"
       />
       <div
         ref={(el) => {
           if (el) dotsRef.current[2] = el
         }}
-        className="w-2 h-2 bg-slate-400 rounded-full"
+        className="w-3 h-3 bg-slate-400 rounded-full"
       />
     </div>
   )

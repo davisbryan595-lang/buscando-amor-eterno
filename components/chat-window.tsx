@@ -211,7 +211,7 @@ export default function ChatWindow({ conversation }: { conversation: Conversatio
             ))}
             {showTypingIndicator && (
               <div className="flex justify-start">
-                <div className="px-4 md:px-5 py-3 md:py-4 rounded-3xl rounded-bl-none bg-gradient-to-r from-slate-100 to-slate-50">
+                <div className="px-8 md:px-10 py-6 md:py-8 rounded-3xl rounded-bl-none bg-gradient-to-r from-slate-100 to-slate-50">
                   <TypingIndicator />
                 </div>
               </div>
