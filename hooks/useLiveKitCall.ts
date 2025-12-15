@@ -89,6 +89,7 @@ export function useLiveKitCall() {
             isConnected: false,
             room: null,
             participants: [],
+            localParticipant: null,
           }))
           roomRef.current = null
         })
