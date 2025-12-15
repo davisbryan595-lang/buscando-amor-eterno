@@ -41,9 +41,9 @@ interface Conversation {
   last_message_time?: string
 }
 
-export default function ChatWindow({ conversation }: { conversation: Conversation }) {
+export default function ChatWindow({ conversation, onBack }: { conversation: Conversation; onBack?: () => void }) {
   const { user } = useAuth()
-  const { messages, sendMessage, markAsRead, fetchMessages } = useMessages()
+  const { messages, sendMessage, markAsRead, fetchMessages, fetchConversations } = useMessages()
   const [newMessage, setNewMessage] = useState('')
   const [loading, setLoading] = useState(false)
   const [otherUserDetails, setOtherUserDetails] = useState<{ name: string; image: string | null } | null>(null)
