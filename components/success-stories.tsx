@@ -101,7 +101,7 @@ export default function SuccessStories() {
               </div>
               <div ref={contentRef} className="flex-1 w-full text-center md:text-left">
                 <div className="flex items-center justify-center md:justify-start gap-2 mb-4">
-                  <Heart className="text-primary fill-primary" size={20} md:size={24} />
+                  <Heart className="text-primary fill-primary w-5 h-5 md:w-6 md:h-6" />
                   <p className="text-primary font-semibold text-base md:text-lg">{t(story.coupleKey)}</p>
                 </div>
                 <p className="text-sm md:text-base text-slate-600 mb-4 flex items-center justify-center md:justify-start gap-2">
