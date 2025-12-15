@@ -83,6 +83,21 @@ export default function ChatWindow({ conversation, onBack }: { conversation: Con
     }
   }, [conversation?.other_user_id, fetchMessages])
 
+  // Mark all unread messages as read when opening the chat
+  useEffect(() => {
+    if (messages.length > 0 && user?.id) {
+      const unreadMessages = messages.filter((msg) => msg.recipient_id === user.id && !msg.read)
+      unreadMessages.forEach((msg) => {
+        markAsRead(msg.id)
+      })
+
+      // Refresh conversations to clear unread badge
+      if (unreadMessages.length > 0) {
+        fetchConversations()
+      }
+    }
+  }, [messages, user?.id, markAsRead, fetchConversations])
+
   // Scroll to bottom when messages change
   useEffect(() => {
     if (messagesEndRef.current) {
