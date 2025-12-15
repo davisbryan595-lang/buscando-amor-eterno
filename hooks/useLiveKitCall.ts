@@ -16,6 +16,7 @@ export function useLiveKitCall() {
   const [state, setState] = useState<CallState>({
     room: null,
     participants: [],
+    localParticipant: null,
     isConnecting: false,
     isConnected: false,
     error: null,
