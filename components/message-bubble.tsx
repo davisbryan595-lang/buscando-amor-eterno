@@ -1,7 +1,9 @@
 'use client'
 
-import React, { useRef, useEffect } from 'react'
+import React, { useRef, useEffect, useState } from 'react'
 import gsap from 'gsap'
+import Image from 'next/image'
+import ImagePreviewModal from '@/components/image-preview-modal'
 
 interface MessageBubbleProps {
   id: string
@@ -23,6 +25,14 @@ export default function MessageBubble({
   const bubbleRef = useRef<HTMLDivElement>(null)
   const longPressTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const touchStartRef = useRef<{ x: number; y: number } | null>(null)
+  const [previewImage, setPreviewImage] = useState<string | null>(null)
+  const [imageSourceElement, setImageSourceElement] = useState<HTMLElement | null>(null)
+
+  // Detect image URLs in content (handles URLs like https://... or http://...)
+  const urlRegex = /(https?:\/\/[^\s]+\.(?:jpg|jpeg|png|gif|webp|svg))/gi
+  const imageUrls = content.match(urlRegex) || []
+  const hasImages = imageUrls.length > 0
+  const textContent = content.replace(urlRegex, '').trim()
 
   useEffect(() => {
     if (bubbleRef.current) {
@@ -75,40 +85,75 @@ export default function MessageBubble({
     }
   }
 
-  return (
-    <div
-      ref={bubbleRef}
-      className={`flex ${isOwn ? 'justify-end' : 'justify-start'} group`}
-      onContextMenu={onContextMenu}
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
-    >
-      <div
-        className={`relative max-w-sm sm:max-w-md md:max-w-4xl lg:max-w-5xl px-5 sm:px-6 md:px-8 py-4 sm:py-5 md:py-6 rounded-3xl text-base sm:text-lg md:text-xl break-words shadow-md transition-all duration-200 hover:shadow-lg ${
-          isOwn
-            ? 'bg-primary text-white rounded-br-none'
-            : 'bg-gradient-to-r from-slate-100 to-slate-50 text-slate-900 rounded-bl-none border border-slate-200'
-        }`}
-      >
-        <p className="leading-relaxed">{content}</p>
-        <span
-          className={`text-sm mt-3 block opacity-70 ${
-            isOwn ? 'text-white/70' : 'text-slate-500'
-          }`}
-        >
-          {getFormattedTime(timestamp)}
-        </span>
+  const handleImageClick = (e: React.MouseEvent<HTMLImageElement>, imageUrl: string) => {
+    e.stopPropagation()
+    setImageSourceElement(e.currentTarget)
+    setPreviewImage(imageUrl)
+  }
 
-        {/* Hover action indicator */}
+  return (
+    <>
+      <div
+        ref={bubbleRef}
+        className={`flex ${isOwn ? 'justify-end' : 'justify-start'} group`}
+        onContextMenu={onContextMenu}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
         <div
-          className={`absolute top-1/2 -translate-y-1/2 text-xs px-2 py-1 rounded-full bg-slate-800 text-white opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap ${
-            isOwn ? '-left-20' : '-right-20'
+          className={`relative max-w-xs sm:max-w-sm md:max-w-2xl lg:max-w-3xl px-4 sm:px-5 md:px-6 py-3 sm:py-4 md:py-5 rounded-3xl text-sm sm:text-base md:text-lg break-words shadow-md transition-all duration-200 hover:shadow-lg ${
+            isOwn
+              ? 'bg-primary text-white rounded-br-none'
+              : 'bg-gradient-to-r from-slate-100 to-slate-50 text-slate-900 rounded-bl-none border border-slate-200'
           }`}
         >
-          {isOwn ? '⋮ Right-click' : '⋮ Right-click'}
+          {textContent && <p className="leading-relaxed">{textContent}</p>}
+
+          {/* Image gallery */}
+          {hasImages && (
+            <div className={`grid gap-2 mt-2 ${imageUrls.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
+              {imageUrls.map((imageUrl, idx) => (
+                <div key={idx} className="relative w-full overflow-hidden rounded-lg group/img cursor-pointer">
+                  <img
+                    src={imageUrl}
+                    alt={`Message image ${idx + 1}`}
+                    className="w-full h-48 object-cover hover:scale-110 transition-transform duration-300"
+                    onClick={(e) => handleImageClick(e, imageUrl)}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+
+          <span
+            className={`text-xs mt-2 block opacity-70 ${
+              isOwn ? 'text-white/70' : 'text-slate-500'
+            }`}
+          >
+            {getFormattedTime(timestamp)}
+          </span>
+
+          {/* Hover action indicator */}
+          <div
+            className={`absolute top-1/2 -translate-y-1/2 text-xs px-2 py-1 rounded-full bg-slate-800 text-white opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap ${
+              isOwn ? '-left-20' : '-right-20'
+            }`}
+          >
+            {isOwn ? '⋮ Right-click' : '⋮ Right-click'}
+          </div>
         </div>
       </div>
-    </div>
+
+      {/* Image preview modal */}
+      {previewImage && (
+        <ImagePreviewModal
+          imageUrl={previewImage}
+          isOpen={!!previewImage}
+          onClose={() => setPreviewImage(null)}
+          sourceElement={imageSourceElement}
+        />
+      )}
+    </>
   )
 }
