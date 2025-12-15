@@ -134,9 +134,9 @@ export function useLiveKitCall() {
   }, [])
 
   const toggleAudio = useCallback(async (enabled: boolean) => {
-    if (roomRef.current) {
-      const audioTracks = roomRef.current.localParticipant?.audioTracks
-      if (audioTracks) {
+    if (roomRef.current?.localParticipant) {
+      const audioTracks = roomRef.current.localParticipant.audioTracks
+      if (audioTracks && typeof audioTracks.values === 'function') {
         for (const track of audioTracks.values()) {
           await track.mute(!enabled)
         }
