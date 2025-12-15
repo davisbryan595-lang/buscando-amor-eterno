@@ -219,7 +219,9 @@ export function useLiveKitCall() {
   useEffect(() => {
     return () => {
       if (roomRef.current) {
-        roomRef.current.disconnect()
+        roomRef.current.disconnect().catch((err) => {
+          console.warn('Error during cleanup disconnect:', err)
+        })
       }
     }
   }, [])
