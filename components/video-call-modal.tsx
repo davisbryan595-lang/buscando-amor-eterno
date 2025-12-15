@@ -21,7 +21,7 @@ export default function VideoCallModal({
   otherUserId,
   callType,
 }: VideoCallModalProps) {
-  const { joinCall, leaveCall, isConnected, isConnecting, error, participants, localParticipant } =
+  const { joinCall, leaveCall, isConnected, isConnecting, error, participants, localParticipant, toggleAudio, toggleVideo } =
     useLiveKitCall()
   const [audioEnabled, setAudioEnabled] = useState(true)
   const [videoEnabled, setVideoEnabled] = useState(callType === 'video')
