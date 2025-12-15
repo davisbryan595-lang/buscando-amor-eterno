@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useRef } from 'react'
-import { Send, Lock } from 'lucide-react'
+import { Send, Lock, ArrowLeft } from 'lucide-react'
 import gsap from 'gsap'
 import Link from 'next/link'
 import Image from 'next/image'
