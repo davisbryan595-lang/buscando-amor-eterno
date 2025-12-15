@@ -81,7 +81,7 @@ export default function ChatWindow({ conversation, onBack }: { conversation: Con
         fetchUserDetails()
       }
     }
-  }, [conversation?.other_user_id, fetchMessages])
+  }, [conversation?.other_user_id])
 
   // Mark all unread messages as read when opening the chat
   useEffect(() => {
