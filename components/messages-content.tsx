@@ -151,7 +151,7 @@ function MessagesContentInner() {
             {/* Mobile chat view */}
             {!sidebarOpen && (
               <div className="md:hidden absolute inset-0 w-full h-full z-10">
-                <ChatWindow conversation={selectedConversation} />
+                <ChatWindow conversation={selectedConversation} onBack={() => setSelectedConversation(null)} />
               </div>
             )}
           </>
