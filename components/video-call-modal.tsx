@@ -44,36 +44,28 @@ export default function VideoCallModal({
 
   // Handle participant video tracks
   useEffect(() => {
-    if (participants.length > 0) {
+    if (participants.length > 0 && remoteVideoRef.current) {
       const participant = participants[0]
 
-      const updateVideoTrack = (publication: any) => {
-        if (publication.isVideoTrack()) {
-          const track = publication.videoTrack
-          if (track && remoteVideoRef.current) {
-            track.attach(remoteVideoRef.current)
+      // Attach video track if it exists
+      if (callType === 'video') {
+        const videoTracks = participant.videoTracks
+        if (videoTracks && videoTracks.size > 0) {
+          const videoTrack = Array.from(videoTracks.values())[0]
+          if (videoTrack && videoTrack.track) {
+            videoTrack.track.attach(remoteVideoRef.current)
           }
         }
       }
 
-      // Subscribe to existing tracks
-      participant.videoTracks.forEach(updateVideoTrack)
-
-      // Listen for new tracks
-      const handleTrackSubscribed = (publication: any) => {
-        updateVideoTrack(publication)
-      }
-
-      participant.on(ParticipantEvent.TrackSubscribed, handleTrackSubscribed)
-
       return () => {
-        participant.off(ParticipantEvent.TrackSubscribed, handleTrackSubscribed)
-        if (remoteVideoRef.current) {
-          remoteVideoRef.current.innerHTML = ''
+        if (remoteVideoRef.current && remoteVideoRef.current.srcObject) {
+          const stream = remoteVideoRef.current.srcObject as MediaStream
+          stream.getTracks().forEach((track) => track.stop())
         }
       }
     }
-  }, [participants])
+  }, [participants, callType])
 
   // Update local video when videoEnabled changes
   const toggleVideoClick = async () => {
