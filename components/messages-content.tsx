@@ -9,7 +9,7 @@ import Image from 'next/image'
 import { useMessages } from '@/hooks/useMessages'
 import { useAuth } from '@/context/auth-context'
 import { useSubscription } from '@/hooks/useSubscription'
-import { X, ArrowLeft } from 'lucide-react'
+import { X, ArrowLeft, Menu } from 'lucide-react'
 
 function MessagesContentInner() {
   const { user } = useAuth()
