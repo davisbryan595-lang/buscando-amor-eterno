@@ -199,6 +199,32 @@ export default function ChatWindow({ conversation, onBack }: { conversation: Con
             </p>
           </div>
         </div>
+
+        {/* Call Buttons */}
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <button
+            onClick={() => {
+              setCallType('audio')
+              setCallModalOpen(true)
+            }}
+            className="p-2 hover:bg-rose-100 rounded-lg transition text-primary"
+            aria-label="Start audio call"
+            title="Start audio call"
+          >
+            <Mic size={20} />
+          </button>
+          <button
+            onClick={() => {
+              setCallType('video')
+              setCallModalOpen(true)
+            }}
+            className="p-2 hover:bg-rose-100 rounded-lg transition text-primary"
+            aria-label="Start video call"
+            title="Start video call"
+          >
+            <Video size={20} />
+          </button>
+        </div>
       </div>
 
       {/* Messages */}
