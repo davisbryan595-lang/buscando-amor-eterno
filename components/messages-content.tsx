@@ -8,7 +8,7 @@ import Image from 'next/image'
 import { useMessages } from '@/hooks/useMessages'
 import { useAuth } from '@/context/auth-context'
 import { useSubscription } from '@/hooks/useSubscription'
-import { X } from 'lucide-react'
+import { X, ArrowLeft } from 'lucide-react'
 
 function MessagesContentInner() {
   const { user } = useAuth()
@@ -83,26 +83,24 @@ function MessagesContentInner() {
 
 
   return (
-    <div className="pt-24 pb-12 px-3 md:px-4 h-screen flex flex-col">
-      <div className="max-w-6xl mx-auto w-full flex-1 flex gap-3 md:gap-6 relative overflow-hidden">
-        {/* Mobile sidebar toggle */}
+    <div className="pt-20 md:pt-24 pb-12 px-3 sm:px-4 md:px-6 lg:px-8 h-screen flex flex-col bg-white">
+      <div className="w-full max-w-7xl mx-auto flex-1 flex gap-0 md:gap-4 lg:gap-6 relative overflow-hidden">
+        {/* Mobile back button */}
         <div className="md:hidden absolute left-0 top-0 z-30">
-          {!sidebarOpen && (
+          {selectedConversation && sidebarOpen === false ? (
             <button
-              onClick={() => setSidebarOpen(true)}
+              onClick={() => setSelectedConversation(null)}
               className="p-2 hover:bg-rose-100 rounded-lg transition"
-              aria-label="Open conversations"
+              aria-label="Back to conversations"
             >
-              <svg className="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
+              <ArrowLeft size={24} className="text-primary" />
             </button>
-          )}
+          ) : null}
         </div>
 
         {/* Sidebar */}
-        <div className={`absolute inset-0 md:static md:inset-auto md:w-72 lg:w-80 bg-gradient-to-b from-white to-rose-50 md:rounded-xl md:border md:border-rose-100 overflow-y-auto transition-all duration-300 z-20 ${
-          sidebarOpen ? 'opacity-100 pointer-events-auto w-full' : 'md:opacity-100 md:pointer-events-auto opacity-0 pointer-events-none'
+        <div className={`absolute inset-0 md:static md:inset-auto w-full md:w-72 lg:w-96 bg-gradient-to-b from-white to-rose-50 md:rounded-xl md:border md:border-rose-100 overflow-y-auto transition-all duration-300 flex flex-col ${
+          sidebarOpen ? 'opacity-100 pointer-events-auto z-20' : 'md:opacity-100 md:pointer-events-auto md:z-auto opacity-0 pointer-events-none md:flex z-0'
         }`}>
           <div className="p-3 md:p-4 border-b border-rose-100 sticky top-0 bg-white md:rounded-t-xl flex items-center justify-between">
             <h2 className="text-lg md:text-xl font-bold text-slate-900">Messages</h2>
@@ -156,16 +154,25 @@ function MessagesContentInner() {
         </div>
 
         {/* Chat window */}
-        {selectedConversation && (
-          <div className="hidden md:flex flex-1 overflow-hidden">
-            <ChatWindow conversation={selectedConversation} />
-          </div>
-        )}
+        {selectedConversation ? (
+          <>
+            {/* Desktop chat view */}
+            <div className="hidden md:flex flex-1 overflow-hidden rounded-xl border border-rose-100">
+              <ChatWindow conversation={selectedConversation} />
+            </div>
 
-        {/* Mobile chat view */}
-        {selectedConversation && !sidebarOpen && (
-          <div className="md:hidden absolute inset-0 w-full h-full z-10">
-            <ChatWindow conversation={selectedConversation} />
+            {/* Mobile chat view */}
+            {!sidebarOpen && (
+              <div className="md:hidden absolute inset-0 w-full h-full z-10">
+                <ChatWindow conversation={selectedConversation} />
+              </div>
+            )}
+          </>
+        ) : (
+          <div className="hidden md:flex flex-1 items-center justify-center bg-gradient-to-br from-rose-50 to-white rounded-xl border border-rose-100">
+            <div className="text-center">
+              <p className="text-slate-600 text-lg">Select a conversation to start messaging</p>
+            </div>
           </div>
         )}
       </div>

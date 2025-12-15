@@ -1,14 +1,16 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
-import { Send, Phone, Video, Lock } from 'lucide-react'
+import React, { useState, useEffect, useRef } from 'react'
+import { Send, Lock } from 'lucide-react'
+import gsap from 'gsap'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useMessages } from '@/hooks/useMessages'
 import { useAuth } from '@/context/auth-context'
 import { toast } from 'sonner'
-import AudioCall from '@/components/audio-call'
-import VideoCall from '@/components/video-call'
+import MessageBubble from '@/components/message-bubble'
+import MessageContextMenu from '@/components/message-context-menu'
+import TypingIndicator from '@/components/typing-indicator'
 
 const getLastSeenText = (timestamp?: string): string => {
   if (!timestamp) return 'Offline'
@@ -45,8 +47,11 @@ export default function ChatWindow({ conversation }: { conversation: Conversatio
   const [newMessage, setNewMessage] = useState('')
   const [loading, setLoading] = useState(false)
   const [otherUserDetails, setOtherUserDetails] = useState<{ name: string; image: string | null } | null>(null)
-  const [audioCallActive, setAudioCallActive] = useState(false)
-  const [videoCallActive, setVideoCallActive] = useState(false)
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; messageId: string; content: string; isOwn: boolean } | null>(null)
+  const [showTypingIndicator, setShowTypingIndicator] = useState(false)
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+  const messagesContainerRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     if (conversation?.other_user_id) {
@@ -78,6 +83,17 @@ export default function ChatWindow({ conversation }: { conversation: Conversatio
     }
   }, [conversation?.other_user_id, fetchMessages, conversation.other_user_name, conversation.other_user_image])
 
+  // Scroll to bottom when messages change
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      gsap.to(messagesContainerRef.current, {
+        scrollTop: messagesContainerRef.current?.scrollHeight,
+        duration: 0.5,
+        ease: 'power2.out',
+      })
+    }
+  }, [messages])
+
   const handleSend = async () => {
     if (!newMessage.trim() || !user) return
 
@@ -85,6 +101,7 @@ export default function ChatWindow({ conversation }: { conversation: Conversatio
       setLoading(true)
       await sendMessage(conversation.other_user_id, newMessage)
       setNewMessage('')
+      inputRef.current?.focus()
     } catch (err: any) {
       console.error('Error sending message:', err)
       toast.error(err.message || 'Error sending message')
@@ -93,142 +110,151 @@ export default function ChatWindow({ conversation }: { conversation: Conversatio
     }
   }
 
-  const handleStartAudioCall = () => {
-    setAudioCallActive(true)
-    toast.success(`Audio call started with ${otherUserDetails?.name || conversation.other_user_name || 'User'}`)
+  const handleContextMenu = (e: React.MouseEvent | React.TouchEvent, messageId: string, content: string, isOwn: boolean) => {
+    e.preventDefault()
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
+    setContextMenu({
+      x: e instanceof MouseEvent ? e.clientX : rect.left,
+      y: e instanceof MouseEvent ? e.clientY : rect.bottom,
+      messageId,
+      content,
+      isOwn,
+    })
   }
 
-  const handleEndAudioCall = () => {
-    setAudioCallActive(false)
-    toast.info('Audio call ended')
+  const handleDeleteMessage = (messageId: string) => {
+    // TODO: Implement message deletion
+    toast.info('Message deletion coming soon!')
   }
 
-  const handleStartVideoCall = () => {
-    setVideoCallActive(true)
-    toast.success(`Video call started with ${otherUserDetails?.name || conversation.other_user_name || 'User'}`)
-  }
-
-  const handleEndVideoCall = () => {
-    setVideoCallActive(false)
-    toast.info('Video call ended')
-  }
-
-  if (audioCallActive) {
-    return (
-      <AudioCall
-        otherUserId={conversation.other_user_id}
-        otherUserName={otherUserDetails?.name || conversation.other_user_name}
-        otherUserImage={otherUserDetails?.image || conversation.other_user_image}
-        isIncoming={false}
-        onAccept={() => {}}
-        onReject={handleEndAudioCall}
-        onHangup={handleEndAudioCall}
-      />
-    )
-  }
-
-  if (videoCallActive) {
-    return (
-      <VideoCall
-        otherUserId={conversation.other_user_id}
-        otherUserName={otherUserDetails?.name || conversation.other_user_name}
-        otherUserImage={otherUserDetails?.image || conversation.other_user_image}
-        isIncoming={false}
-        onAccept={() => {}}
-        onReject={handleEndVideoCall}
-        onHangup={handleEndVideoCall}
-      />
-    )
+  const handleMessageLongPress = (messageId: string) => {
+    const message = messages.find((m) => m.id === messageId)
+    if (message) {
+      const element = document.getElementById(`message-${messageId}`)
+      if (element) {
+        const rect = element.getBoundingClientRect()
+        handleContextMenu(
+          { currentTarget: element } as unknown as React.MouseEvent,
+          messageId,
+          message.content,
+          message.sender_id === user?.id
+        )
+      }
+    }
   }
 
   return (
-    <div className="bg-gradient-to-b from-white to-rose-50 rounded-xl md:border md:border-rose-100 flex flex-col h-full md:soft-glow">
+    <div className="bg-white flex flex-col h-full overflow-hidden">
       {/* Header */}
-      <div className="p-3 md:p-4 border-b border-rose-100 flex items-center justify-between flex-shrink-0">
-        <div className="flex items-center gap-2 md:gap-3 min-w-0">
+      <div className="px-4 sm:px-5 md:px-6 py-3 md:py-4 border-b border-rose-100 flex items-center justify-between flex-shrink-0 bg-gradient-to-r from-white to-rose-50/50">
+        <div className="flex items-center gap-3 md:gap-4 min-w-0">
           <div className="relative w-10 h-10 md:w-12 md:h-12 flex-shrink-0">
             <Image
               src={otherUserDetails?.image || conversation.other_user_image || "/placeholder.svg"}
               alt={otherUserDetails?.name || conversation.other_user_name || 'User'}
               fill
-              className="rounded-full object-cover"
+              className="rounded-full object-cover border-2 border-rose-100"
             />
             {conversation.is_online && (
-              <div className="absolute bottom-0 right-0 w-2 h-2 md:w-3 md:h-3 bg-green-500 rounded-full border-2 border-white z-10" />
+              <div className="absolute bottom-0 right-0 w-3 h-3 md:w-4 md:h-4 bg-green-500 rounded-full border-3 border-white z-10" />
             )}
           </div>
           <div className="min-w-0 flex-1">
-            <p className="font-semibold text-slate-900 text-sm md:text-base truncate">{otherUserDetails?.name || conversation.other_user_name || 'User'}</p>
-            <p className="text-xs md:text-sm text-slate-600 truncate">
-              {conversation.is_online ? 'Online' : getLastSeenText(conversation.last_message_time)}
+            <p className="font-bold text-slate-900 text-sm md:text-lg truncate">{otherUserDetails?.name || conversation.other_user_name || 'User'}</p>
+            <p className="text-xs md:text-sm text-slate-600 mt-0.5">
+              {conversation.is_online ? (
+                <span className="flex items-center gap-2">
+                  <span className="w-2 h-2 bg-green-500 rounded-full inline-block"></span>
+                  Active now
+                </span>
+              ) : (
+                getLastSeenText(conversation.last_message_time)
+              )}
             </p>
           </div>
-        </div>
-
-        <div className="flex gap-1 md:gap-2 flex-shrink-0">
-          <button
-            onClick={handleStartAudioCall}
-            className="p-2 hover:bg-rose-100 rounded-full transition"
-            aria-label="Start audio call"
-          >
-            <Phone size={18} className="md:w-5 md:h-5 text-primary" />
-          </button>
-          <button
-            onClick={handleStartVideoCall}
-            className="p-2 hover:bg-rose-100 rounded-full transition"
-            aria-label="Start video call"
-          >
-            <Video size={18} className="md:w-5 md:h-5 text-primary" />
-          </button>
         </div>
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-3 md:p-4 space-y-3 md:space-y-4">
+      <div ref={messagesContainerRef} className="flex-1 overflow-y-auto px-4 sm:px-5 md:px-6 py-3 md:py-4 space-y-3 md:space-y-4 bg-white w-full">
         {messages.length === 0 ? (
-          <div className="flex items-center justify-center h-full text-slate-500 text-sm md:text-base">
-            <p>No messages yet. Start the conversation!</p>
+          <div className="flex items-center justify-center h-full text-slate-400">
+            <div className="text-center">
+              <p className="text-base md:text-lg font-semibold mb-2">No messages yet</p>
+              <p className="text-sm md:text-base">Start a conversation with {otherUserDetails?.name || conversation.other_user_name}!</p>
+            </div>
           </div>
         ) : (
-          messages.map((msg) => (
-            <div
-              key={msg.id}
-              className={`flex ${msg.sender_id === user?.id ? 'justify-end' : 'justify-start'}`}
-            >
+          <>
+            {messages.map((msg) => (
               <div
-                className={`max-w-xs md:max-w-sm px-3 md:px-4 py-2 rounded-2xl text-sm md:text-base break-words ${
-                  msg.sender_id === user?.id
-                    ? 'bg-primary text-white rounded-br-none'
-                    : 'bg-slate-200 text-slate-900 rounded-bl-none'
-                }`}
+                key={msg.id}
+                id={`message-${msg.id}`}
+                onClick={(e) => {
+                  // Prevent context menu from opening on normal click
+                  if (e.detail === 1) {
+                    setContextMenu(null)
+                  }
+                }}
               >
-                <p>{msg.content}</p>
+                <MessageBubble
+                  id={msg.id}
+                  content={msg.content}
+                  isOwn={msg.sender_id === user?.id}
+                  timestamp={msg.created_at}
+                  onContextMenu={(e) =>
+                    handleContextMenu(e, msg.id, msg.content, msg.sender_id === user?.id)
+                  }
+                  onLongPress={handleMessageLongPress}
+                />
               </div>
-            </div>
-          ))
+            ))}
+            {showTypingIndicator && (
+              <div className="flex justify-start">
+                <div className="px-5 md:px-6 py-3 md:py-4 rounded-3xl rounded-bl-none bg-gradient-to-r from-slate-100 to-slate-50">
+                  <TypingIndicator />
+                </div>
+              </div>
+            )}
+            <div ref={messagesEndRef} />
+          </>
         )}
       </div>
 
       {/* Input */}
-      <div className="p-3 md:p-4 border-t border-rose-100 flex gap-2 flex-shrink-0">
+      <div className="px-4 sm:px-5 md:px-6 py-3 md:py-4 border-t border-rose-100 flex gap-2 md:gap-3 flex-shrink-0 bg-gradient-to-r from-white to-rose-50/50">
         <input
+          ref={inputRef}
           type="text"
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
           onKeyPress={(e) => e.key === 'Enter' && handleSend()}
-          placeholder="Message..."
+          placeholder="Type your message..."
           disabled={loading}
-          className="flex-1 px-3 md:px-4 py-2 bg-white border border-rose-200 rounded-full text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
+          className="flex-1 px-4 md:px-5 py-2 md:py-3 bg-white border border-rose-200 rounded-full text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 transition shadow-sm hover:shadow-md"
         />
         <button
           onClick={handleSend}
           disabled={loading}
-          className="p-2 md:p-2.5 bg-primary text-white rounded-full hover:bg-rose-700 transition disabled:opacity-50 flex-shrink-0"
+          className="p-3 md:p-4 bg-primary text-white rounded-full hover:bg-rose-700 transition disabled:opacity-50 flex-shrink-0 shadow-sm hover:shadow-lg active:scale-95 transform duration-75"
           aria-label="Send message"
         >
           <Send size={18} className="md:w-5 md:h-5" />
         </button>
       </div>
+
+      {/* Context Menu */}
+      {contextMenu && (
+        <MessageContextMenu
+          messageId={contextMenu.messageId}
+          content={contextMenu.content}
+          isOwn={contextMenu.isOwn}
+          x={contextMenu.x}
+          y={contextMenu.y}
+          onClose={() => setContextMenu(null)}
+          onDelete={handleDeleteMessage}
+        />
+      )}
     </div>
   )
 }

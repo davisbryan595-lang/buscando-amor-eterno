@@ -1,7 +1,8 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
+import gsap from 'gsap'
 import { Menu, X, Bell, Globe } from 'lucide-react'
 import { useLanguage } from '@/lib/i18n-context'
 import { useAuth } from '@/context/auth-context'
@@ -14,12 +15,23 @@ export default function Navigation() {
   const [langDropdown, setLangDropdown] = useState(false)
   const [notificationsOpen, setNotificationsOpen] = useState(false)
   const [isMounted, setIsMounted] = useState(false)
+  const navRef = useRef<HTMLDivElement>(null)
   const { language, setLanguage, t } = useLanguage()
   const { user } = useAuth()
   const { notifications, dismissNotification } = useNotifications()
 
   React.useEffect(() => {
     setIsMounted(true)
+  }, [])
+
+  useEffect(() => {
+    if (navRef.current) {
+      gsap.from(navRef.current, {
+        opacity: 0,
+        y: -20,
+        duration: 0.6,
+      })
+    }
   }, [])
 
   const toggleOneSignal = () => {
@@ -40,7 +52,7 @@ export default function Navigation() {
   }
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-b border-rose-100">
+    <nav ref={navRef} className="fixed top-0 left-0 right-0 z-50 bg-white/90 md:bg-white/95 backdrop-blur-md border-b border-rose-100/50 md:border-rose-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
         <Link href="/" className="flex items-center gap-2">
           <img
