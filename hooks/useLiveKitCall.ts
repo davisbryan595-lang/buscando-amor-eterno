@@ -145,9 +145,9 @@ export function useLiveKitCall() {
   }, [])
 
   const toggleVideo = useCallback(async (enabled: boolean) => {
-    if (roomRef.current) {
-      const videoTracks = roomRef.current.localParticipant?.videoTracks
-      if (videoTracks) {
+    if (roomRef.current?.localParticipant) {
+      const videoTracks = roomRef.current.localParticipant.videoTracks
+      if (videoTracks && typeof videoTracks.values === 'function') {
         for (const track of videoTracks.values()) {
           await track.mute(!enabled)
         }
