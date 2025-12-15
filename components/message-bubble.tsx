@@ -36,10 +36,11 @@ export default function MessageBubble({
 
   useEffect(() => {
     if (bubbleRef.current) {
-      gsap.from(bubbleRef.current, {
-        opacity: 0,
-        y: 20,
-        scale: 0.9,
+      gsap.set(bubbleRef.current, { opacity: 0, y: 20, scale: 0.9 })
+      gsap.to(bubbleRef.current, {
+        opacity: 1,
+        y: 0,
+        scale: 1,
         duration: 0.4,
         ease: 'back.out',
       })
