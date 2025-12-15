@@ -51,6 +51,23 @@ function MessagesContentInner() {
     setSidebarOpen(false)
   }
 
+  const handleBackToConversations = () => {
+    if (chatWindowRef.current) {
+      setIsClosingChat(true)
+      gsap.to(chatWindowRef.current, {
+        x: '100%',
+        duration: 0.4,
+        ease: 'power2.in',
+        onComplete: () => {
+          setSelectedConversation(null)
+          setIsClosingChat(false)
+        },
+      })
+    } else {
+      setSelectedConversation(null)
+    }
+  }
+
   if (loading) {
     return (
       <div className="pt-24 pb-12 px-4 h-screen flex items-center justify-center">
