@@ -1,8 +1,9 @@
 'use client'
 
-import React, { useState, useEffect, Suspense } from 'react'
+import React, { useState, useEffect, Suspense, useRef } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
+import gsap from 'gsap'
 import ChatWindow from '@/components/chat-window'
 import Image from 'next/image'
 import { useMessages } from '@/hooks/useMessages'
