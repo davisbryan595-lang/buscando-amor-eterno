@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useRef } from 'react'
-import { Send, Lock } from 'lucide-react'
+import { Send, Lock, ArrowLeft, Mic, Video } from 'lucide-react'
 import gsap from 'gsap'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -11,6 +11,7 @@ import { toast } from 'sonner'
 import MessageBubble from '@/components/message-bubble'
 import MessageContextMenu from '@/components/message-context-menu'
 import TypingIndicator from '@/components/typing-indicator'
+import VideoCallModal from '@/components/video-call-modal'
 
 const getLastSeenText = (timestamp?: string): string => {
   if (!timestamp) return 'Offline'
@@ -41,14 +42,16 @@ interface Conversation {
   last_message_time?: string
 }
 
-export default function ChatWindow({ conversation }: { conversation: Conversation }) {
+export default function ChatWindow({ conversation, onBack }: { conversation: Conversation; onBack?: () => void }) {
   const { user } = useAuth()
-  const { messages, sendMessage, markAsRead, fetchMessages } = useMessages()
+  const { messages, sendMessage, markAsRead, fetchMessages, fetchConversations } = useMessages()
   const [newMessage, setNewMessage] = useState('')
   const [loading, setLoading] = useState(false)
   const [otherUserDetails, setOtherUserDetails] = useState<{ name: string; image: string | null } | null>(null)
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; messageId: string; content: string; isOwn: boolean } | null>(null)
   const [showTypingIndicator, setShowTypingIndicator] = useState(false)
+  const [callModalOpen, setCallModalOpen] = useState(false)
+  const [callType, setCallType] = useState<'audio' | 'video'>('video')
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const messagesContainerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -81,7 +84,21 @@ export default function ChatWindow({ conversation }: { conversation: Conversatio
         fetchUserDetails()
       }
     }
-  }, [conversation?.other_user_id, fetchMessages])
+  }, [conversation?.other_user_id, user?.id, fetchMessages])
+
+  // Mark all unread messages as read when opening the chat
+  useEffect(() => {
+    if (messages.length > 0 && user?.id) {
+      const unreadMessages = messages.filter((msg) => msg.recipient_id === user.id && !msg.read)
+      if (unreadMessages.length > 0) {
+        unreadMessages.forEach((msg) => {
+          markAsRead(msg.id)
+        })
+        // Refresh conversations to clear unread badge
+        fetchConversations()
+      }
+    }
+  }, [conversation?.id, messages.length, user?.id, markAsRead, fetchConversations])
 
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -146,8 +163,17 @@ export default function ChatWindow({ conversation }: { conversation: Conversatio
   return (
     <div className="bg-white flex flex-col h-full overflow-hidden">
       {/* Header */}
-      <div className="px-4 sm:px-5 md:px-6 py-3 md:py-4 border-b border-rose-100 flex items-center justify-between flex-shrink-0 bg-gradient-to-r from-white to-rose-50/50">
-        <div className="flex items-center gap-3 md:gap-4 min-w-0">
+      <div className="px-3 sm:px-5 md:px-6 py-3 md:py-4 border-b border-rose-100 flex items-center justify-between flex-shrink-0 bg-gradient-to-r from-white to-rose-50/50">
+        <div className="flex items-center gap-3 md:gap-4 min-w-0 flex-1">
+          {onBack && (
+            <button
+              onClick={onBack}
+              className="p-2 hover:bg-rose-100 rounded-lg transition flex-shrink-0 md:hidden"
+              aria-label="Back to conversations"
+            >
+              <ArrowLeft size={20} className="text-primary" />
+            </button>
+          )}
           <div className="relative w-10 h-10 md:w-12 md:h-12 flex-shrink-0">
             <Image
               src={otherUserDetails?.image || conversation.other_user_image || "/placeholder.svg"}
@@ -172,6 +198,32 @@ export default function ChatWindow({ conversation }: { conversation: Conversatio
               )}
             </p>
           </div>
+        </div>
+
+        {/* Call Buttons */}
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <button
+            onClick={() => {
+              setCallType('audio')
+              setCallModalOpen(true)
+            }}
+            className="p-2 hover:bg-rose-100 rounded-lg transition text-primary"
+            aria-label="Start audio call"
+            title="Start audio call"
+          >
+            <Mic size={20} />
+          </button>
+          <button
+            onClick={() => {
+              setCallType('video')
+              setCallModalOpen(true)
+            }}
+            className="p-2 hover:bg-rose-100 rounded-lg transition text-primary"
+            aria-label="Start video call"
+            title="Start video call"
+          >
+            <Video size={20} />
+          </button>
         </div>
       </div>
 
@@ -255,6 +307,15 @@ export default function ChatWindow({ conversation }: { conversation: Conversatio
           onDelete={handleDeleteMessage}
         />
       )}
+
+      {/* Video Call Modal */}
+      <VideoCallModal
+        isOpen={callModalOpen}
+        onClose={() => setCallModalOpen(false)}
+        otherUserName={otherUserDetails?.name || conversation.other_user_name || 'User'}
+        otherUserId={conversation.other_user_id}
+        callType={callType}
+      />
     </div>
   )
 }

@@ -123,8 +123,9 @@ export function useMessages() {
       pollAttemptsRef.current = 0
     } catch (err: any) {
       const errorMessage = err?.message || (typeof err === 'string' ? err : 'Failed to fetch conversations')
+      const errorDetails = err?.code ? ` (Code: ${err.code})` : err?.status ? ` (Status: ${err.status})` : ''
       setError(errorMessage)
-      console.error('Error fetching conversations:', errorMessage, err)
+      console.error('Error fetching conversations:', errorMessage + errorDetails, err)
     } finally {
       setLoading(false)
     }
@@ -288,7 +289,7 @@ export function useMessages() {
         console.error('Error fetching messages:', errorMessage, err)
       }
     },
-    [user?.id]
+    [user]
   )
 
   const sendMessage = useCallback(
@@ -347,8 +348,9 @@ export function useMessages() {
         if (err) throw err
       } catch (err: any) {
         const errorMessage = err?.message || (typeof err === 'string' ? err : 'Failed to mark message as read')
+        const errorDetails = err?.code ? ` (Code: ${err.code})` : err?.status ? ` (Status: ${err.status})` : ''
         setError(errorMessage)
-        console.error('Error marking message as read:', errorMessage, err)
+        console.error('Error marking message as read:', errorMessage + errorDetails, err)
       }
     },
     []
