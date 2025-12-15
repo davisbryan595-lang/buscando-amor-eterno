@@ -222,7 +222,7 @@ export default function ChatWindow({ conversation }: { conversation: Conversatio
       </div>
 
       {/* Input */}
-      <div className="px-4 sm:px-5 md:px-8 py-5 md:py-7 border-t border-rose-100 flex gap-3 md:gap-4 flex-shrink-0 bg-gradient-to-r from-white to-rose-50/50">
+      <div className="px-4 sm:px-5 md:px-6 py-3 md:py-4 border-t border-rose-100 flex gap-2 md:gap-3 flex-shrink-0 bg-gradient-to-r from-white to-rose-50/50">
         <input
           ref={inputRef}
           type="text"
@@ -231,15 +231,15 @@ export default function ChatWindow({ conversation }: { conversation: Conversatio
           onKeyPress={(e) => e.key === 'Enter' && handleSend()}
           placeholder="Type your message..."
           disabled={loading}
-          className="flex-1 px-5 md:px-6 py-4 md:py-5 bg-white border border-rose-200 rounded-full text-base md:text-lg focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 transition shadow-sm hover:shadow-md"
+          className="flex-1 px-4 md:px-5 py-2 md:py-3 bg-white border border-rose-200 rounded-full text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 transition shadow-sm hover:shadow-md"
         />
         <button
           onClick={handleSend}
           disabled={loading}
-          className="p-4 md:p-5 bg-primary text-white rounded-full hover:bg-rose-700 transition disabled:opacity-50 flex-shrink-0 shadow-sm hover:shadow-lg active:scale-95 transform duration-75"
+          className="p-3 md:p-4 bg-primary text-white rounded-full hover:bg-rose-700 transition disabled:opacity-50 flex-shrink-0 shadow-sm hover:shadow-lg active:scale-95 transform duration-75"
           aria-label="Send message"
         >
-          <Send size={22} className="md:w-7 md:h-7" />
+          <Send size={18} className="md:w-5 md:h-5" />
         </button>
       </div>
 
