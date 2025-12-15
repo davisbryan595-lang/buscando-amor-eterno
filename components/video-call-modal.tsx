@@ -5,6 +5,8 @@ import { Participant, ParticipantEvent } from 'livekit-client'
 import { X, Mic, MicOff, Video, VideoOff, Phone } from 'lucide-react'
 import { useLiveKitCall } from '@/hooks/useLiveKitCall'
 import { useIsMobile } from '@/hooks/use-mobile'
+import { useAuth } from '@/context/auth-context'
+import { supabase } from '@/lib/supabase'
 
 interface VideoCallModalProps {
   isOpen: boolean
@@ -12,6 +14,7 @@ interface VideoCallModalProps {
   otherUserName: string
   otherUserId: string
   callType: 'audio' | 'video'
+  callInvitationId?: string
 }
 
 export default function VideoCallModal({
@@ -20,21 +23,55 @@ export default function VideoCallModal({
   otherUserName,
   otherUserId,
   callType,
+  callInvitationId,
 }: VideoCallModalProps) {
+  const { user } = useAuth()
   const { joinCall, leaveCall, isConnected, isConnecting, error, participants, localParticipant, toggleAudio, toggleVideo } =
     useLiveKitCall()
   const [audioEnabled, setAudioEnabled] = useState(true)
   const [videoEnabled, setVideoEnabled] = useState(callType === 'video')
+  const [invitationSent, setInvitationSent] = useState(false)
   const isMobile = useIsMobile()
   const remoteVideoRef = React.useRef<HTMLVideoElement>(null)
   const localVideoRef = React.useRef<HTMLVideoElement>(null)
 
+  // Send call invitation when modal opens (for outgoing calls)
+  useEffect(() => {
+    if (isOpen && !invitationSent && !callInvitationId && user) {
+      const sendInvitation = async () => {
+        try {
+          const roomName = [user.id, otherUserId].sort().join('-')
+
+          const { error: err } = await supabase
+            .from('call_invitations')
+            .insert({
+              caller_id: user.id,
+              recipient_id: otherUserId,
+              call_type: callType,
+              room_name: roomName,
+              status: 'pending',
+            })
+
+          if (err) {
+            console.error('Error sending call invitation:', err)
+          } else {
+            setInvitationSent(true)
+          }
+        } catch (err) {
+          console.error('Error sending call invitation:', err)
+        }
+      }
+
+      sendInvitation()
+    }
+  }, [isOpen, invitationSent, callInvitationId, user, otherUserId, callType])
+
   // Start call when modal opens
   useEffect(() => {
-    if (isOpen && !isConnected && !isConnecting) {
+    if (isOpen && !isConnected && !isConnecting && (invitationSent || callInvitationId)) {
       joinCall(otherUserId, callType)
     }
-  }, [isOpen, isConnected, isConnecting, otherUserId, callType, joinCall])
+  }, [isOpen, isConnected, isConnecting, otherUserId, callType, joinCall, invitationSent, callInvitationId])
 
   // Handle local video track
   useEffect(() => {
@@ -88,6 +125,25 @@ export default function VideoCallModal({
   }
 
   const handleEndCall = async () => {
+    try {
+      // Mark call invitation as ended
+      if (invitationSent && user) {
+        const roomName = [user.id, otherUserId].sort().join('-')
+        await supabase
+          .from('call_invitations')
+          .update({ status: 'ended' })
+          .eq('room_name', roomName)
+          .eq('caller_id', user.id)
+      } else if (callInvitationId) {
+        await supabase
+          .from('call_invitations')
+          .update({ status: 'ended' })
+          .eq('id', callInvitationId)
+      }
+    } catch (err) {
+      console.warn('Error updating call status:', err)
+    }
+
     await leaveCall()
     onClose()
   }
