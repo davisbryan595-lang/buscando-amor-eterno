@@ -41,10 +41,8 @@ function MessagesContentInner() {
           unread_count: 0,
         })
       }
-    } else if (!selectedConversation && conversations.length > 0) {
-      setSelectedConversation(conversations[0])
     }
-  }, [conversations, userIdParam, user?.id, selectedConversation])
+  }, [userIdParam, conversations, user?.id])
 
   const handleSelectConversation = (conversation: any) => {
     setSelectedConversation(conversation)
