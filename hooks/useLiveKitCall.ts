@@ -174,9 +174,14 @@ export function useLiveKitCall() {
   )
 
   const leaveCall = useCallback(async () => {
-    if (roomRef.current) {
-      await roomRef.current.disconnect()
-      roomRef.current = null
+    try {
+      if (roomRef.current) {
+        await roomRef.current.disconnect()
+        roomRef.current = null
+      }
+    } catch (err) {
+      console.warn('Error disconnecting from call:', err)
+    } finally {
       setState({
         room: null,
         participants: [],
