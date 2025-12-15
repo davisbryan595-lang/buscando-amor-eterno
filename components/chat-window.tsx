@@ -81,7 +81,7 @@ export default function ChatWindow({ conversation }: { conversation: Conversatio
         fetchUserDetails()
       }
     }
-  }, [conversation?.other_user_id, fetchMessages, conversation.other_user_name, conversation.other_user_image])
+  }, [conversation?.other_user_id, fetchMessages])
 
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -176,7 +176,7 @@ export default function ChatWindow({ conversation }: { conversation: Conversatio
       </div>
 
       {/* Messages */}
-      <div ref={messagesContainerRef} className="flex-1 overflow-y-auto px-4 sm:px-5 md:px-6 py-3 md:py-4 space-y-3 md:space-y-4 bg-white w-full">
+      <div ref={messagesContainerRef} className="flex-1 overflow-y-auto overflow-x-hidden px-4 sm:px-5 md:px-6 py-3 md:py-4 space-y-3 md:space-y-4 bg-white w-full">
         {messages.length === 0 ? (
           <div className="flex items-center justify-center h-full text-slate-400">
             <div className="text-center">
