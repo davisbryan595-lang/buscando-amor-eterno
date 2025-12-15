@@ -85,7 +85,7 @@ export default function MessageBubble({
       onTouchEnd={handleTouchEnd}
     >
       <div
-        className={`relative max-w-xs sm:max-w-sm md:max-w-2xl lg:max-w-3xl px-5 sm:px-6 md:px-8 py-4 sm:py-5 md:py-6 rounded-3xl text-base sm:text-lg md:text-xl break-words shadow-md transition-all duration-200 hover:shadow-lg ${
+        className={`relative max-w-sm sm:max-w-md md:max-w-4xl lg:max-w-5xl px-5 sm:px-6 md:px-8 py-4 sm:py-5 md:py-6 rounded-3xl text-base sm:text-lg md:text-xl break-words shadow-md transition-all duration-200 hover:shadow-lg ${
           isOwn
             ? 'bg-primary text-white rounded-br-none'
             : 'bg-gradient-to-r from-slate-100 to-slate-50 text-slate-900 rounded-bl-none border border-slate-200'
