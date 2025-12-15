@@ -103,7 +103,7 @@ export function useLiveKitCall() {
           localParticipant: room.localParticipant,
           isConnected: true,
           isConnecting: false,
-          participants: Array.from(room.participants.values()),
+          participants: room.participants ? Array.from(room.participants.values()) : [],
         }))
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Failed to join call'
@@ -134,9 +134,9 @@ export function useLiveKitCall() {
   }, [])
 
   const toggleAudio = useCallback(async (enabled: boolean) => {
-    if (roomRef.current) {
-      const audioTracks = roomRef.current.localParticipant?.audioTracks
-      if (audioTracks) {
+    if (roomRef.current?.localParticipant) {
+      const audioTracks = roomRef.current.localParticipant.audioTracks
+      if (audioTracks && typeof audioTracks.values === 'function') {
         for (const track of audioTracks.values()) {
           await track.mute(!enabled)
         }
@@ -145,9 +145,9 @@ export function useLiveKitCall() {
   }, [])
 
   const toggleVideo = useCallback(async (enabled: boolean) => {
-    if (roomRef.current) {
-      const videoTracks = roomRef.current.localParticipant?.videoTracks
-      if (videoTracks) {
+    if (roomRef.current?.localParticipant) {
+      const videoTracks = roomRef.current.localParticipant.videoTracks
+      if (videoTracks && typeof videoTracks.values === 'function') {
         for (const track of videoTracks.values()) {
           await track.mute(!enabled)
         }
