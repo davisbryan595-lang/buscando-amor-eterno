@@ -5,6 +5,7 @@ import { useAuth } from '@/context/auth-context'
 export interface CallState {
   room: Room | null
   participants: Participant[]
+  localParticipant: Participant | null
   isConnecting: boolean
   isConnected: boolean
   error: string | null
