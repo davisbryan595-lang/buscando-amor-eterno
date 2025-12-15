@@ -87,16 +87,15 @@ export default function ChatWindow({ conversation, onBack }: { conversation: Con
   useEffect(() => {
     if (messages.length > 0 && user?.id) {
       const unreadMessages = messages.filter((msg) => msg.recipient_id === user.id && !msg.read)
-      unreadMessages.forEach((msg) => {
-        markAsRead(msg.id)
-      })
-
-      // Refresh conversations to clear unread badge
       if (unreadMessages.length > 0) {
+        unreadMessages.forEach((msg) => {
+          markAsRead(msg.id)
+        })
+        // Refresh conversations to clear unread badge
         fetchConversations()
       }
     }
-  }, [messages, user?.id, markAsRead, fetchConversations])
+  }, [conversation?.id, messages.length, user?.id, markAsRead, fetchConversations])
 
   // Scroll to bottom when messages change
   useEffect(() => {
