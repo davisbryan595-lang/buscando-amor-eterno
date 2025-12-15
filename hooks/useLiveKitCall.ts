@@ -125,6 +125,7 @@ export function useLiveKitCall() {
       setState({
         room: null,
         participants: [],
+        localParticipant: null,
         isConnecting: false,
         isConnected: false,
         error: null,
