@@ -1,14 +1,12 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { Send, Phone, Video, Lock } from 'lucide-react'
+import { Send, Lock } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useMessages } from '@/hooks/useMessages'
 import { useAuth } from '@/context/auth-context'
 import { toast } from 'sonner'
-import AudioCall from '@/components/audio-call'
-import VideoCall from '@/components/video-call'
 
 const getLastSeenText = (timestamp?: string): string => {
   if (!timestamp) return 'Offline'
@@ -45,8 +43,6 @@ export default function ChatWindow({ conversation }: { conversation: Conversatio
   const [newMessage, setNewMessage] = useState('')
   const [loading, setLoading] = useState(false)
   const [otherUserDetails, setOtherUserDetails] = useState<{ name: string; image: string | null } | null>(null)
-  const [audioCallActive, setAudioCallActive] = useState(false)
-  const [videoCallActive, setVideoCallActive] = useState(false)
 
   useEffect(() => {
     if (conversation?.other_user_id) {
@@ -93,54 +89,6 @@ export default function ChatWindow({ conversation }: { conversation: Conversatio
     }
   }
 
-  const handleStartAudioCall = () => {
-    setAudioCallActive(true)
-    toast.success(`Audio call started with ${otherUserDetails?.name || conversation.other_user_name || 'User'}`)
-  }
-
-  const handleEndAudioCall = () => {
-    setAudioCallActive(false)
-    toast.info('Audio call ended')
-  }
-
-  const handleStartVideoCall = () => {
-    setVideoCallActive(true)
-    toast.success(`Video call started with ${otherUserDetails?.name || conversation.other_user_name || 'User'}`)
-  }
-
-  const handleEndVideoCall = () => {
-    setVideoCallActive(false)
-    toast.info('Video call ended')
-  }
-
-  if (audioCallActive) {
-    return (
-      <AudioCall
-        otherUserId={conversation.other_user_id}
-        otherUserName={otherUserDetails?.name || conversation.other_user_name}
-        otherUserImage={otherUserDetails?.image || conversation.other_user_image}
-        isIncoming={false}
-        onAccept={() => {}}
-        onReject={handleEndAudioCall}
-        onHangup={handleEndAudioCall}
-      />
-    )
-  }
-
-  if (videoCallActive) {
-    return (
-      <VideoCall
-        otherUserId={conversation.other_user_id}
-        otherUserName={otherUserDetails?.name || conversation.other_user_name}
-        otherUserImage={otherUserDetails?.image || conversation.other_user_image}
-        isIncoming={false}
-        onAccept={() => {}}
-        onReject={handleEndVideoCall}
-        onHangup={handleEndVideoCall}
-      />
-    )
-  }
-
   return (
     <div className="bg-gradient-to-b from-white to-rose-50 rounded-xl md:border md:border-rose-100 flex flex-col h-full md:soft-glow">
       {/* Header */}
@@ -165,22 +113,6 @@ export default function ChatWindow({ conversation }: { conversation: Conversatio
           </div>
         </div>
 
-        <div className="flex gap-1 md:gap-2 flex-shrink-0">
-          <button
-            onClick={handleStartAudioCall}
-            className="p-2 hover:bg-rose-100 rounded-full transition"
-            aria-label="Start audio call"
-          >
-            <Phone size={18} className="md:w-5 md:h-5 text-primary" />
-          </button>
-          <button
-            onClick={handleStartVideoCall}
-            className="p-2 hover:bg-rose-100 rounded-full transition"
-            aria-label="Start video call"
-          >
-            <Video size={18} className="md:w-5 md:h-5 text-primary" />
-          </button>
-        </div>
       </div>
 
       {/* Messages */}
