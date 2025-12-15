@@ -145,7 +145,7 @@ function MessagesContentInner() {
           <>
             {/* Desktop chat view */}
             <div className="hidden md:flex flex-1 overflow-hidden">
-              <ChatWindow conversation={selectedConversation} />
+              <ChatWindow conversation={selectedConversation} onBack={() => setSelectedConversation(null)} />
             </div>
 
             {/* Mobile chat view */}
