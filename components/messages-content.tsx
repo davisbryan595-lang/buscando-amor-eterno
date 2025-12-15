@@ -18,6 +18,8 @@ function MessagesContentInner() {
   const userIdParam = searchParams.get('user')
   const [selectedConversation, setSelectedConversation] = useState<any>(null)
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [isClosingChat, setIsClosingChat] = useState(false)
+  const chatWindowRef = useRef<HTMLDivElement>(null)
 
   // Auto-select conversation if user_id is in query params
   useEffect(() => {
