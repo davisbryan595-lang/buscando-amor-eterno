@@ -99,6 +99,7 @@ export function useLiveKitCall() {
         setState((prev) => ({
           ...prev,
           room,
+          localParticipant: room.localParticipant,
           isConnected: true,
           isConnecting: false,
           participants: Array.from(room.participants.values()),
