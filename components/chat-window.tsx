@@ -161,8 +161,17 @@ export default function ChatWindow({ conversation, onBack }: { conversation: Con
   return (
     <div className="bg-white flex flex-col h-full overflow-hidden">
       {/* Header */}
-      <div className="px-4 sm:px-5 md:px-6 py-3 md:py-4 border-b border-rose-100 flex items-center justify-between flex-shrink-0 bg-gradient-to-r from-white to-rose-50/50">
-        <div className="flex items-center gap-3 md:gap-4 min-w-0">
+      <div className="px-3 sm:px-5 md:px-6 py-3 md:py-4 border-b border-rose-100 flex items-center justify-between flex-shrink-0 bg-gradient-to-r from-white to-rose-50/50">
+        <div className="flex items-center gap-3 md:gap-4 min-w-0 flex-1">
+          {onBack && (
+            <button
+              onClick={onBack}
+              className="p-2 hover:bg-rose-100 rounded-lg transition flex-shrink-0 md:hidden"
+              aria-label="Back to conversations"
+            >
+              <ArrowLeft size={20} className="text-primary" />
+            </button>
+          )}
           <div className="relative w-10 h-10 md:w-12 md:h-12 flex-shrink-0">
             <Image
               src={otherUserDetails?.image || conversation.other_user_image || "/placeholder.svg"}
