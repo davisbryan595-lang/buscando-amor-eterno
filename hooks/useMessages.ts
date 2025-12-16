@@ -133,6 +133,16 @@ export function useMessages() {
 
     let pollInterval: ReturnType<typeof setInterval> | null = null
     let isMounted = true
+    let lastFetch = 0
+    const MIN_FETCH_INTERVAL = 3000
+
+    const throttledFetch = () => {
+      const now = Date.now()
+      if (now - lastFetch >= MIN_FETCH_INTERVAL) {
+        lastFetch = now
+        fetchConversations()
+      }
+    }
 
     try {
       const subscription = supabase
@@ -148,20 +158,20 @@ export function useMessages() {
           (payload) => {
             if (isMounted) {
               setMessages((prev) => [payload.new as Message, ...prev])
-              fetchConversations()
+              throttledFetch()
             }
           }
         )
         .subscribe((status) => {
           if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
             console.warn('Message subscription error:', status)
-            // Fall back to polling if realtime fails
+            // Fall back to polling if realtime fails (less frequent)
             if (!pollInterval) {
               pollInterval = setInterval(() => {
                 if (isMounted) {
-                  fetchConversations()
+                  throttledFetch()
                 }
-              }, 5000)
+              }, 10000)
             }
           }
         })
@@ -175,13 +185,13 @@ export function useMessages() {
       }
     } catch (err) {
       console.warn('Failed to setup message subscription:', err)
-      // Fall back to polling
+      // Fall back to polling (less frequent)
       if (!pollInterval) {
         pollInterval = setInterval(() => {
           if (isMounted) {
-            fetchConversations()
+            throttledFetch()
           }
-        }, 5000)
+        }, 10000)
       }
 
       return () => {
