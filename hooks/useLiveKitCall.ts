@@ -242,7 +242,17 @@ export function useLiveKitCall() {
         roomRef.current.disconnect().catch((err) => {
           console.warn('Error during cleanup disconnect:', err)
         })
+        roomRef.current = null
       }
+      // Ensure state is cleared to prevent any lingering references
+      setState({
+        room: null,
+        participants: [],
+        localParticipant: null,
+        isConnecting: false,
+        isConnected: false,
+        error: null,
+      })
     }
   }, [])
 
