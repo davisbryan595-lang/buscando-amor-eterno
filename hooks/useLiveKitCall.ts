@@ -176,6 +176,7 @@ export function useLiveKitCall() {
           localParticipant: room.localParticipant,
           isConnected: true,
           isConnecting: false,
+          error: null,
           participants: room.participants ? Array.from(room.participants.values()) : [],
         }))
       } catch (err) {
