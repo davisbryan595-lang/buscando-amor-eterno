@@ -28,7 +28,7 @@ export async function POST(request: Request) {
       canSubscribe: true,
     });
 
-    const token = at.toJwt();
+    const token = await at.toJwt();
 
     return NextResponse.json({ token });
   } catch (err) {
@@ -66,7 +66,7 @@ export async function GET(request: Request) {
       canSubscribe: true,
     });
 
-    const token = at.toJwt();
+    const token = await at.toJwt();
 
     return NextResponse.json({ token });
   } catch (err) {
