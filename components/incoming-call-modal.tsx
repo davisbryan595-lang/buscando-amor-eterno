@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useEffect, useState } from 'react'
-import { Phone, PhoneOff, Video, Mic } from 'lucide-react'
+import { Phone, PhoneOff, Video, Mic, Clock } from 'lucide-react'
 import Image from 'next/image'
 import { IncomingCall } from '@/hooks/useIncomingCalls'
 
@@ -60,53 +60,81 @@ export default function IncomingCallModal({
   }
 
   const callIcon = call.call_type === 'video' ? (
-    <Video className="w-6 h-6 text-white" />
+    <Video className="w-8 h-8 text-white" />
   ) : (
-    <Mic className="w-6 h-6 text-white" />
+    <Mic className="w-8 h-8 text-white" />
   )
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-3xl w-full max-w-sm shadow-2xl overflow-hidden">
-        {/* Header with gradient */}
-        <div className="bg-gradient-to-r from-primary to-rose-700 p-8 text-center text-white">
-          <div className="inline-flex items-center justify-center w-20 h-20 bg-white/20 rounded-full mb-4 mx-auto">
-            {callIcon}
-          </div>
-          <h2 className="text-2xl font-bold mb-1">
-            {call.call_type === 'video' ? 'Incoming Video Call' : 'Incoming Audio Call'}
-          </h2>
-          <p className="text-white/80 text-sm">
-            Connecting in {timeLeft}s
-          </p>
-        </div>
+    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+      <div className="bg-white rounded-3xl w-full max-w-sm shadow-2xl overflow-hidden animate-in fade-in duration-300">
+        {/* Gradient Header with Call Type */}
+        <div className="bg-gradient-to-r from-primary via-rose-500 to-rose-700 p-8 text-center text-white relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16" />
+          <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full -ml-12 -mb-12" />
 
-        {/* Caller info */}
-        <div className="p-6 text-center border-b border-slate-200">
-          <div className="flex justify-center mb-4">
-            <div className="relative w-24 h-24">
-              <Image
-                src={call.caller_image || '/placeholder.svg'}
-                alt={call.caller_name || 'Caller'}
-                fill
-                className="rounded-full object-cover"
-              />
+          <div className="relative z-10">
+            <div className="inline-flex items-center justify-center w-20 h-20 bg-white/20 backdrop-blur-sm rounded-full mb-4 mx-auto border border-white/30">
+              {callIcon}
+            </div>
+            <h2 className="text-2xl font-bold mb-2">
+              {call.call_type === 'video' ? 'Incoming Video Call' : 'Incoming Audio Call'}
+            </h2>
+            <div className="flex items-center justify-center gap-2 text-white/90 text-sm font-medium">
+              <Clock size={14} />
+              <span>Answering in {timeLeft}s</span>
             </div>
           </div>
-          <h3 className="text-xl font-bold text-slate-900">
-            {call.caller_name}
+        </div>
+
+        {/* Caller Info - Enhanced */}
+        <div className="p-8 text-center border-b border-slate-100 bg-gradient-to-b from-slate-50 to-white">
+          {/* Profile Picture */}
+          <div className="flex justify-center mb-6">
+            <div className="relative w-28 h-28">
+              {call.caller_image ? (
+                <Image
+                  src={call.caller_image}
+                  alt={call.caller_name || 'Caller'}
+                  fill
+                  className="rounded-full object-cover shadow-lg border-4 border-white"
+                  priority
+                />
+              ) : (
+                <div className="w-full h-full rounded-full bg-gradient-to-br from-primary to-rose-700 flex items-center justify-center shadow-lg border-4 border-white">
+                  <span className="text-white text-3xl font-bold">
+                    {(call.caller_name || 'C')[0].toUpperCase()}
+                  </span>
+                </div>
+              )}
+              {/* Call type badge */}
+              <div className="absolute bottom-0 right-0 bg-primary text-white rounded-full w-8 h-8 flex items-center justify-center border-2 border-white shadow-md">
+                {call.call_type === 'video' ? (
+                  <Video size={16} />
+                ) : (
+                  <Mic size={16} />
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Caller Name */}
+          <h3 className="text-2xl font-bold text-slate-900 mb-1">
+            {call.caller_name || 'Unknown Caller'}
           </h3>
-          <p className="text-slate-600 text-sm mt-1">
-            {call.call_type === 'video' ? 'wants to video call' : 'wants to call'}
+          <p className="text-slate-600 text-sm">
+            {call.call_type === 'video'
+              ? 'wants to video call with you'
+              : 'wants to call you'}
           </p>
         </div>
 
-        {/* Action buttons */}
-        <div className="p-6 flex gap-4">
+        {/* Action Buttons */}
+        <div className="p-6 flex gap-4 bg-white">
           <button
             onClick={handleReject}
             disabled={isRejecting || isAccepting}
-            className="flex-1 py-4 px-6 bg-slate-100 hover:bg-slate-200 disabled:bg-slate-100 disabled:opacity-50 text-slate-900 rounded-full font-semibold transition flex items-center justify-center gap-2"
+            className="flex-1 py-4 px-6 bg-slate-100 hover:bg-slate-200 disabled:bg-slate-100 disabled:opacity-50 text-slate-900 rounded-full font-semibold transition flex items-center justify-center gap-2 transform active:scale-95"
           >
             <PhoneOff size={20} />
             <span>Decline</span>
@@ -114,18 +142,19 @@ export default function IncomingCallModal({
           <button
             onClick={handleAccept}
             disabled={isAccepting || isRejecting}
-            className="flex-1 py-4 px-6 bg-green-500 hover:bg-green-600 disabled:bg-green-500 disabled:opacity-50 text-white rounded-full font-semibold transition flex items-center justify-center gap-2"
+            className="flex-1 py-4 px-6 bg-green-500 hover:bg-green-600 disabled:bg-green-500 disabled:opacity-50 text-white rounded-full font-semibold transition flex items-center justify-center gap-2 transform active:scale-95 shadow-lg"
           >
             <Phone size={20} />
             <span>Accept</span>
           </button>
         </div>
 
-        {/* Info message */}
-        <div className="px-6 pb-6 text-center">
-          <p className="text-xs text-slate-600">
-            This call will automatically decline in {timeLeft} seconds
-          </p>
+        {/* Timer Footer */}
+        <div className="px-6 pb-6 text-center bg-white">
+          <div className="inline-flex items-center gap-2 text-xs text-slate-600 bg-slate-50 px-4 py-2 rounded-full">
+            <Clock size={12} />
+            <span>Call will auto-decline in {timeLeft} seconds</span>
+          </div>
         </div>
       </div>
     </div>
