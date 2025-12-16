@@ -167,19 +167,16 @@ export function useIncomingCalls() {
             )
             .subscribe((status) => {
               if (status === 'SUBSCRIBED') {
-                console.log('[IncomingCalls] Subscription active')
                 subscriptionActive = true
                 reconnectAttempts = 0
                 if (isMounted) {
                   setLoading(false)
                 }
               } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
-                console.warn('[IncomingCalls] Subscription error:', status)
                 subscriptionActive = false
                 if (isMounted && reconnectAttempts < maxReconnectAttempts) {
                   reconnectAttempts++
                   const delay = Math.min(1000 * Math.pow(2, reconnectAttempts - 1), 30000)
-                  console.log(`[IncomingCalls] Attempting reconnect in ${delay}ms`)
                   const timeout = setTimeout(() => {
                     if (isMounted) {
                       if (subscriptionRef.current) {
