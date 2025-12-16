@@ -254,7 +254,7 @@ export function useLiveKitCall() {
               await new Promise((resolve) => setTimeout(resolve, 500))
 
               // Verify again
-              if (room.localParticipant.audioTracks.size === 0) {
+              if (!room.localParticipant.audioTracks || room.localParticipant.audioTracks.size === 0) {
                 // If we have a publication, we can consider it a success even if the map isn't updated yet
                 if (publication) {
                   console.warn('Audio track published but not yet in localParticipant.audioTracks map')
@@ -270,7 +270,10 @@ export function useLiveKitCall() {
 
           // Final check: verify audio is publishing
           const finalAudioPubs = room.localParticipant.audioTracks
-          if (!finalAudioPubs || finalAudioPubs.size === 0) {
+          if (!finalAudioPubs) {
+            throw new Error('Still no audio track after fallback — check mic permissions/device')
+          }
+          if (finalAudioPubs.size === 0) {
             throw new Error('Still no audio track after fallback — check mic permissions/device')
           }
           console.log('🎙️ Final audio publication check passed. Audio track count:', finalAudioPubs.size)
