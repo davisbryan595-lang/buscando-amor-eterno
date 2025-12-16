@@ -12,12 +12,14 @@ interface LiveKitRoomProps {
   roomName: string
   participantName: string
   onDisconnect?: () => void
+  shouldConnect?: boolean
 }
 
 export default function LiveKitVideoRoom({
   roomName,
   participantName,
   onDisconnect,
+  shouldConnect = true,
 }: LiveKitRoomProps) {
   const [token, setToken] = useState<string>('')
   const [serverUrl, setServerUrl] = useState<string>('')
@@ -99,7 +101,7 @@ export default function LiveKitVideoRoom({
         audio={true}
         token={token}
         serverUrl={serverUrl}
-        connect={true}
+        connect={shouldConnect}
         onDisconnected={() => {
           console.log('Disconnected from room')
           onDisconnect?.()

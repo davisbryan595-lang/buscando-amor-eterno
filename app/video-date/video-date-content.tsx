@@ -25,6 +25,7 @@ export default function VideoDateContent() {
   const [roomId, setRoomId] = useState<string>('')
   const [inputRoomId, setInputRoomId] = useState<string>('')
   const [inCall, setInCall] = useState(false)
+  const [isConnected, setIsConnected] = useState(false)
   const [copied, setCopied] = useState(false)
 
   useEffect(() => {
@@ -32,6 +33,7 @@ export default function VideoDateContent() {
     if (urlRoomId) {
       setRoomId(urlRoomId)
       setInCall(true)
+      setIsConnected(true)
     }
   }, [searchParams])
 
@@ -51,6 +53,7 @@ export default function VideoDateContent() {
     const newRoomId = generateRoomId()
     setRoomId(newRoomId)
     setInCall(true)
+    setIsConnected(true)
     router.push(`/video-date?room=${newRoomId}`)
   }
 
@@ -59,7 +62,7 @@ export default function VideoDateContent() {
       toast.error('Please enter a room ID')
       return
     }
-    
+
     if (!user) {
       toast.error('Please log in to join a video call')
       return
@@ -67,13 +70,21 @@ export default function VideoDateContent() {
 
     setRoomId(inputRoomId.trim())
     setInCall(true)
+    setIsConnected(true)
     router.push(`/video-date?room=${inputRoomId.trim()}`)
   }
 
   const handleDisconnect = () => {
+    if (!isConnected) return
+    setIsConnected(false)
     setInCall(false)
     setRoomId('')
     router.push('/video-date')
+  }
+
+  const handleLeaveCall = () => {
+    if (!isConnected) return
+    setIsConnected(false)
   }
 
   const copyRoomLink = async () => {
@@ -144,11 +155,12 @@ export default function VideoDateContent() {
                   roomName={roomId}
                   participantName={user.email || user.id}
                   onDisconnect={handleDisconnect}
+                  shouldConnect={isConnected}
                 />
               </div>
 
               <button
-                onClick={handleDisconnect}
+                onClick={handleLeaveCall}
                 className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-semibold"
               >
                 Leave Call
