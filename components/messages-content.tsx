@@ -136,8 +136,11 @@ function MessagesContentInner() {
         </div>
 
         {selectedConversation && (
-          <div className="flex-1 hidden md:flex min-w-0">
-            <ChatWindow conversation={selectedConversation} />
+          <div className={`flex-1 flex min-w-0 ${selectedConversation ? 'flex' : 'hidden md:flex'}`}>
+            <ChatWindow
+              conversation={selectedConversation}
+              onBack={() => setSelectedConversation(null)}
+            />
           </div>
         )}
 
