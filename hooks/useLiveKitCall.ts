@@ -181,25 +181,27 @@ export function useLiveKitCall() {
         // Enable microphone and camera after connection
         try {
           await room.localParticipant.setMicrophoneEnabled(true)
-          console.log('Microphone enabled, audio tracks:', room.localParticipant.audioTracks.size)
+          console.log('Microphone enabled, audio tracks:', room.localParticipant.audioTracks?.size ?? 0)
 
           if (callType === 'video') {
             await room.localParticipant.setCameraEnabled(true)
-            console.log('Camera enabled, video tracks:', room.localParticipant.videoTracks.size)
+            console.log('Camera enabled, video tracks:', room.localParticipant.videoTracks?.size ?? 0)
           }
 
           // Verify tracks are publishing
-          const audioTracks = Array.from(room.localParticipant.audioTracks.values())
-          if (audioTracks.length === 0) {
-            console.warn('No audio tracks after enabling microphone')
-          } else {
-            audioTracks.forEach((pub) => {
-              console.log('Audio track status:', {
-                muted: pub.isMuted,
-                enabled: pub.track?.mediaStreamTrack?.enabled,
-                readyState: pub.track?.mediaStreamTrack?.readyState,
+          if (room.localParticipant.audioTracks) {
+            const audioTracks = Array.from(room.localParticipant.audioTracks.values())
+            if (audioTracks.length === 0) {
+              console.warn('No audio tracks after enabling microphone')
+            } else {
+              audioTracks.forEach((pub) => {
+                console.log('Audio track status:', {
+                  muted: pub.isMuted,
+                  enabled: pub.track?.mediaStreamTrack?.enabled,
+                  readyState: pub.track?.mediaStreamTrack?.readyState,
+                })
               })
-            })
+            }
           }
         } catch (publishError) {
           console.error('Error publishing tracks:', publishError)
