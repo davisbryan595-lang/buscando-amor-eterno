@@ -150,6 +150,26 @@ export function useLiveKitCall() {
           console.warn('Failed to subscribe to track:', trackSid, 'from participant:', participant.identity)
         })
 
+        // Handle successful track subscriptions
+        room.on(RoomEvent.TrackSubscribed, (track, publication, participant) => {
+          console.log('Track subscribed:', {
+            kind: track.kind,
+            participant: participant.identity,
+            sid: track.sid,
+            enabled: track.mediaStreamTrack?.enabled,
+            muted: publication.isMuted,
+          })
+        })
+
+        // Handle track publications
+        room.on(RoomEvent.TrackPublished, (publication, participant) => {
+          console.log('Track published:', {
+            kind: publication.kind,
+            participant: participant.identity,
+            source: publication.source,
+          })
+        })
+
         // Connect to room with timeout
         const connectPromise = room.connect(liveKitUrl, token)
         const timeoutPromise = new Promise<void>((_, reject) =>
