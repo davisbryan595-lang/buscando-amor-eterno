@@ -89,6 +89,60 @@ export function useIncomingCalls() {
 
       const subscribeToIncomingCalls = () => {
         try {
+          const handleCallInvitation = async (payload: any) => {
+            if (isMounted && subscriptionActive) {
+              try {
+                const callInvitation = payload.new as any
+
+                // Only show pending calls
+                if (callInvitation.status !== 'pending') {
+                  return
+                }
+
+                // Check if call has expired
+                const expiresAt = new Date(callInvitation.expires_at).getTime()
+                if (Date.now() > expiresAt) {
+                  return
+                }
+
+                // Fetch caller profile info
+                const { data: callerProfile } = await supabase
+                  .from('profiles')
+                  .select('full_name, photos, main_photo_index')
+                  .eq('user_id', callInvitation.caller_id)
+                  .single()
+
+                const processedCall: IncomingCall = {
+                  id: callInvitation.id,
+                  caller_id: callInvitation.caller_id,
+                  recipient_id: callInvitation.recipient_id,
+                  call_type: callInvitation.call_type,
+                  status: callInvitation.status,
+                  room_name: callInvitation.room_name,
+                  created_at: callInvitation.created_at,
+                  expires_at: callInvitation.expires_at,
+                  caller_name: callerProfile?.full_name || 'Unknown',
+                  caller_image: callerProfile?.photos?.[callerProfile?.main_photo_index || 0] || undefined,
+                }
+
+                if (isMounted) {
+                  setIncomingCall(processedCall)
+                  setError(null)
+
+                  // Auto-decline after 1 minute
+                  clearCallTimeout()
+                  callTimeoutRef.current = setTimeout(() => {
+                    if (isMounted && incomingCall?.id === processedCall.id) {
+                      rejectCall(processedCall.id)
+                    }
+                  }, 60000)
+                }
+              } catch (err) {
+                console.error('Error processing incoming call:', err)
+              }
+            }
+          }
+
           subscriptionRef.current = supabase
             .channel(`incoming_calls:${user.id}`)
             .on(
@@ -99,54 +153,17 @@ export function useIncomingCalls() {
                 table: 'call_invitations',
                 filter: `recipient_id=eq.${user.id}`,
               },
-              async (payload) => {
-                if (isMounted && subscriptionActive) {
-                  try {
-                    const callInvitation = payload.new as any
-
-                    // Check if call has expired
-                    const expiresAt = new Date(callInvitation.expires_at).getTime()
-                    if (Date.now() > expiresAt) {
-                      return
-                    }
-
-                    // Fetch caller profile info
-                    const { data: callerProfile } = await supabase
-                      .from('profiles')
-                      .select('full_name, photos, main_photo_index')
-                      .eq('user_id', callInvitation.caller_id)
-                      .single()
-
-                    const processedCall: IncomingCall = {
-                      id: callInvitation.id,
-                      caller_id: callInvitation.caller_id,
-                      recipient_id: callInvitation.recipient_id,
-                      call_type: callInvitation.call_type,
-                      status: callInvitation.status,
-                      room_name: callInvitation.room_name,
-                      created_at: callInvitation.created_at,
-                      expires_at: callInvitation.expires_at,
-                      caller_name: callerProfile?.full_name || 'Unknown',
-                      caller_image: callerProfile?.photos?.[callerProfile?.main_photo_index || 0] || undefined,
-                    }
-
-                    if (isMounted) {
-                      setIncomingCall(processedCall)
-                      setError(null)
-
-                      // Auto-decline after 1 minute
-                      clearCallTimeout()
-                      callTimeoutRef.current = setTimeout(() => {
-                        if (isMounted && incomingCall?.id === processedCall.id) {
-                          rejectCall(processedCall.id)
-                        }
-                      }, 60000)
-                    }
-                  } catch (err) {
-                    console.error('Error processing incoming call:', err)
-                  }
-                }
-              }
+              handleCallInvitation
+            )
+            .on(
+              'postgres_changes',
+              {
+                event: 'UPDATE',
+                schema: 'public',
+                table: 'call_invitations',
+                filter: `recipient_id=eq.${user.id}`,
+              },
+              handleCallInvitation
             )
             .subscribe((status) => {
               if (status === 'SUBSCRIBED') {
