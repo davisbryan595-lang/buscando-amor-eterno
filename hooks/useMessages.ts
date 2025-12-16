@@ -177,6 +177,13 @@ export function useMessages() {
       }
     }
 
+    const stopPolling = () => {
+      if (pollInterval) {
+        clearInterval(pollInterval)
+        pollInterval = null
+      }
+    }
+
     try {
       const subscription = supabase
         .channel(`messages:${user.id}`)
@@ -196,70 +203,28 @@ export function useMessages() {
           }
         )
         .subscribe((status) => {
-          if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
-            console.warn('Message subscription error:', status)
-            // Fall back to polling if realtime fails (less frequent)
-            if (!pollInterval) {
+          if (status === 'SUBSCRIBED') {
+            console.log('[Messages] Subscription active')
+            stopPolling()
+          } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+            console.warn('[Messages] Subscription error:', status, '- Check RLS policies on messages table in Supabase dashboard')
+            if (!pollInterval && isMounted) {
               pollInterval = setInterval(() => {
                 if (isMounted) {
                   throttledFetch()
                 }
               }, 10000)
             }
-          )
-          .subscribe((status) => {
-            if (status === 'SUBSCRIBED') {
-              console.log('[Messages] Subscription active')
-              subscriptionActive = true
-              reconnectAttempts = 0
-              stopPolling()
-            } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
-              console.warn('[Messages] Subscription error:', status, '- Check RLS policies on messages table in Supabase dashboard')
-              subscriptionActive = false
-              if (isMounted && reconnectAttempts < maxReconnectAttempts) {
-                reconnectAttempts++
-                const delay = Math.min(1000 * Math.pow(2, reconnectAttempts - 1), 30000)
-                console.log(`[Messages] Attempting reconnect in ${delay}ms (attempt ${reconnectAttempts}/${maxReconnectAttempts})`)
-                const timeout = setTimeout(() => {
-                  if (isMounted) {
-                    subscription.unsubscribe()
-                    setupSubscription()
-                  }
-                }, delay)
-                timeoutsRef.add(timeout)
-              } else if (isMounted) {
-                startPolling()
-              }
-            }
-          })
+          }
+        })
 
-        return () => {
-          isMounted = false
-          subscriptionActive = false
-          subscription.unsubscribe()
-          clearAllTimeouts()
-          stopPolling()
-        }
-      } catch (err) {
-        console.warn('[Messages] Failed to setup subscription:', err)
-        subscriptionActive = false
-        if (isMounted && reconnectAttempts < maxReconnectAttempts) {
-          reconnectAttempts++
-          const delay = Math.min(1000 * Math.pow(2, reconnectAttempts - 1), 30000)
-          console.log(`[Messages] Retrying setup in ${delay}ms`)
-          const timeout = setTimeout(() => {
-            if (isMounted) {
-              setupSubscription()
-            }
-          }, delay)
-          timeoutsRef.add(timeout)
-        } else if (isMounted) {
-          startPolling()
-        }
+      return () => {
+        isMounted = false
+        subscription.unsubscribe()
+        stopPolling()
       }
     } catch (err) {
       console.warn('Failed to setup message subscription:', err)
-      // Fall back to polling (less frequent)
       if (!pollInterval) {
         pollInterval = setInterval(() => {
           if (isMounted) {
@@ -268,16 +233,11 @@ export function useMessages() {
         }, 10000)
       }
 
-        return () => {
-          isMounted = false
-          subscriptionActive = false
-          clearAllTimeouts()
-          stopPolling()
-        }
+      return () => {
+        isMounted = false
+        stopPolling()
       }
     }
-
-    return setupSubscription()
   }
 
   const fetchMessages = useCallback(
