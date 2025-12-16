@@ -84,13 +84,15 @@ export function useLiveKitCall() {
 
         const room = new Room({
           audio: true,
-          video: callType === 'video',
+          video: callType === 'video' ? { width: 640, height: 480 } : false,
           adaptiveStream: true,
           dynacast: true,
+          autoSubscribe: true,
+          maxParticipants: 2,
           reconnectPolicy: {
-            maxRetries: 3,
+            maxRetries: 5,
             initialWaitTime: 100,
-            maxWaitTime: 1000,
+            maxWaitTime: 2000,
           },
         })
 
