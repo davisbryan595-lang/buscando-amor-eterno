@@ -32,7 +32,13 @@ export function useLiveKitCall() {
   }, [])
 
   const removeAllListeners = useCallback(() => {
-    cleanupListenersRef.current.forEach(cleanup => cleanup())
+    cleanupListenersRef.current.forEach((cleanup) => {
+      try {
+        cleanup()
+      } catch (err) {
+        // Silently handle cleanup errors
+      }
+    })
     cleanupListenersRef.current = []
   }, [])
 
