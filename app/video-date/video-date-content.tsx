@@ -75,6 +75,7 @@ export default function VideoDateContent() {
   }
 
   const handleDisconnect = () => {
+    if (!isConnected) return
     setIsConnected(false)
     setInCall(false)
     setRoomId('')
@@ -82,12 +83,8 @@ export default function VideoDateContent() {
   }
 
   const handleLeaveCall = () => {
+    if (!isConnected) return
     setIsConnected(false)
-    setTimeout(() => {
-      setInCall(false)
-      setRoomId('')
-      router.push('/video-date')
-    }, 100)
   }
 
   const copyRoomLink = async () => {
