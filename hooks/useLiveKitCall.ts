@@ -115,10 +115,12 @@ export function useLiveKitCall() {
           },
           adaptiveStream: true,
           dynacast: true,
+          autoSubscribe: true,
+          maxParticipants: 2,
           reconnectPolicy: {
-            maxRetries: 3,
+            maxRetries: 5,
             initialWaitTime: 100,
-            maxWaitTime: 1000,
+            maxWaitTime: 2000,
           },
         })
 
@@ -143,6 +145,7 @@ export function useLiveKitCall() {
           safeSetState((prev) => ({
             ...prev,
             isConnected: false,
+            isConnecting: false,
             room: null,
             participants: [],
             localParticipant: null,
@@ -162,16 +165,26 @@ export function useLiveKitCall() {
           }
         }
 
+        const handleReconnected = () => {
+          safeSetState((prev) => ({
+            ...prev,
+            error: null,
+            isConnecting: false,
+          }))
+        }
+
         room.on(RoomEvent.ParticipantConnected, handleParticipantConnected)
         room.on(RoomEvent.ParticipantDisconnected, handleParticipantDisconnected)
         room.on(RoomEvent.Disconnected, handleDisconnected)
         room.on(RoomEvent.Error, handleRoomError)
+        room.on(RoomEvent.Reconnected, handleReconnected)
 
         cleanupListenersRef.current.push(() => {
           room?.off(RoomEvent.ParticipantConnected, handleParticipantConnected)
           room?.off(RoomEvent.ParticipantDisconnected, handleParticipantDisconnected)
           room?.off(RoomEvent.Disconnected, handleDisconnected)
           room?.off(RoomEvent.Error, handleRoomError)
+          room?.off(RoomEvent.Reconnected, handleReconnected)
         })
 
         // Connect to room with timeout
@@ -227,6 +240,7 @@ export function useLiveKitCall() {
           localParticipant: room.localParticipant,
           isConnected: true,
           isConnecting: false,
+          error: null,
           participants: room.participants ? Array.from(room.participants.values()) : [],
         }))
       } catch (err) {
@@ -297,7 +311,17 @@ export function useLiveKitCall() {
       removeAllListeners()
       if (roomRef.current) {
         roomRef.current.disconnect().catch(() => {})
+        roomRef.current = null
       }
+      // Ensure state is cleared to prevent any lingering references
+      setState({
+        room: null,
+        participants: [],
+        localParticipant: null,
+        isConnecting: false,
+        isConnected: false,
+        error: null,
+      })
     }
   }, [removeAllListeners])
 

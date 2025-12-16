@@ -215,7 +215,11 @@ export default function VideoCallModal({
         try {
           videoTrack.track.attach(localVideoRef.current)
           return () => {
-            videoTrack.track?.detach()
+            try {
+              videoTrack.track?.detach()
+            } catch (err) {
+              // Silently handle detach errors
+            }
           }
         } catch (err) {
           // Silently handle attach errors
