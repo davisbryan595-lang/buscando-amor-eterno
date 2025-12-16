@@ -196,6 +196,10 @@ export default function VideoCallModal({
     onClose()
   }
 
+  // Track cleanup to prevent dangling references
+  const participantListenerRef = React.useRef<Participant | null>(null)
+  const trackSubscribedHandlerRef = React.useRef<((track: any) => void) | null>(null)
+
   if (!isOpen) return null
 
   const isMobileView = isMobile
