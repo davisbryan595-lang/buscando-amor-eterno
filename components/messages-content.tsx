@@ -88,11 +88,11 @@ function MessagesContentInner() {
 
 
   return (
-    <div className="pt-24 pb-12 px-4 h-screen flex flex-col">
-      <div className="max-w-6xl mx-auto w-full flex-1 flex gap-6">
-        <div className="w-full md:w-80 bg-gradient-to-b from-white to-rose-50 rounded-xl border border-rose-100 overflow-y-auto">
-          <div className="p-4 border-b border-rose-100 sticky top-0 bg-white">
-            <h2 className="text-xl font-bold text-slate-900">Messages</h2>
+    <div className="pt-20 pb-4 px-4 lg:px-6 h-screen flex flex-col">
+      <div className="max-w-7xl mx-auto w-full flex-1 flex gap-4 lg:gap-6 min-h-0">
+        <div className="w-full md:w-80 lg:w-96 bg-gradient-to-b from-white to-rose-50 rounded-xl border border-rose-100 overflow-y-auto flex-shrink-0">
+          <div className="p-4 lg:p-6 border-b border-rose-100 sticky top-0 bg-white z-10">
+            <h2 className="text-xl lg:text-2xl font-bold text-slate-900">Messages</h2>
           </div>
 
           <div className="divide-y">
@@ -136,8 +136,16 @@ function MessagesContentInner() {
         </div>
 
         {selectedConversation && (
-          <div className="flex-1 hidden md:flex">
+          <div className="flex-1 hidden md:flex min-w-0">
             <ChatWindow conversation={selectedConversation} />
+          </div>
+        )}
+
+        {!selectedConversation && conversations.length > 0 && (
+          <div className="flex-1 hidden md:flex items-center justify-center bg-gradient-to-b from-white to-rose-50 rounded-xl border border-rose-100">
+            <div className="text-center text-slate-500">
+              <p className="text-lg">Select a conversation to start chatting</p>
+            </div>
           </div>
         )}
       </div>
