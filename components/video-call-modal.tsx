@@ -34,6 +34,7 @@ export default function VideoCallModal({
   const isMobile = useIsMobile()
   const remoteVideoRef = React.useRef<HTMLVideoElement>(null)
   const localVideoRef = React.useRef<HTMLVideoElement>(null)
+  const sendingInvitationRef = React.useRef(false)
 
   // Send call invitation when modal opens (for outgoing calls)
   useEffect(() => {
