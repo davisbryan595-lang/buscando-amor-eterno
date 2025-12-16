@@ -115,19 +115,24 @@ export default function VideoCallModal({
 
   // Handle remote participant video tracks
   useEffect(() => {
-    if (participants.length > 0 && remoteVideoRef.current) {
+    if (participants.length > 0 && remoteVideoRef.current && callType === 'video') {
       const participant = participants[0]
+      const videoTracks = participant.videoTracks
 
-      // Attach video track if it exists
-      if (callType === 'video') {
-        const videoTracks = participant.videoTracks
-        if (videoTracks && videoTracks.size > 0) {
-          const videoTrack = Array.from(videoTracks.values())[0]
-          if (videoTrack && videoTrack.track) {
+      if (videoTracks && videoTracks.size > 0) {
+        const videoTrack = Array.from(videoTracks.values())[0]
+        if (videoTrack?.track) {
+          try {
             videoTrack.track.attach(remoteVideoRef.current)
             return () => {
-              videoTrack.track.detach()
+              try {
+                videoTrack.track.detach()
+              } catch (err) {
+                console.warn('Error detaching remote video track:', err)
+              }
             }
+          } catch (err) {
+            console.warn('Error attaching remote video track:', err)
           }
         }
       }
