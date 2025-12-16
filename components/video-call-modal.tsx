@@ -131,30 +131,55 @@ export default function VideoCallModal({
     if (participants.length > 0 && remoteAudioRef.current) {
       const participant = participants[0]
 
-      // Attach audio track
+      // Clean up previous listener if participant changed
+      if (participantListenerRef.current && participantListenerRef.current !== participant) {
+        if (trackSubscribedHandlerRef.current) {
+          participantListenerRef.current.off(ParticipantEvent.TrackSubscribed, trackSubscribedHandlerRef.current)
+        }
+        participantListenerRef.current = null
+        trackSubscribedHandlerRef.current = null
+      }
+
+      // Attach existing audio tracks
       const audioTracks = participant.audioTracks
       if (audioTracks && audioTracks.size > 0) {
         const audioTrack = Array.from(audioTracks.values())[0]
-        if (audioTrack && audioTrack.track) {
-          audioTrack.track.attach(remoteAudioRef.current)
-          return () => {
-            audioTrack.track.detach()
+        if (audioTrack?.track && remoteAudioRef.current) {
+          try {
+            audioTrack.track.attach(remoteAudioRef.current)
+          } catch (err) {
+            console.warn('Error attaching audio track:', err)
           }
         }
       }
 
       // Listen for new audio tracks being published
       const handleTrackSubscribed = (track: any) => {
-        if (track.kind === 'audio' && remoteAudioRef.current) {
-          track.attach(remoteAudioRef.current)
+        if (track?.kind === 'audio' && remoteAudioRef.current) {
+          try {
+            track.attach(remoteAudioRef.current)
+          } catch (err) {
+            console.warn('Error attaching subscribed audio track:', err)
+          }
         }
       }
 
-      participant.on(ParticipantEvent.TrackSubscribed, handleTrackSubscribed)
+      // Register listener only if not already registered for this participant
+      if (participantListenerRef.current !== participant) {
+        trackSubscribedHandlerRef.current = handleTrackSubscribed
+        participantListenerRef.current = participant
+        participant.on(ParticipantEvent.TrackSubscribed, handleTrackSubscribed)
+      }
 
       return () => {
-        participant.off(ParticipantEvent.TrackSubscribed, handleTrackSubscribed)
+        // Don't unsubscribe here - let the next effect or cleanup handle it
+        // This prevents issues with participant changes
       }
+    } else if (participants.length === 0 && participantListenerRef.current && trackSubscribedHandlerRef.current) {
+      // Clean up when no participants
+      participantListenerRef.current.off(ParticipantEvent.TrackSubscribed, trackSubscribedHandlerRef.current)
+      participantListenerRef.current = null
+      trackSubscribedHandlerRef.current = null
     }
   }, [participants])
 
