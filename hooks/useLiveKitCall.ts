@@ -314,8 +314,25 @@ export function useLiveKitCall() {
     if (roomRef.current?.localParticipant) {
       try {
         await roomRef.current.localParticipant.setMicrophoneEnabled(enabled)
+        const audioTrackCount = roomRef.current.localParticipant.audioTracks?.size ?? 0
+        console.log(`🎙️ Audio toggled ${enabled ? 'on' : 'off'}. Audio tracks: ${audioTrackCount}`)
+
+        // If enabling audio but no tracks exist, use fallback
+        if (enabled && audioTrackCount === 0) {
+          console.warn('⚠️ No audio tracks after toggle. Attempting fallback...')
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+          const audioTrack = stream.getAudioTracks()[0]
+          if (audioTrack) {
+            await roomRef.current.localParticipant.publishTrack(audioTrack)
+            console.log('✅ Fallback audio published')
+          }
+        }
       } catch (err) {
-        console.error('Error toggling audio:', err)
+        console.error('❌ Error toggling audio:', err)
+        setState((prev) => ({
+          ...prev,
+          error: `Failed to toggle audio: ${err instanceof Error ? err.message : 'Unknown error'}`,
+        }))
       }
     }
   }, [])
