@@ -34,31 +34,42 @@ export default function VideoCallModal({
   const isMobile = useIsMobile()
   const remoteVideoRef = React.useRef<HTMLVideoElement>(null)
   const localVideoRef = React.useRef<HTMLVideoElement>(null)
+  const sendingInvitationRef = React.useRef(false)
 
   // Send call invitation when modal opens (for outgoing calls)
   useEffect(() => {
-    if (isOpen && !invitationSent && !callInvitationId && user) {
+    if (isOpen && !invitationSent && !callInvitationId && user && !sendingInvitationRef.current) {
       const sendInvitation = async () => {
+        sendingInvitationRef.current = true
         try {
           const roomName = [user.id, otherUserId].sort().join('-')
 
+          // Use upsert to handle both insert and update cases
           const { error: err } = await supabase
             .from('call_invitations')
-            .insert({
-              caller_id: user.id,
-              recipient_id: otherUserId,
-              call_type: callType,
-              room_name: roomName,
-              status: 'pending',
-            })
+            .upsert(
+              {
+                caller_id: user.id,
+                recipient_id: otherUserId,
+                call_type: callType,
+                room_name: roomName,
+                status: 'pending',
+                updated_at: new Date().toISOString(),
+              },
+              {
+                onConflict: 'caller_id,recipient_id,room_name',
+              }
+            )
 
           if (err) {
-            console.error('Error sending call invitation:', err)
+            console.error('Error sending call invitation:', err?.message || err)
           } else {
             setInvitationSent(true)
           }
         } catch (err) {
-          console.error('Error sending call invitation:', err)
+          console.error('Error sending call invitation:', err instanceof Error ? err.message : err)
+        } finally {
+          sendingInvitationRef.current = false
         }
       }
 
