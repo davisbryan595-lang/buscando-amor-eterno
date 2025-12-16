@@ -25,6 +25,7 @@ export default function VideoDateContent() {
   const [roomId, setRoomId] = useState<string>('')
   const [inputRoomId, setInputRoomId] = useState<string>('')
   const [inCall, setInCall] = useState(false)
+  const [isConnected, setIsConnected] = useState(false)
   const [copied, setCopied] = useState(false)
 
   useEffect(() => {
