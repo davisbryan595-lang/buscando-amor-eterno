@@ -130,13 +130,39 @@ export default function VideoCallModal({
   useEffect(() => {
     if (participants.length > 0 && remoteAudioRef.current) {
       const participant = participants[0]
+      const audioElement = remoteAudioRef.current
+
+      // Ensure audio element is properly configured
+      audioElement.volume = 1.0
+      audioElement.muted = false
 
       // Attach audio track
       const audioTracks = participant.audioTracks
       if (audioTracks && audioTracks.size > 0) {
         const audioTrack = Array.from(audioTracks.values())[0]
         if (audioTrack && audioTrack.track) {
-          audioTrack.track.attach(remoteAudioRef.current)
+          audioTrack.track.attach(audioElement)
+
+          // Force play and handle autoplay restrictions
+          const playPromise = audioElement.play()
+          if (playPromise !== undefined) {
+            playPromise
+              .then(() => {
+                console.log('Remote audio playback started successfully')
+              })
+              .catch((err) => {
+                console.error('Audio autoplay blocked:', err)
+                // Try to play again on user interaction
+                const enableAudio = () => {
+                  audioElement.play().catch((e) => console.error('Retry audio play failed:', e))
+                  document.removeEventListener('click', enableAudio)
+                  document.removeEventListener('touchstart', enableAudio)
+                }
+                document.addEventListener('click', enableAudio, { once: true })
+                document.addEventListener('touchstart', enableAudio, { once: true })
+              })
+          }
+
           return () => {
             audioTrack.track.detach()
           }
@@ -145,8 +171,14 @@ export default function VideoCallModal({
 
       // Listen for new audio tracks being published
       const handleTrackSubscribed = (track: any) => {
-        if (track.kind === 'audio' && remoteAudioRef.current) {
-          track.attach(remoteAudioRef.current)
+        if (track.kind === 'audio' && audioElement) {
+          track.attach(audioElement)
+          // Ensure playback after attaching new track
+          audioElement.volume = 1.0
+          audioElement.muted = false
+          audioElement.play().catch((err) => {
+            console.error('Error playing newly subscribed audio:', err)
+          })
         }
       }
 
@@ -299,6 +331,7 @@ export default function VideoCallModal({
             ref={remoteAudioRef}
             autoPlay
             playsInline
+            muted={false}
             className="hidden"
           />
         </div>
