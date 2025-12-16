@@ -641,7 +641,7 @@ export default function VideoCallModal({
         </div>
 
         {/* Controls Footer */}
-        <div className="bg-gradient-to-t from-black/95 via-black/70 to-transparent px-6 py-6 flex items-center justify-center gap-6 absolute bottom-0 left-0 right-0">
+        <div className="bg-gradient-to-t from-black/95 via-black/70 to-transparent px-6 py-6 flex items-center justify-center gap-6 absolute bottom-0 left-0 right-0 z-40 pointer-events-auto">
           {/* Audio Toggle */}
           <button
             onClick={toggleAudioClick}
