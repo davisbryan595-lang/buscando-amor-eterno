@@ -83,8 +83,17 @@ export function useLiveKitCall() {
         }
 
         const room = new Room({
-          audio: true,
-          video: callType === 'video',
+          audioCaptureDefaults: {
+            autoGainControl: true,
+            echoCancellation: true,
+            noiseSuppression: true,
+          },
+          videoCaptureDefaults: {
+            resolution: {
+              width: 640,
+              height: 480,
+            },
+          },
           adaptiveStream: true,
           dynacast: true,
           reconnectPolicy: {
