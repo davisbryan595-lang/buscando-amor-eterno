@@ -44,39 +44,22 @@ export default function VideoCallModal({
         try {
           const roomName = [user.id, otherUserId].sort().join('-')
 
-          // Check if invitation already exists
-          const { data: existingInvitation } = await supabase
-            .from('call_invitations')
-            .select('id, status')
-            .eq('caller_id', user.id)
-            .eq('recipient_id', otherUserId)
-            .eq('room_name', roomName)
-            .maybeSingle()
-
-          // If an invitation exists and is not ended/declined, reuse it
-          if (existingInvitation && !['ended', 'declined'].includes(existingInvitation.status)) {
-            setInvitationSent(true)
-            return
-          }
-
-          // If there's a previous ended/declined invitation, delete it to allow a new one
-          if (existingInvitation && ['ended', 'declined'].includes(existingInvitation.status)) {
-            await supabase
-              .from('call_invitations')
-              .delete()
-              .eq('id', existingInvitation.id)
-          }
-
-          // Create a new invitation
+          // Use upsert to handle both insert and update cases
           const { error: err } = await supabase
             .from('call_invitations')
-            .insert({
-              caller_id: user.id,
-              recipient_id: otherUserId,
-              call_type: callType,
-              room_name: roomName,
-              status: 'pending',
-            })
+            .upsert(
+              {
+                caller_id: user.id,
+                recipient_id: otherUserId,
+                call_type: callType,
+                room_name: roomName,
+                status: 'pending',
+                updated_at: new Date().toISOString(),
+              },
+              {
+                onConflict: 'caller_id,recipient_id,room_name',
+              }
+            )
 
           if (err) {
             console.error('Error sending call invitation:', err?.message || err)
