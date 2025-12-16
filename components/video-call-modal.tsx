@@ -34,6 +34,7 @@ export default function VideoCallModal({
   const isMobile = useIsMobile()
   const remoteVideoRef = React.useRef<HTMLVideoElement>(null)
   const localVideoRef = React.useRef<HTMLVideoElement>(null)
+  const remoteAudioRef = React.useRef<HTMLAudioElement>(null)
   const sendingInvitationRef = React.useRef(false)
 
   // Send call invitation when modal opens (for outgoing calls)
@@ -124,6 +125,38 @@ export default function VideoCallModal({
       }
     }
   }, [participants, callType])
+
+  // Handle remote participant audio tracks
+  useEffect(() => {
+    if (participants.length > 0 && remoteAudioRef.current) {
+      const participant = participants[0]
+
+      // Attach audio track
+      const audioTracks = participant.audioTracks
+      if (audioTracks && audioTracks.size > 0) {
+        const audioTrack = Array.from(audioTracks.values())[0]
+        if (audioTrack && audioTrack.track) {
+          audioTrack.track.attach(remoteAudioRef.current)
+          return () => {
+            audioTrack.track.detach()
+          }
+        }
+      }
+
+      // Listen for new audio tracks being published
+      const handleTrackSubscribed = (track: any) => {
+        if (track.kind === 'audio' && remoteAudioRef.current) {
+          track.attach(remoteAudioRef.current)
+        }
+      }
+
+      participant.on(ParticipantEvent.TrackSubscribed, handleTrackSubscribed)
+
+      return () => {
+        participant.off(ParticipantEvent.TrackSubscribed, handleTrackSubscribed)
+      }
+    }
+  }, [participants])
 
   // Update video when toggled
   const toggleVideoClick = async () => {
@@ -260,6 +293,14 @@ export default function VideoCallModal({
               muted
             />
           )}
+
+          {/* Remote Audio Element (hidden but necessary for playback) */}
+          <audio
+            ref={remoteAudioRef}
+            autoPlay
+            playsInline
+            className="hidden"
+          />
         </div>
 
         {/* Controls */}
