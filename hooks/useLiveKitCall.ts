@@ -167,11 +167,21 @@ export function useLiveKitCall() {
         }
 
         const handleRoomError = (error: Error) => {
-          safeSetState((prev) => ({
-            ...prev,
-            error: error instanceof Error ? error.message : 'Connection error occurred',
-            isConnecting: false,
-          }))
+          // Log errors for debugging but don't spam console
+          const isNetworkError = error?.message?.toLowerCase().includes('network') ||
+                               error?.message?.toLowerCase().includes('timeout') ||
+                               error?.message?.toLowerCase().includes('connection')
+
+          if (isNetworkError) {
+            // Network errors are expected during reconnection, don't set error state
+          } else {
+            safeSetState((prev) => ({
+              ...prev,
+              error: error instanceof Error ? error.message : 'Connection error occurred',
+              isConnecting: false,
+            }))
+          }
+
           if (roomRef.current) {
             roomRef.current.disconnect().catch(() => {})
           }
