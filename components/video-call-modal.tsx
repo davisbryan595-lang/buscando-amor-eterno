@@ -1,7 +1,7 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
-import { Participant, ParticipantEvent } from 'livekit-client'
+import React, { useEffect, useState, useRef } from 'react'
+import { Participant, ParticipantEvent, Track } from 'livekit-client'
 import { X, Mic, MicOff, Video, VideoOff, Phone } from 'lucide-react'
 import { useLiveKitCall } from '@/hooks/useLiveKitCall'
 import { useIsMobile } from '@/hooks/use-mobile'
@@ -32,20 +32,19 @@ export default function VideoCallModal({
   const [videoEnabled, setVideoEnabled] = useState(callType === 'video')
   const [invitationSent, setInvitationSent] = useState(false)
   const isMobile = useIsMobile()
-  const remoteVideoRef = React.useRef<HTMLVideoElement>(null)
-  const localVideoRef = React.useRef<HTMLVideoElement>(null)
-  const remoteAudioRef = React.useRef<HTMLAudioElement>(null)
-  const sendingInvitationRef = React.useRef(false)
+  const remoteVideoRef = useRef<HTMLVideoElement>(null)
+  const localVideoRef = useRef<HTMLVideoElement>(null)
+  const remoteAudioRef = useRef<HTMLAudioElement>(null)
+  const sendingInvitationRef = useRef(false)
+  const remoteTracksRef = useRef<Map<string, any>>(new Map())
 
-  // Send call invitation when modal opens (for outgoing calls)
+  // Send call invitation when modal opens
   useEffect(() => {
     if (isOpen && !invitationSent && !callInvitationId && user && !sendingInvitationRef.current) {
       const sendInvitation = async () => {
         sendingInvitationRef.current = true
         try {
           const roomName = [user.id, otherUserId].sort().join('-')
-
-          // Use upsert to handle both insert and update cases
           const expiresAt = new Date()
           expiresAt.setMinutes(expiresAt.getMinutes() + 5)
 
@@ -66,13 +65,11 @@ export default function VideoCallModal({
               }
             )
 
-          if (err) {
-            console.error('Error sending call invitation:', err?.message || err)
-          } else {
+          if (!err) {
             setInvitationSent(true)
           }
         } catch (err) {
-          console.error('Error sending call invitation:', err instanceof Error ? err.message : err)
+          // Silently handle invitation errors
         } finally {
           sendingInvitationRef.current = false
         }
@@ -91,141 +88,171 @@ export default function VideoCallModal({
 
   // Handle local video track
   useEffect(() => {
-    if (isConnected && localParticipant && callType === 'video' && localVideoRef.current) {
-      const videoTracks = localParticipant.videoTracks
-      if (videoTracks && videoTracks.size > 0) {
-        const videoTrack = Array.from(videoTracks.values())[0]
-        if (videoTrack && videoTrack.track) {
+    if (!isConnected || !localParticipant || callType !== 'video' || !localVideoRef.current) {
+      return
+    }
+
+    const videoTracks = localParticipant.videoTracks
+    if (videoTracks?.size > 0) {
+      const videoTrack = Array.from(videoTracks.values())[0]
+      if (videoTrack?.track) {
+        try {
           videoTrack.track.attach(localVideoRef.current)
           return () => {
-            videoTrack.track.detach()
+            videoTrack.track?.detach()
           }
+        } catch (err) {
+          // Silently handle attach errors
         }
       }
     }
   }, [isConnected, localParticipant, callType])
 
-  // Handle remote participant video tracks
+  // Handle remote participant tracks
   useEffect(() => {
-    if (participants.length > 0 && remoteVideoRef.current) {
-      const participant = participants[0]
+    if (participants.length === 0) {
+      return
+    }
 
-      // Attach video track if it exists
-      if (callType === 'video') {
-        const videoTracks = participant.videoTracks
-        if (videoTracks && videoTracks.size > 0) {
-          const videoTrack = Array.from(videoTracks.values())[0]
-          if (videoTrack && videoTrack.track) {
-            videoTrack.track.attach(remoteVideoRef.current)
-            return () => {
-              videoTrack.track.detach()
+    const participant = participants[0] as Participant
+    if (!participant) return
+
+    // Handle remote video track
+    if (callType === 'video' && remoteVideoRef.current) {
+      const handleVideoTrackSubscribed = (track: Track) => {
+        if (track.kind === 'video' && remoteVideoRef.current) {
+          try {
+            remoteTracksRef.current.set('video', track)
+            track.attach(remoteVideoRef.current)
+          } catch (err) {
+            // Silently handle attach errors
+          }
+        }
+      }
+
+      const handleVideoTrackUnsubscribed = (track: Track) => {
+        if (track.kind === 'video' && remoteVideoRef.current) {
+          try {
+            track.detach()
+            remoteTracksRef.current.delete('video')
+          } catch (err) {
+            // Silently handle detach errors
+          }
+        }
+      }
+
+      // Check for existing video track
+      const videoTracks = participant.videoTracks
+      if (videoTracks?.size > 0) {
+        const videoTrack = Array.from(videoTracks.values())[0]
+        if (videoTrack?.track) {
+          handleVideoTrackSubscribed(videoTrack.track)
+        }
+      }
+
+      participant.on(ParticipantEvent.TrackSubscribed, handleVideoTrackSubscribed)
+      participant.on(ParticipantEvent.TrackUnsubscribed, handleVideoTrackUnsubscribed)
+
+      return () => {
+        participant.off(ParticipantEvent.TrackSubscribed, handleVideoTrackSubscribed)
+        participant.off(ParticipantEvent.TrackUnsubscribed, handleVideoTrackUnsubscribed)
+        if (remoteVideoRef.current) {
+          try {
+            const videoTrack = remoteTracksRef.current.get('video')
+            if (videoTrack) {
+              videoTrack.detach()
             }
+          } catch (err) {
+            // Silently handle cleanup errors
           }
         }
       }
     }
   }, [participants, callType])
 
-  // Handle remote participant audio tracks
+  // Handle remote audio track
   useEffect(() => {
-    if (participants.length > 0 && remoteAudioRef.current) {
-      const participant = participants[0]
-      const audioElement = remoteAudioRef.current
+    if (participants.length === 0 || !remoteAudioRef.current) {
+      return
+    }
 
-      // Ensure audio element is properly configured
-      audioElement.volume = 1.0
-      audioElement.muted = false
-      audioElement.autoplay = true
+    const participant = participants[0] as Participant
+    if (!participant) return
 
-      const attachAudioTrack = (track: any) => {
-        if (track && track.kind === 'audio') {
-          console.log('Attaching remote audio track:', {
-            sid: track.sid,
-            enabled: track.mediaStreamTrack?.enabled,
-            muted: track.isMuted,
-            readyState: track.mediaStreamTrack?.readyState,
-          })
+    const audioElement = remoteAudioRef.current
 
-          // Create a new MediaStream with the audio track
-          const stream = new MediaStream([track.mediaStreamTrack])
+    const handleAudioTrackSubscribed = (track: Track) => {
+      if (track.kind === 'audio') {
+        try {
+          const stream = new MediaStream([track.mediaStreamTrack!])
           audioElement.srcObject = stream
-
-          // Ensure element is configured for playback
           audioElement.muted = false
           audioElement.volume = 1.0
 
-          // Force play with user gesture fallback
-          const attemptPlay = () => {
-            const playPromise = audioElement.play()
-            if (playPromise !== undefined) {
-              playPromise
-                .then(() => {
-                  console.log('Remote audio playback started successfully')
-                })
-                .catch((err) => {
-                  console.warn('Audio autoplay blocked, waiting for user gesture:', err)
-                  // Set up one-time event listeners for user interaction
-                  const enableAudio = () => {
-                    audioElement.play()
-                      .then(() => console.log('Audio playback started after user gesture'))
-                      .catch((e) => console.error('Audio play failed after gesture:', e))
-                  }
-                  document.addEventListener('click', enableAudio, { once: true })
-                  document.addEventListener('touchstart', enableAudio, { once: true })
-                  document.addEventListener('keydown', enableAudio, { once: true })
-                })
-            }
+          // Attempt to play
+          const playPromise = audioElement.play()
+          if (playPromise !== undefined) {
+            playPromise.catch(() => {
+              // Autoplay blocked - will play on user interaction
+              const enableAudio = () => {
+                audioElement.play().catch(() => {})
+              }
+              document.addEventListener('click', enableAudio, { once: true })
+            })
           }
-
-          attemptPlay()
+          remoteTracksRef.current.set('audio', track)
+        } catch (err) {
+          // Silently handle audio setup errors
         }
       }
+    }
 
-      // Attach existing audio tracks
-      const audioTracks = participant.audioTracks
-      if (audioTracks && audioTracks.size > 0) {
-        const audioPublication = Array.from(audioTracks.values())[0]
-        if (audioPublication && audioPublication.track) {
-          attachAudioTrack(audioPublication.track)
+    const handleAudioTrackUnsubscribed = (track: Track) => {
+      if (track.kind === 'audio') {
+        try {
+          if (audioElement.srcObject) {
+            audioElement.srcObject = null
+          }
+          remoteTracksRef.current.delete('audio')
+        } catch (err) {
+          // Silently handle cleanup errors
         }
       }
+    }
 
-      // Listen for new audio tracks being published
-      const handleTrackSubscribed = (track: any, publication: any) => {
-        console.log('Track subscribed:', track.kind, 'from', participant.identity)
-        if (track.kind === 'audio') {
-          attachAudioTrack(track)
-        }
+    // Check for existing audio track
+    const audioTracks = participant.audioTracks
+    if (audioTracks?.size > 0) {
+      const audioTrack = Array.from(audioTracks.values())[0]
+      if (audioTrack?.track) {
+        handleAudioTrackSubscribed(audioTrack.track)
       }
+    }
 
-      const handleTrackUnsubscribed = (track: any) => {
-        console.log('Track unsubscribed:', track.kind)
-        if (track.kind === 'audio' && audioElement) {
-          audioElement.srcObject = null
-        }
-      }
+    participant.on(ParticipantEvent.TrackSubscribed, handleAudioTrackSubscribed)
+    participant.on(ParticipantEvent.TrackUnsubscribed, handleAudioTrackUnsubscribed)
 
-      participant.on(ParticipantEvent.TrackSubscribed, handleTrackSubscribed)
-      participant.on(ParticipantEvent.TrackUnsubscribed, handleTrackUnsubscribed)
-
-      return () => {
-        participant.off(ParticipantEvent.TrackSubscribed, handleTrackSubscribed)
-        participant.off(ParticipantEvent.TrackUnsubscribed, handleTrackUnsubscribed)
-        if (audioElement) {
-          audioElement.srcObject = null
+    return () => {
+      participant.off(ParticipantEvent.TrackSubscribed, handleAudioTrackSubscribed)
+      participant.off(ParticipantEvent.TrackUnsubscribed, handleAudioTrackUnsubscribed)
+      if (remoteAudioRef.current) {
+        try {
+          remoteAudioRef.current.srcObject = null
+        } catch (err) {
+          // Silently handle cleanup errors
         }
       }
     }
   }, [participants])
 
-  // Update video when toggled
+  // Toggle video
   const toggleVideoClick = async () => {
     const newState = !videoEnabled
     setVideoEnabled(newState)
     await toggleVideo(newState)
   }
 
-  // Update audio when toggled
+  // Toggle audio
   const toggleAudioClick = async () => {
     const newState = !audioEnabled
     setAudioEnabled(newState)
@@ -234,7 +261,6 @@ export default function VideoCallModal({
 
   const handleEndCall = async () => {
     try {
-      // Mark call invitation as ended
       if (invitationSent && user) {
         const roomName = [user.id, otherUserId].sort().join('-')
         await supabase
@@ -242,15 +268,27 @@ export default function VideoCallModal({
           .update({ status: 'ended' })
           .eq('room_name', roomName)
           .eq('caller_id', user.id)
+          .catch(() => {})
       } else if (callInvitationId) {
         await supabase
           .from('call_invitations')
           .update({ status: 'ended' })
           .eq('id', callInvitationId)
+          .catch(() => {})
       }
     } catch (err) {
-      console.warn('Error updating call status:', err)
+      // Silently handle errors
     }
+
+    // Clean up tracks
+    remoteTracksRef.current.forEach((track) => {
+      try {
+        track.detach()
+      } catch (err) {
+        // Silently handle errors
+      }
+    })
+    remoteTracksRef.current.clear()
 
     await leaveCall()
     onClose()
@@ -305,11 +343,6 @@ export default function VideoCallModal({
               <div className="text-center bg-red-500/20 border border-red-500 rounded-lg p-6 max-w-sm mx-4">
                 <p className="text-red-100 mb-2 font-semibold">Call Error</p>
                 <p className="text-red-100 text-sm mb-4">{error}</p>
-                <p className="text-gray-300 text-xs mb-4">
-                  {error.includes('credentials') && 'Check that LiveKit environment variables are set on your deployment platform.'}
-                  {error.includes('token') && 'Failed to generate call token. Please refresh and try again.'}
-                  {error.includes('URL') && 'LiveKit service is not configured. Please contact support.'}
-                </p>
                 <button
                   onClick={handleEndCall}
                   className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition"
