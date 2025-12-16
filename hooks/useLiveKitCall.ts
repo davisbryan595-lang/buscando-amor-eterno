@@ -213,7 +213,7 @@ export function useLiveKitCall() {
         // Connect to room with timeout
         const connectPromise = room.connect(liveKitUrl, token)
         const timeoutPromise = new Promise<void>((_, reject) =>
-          setTimeout(() => reject(new Error('Connection timeout after 10 seconds')), 10000)
+          setTimeout(() => reject(new Error('Connection timeout after 15 seconds')), 15000)
         )
 
         await Promise.race([connectPromise, timeoutPromise])
