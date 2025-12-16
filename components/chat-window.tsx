@@ -234,13 +234,20 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
           <>
             {messages.map((msg) => (
               <div
-                className={`max-w-xs lg:max-w-md xl:max-w-lg px-4 py-2 lg:py-3 rounded-2xl ${
-                  msg.sender_id === user?.id
-                    ? 'bg-primary text-white rounded-br-none'
-                    : 'bg-slate-200 text-slate-900 rounded-bl-none'
-                }`}
+                key={msg.id}
+                className={`flex w-full ${msg.sender_id === user?.id ? 'justify-end' : 'justify-start'}`}
               >
-                <p className="text-sm lg:text-base break-words">{msg.content}</p>
+                <div
+                  id={`message-${msg.id}`}
+                  onContextMenu={(e) => handleContextMenu(e, msg.id, msg.content, msg.sender_id === user?.id)}
+                  className={`max-w-xs lg:max-w-md xl:max-w-lg px-4 py-2 lg:py-3 rounded-2xl ${
+                    msg.sender_id === user?.id
+                      ? 'bg-primary text-white rounded-br-none'
+                      : 'bg-slate-200 text-slate-900 rounded-bl-none'
+                  }`}
+                >
+                  <p className="text-sm lg:text-base break-words">{msg.content}</p>
+                </div>
               </div>
             ))}
             {showTypingIndicator && (
