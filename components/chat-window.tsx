@@ -1,14 +1,11 @@
 'use client'
 
 import React, { useState, useEffect, useRef } from 'react'
-import { Send, Lock, ArrowLeft, Mic, Video } from 'lucide-react'
-import gsap from 'gsap'
-import Link from 'next/link'
+import { Send, Phone, Video, ArrowLeft } from 'lucide-react'
 import Image from 'next/image'
 import { useMessages } from '@/hooks/useMessages'
 import { useAuth } from '@/context/auth-context'
 import { toast } from 'sonner'
-import MessageBubble from '@/components/message-bubble'
 import MessageContextMenu from '@/components/message-context-menu'
 import TypingIndicator from '@/components/typing-indicator'
 import VideoCallModal from '@/components/video-call-modal'
@@ -42,19 +39,35 @@ interface Conversation {
   last_message_time?: string
 }
 
-export default function ChatWindow({ conversation, onBack }: { conversation: Conversation; onBack?: () => void }) {
+interface ChatWindowProps {
+  conversation: Conversation
+  onBack?: () => void
+}
+
+export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
   const { user } = useAuth()
   const { messages, sendMessage, markAsRead, fetchMessages, fetchConversations } = useMessages()
   const [newMessage, setNewMessage] = useState('')
   const [loading, setLoading] = useState(false)
   const [otherUserDetails, setOtherUserDetails] = useState<{ name: string; image: string | null } | null>(null)
-  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; messageId: string; content: string; isOwn: boolean } | null>(null)
-  const [showTypingIndicator, setShowTypingIndicator] = useState(false)
   const [callModalOpen, setCallModalOpen] = useState(false)
   const [callType, setCallType] = useState<'audio' | 'video'>('video')
+  const [contextMenu, setContextMenu] = useState<{
+    x: number
+    y: number
+    messageId: string
+    content: string
+    isOwn: boolean
+  } | null>(null)
+  const [showTypingIndicator] = useState(false)
+
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const messagesContainerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }
 
   useEffect(() => {
     if (conversation?.other_user_id) {
@@ -102,13 +115,7 @@ export default function ChatWindow({ conversation, onBack }: { conversation: Con
 
   // Scroll to bottom when messages change
   useEffect(() => {
-    if (messagesEndRef.current) {
-      gsap.to(messagesContainerRef.current, {
-        scrollTop: messagesContainerRef.current?.scrollHeight,
-        duration: 0.5,
-        ease: 'power2.out',
-      })
-    }
+    scrollToBottom()
   }, [messages])
 
   const handleSend = async () => {
@@ -161,20 +168,20 @@ export default function ChatWindow({ conversation, onBack }: { conversation: Con
   }
 
   return (
-    <div className="bg-white flex flex-col h-full overflow-hidden">
+    <div className="bg-gradient-to-b from-white to-rose-50 rounded-xl border border-rose-100 flex flex-col h-full w-full soft-glow">
       {/* Header */}
-      <div className="px-3 sm:px-5 md:px-6 py-3 md:py-4 border-b border-rose-100 flex items-center justify-between flex-shrink-0 bg-gradient-to-r from-white to-rose-50/50">
-        <div className="flex items-center gap-3 md:gap-4 min-w-0 flex-1">
+      <div className="p-4 lg:p-6 border-b border-rose-100 flex items-center justify-between flex-shrink-0">
+        <div className="flex items-center gap-3 lg:gap-4 min-w-0">
           {onBack && (
             <button
               onClick={onBack}
-              className="p-2 hover:bg-rose-100 rounded-lg transition flex-shrink-0 md:hidden"
+              className="md:hidden p-2 hover:bg-rose-100 rounded-full transition flex-shrink-0"
               aria-label="Back to conversations"
             >
-              <ArrowLeft size={20} className="text-primary" />
+              <ArrowLeft size={20} className="text-slate-700" />
             </button>
           )}
-          <div className="relative w-10 h-10 md:w-12 md:h-12 flex-shrink-0">
+          <div className="relative w-12 h-12 lg:w-14 lg:h-14 flex-shrink-0">
             <Image
               src={otherUserDetails?.image || conversation.other_user_image || "/placeholder.svg"}
               alt={otherUserDetails?.name || conversation.other_user_name || 'User'}
@@ -185,80 +192,62 @@ export default function ChatWindow({ conversation, onBack }: { conversation: Con
               <div className="absolute bottom-0 right-0 w-3 h-3 md:w-4 md:h-4 bg-green-500 rounded-full border-3 border-white z-10" />
             )}
           </div>
-          <div className="min-w-0 flex-1">
-            <p className="font-bold text-slate-900 text-sm md:text-lg truncate">{otherUserDetails?.name || conversation.other_user_name || 'User'}</p>
-            <p className="text-xs md:text-sm text-slate-600 mt-0.5">
-              {conversation.is_online ? (
-                <span className="flex items-center gap-2">
-                  <span className="w-2 h-2 bg-green-500 rounded-full inline-block"></span>
-                  Active now
-                </span>
-              ) : (
-                getLastSeenText(conversation.last_message_time)
-              )}
+          <div className="min-w-0">
+            <p className="font-semibold text-slate-900 text-base lg:text-lg truncate">{otherUserDetails?.name || conversation.other_user_name || 'User'}</p>
+            <p className="text-sm lg:text-base text-slate-600">
+              {conversation.is_online ? 'Online' : getLastSeenText(conversation.last_message_time)}
             </p>
           </div>
         </div>
 
-        {/* Call Buttons */}
-        <div className="flex items-center gap-2 flex-shrink-0">
+        <div className="flex gap-2 lg:gap-3 flex-shrink-0">
           <button
             onClick={() => {
               setCallType('audio')
               setCallModalOpen(true)
             }}
-            className="p-2 hover:bg-rose-100 rounded-lg transition text-primary"
-            aria-label="Start audio call"
+            className="p-2 lg:p-3 hover:bg-rose-100 rounded-full transition"
             title="Start audio call"
           >
-            <Mic size={20} />
+            <Phone size={20} className="text-primary lg:w-6 lg:h-6" />
           </button>
           <button
             onClick={() => {
               setCallType('video')
               setCallModalOpen(true)
             }}
-            className="p-2 hover:bg-rose-100 rounded-lg transition text-primary"
-            aria-label="Start video call"
+            className="p-2 lg:p-3 hover:bg-rose-100 rounded-full transition"
             title="Start video call"
           >
-            <Video size={20} />
+            <Video size={20} className="text-primary lg:w-6 lg:h-6" />
           </button>
         </div>
       </div>
 
       {/* Messages */}
-      <div ref={messagesContainerRef} className="flex-1 overflow-y-auto overflow-x-hidden px-4 sm:px-5 md:px-6 py-3 md:py-4 space-y-3 md:space-y-4 bg-white w-full">
+      <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 lg:p-6 space-y-3 lg:space-y-4 min-h-0">
         {messages.length === 0 ? (
-          <div className="flex items-center justify-center h-full text-slate-400">
-            <div className="text-center">
-              <p className="text-base md:text-lg font-semibold mb-2">No messages yet</p>
-              <p className="text-sm md:text-base">Start a conversation with {otherUserDetails?.name || conversation.other_user_name}!</p>
-            </div>
+          <div className="flex items-center justify-center h-full text-slate-500">
+            <p className="text-base lg:text-lg">No messages yet. Start the conversation!</p>
           </div>
         ) : (
           <>
             {messages.map((msg) => (
               <div
                 key={msg.id}
-                id={`message-${msg.id}`}
-                onClick={(e) => {
-                  // Prevent context menu from opening on normal click
-                  if (e.detail === 1) {
-                    setContextMenu(null)
-                  }
-                }}
+                className={`flex w-full ${msg.sender_id === user?.id ? 'justify-end' : 'justify-start'}`}
               >
-                <MessageBubble
-                  id={msg.id}
-                  content={msg.content}
-                  isOwn={msg.sender_id === user?.id}
-                  timestamp={msg.created_at}
-                  onContextMenu={(e) =>
-                    handleContextMenu(e, msg.id, msg.content, msg.sender_id === user?.id)
-                  }
-                  onLongPress={handleMessageLongPress}
-                />
+                <div
+                  id={`message-${msg.id}`}
+                  onContextMenu={(e) => handleContextMenu(e, msg.id, msg.content, msg.sender_id === user?.id)}
+                  className={`max-w-xs lg:max-w-md xl:max-w-lg px-4 py-2 lg:py-3 rounded-2xl ${
+                    msg.sender_id === user?.id
+                      ? 'bg-primary text-white rounded-br-none'
+                      : 'bg-slate-200 text-slate-900 rounded-bl-none'
+                  }`}
+                >
+                  <p className="text-sm lg:text-base break-words">{msg.content}</p>
+                </div>
               </div>
             ))}
             {showTypingIndicator && (
@@ -271,10 +260,11 @@ export default function ChatWindow({ conversation, onBack }: { conversation: Con
             <div ref={messagesEndRef} />
           </>
         )}
+        <div ref={messagesEndRef} />
       </div>
 
       {/* Input */}
-      <div className="px-4 sm:px-5 md:px-6 py-3 md:py-4 border-t border-rose-100 flex gap-2 md:gap-3 flex-shrink-0 bg-gradient-to-r from-white to-rose-50/50">
+      <div className="p-4 lg:p-6 border-t border-rose-100 flex gap-2 lg:gap-3 flex-shrink-0">
         <input
           ref={inputRef}
           type="text"
@@ -283,15 +273,15 @@ export default function ChatWindow({ conversation, onBack }: { conversation: Con
           onKeyPress={(e) => e.key === 'Enter' && handleSend()}
           placeholder="Type your message..."
           disabled={loading}
-          className="flex-1 px-4 md:px-5 py-2 md:py-3 bg-white border border-rose-200 rounded-full text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 transition shadow-sm hover:shadow-md"
+          className="flex-1 px-4 lg:px-6 py-2 lg:py-3 text-sm lg:text-base bg-white border border-rose-200 rounded-full focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
         />
         <button
           onClick={handleSend}
           disabled={loading}
-          className="p-3 md:p-4 bg-primary text-white rounded-full hover:bg-rose-700 transition disabled:opacity-50 flex-shrink-0 shadow-sm hover:shadow-lg active:scale-95 transform duration-75"
+          className="p-2 lg:p-3 bg-primary text-white rounded-full hover:bg-rose-700 transition disabled:opacity-50 flex-shrink-0"
           aria-label="Send message"
         >
-          <Send size={18} className="md:w-5 md:h-5" />
+          <Send size={20} className="lg:w-6 lg:h-6" />
         </button>
       </div>
 

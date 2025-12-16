@@ -1,11 +1,11 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
-import { Room, Participant, RoomEvent, ParticipantEvent } from 'livekit-client'
+import { Room, Participant, RoomEvent, LocalParticipant, RemoteParticipant } from 'livekit-client'
 import { useAuth } from '@/context/auth-context'
 
 export interface CallState {
   room: Room | null
   participants: Participant[]
-  localParticipant: Participant | null
+  localParticipant: LocalParticipant | null
   isConnecting: boolean
   isConnected: boolean
   error: string | null
@@ -22,34 +22,53 @@ export function useLiveKitCall() {
     error: null,
   })
   const roomRef = useRef<Room | null>(null)
+  const cleanupListenersRef = useRef<Array<() => void>>([])
+
+  const safeSetState = useCallback((updater: (prev: CallState) => CallState) => {
+    setState((prev) => {
+      const next = updater(prev)
+      return next
+    })
+  }, [])
+
+  const removeAllListeners = useCallback(() => {
+    cleanupListenersRef.current.forEach(cleanup => cleanup())
+    cleanupListenersRef.current = []
+  }, [])
 
   const joinCall = useCallback(
     async (otherUserId: string, callType: 'audio' | 'video') => {
       if (!user) {
-        setState((prev) => ({ ...prev, error: 'User not authenticated' }))
+        safeSetState((prev) => ({ ...prev, error: 'User not authenticated' }))
         return
       }
 
+      let room: Room | null = null
+
       try {
-        setState((prev) => ({ ...prev, isConnecting: true, error: null }))
+        safeSetState((prev) => ({ ...prev, isConnecting: true, error: null }))
 
         // Request media permissions first
         try {
           const constraints = {
-            audio: true,
-            video: callType === 'video' ? { width: 640, height: 480 } : false,
+            audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+            video: callType === 'video' ? { width: { ideal: 640 }, height: { ideal: 480 } } : false,
           }
-          await navigator.mediaDevices.getUserMedia(constraints)
+          const stream = await navigator.mediaDevices.getUserMedia(constraints)
+          // Stop the stream after getting permissions - LiveKit will request it again
+          stream.getTracks().forEach(track => track.stop())
         } catch (permError) {
-          if (permError instanceof DOMException && permError.name === 'NotAllowedError') {
-            throw new Error('Camera/microphone permissions denied. Please allow access in browser settings.')
-          } else if (permError instanceof DOMException && permError.name === 'NotFoundError') {
-            throw new Error('Camera or microphone not found on your device.')
+          if (permError instanceof DOMException) {
+            if (permError.name === 'NotAllowedError') {
+              throw new Error('Camera/microphone permissions denied. Please allow access in browser settings.')
+            } else if (permError.name === 'NotFoundError') {
+              throw new Error('Camera or microphone not found on your device.')
+            }
           }
           throw permError
         }
 
-        // Generate room name (same for both users)
+        // Generate room name
         const roomName = [user.id, otherUserId].sort().join('-')
 
         // Get token from backend
@@ -76,15 +95,24 @@ export function useLiveKitCall() {
 
         const { token } = await tokenResponse.json()
 
-        // Create and connect to room
+        // Create room with proper configuration
         const liveKitUrl = process.env.NEXT_PUBLIC_LIVEKIT_URL
         if (!liveKitUrl) {
           throw new Error('LiveKit URL not configured')
         }
 
-        const room = new Room({
-          audio: true,
-          video: callType === 'video' ? { width: 640, height: 480 } : false,
+        room = new Room({
+          audioCaptureDefaults: {
+            autoGainControl: true,
+            echoCancellation: true,
+            noiseSuppression: true,
+          },
+          videoCaptureDefaults: {
+            resolution: {
+              width: 640,
+              height: 480,
+            },
+          },
           adaptiveStream: true,
           dynacast: true,
           autoSubscribe: true,
@@ -98,23 +126,23 @@ export function useLiveKitCall() {
 
         roomRef.current = room
 
-        // Handle room events
-        room.on(RoomEvent.ParticipantConnected, (participant: Participant) => {
-          setState((prev) => ({
+        // Setup room event listeners
+        const handleParticipantConnected = (participant: Participant) => {
+          safeSetState((prev) => ({
             ...prev,
             participants: [...prev.participants, participant],
           }))
-        })
+        }
 
-        room.on(RoomEvent.ParticipantDisconnected, (participant: Participant) => {
-          setState((prev) => ({
+        const handleParticipantDisconnected = (participant: Participant) => {
+          safeSetState((prev) => ({
             ...prev,
             participants: prev.participants.filter((p) => p.sid !== participant.sid),
           }))
-        })
+        }
 
-        room.on(RoomEvent.Disconnected, () => {
-          setState((prev) => ({
+        const handleDisconnected = () => {
+          safeSetState((prev) => ({
             ...prev,
             isConnected: false,
             isConnecting: false,
@@ -123,35 +151,40 @@ export function useLiveKitCall() {
             localParticipant: null,
           }))
           roomRef.current = null
-        })
+          removeAllListeners()
+        }
 
-        // Handle connection errors
-        room.on(RoomEvent.Error, (error: Error) => {
-          const errorMessage = error instanceof Error ? error.message : 'Connection error occurred'
-          setState((prev) => ({
+        const handleRoomError = (error: Error) => {
+          safeSetState((prev) => ({
             ...prev,
-            error: errorMessage,
+            error: error instanceof Error ? error.message : 'Connection error occurred',
             isConnecting: false,
           }))
-          console.error('Room error:', error)
           if (roomRef.current) {
-            roomRef.current.disconnect()
+            roomRef.current.disconnect().catch(() => {})
           }
-        })
+        }
 
-        // Handle reconnection completion
-        room.on(RoomEvent.Reconnected, () => {
-          setState((prev) => ({
+        const handleReconnected = () => {
+          safeSetState((prev) => ({
             ...prev,
             error: null,
             isConnecting: false,
           }))
-          console.log('Room reconnected successfully')
-        })
+        }
 
-        // Handle media track subscription failures
-        room.on(RoomEvent.TrackSubscriptionFailed, (trackSid: string, participant: Participant) => {
-          console.warn('Failed to subscribe to track:', trackSid, 'from participant:', participant.identity)
+        room.on(RoomEvent.ParticipantConnected, handleParticipantConnected)
+        room.on(RoomEvent.ParticipantDisconnected, handleParticipantDisconnected)
+        room.on(RoomEvent.Disconnected, handleDisconnected)
+        room.on(RoomEvent.Error, handleRoomError)
+        room.on(RoomEvent.Reconnected, handleReconnected)
+
+        cleanupListenersRef.current.push(() => {
+          room?.off(RoomEvent.ParticipantConnected, handleParticipantConnected)
+          room?.off(RoomEvent.ParticipantDisconnected, handleParticipantDisconnected)
+          room?.off(RoomEvent.Disconnected, handleDisconnected)
+          room?.off(RoomEvent.Error, handleRoomError)
+          room?.off(RoomEvent.Reconnected, handleReconnected)
         })
 
         // Connect to room with timeout
@@ -162,17 +195,46 @@ export function useLiveKitCall() {
 
         await Promise.race([connectPromise, timeoutPromise])
 
-        // Enable microphone and camera after connection
+        // Enable media with proper sequencing
         try {
+          // Enable microphone
           await room.localParticipant.setMicrophoneEnabled(true)
+
+          // Enable camera for video calls
           if (callType === 'video') {
             await room.localParticipant.setCameraEnabled(true)
           }
-        } catch (publishError) {
-          console.error('Error publishing tracks:', publishError)
+
+          // Wait for tracks to be ready
+          await new Promise<void>((resolve, reject) => {
+            const maxWaitTime = 5000
+            const startTime = Date.now()
+
+            const checkTracks = () => {
+              const hasAudio = (room?.localParticipant.audioTracks?.size ?? 0) > 0
+              const hasVideo = callType === 'video' ? (room?.localParticipant.videoTracks?.size ?? 0) > 0 : true
+
+              if (hasAudio && hasVideo) {
+                resolve()
+                return
+              }
+
+              if (Date.now() - startTime > maxWaitTime) {
+                reject(new Error('Timeout waiting for media tracks to be ready'))
+                return
+              }
+
+              setTimeout(checkTracks, 100)
+            }
+
+            checkTracks()
+          })
+        } catch (mediaError) {
+          throw new Error(`Failed to enable media: ${mediaError instanceof Error ? mediaError.message : 'Unknown error'}`)
         }
 
-        setState((prev) => ({
+        // Update state with successful connection
+        safeSetState((prev) => ({
           ...prev,
           room,
           localParticipant: room.localParticipant,
@@ -183,18 +245,17 @@ export function useLiveKitCall() {
         }))
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Failed to join call'
-        setState((prev) => ({
+        safeSetState((prev) => ({
           ...prev,
           error: errorMessage,
           isConnecting: false,
         }))
-        console.error('Error joining call:', err)
         if (roomRef.current) {
-          roomRef.current.disconnect()
+          roomRef.current.disconnect().catch(() => {})
         }
       }
     },
-    [user]
+    [user, safeSetState, removeAllListeners]
   )
 
   const leaveCall = useCallback(async () => {
@@ -204,46 +265,52 @@ export function useLiveKitCall() {
         roomRef.current = null
       }
     } catch (err) {
-      console.warn('Error disconnecting from call:', err)
+      // Silently handle disconnect errors
     } finally {
-      setState({
+      removeAllListeners()
+      safeSetState(() => ({
         room: null,
         participants: [],
         localParticipant: null,
         isConnecting: false,
         isConnected: false,
         error: null,
-      })
+      }))
     }
-  }, [])
+  }, [removeAllListeners, safeSetState])
 
   const toggleAudio = useCallback(async (enabled: boolean) => {
     if (roomRef.current?.localParticipant) {
       try {
         await roomRef.current.localParticipant.setMicrophoneEnabled(enabled)
       } catch (err) {
-        console.error('Error toggling audio:', err)
+        safeSetState((prev) => ({
+          ...prev,
+          error: `Failed to ${enabled ? 'enable' : 'disable'} audio`,
+        }))
       }
     }
-  }, [])
+  }, [safeSetState])
 
   const toggleVideo = useCallback(async (enabled: boolean) => {
     if (roomRef.current?.localParticipant) {
       try {
         await roomRef.current.localParticipant.setCameraEnabled(enabled)
       } catch (err) {
-        console.error('Error toggling video:', err)
+        safeSetState((prev) => ({
+          ...prev,
+          error: `Failed to ${enabled ? 'enable' : 'disable'} video`,
+        }))
       }
     }
-  }, [])
+  }, [safeSetState])
 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
+      removeAllListeners()
       if (roomRef.current) {
-        roomRef.current.disconnect().catch((err) => {
-          console.warn('Error during cleanup disconnect:', err)
-        })
+        roomRef.current.disconnect().catch(() => {})
         roomRef.current = null
       }
       // Ensure state is cleared to prevent any lingering references
@@ -256,7 +323,7 @@ export function useLiveKitCall() {
         error: null,
       })
     }
-  }, [])
+  }, [removeAllListeners])
 
   return {
     ...state,

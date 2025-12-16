@@ -1,76 +1,78 @@
-import { AccessToken } from 'livekit-server-sdk';
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server'
+import { AccessToken } from 'livekit-server-sdk'
 
-export async function POST(request: Request) {
-  try {
-    const { roomName, userName } = await request.json();
+async function generateToken(roomName: string, participantName: string) {
+  const apiKey = process.env.LIVEKIT_API_KEY
+  const apiSecret = process.env.LIVEKIT_API_SECRET
 
-    if (!roomName || !userName) {
-      return NextResponse.json({ error: 'Missing roomName or userName' }, { status: 400 });
-    }
+  if (!apiKey || !apiSecret) {
+    throw new Error('LiveKit credentials not configured')
+  }
 
-    const apiKey = process.env.LIVEKIT_API_KEY;
-    const apiSecret = process.env.LIVEKIT_API_SECRET;
+  const token = new AccessToken(apiKey, apiSecret, {
+    identity: participantName,
+    name: participantName,
+  })
 
-    if (!apiKey || !apiSecret) {
-      return NextResponse.json({ error: 'LiveKit credentials not configured' }, { status: 500 });
-    }
+  token.addGrant({
+    room: roomName,
+    roomJoin: true,
+    canPublish: true,
+    canSubscribe: true,
+    canPublishData: true,
+  })
 
-    const at = new AccessToken(apiKey, apiSecret, {
-      identity: userName,
-      ttl: '10m',
-    });
+  const jwt = await token.toJwt()
 
-    at.addGrant({
-      roomJoin: true,
-      room: roomName,
-      canPublish: true,
-      canSubscribe: true,
-    });
-
-    const token = await at.toJwt();
-
-    return NextResponse.json({ token });
-  } catch (err) {
-    console.error('Token generation error:', err);
-    return NextResponse.json({ error: 'Failed to generate token' }, { status: 500 });
+  return {
+    token: jwt,
+    url: process.env.NEXT_PUBLIC_LIVEKIT_URL,
   }
 }
 
-export async function GET(request: Request) {
+export async function GET(req: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
-    const room = searchParams.get('room');
-    const identity = searchParams.get('identity');
+    const searchParams = req.nextUrl.searchParams
+    const roomName = searchParams.get('room')
+    const participantName = searchParams.get('participant')
 
-    if (!room || !identity) {
-      return NextResponse.json({ error: 'Missing room or identity' }, { status: 400 });
+    if (!roomName || !participantName) {
+      return NextResponse.json(
+        { error: 'Missing required parameters: room and participant' },
+        { status: 400 }
+      )
     }
 
-    const apiKey = process.env.LIVEKIT_API_KEY;
-    const apiSecret = process.env.LIVEKIT_API_SECRET;
+    const result = await generateToken(roomName, participantName)
+    return NextResponse.json(result)
+  } catch (error) {
+    console.error('Error generating LiveKit token:', error)
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Failed to generate token' },
+      { status: 500 }
+    )
+  }
+}
 
-    if (!apiKey || !apiSecret) {
-      return NextResponse.json({ error: 'LiveKit credentials not configured' }, { status: 500 });
+export async function POST(req: NextRequest) {
+  try {
+    const body = await req.json()
+    const { roomName, userName, callType } = body
+
+    if (!roomName || !userName) {
+      return NextResponse.json(
+        { error: 'Missing required parameters: roomName and userName' },
+        { status: 400 }
+      )
     }
 
-    const at = new AccessToken(apiKey, apiSecret, {
-      identity,
-      ttl: '10m',
-    });
-
-    at.addGrant({
-      roomJoin: true,
-      room,
-      canPublish: true,
-      canSubscribe: true,
-    });
-
-    const token = await at.toJwt();
-
-    return NextResponse.json({ token });
-  } catch (err) {
-    console.error('Token generation error:', err);
-    return NextResponse.json({ error: 'Failed to generate token' }, { status: 500 });
+    const result = await generateToken(roomName, userName)
+    return NextResponse.json(result)
+  } catch (error) {
+    console.error('Error generating LiveKit token:', error)
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Failed to generate token' },
+      { status: 500 }
+    )
   }
 }
