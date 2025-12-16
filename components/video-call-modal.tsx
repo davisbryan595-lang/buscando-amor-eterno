@@ -448,8 +448,8 @@ export default function VideoCallModal({
 
   const isMobileView = isMobile
   const containerClasses = isMobileView
-    ? 'fixed inset-0 z-50 flex flex-col'
-    : 'fixed inset-0 bg-black/50 flex items-center justify-center z-50'
+    ? 'fixed inset-0 z-[99] flex flex-col pointer-events-auto'
+    : 'fixed inset-0 bg-black/50 flex items-center justify-center z-[99] pointer-events-auto'
 
   const modalClasses = isMobileView
     ? 'w-full h-full bg-black'
@@ -459,7 +459,7 @@ export default function VideoCallModal({
     <div className={containerClasses}>
       <div className={modalClasses}>
         {/* Header */}
-        <div className="bg-gradient-to-b from-black/90 via-black/50 to-transparent px-6 py-4 flex items-center justify-between absolute top-0 left-0 right-0 z-10">
+        <div className="bg-gradient-to-b from-black/90 via-black/50 to-transparent px-6 py-4 flex items-center justify-between absolute top-0 left-0 right-0 z-20 pointer-events-none">
           <div className="flex-1">
             <h3 className="text-white font-semibold text-lg">
               {callType === 'video' ? 'Video Call' : 'Audio Call'}
@@ -468,7 +468,7 @@ export default function VideoCallModal({
           </div>
 
           {/* Connection Status & Stats */}
-          <div className="flex items-center gap-4 mr-4">
+          <div className="flex items-center gap-4 mr-4 pointer-events-auto">
             {/* Call Duration */}
             <div className="flex items-center gap-2 text-white text-sm font-medium">
               <Timer size={16} />
@@ -486,6 +486,7 @@ export default function VideoCallModal({
                     ? 'bg-yellow-500/20 text-yellow-300'
                     : 'bg-slate-700 text-gray-300'
                 }`}
+                aria-label="Toggle connection stats"
               >
                 {connectionErrorRef.current || stats.quality === 'poor' ? (
                   <WifiOff size={14} />
@@ -508,9 +509,9 @@ export default function VideoCallModal({
           </div>
         </div>
 
-        {/* Connection Stats Panel */}
-        {showStats && isConnected && (
-          <div className="absolute top-20 right-6 z-20 bg-slate-900/95 border border-slate-700 rounded-lg p-4 w-64 backdrop-blur-sm">
+        {/* Connection Stats Panel - Desktop Always Visible, Mobile on Demand */}
+        {isConnected && (showStats || !isMobileView) && (
+          <div className={`${!isMobileView ? 'absolute top-20 right-6 z-30 pointer-events-auto' : 'absolute top-20 right-6 z-30'} bg-slate-900/95 border border-slate-700 rounded-lg p-4 w-64 backdrop-blur-sm`}>
             <h4 className="text-white font-semibold mb-3 text-sm">Connection Stats</h4>
             <div className="space-y-2 text-sm text-gray-300">
               <div className="flex justify-between">
@@ -543,6 +544,14 @@ export default function VideoCallModal({
 
         {/* Video Container */}
         <div className="flex-1 relative bg-black overflow-hidden">
+          {/* Desktop Connection Status Banner */}
+          {!isMobileView && isConnected && (
+            <div className="absolute top-24 left-6 z-30 flex items-center gap-2 px-4 py-2 bg-green-500/20 border border-green-500/50 rounded-lg">
+              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+              <span className="text-green-300 text-sm font-medium">Call Connected</span>
+            </div>
+          )}
+
           {/* Connecting State */}
           {isConnecting && (
             <div className="absolute inset-0 flex items-center justify-center z-20 bg-black/60 backdrop-blur-sm">
@@ -640,7 +649,7 @@ export default function VideoCallModal({
         </div>
 
         {/* Controls Footer */}
-        <div className="bg-gradient-to-t from-black/95 via-black/70 to-transparent px-6 py-6 flex items-center justify-center gap-6 absolute bottom-0 left-0 right-0">
+        <div className="bg-gradient-to-t from-black/95 via-black/70 to-transparent px-6 py-6 flex items-center justify-center gap-6 absolute bottom-0 left-0 right-0 z-40 pointer-events-auto">
           {/* Audio Toggle */}
           <button
             onClick={toggleAudioClick}

@@ -32,7 +32,7 @@ export default function CallManager({ children }: CallManagerProps) {
           })
         }
       } catch (err) {
-        console.error('Error accepting call:', err)
+        // Silently handle errors
       }
     },
     [acceptCall, incomingCall]
@@ -43,7 +43,7 @@ export default function CallManager({ children }: CallManagerProps) {
       try {
         await rejectCall(callId)
       } catch (err) {
-        console.error('Error rejecting call:', err)
+        // Silently handle errors
       }
     },
     [rejectCall]

@@ -66,7 +66,7 @@ export default function IncomingCallModal({
   )
 
   return (
-    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+    <div className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4 backdrop-blur-sm pointer-events-auto">
       <div className="bg-white rounded-3xl w-full max-w-sm shadow-2xl overflow-hidden animate-in fade-in duration-300">
         {/* Gradient Header with Call Type */}
         <div className="bg-gradient-to-r from-primary via-rose-500 to-rose-700 p-8 text-center text-white relative overflow-hidden">

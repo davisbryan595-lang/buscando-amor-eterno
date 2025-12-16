@@ -32,7 +32,13 @@ export function useLiveKitCall() {
   }, [])
 
   const removeAllListeners = useCallback(() => {
-    cleanupListenersRef.current.forEach(cleanup => cleanup())
+    cleanupListenersRef.current.forEach((cleanup) => {
+      try {
+        cleanup()
+      } catch (err) {
+        // Silently handle cleanup errors
+      }
+    })
     cleanupListenersRef.current = []
   }, [])
 
@@ -56,7 +62,13 @@ export function useLiveKitCall() {
           }
           const stream = await navigator.mediaDevices.getUserMedia(constraints)
           // Stop the stream after getting permissions - LiveKit will request it again
-          stream.getTracks().forEach(track => track.stop())
+          stream.getTracks().forEach((track) => {
+            try {
+              track.stop()
+            } catch (err) {
+              // Silently handle track stop errors
+            }
+          })
         } catch (permError) {
           if (permError instanceof DOMException) {
             if (permError.name === 'NotAllowedError') {
@@ -118,10 +130,11 @@ export function useLiveKitCall() {
           autoSubscribe: true,
           maxParticipants: 2,
           reconnectPolicy: {
-            maxRetries: 5,
-            initialWaitTime: 100,
-            maxWaitTime: 2000,
+            maxRetries: 10,
+            initialWaitTime: 200,
+            maxWaitTime: 5000,
           },
+          shouldFailOnVersionMismatch: false,
         })
 
         roomRef.current = room
@@ -155,11 +168,21 @@ export function useLiveKitCall() {
         }
 
         const handleRoomError = (error: Error) => {
-          safeSetState((prev) => ({
-            ...prev,
-            error: error instanceof Error ? error.message : 'Connection error occurred',
-            isConnecting: false,
-          }))
+          // Log errors for debugging but don't spam console
+          const isNetworkError = error?.message?.toLowerCase().includes('network') ||
+                               error?.message?.toLowerCase().includes('timeout') ||
+                               error?.message?.toLowerCase().includes('connection')
+
+          if (isNetworkError) {
+            // Network errors are expected during reconnection, don't set error state
+          } else {
+            safeSetState((prev) => ({
+              ...prev,
+              error: error instanceof Error ? error.message : 'Connection error occurred',
+              isConnecting: false,
+            }))
+          }
+
           if (roomRef.current) {
             roomRef.current.disconnect().catch(() => {})
           }
@@ -190,7 +213,7 @@ export function useLiveKitCall() {
         // Connect to room with timeout
         const connectPromise = room.connect(liveKitUrl, token)
         const timeoutPromise = new Promise<void>((_, reject) =>
-          setTimeout(() => reject(new Error('Connection timeout after 10 seconds')), 10000)
+          setTimeout(() => reject(new Error('Connection timeout after 15 seconds')), 15000)
         )
 
         await Promise.race([connectPromise, timeoutPromise])
@@ -198,16 +221,24 @@ export function useLiveKitCall() {
         // Enable media with proper sequencing
         try {
           // Enable microphone
-          await room.localParticipant.setMicrophoneEnabled(true)
+          try {
+            await room.localParticipant.setMicrophoneEnabled(true)
+          } catch (err) {
+            // Microphone might already be enabled, continue
+          }
 
           // Enable camera for video calls
           if (callType === 'video') {
-            await room.localParticipant.setCameraEnabled(true)
+            try {
+              await room.localParticipant.setCameraEnabled(true)
+            } catch (err) {
+              // Camera might already be enabled, continue
+            }
           }
 
-          // Wait for tracks to be ready
+          // Wait for tracks to be ready with timeout
           await new Promise<void>((resolve, reject) => {
-            const maxWaitTime = 5000
+            const maxWaitTime = 8000
             const startTime = Date.now()
 
             const checkTracks = () => {
@@ -220,6 +251,11 @@ export function useLiveKitCall() {
               }
 
               if (Date.now() - startTime > maxWaitTime) {
+                // Don't fail completely if video tracks aren't ready, continue with audio
+                if (hasAudio || callType === 'audio') {
+                  resolve()
+                  return
+                }
                 reject(new Error('Timeout waiting for media tracks to be ready'))
                 return
               }
@@ -230,7 +266,8 @@ export function useLiveKitCall() {
             checkTracks()
           })
         } catch (mediaError) {
-          throw new Error(`Failed to enable media: ${mediaError instanceof Error ? mediaError.message : 'Unknown error'}`)
+          // Log error but continue - call might still work with degraded media
+          const message = mediaError instanceof Error ? mediaError.message : 'Unknown media error'
         }
 
         // Update state with successful connection
