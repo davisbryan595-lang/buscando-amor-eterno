@@ -205,22 +205,20 @@ export function useLiveKitCall() {
 
   const toggleAudio = useCallback(async (enabled: boolean) => {
     if (roomRef.current?.localParticipant) {
-      const audioTracks = roomRef.current.localParticipant.audioTracks
-      if (audioTracks && typeof audioTracks.values === 'function') {
-        for (const track of audioTracks.values()) {
-          await track.mute(!enabled)
-        }
+      try {
+        await roomRef.current.localParticipant.setMicrophoneEnabled(enabled)
+      } catch (err) {
+        console.error('Error toggling audio:', err)
       }
     }
   }, [])
 
   const toggleVideo = useCallback(async (enabled: boolean) => {
     if (roomRef.current?.localParticipant) {
-      const videoTracks = roomRef.current.localParticipant.videoTracks
-      if (videoTracks && typeof videoTracks.values === 'function') {
-        for (const track of videoTracks.values()) {
-          await track.mute(!enabled)
-        }
+      try {
+        await roomRef.current.localParticipant.setCameraEnabled(enabled)
+      } catch (err) {
+        console.error('Error toggling video:', err)
       }
     }
   }, [])
