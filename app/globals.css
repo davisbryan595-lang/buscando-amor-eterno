@@ -1,6 +1,5 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
-@import '@livekit/components-styles';
 @import '../styles/livekit-custom.css';
 
 @custom-variant dark (&:is(.dark *));
