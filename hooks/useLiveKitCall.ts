@@ -241,16 +241,25 @@ export function useLiveKitCall() {
                 noiseSuppression: true,
                 autoGainControl: true,
               })
-              await room.localParticipant.publishTrack(audioTrack)
+              const publication = await room.localParticipant.publishTrack(audioTrack)
               console.log('✅ Manually published audio track:', {
                 trackId: audioTrack.mediaStreamTrack.id,
                 label: audioTrack.mediaStreamTrack.label,
                 enabled: audioTrack.mediaStreamTrack.enabled,
+                publicationSid: publication?.trackSid,
               })
+
+              // Wait a bit for the track to be registered in the map
+              await new Promise((resolve) => setTimeout(resolve, 500))
 
               // Verify again
               if (room.localParticipant.audioTracks.size === 0) {
-                throw new Error('Still no audio track after fallback — check mic permissions/device')
+                // If we have a publication, we can consider it a success even if the map isn't updated yet
+                if (publication) {
+                  console.warn('Audio track published but not yet in localParticipant.audioTracks map')
+                } else {
+                  throw new Error('Still no audio track after fallback — check mic permissions/device')
+                }
               }
             } catch (fallbackError) {
               console.error('Fallback publish failed:', fallbackError)
