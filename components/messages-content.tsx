@@ -90,7 +90,7 @@ function MessagesContentInner() {
   return (
     <div className="pt-20 pb-4 px-4 lg:px-6 h-screen flex flex-col">
       <div className="max-w-7xl mx-auto w-full flex-1 flex gap-4 lg:gap-6 min-h-0">
-        <div className="w-full md:w-80 lg:w-96 bg-gradient-to-b from-white to-rose-50 rounded-xl border border-rose-100 overflow-y-auto flex-shrink-0">
+        <div className={`w-full md:w-80 lg:w-96 bg-gradient-to-b from-white to-rose-50 rounded-xl border border-rose-100 overflow-y-auto flex-shrink-0 ${selectedConversation ? 'hidden md:block' : 'block'}`}>
           <div className="p-4 lg:p-6 border-b border-rose-100 sticky top-0 bg-white z-10">
             <h2 className="text-xl lg:text-2xl font-bold text-slate-900">Messages</h2>
           </div>
