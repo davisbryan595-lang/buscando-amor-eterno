@@ -129,13 +129,13 @@ export function useIncomingCalls() {
                   setIncomingCall(processedCall)
                   setError(null)
 
-                  // Auto-decline after 1 minute
+                  // Auto-decline after 5 minutes
                   clearCallTimeout()
                   callTimeoutRef.current = setTimeout(() => {
                     if (isMounted && incomingCall?.id === processedCall.id) {
                       rejectCall(processedCall.id)
                     }
-                  }, 60000)
+                  }, 300000)
                 }
               } catch (err) {
                 console.error('Error processing incoming call:', err)

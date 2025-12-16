@@ -18,11 +18,11 @@ export default function IncomingCallModal({
 }: IncomingCallModalProps) {
   const [isAccepting, setIsAccepting] = useState(false)
   const [isRejecting, setIsRejecting] = useState(false)
-  const [timeLeft, setTimeLeft] = useState(10)
+  const [timeLeft, setTimeLeft] = useState(60)
 
   useEffect(() => {
     if (!call) {
-      setTimeLeft(10)
+      setTimeLeft(60)
       return
     }
 
