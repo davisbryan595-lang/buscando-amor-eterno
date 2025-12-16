@@ -130,10 +130,11 @@ export function useLiveKitCall() {
           autoSubscribe: true,
           maxParticipants: 2,
           reconnectPolicy: {
-            maxRetries: 5,
-            initialWaitTime: 100,
-            maxWaitTime: 2000,
+            maxRetries: 10,
+            initialWaitTime: 200,
+            maxWaitTime: 5000,
           },
+          shouldFailOnVersionMismatch: false,
         })
 
         roomRef.current = room
