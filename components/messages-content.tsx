@@ -54,13 +54,25 @@ function MessagesContentInner() {
       <div className="pt-24 pb-12 px-4 h-screen flex items-center justify-center">
         <div className="text-center max-w-md">
           <p className="text-slate-900 font-semibold mb-3">Unable to load conversations</p>
-          <p className="text-slate-600 text-sm mb-6">{error}</p>
-          <button
-            onClick={() => window.location.reload()}
-            className="px-6 py-2 bg-primary text-white rounded-full hover:bg-rose-700 transition"
-          >
-            Try Again
-          </button>
+          <p className="text-slate-600 text-sm mb-6">
+            {error.includes('timed out')
+              ? 'The connection is taking longer than expected. Please check your internet connection and try again.'
+              : error}
+          </p>
+          <div className="flex gap-3 justify-center">
+            <button
+              onClick={() => window.location.reload()}
+              className="px-6 py-2 bg-primary text-white rounded-full hover:bg-rose-700 transition"
+            >
+              Reload Page
+            </button>
+            <Link
+              href="/browse"
+              className="px-6 py-2 bg-slate-200 text-slate-900 rounded-full hover:bg-slate-300 transition"
+            >
+              Browse Profiles
+            </Link>
+          </div>
         </div>
       </div>
     )
