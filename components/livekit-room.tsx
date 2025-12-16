@@ -112,9 +112,18 @@ export default function LiveKitVideoRoom({
         }}
         onError={(error) => {
           console.error('LiveKit room error:', error)
-          setError(error.message)
+          setError(error?.message || 'An error occurred')
+        }}
+        onMediaDeviceFailure={(error) => {
+          console.error('Media device error:', error)
+          setError(`Camera/Microphone access denied. Please allow access and try again.`)
         }}
         className="h-full"
+        options={{
+          publishDefaults: {
+            videoCodec: 'vp8',
+          },
+        }}
       >
         <VideoConference />
         <RoomAudioRenderer />
