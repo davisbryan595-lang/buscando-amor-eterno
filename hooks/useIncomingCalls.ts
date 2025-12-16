@@ -43,7 +43,6 @@ export function useIncomingCalls() {
         clearCallTimeout()
       } catch (err: any) {
         const errorMessage = err?.message || 'Failed to reject call'
-        console.error('Error rejecting call:', errorMessage, err)
         setError(errorMessage)
       }
     },
@@ -62,7 +61,6 @@ export function useIncomingCalls() {
         clearCallTimeout()
       } catch (err: any) {
         const errorMessage = err?.message || 'Failed to accept call'
-        console.error('Error accepting call:', errorMessage, err)
         setError(errorMessage)
       }
     },
