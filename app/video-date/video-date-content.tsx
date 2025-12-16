@@ -33,6 +33,7 @@ export default function VideoDateContent() {
     if (urlRoomId) {
       setRoomId(urlRoomId)
       setInCall(true)
+      setIsConnected(true)
     }
   }, [searchParams])
 
@@ -52,6 +53,7 @@ export default function VideoDateContent() {
     const newRoomId = generateRoomId()
     setRoomId(newRoomId)
     setInCall(true)
+    setIsConnected(true)
     router.push(`/video-date?room=${newRoomId}`)
   }
 
@@ -60,7 +62,7 @@ export default function VideoDateContent() {
       toast.error('Please enter a room ID')
       return
     }
-    
+
     if (!user) {
       toast.error('Please log in to join a video call')
       return
@@ -68,19 +70,24 @@ export default function VideoDateContent() {
 
     setRoomId(inputRoomId.trim())
     setInCall(true)
+    setIsConnected(true)
     router.push(`/video-date?room=${inputRoomId.trim()}`)
   }
 
   const handleDisconnect = () => {
+    setIsConnected(false)
     setInCall(false)
     setRoomId('')
     router.push('/video-date')
   }
 
   const handleLeaveCall = () => {
-    setInCall(false)
-    setRoomId('')
-    router.push('/video-date')
+    setIsConnected(false)
+    setTimeout(() => {
+      setInCall(false)
+      setRoomId('')
+      router.push('/video-date')
+    }, 100)
   }
 
   const copyRoomLink = async () => {
@@ -151,6 +158,7 @@ export default function VideoDateContent() {
                   roomName={roomId}
                   participantName={user.email || user.id}
                   onDisconnect={handleDisconnect}
+                  shouldConnect={isConnected}
                 />
               </div>
 
