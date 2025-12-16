@@ -76,6 +76,12 @@ export default function VideoDateContent() {
     router.push('/video-date')
   }
 
+  const handleLeaveCall = () => {
+    setInCall(false)
+    setRoomId('')
+    router.push('/video-date')
+  }
+
   const copyRoomLink = async () => {
     const link = `${window.location.origin}/video-date?room=${roomId}`
     try {
