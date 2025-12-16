@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
-import { Room, Participant, RoomEvent, ParticipantEvent } from 'livekit-client'
+import { Room, Participant, RoomEvent, ParticipantEvent, createLocalAudioTrack } from 'livekit-client'
 import { useAuth } from '@/context/auth-context'
 
 export interface CallState {
@@ -203,7 +203,17 @@ export function useLiveKitCall() {
           })
 
           // Verify microphone track is publishing
-          if (room.localParticipant.audioTracks && room.localParticipant.audioTracks.size > 0) {
+          let audioTrackFound = false
+          // Wait a bit for the track to be registered
+          for (let i = 0; i < 10; i++) {
+            if (room.localParticipant.audioTracks && room.localParticipant.audioTracks.size > 0) {
+              audioTrackFound = true
+              break
+            }
+            await new Promise((resolve) => setTimeout(resolve, 200))
+          }
+
+          if (audioTrackFound) {
             const audioPublication = Array.from(room.localParticipant.audioTracks.values())[0]
             if (audioPublication.track) {
               const track = audioPublication.track.mediaStreamTrack
@@ -222,7 +232,30 @@ export function useLiveKitCall() {
               }
             }
           } else {
-            console.warn('No audio tracks found after enabling microphone!')
+            console.warn('No audio tracks found after enabling microphone! Using fallback publish...')
+
+            // Fallback: manually create and publish audio track
+            try {
+              const audioTrack = await createLocalAudioTrack({
+                echoCancellation: true,
+                noiseSuppression: true,
+                autoGainControl: true,
+              })
+              await room.localParticipant.publishTrack(audioTrack)
+              console.log('✅ Manually published audio track:', {
+                trackId: audioTrack.mediaStreamTrack.id,
+                label: audioTrack.mediaStreamTrack.label,
+                enabled: audioTrack.mediaStreamTrack.enabled,
+              })
+
+              // Verify again
+              if (room.localParticipant.audioTracks.size === 0) {
+                throw new Error('Still no audio track after fallback — check mic permissions/device')
+              }
+            } catch (fallbackError) {
+              console.error('Fallback publish failed:', fallbackError)
+              throw new Error('Still no audio track after fallback — check mic permissions/device')
+            }
           }
 
           // Enable camera for video calls
