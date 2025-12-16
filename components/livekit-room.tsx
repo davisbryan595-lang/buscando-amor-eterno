@@ -12,6 +12,7 @@ interface LiveKitRoomProps {
   roomName: string
   participantName: string
   onDisconnect?: () => void
+  shouldConnect?: boolean
 }
 
 export default function LiveKitVideoRoom({
