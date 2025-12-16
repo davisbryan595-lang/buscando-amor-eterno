@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { Send, Phone, Video, Lock } from 'lucide-react'
+import { Send, Phone, Video, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useMessages } from '@/hooks/useMessages'
