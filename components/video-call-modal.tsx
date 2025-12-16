@@ -95,10 +95,18 @@ export default function VideoCallModal({
       const videoTracks = localParticipant.videoTracks
       if (videoTracks && videoTracks.size > 0) {
         const videoTrack = Array.from(videoTracks.values())[0]
-        if (videoTrack && videoTrack.track) {
-          videoTrack.track.attach(localVideoRef.current)
-          return () => {
-            videoTrack.track.detach()
+        if (videoTrack?.track) {
+          try {
+            videoTrack.track.attach(localVideoRef.current)
+            return () => {
+              try {
+                videoTrack.track.detach()
+              } catch (err) {
+                console.warn('Error detaching local video track:', err)
+              }
+            }
+          } catch (err) {
+            console.warn('Error attaching local video track:', err)
           }
         }
       }
