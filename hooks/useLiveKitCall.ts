@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
-import { Room, Participant, RoomEvent, ParticipantEvent } from 'livekit-client'
+import { Room, Participant, RoomEvent, ParticipantEvent, createLocalAudioTrack } from 'livekit-client'
 import { useAuth } from '@/context/auth-context'
 
 export interface CallState {
@@ -202,10 +202,19 @@ export function useLiveKitCall() {
             audioTrackCount: room.localParticipant.audioTracks?.size ?? 0,
           })
 
-          // Force publish the audio track if it exists
-          const audioPubs = room.localParticipant.audioTracks
-          if (audioPubs && audioPubs.size > 0) {
-            const audioPublication = Array.from(audioPubs.values())[0]
+          // Verify microphone track is publishing
+          let audioTrackFound = false
+          // Wait a bit for the track to be registered
+          for (let i = 0; i < 10; i++) {
+            if (room.localParticipant.audioTracks && room.localParticipant.audioTracks.size > 0) {
+              audioTrackFound = true
+              break
+            }
+            await new Promise((resolve) => setTimeout(resolve, 200))
+          }
+
+          if (audioTrackFound) {
+            const audioPublication = Array.from(room.localParticipant.audioTracks.values())[0]
             if (audioPublication.track) {
               const track = audioPublication.track.mediaStreamTrack
               console.log('✅ Local audio track details:', {
@@ -224,24 +233,38 @@ export function useLiveKitCall() {
               console.log('📤 Audio track published:', audioPublication.trackSid)
             }
           } else {
-            // Fallback: manually create and publish if enable didn't work
-            console.warn('⚠️ No audio tracks found after enabling microphone! Using fallback publish...')
+            console.warn('No audio tracks found after enabling microphone! Using fallback publish...')
+
+            // Fallback: manually create and publish audio track
             try {
-              const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-              const audioTrack = stream.getAudioTracks()[0]
-              if (audioTrack) {
-                await room.localParticipant.publishTrack(audioTrack)
-                console.log('✅ Manually published audio track:', {
-                  trackId: audioTrack.id,
-                  label: audioTrack.label,
-                  enabled: audioTrack.enabled,
-                })
-              } else {
-                throw new Error('No audio track found in getUserMedia stream')
+              const audioTrack = await createLocalAudioTrack({
+                echoCancellation: true,
+                noiseSuppression: true,
+                autoGainControl: true,
+              })
+              const publication = await room.localParticipant.publishTrack(audioTrack)
+              console.log('✅ Manually published audio track:', {
+                trackId: audioTrack.mediaStreamTrack.id,
+                label: audioTrack.mediaStreamTrack.label,
+                enabled: audioTrack.mediaStreamTrack.enabled,
+                publicationSid: publication?.trackSid,
+              })
+
+              // Wait a bit for the track to be registered in the map
+              await new Promise((resolve) => setTimeout(resolve, 500))
+
+              // Verify again
+              if (room.localParticipant.audioTracks.size === 0) {
+                // If we have a publication, we can consider it a success even if the map isn't updated yet
+                if (publication) {
+                  console.warn('Audio track published but not yet in localParticipant.audioTracks map')
+                } else {
+                  throw new Error('Still no audio track after fallback — check mic permissions/device')
+                }
               }
             } catch (fallbackError) {
-              console.error('❌ Fallback audio publish failed:', fallbackError)
-              throw new Error('Failed to publish audio track: ' + (fallbackError instanceof Error ? fallbackError.message : 'Unknown error'))
+              console.error('Fallback publish failed:', fallbackError)
+              throw new Error('Still no audio track after fallback — check mic permissions/device')
             }
           }
 
