@@ -37,7 +37,12 @@ interface Conversation {
   last_message_time?: string
 }
 
-export default function ChatWindow({ conversation }: { conversation: Conversation }) {
+interface ChatWindowProps {
+  conversation: Conversation
+  onBack?: () => void
+}
+
+export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
   const { user } = useAuth()
   const { messages, sendMessage, markAsRead, fetchMessages } = useMessages()
   const [newMessage, setNewMessage] = useState('')
