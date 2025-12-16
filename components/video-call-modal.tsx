@@ -42,6 +42,22 @@ export default function VideoCallModal({
         try {
           const roomName = [user.id, otherUserId].sort().join('-')
 
+          // Check if invitation already exists
+          const { data: existingInvitation } = await supabase
+            .from('call_invitations')
+            .select('id, status')
+            .eq('caller_id', user.id)
+            .eq('recipient_id', otherUserId)
+            .eq('room_name', roomName)
+            .single()
+
+          // If an invitation exists and is not ended/declined, reuse it
+          if (existingInvitation && !['ended', 'declined'].includes(existingInvitation.status)) {
+            setInvitationSent(true)
+            return
+          }
+
+          // Otherwise, create a new invitation
           const { error: err } = await supabase
             .from('call_invitations')
             .insert({
