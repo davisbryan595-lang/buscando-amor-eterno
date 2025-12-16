@@ -48,7 +48,7 @@ export function useMessages() {
     }
   }, [user])
 
-  const fetchConversations = async () => {
+  const fetchConversations = async (retryCount = 0) => {
     if (!user) return
 
     try {
