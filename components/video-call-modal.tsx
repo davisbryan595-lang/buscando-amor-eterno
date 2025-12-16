@@ -36,6 +36,8 @@ export default function VideoCallModal({
   const localVideoRef = React.useRef<HTMLVideoElement>(null)
   const remoteAudioRef = React.useRef<HTMLAudioElement>(null)
   const sendingInvitationRef = React.useRef(false)
+  const participantListenerRef = React.useRef<Participant | null>(null)
+  const trackSubscribedHandlerRef = React.useRef<((track: any) => void) | null>(null)
 
   // Send call invitation when modal opens (for outgoing calls)
   useEffect(() => {
