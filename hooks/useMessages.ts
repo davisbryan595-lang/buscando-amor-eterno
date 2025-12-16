@@ -1,4 +1,4 @@
-import { useCallback, useState, useEffect } from 'react'
+import { useCallback, useState, useEffect, useRef } from 'react'
 import { useAuth } from '@/context/auth-context'
 import { supabase } from '@/lib/supabase'
 import { useSubscription } from './useSubscription'
@@ -32,21 +32,37 @@ export function useMessages() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const pollAttemptsRef = useRef(0)
+  const lastFetchRef = useRef(0)
+
   useEffect(() => {
     if (!user) {
       setLoading(false)
       return
     }
 
-    fetchConversations()
+    let isMounted = true
+
+    const initialize = async () => {
+      if (isMounted) {
+        await fetchConversations()
+      }
+    }
+
+    initialize()
     const unsubscribe = subscribeToMessages()
 
     return () => {
+      isMounted = false
       if (unsubscribe) {
         unsubscribe()
       }
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current)
+      }
     }
-  }, [user])
+  }, [user?.id])
 
   const fetchConversations = async () => {
     if (!user) return
@@ -73,16 +89,20 @@ export function useMessages() {
       if (err) throw err
 
       const conversationMap = new Map<string, any>()
+      const userIds = new Set<string>()
 
       // Process messages to build unique conversations
       data?.forEach((msg: any) => {
         const otherUserId = msg.sender_id === user.id ? msg.recipient_id : msg.sender_id
+        userIds.add(otherUserId)
         if (!conversationMap.has(otherUserId)) {
           const isUnread = msg.recipient_id === user.id && !msg.read
           conversationMap.set(otherUserId, {
             id: otherUserId,
             user_id: user.id,
             other_user_id: otherUserId,
+            other_user_name: null,
+            other_user_image: null,
             last_message: msg.content,
             last_message_time: msg.created_at,
             unread_count: isUnread ? 1 : 0,
@@ -120,13 +140,26 @@ export function useMessages() {
 
       setConversations(convArray)
       setError(null)
+      lastFetchRef.current = Date.now()
+      pollAttemptsRef.current = 0
     } catch (err: any) {
-      setError(err.message)
-      console.error('Error fetching conversations:', err)
+      const errorMessage = err?.message || (typeof err === 'string' ? err : 'Failed to fetch conversations')
+      const errorDetails = err?.code ? ` (Code: ${err.code})` : err?.status ? ` (Status: ${err.status})` : ''
+      setError(errorMessage)
+      console.error('Error fetching conversations:', errorMessage + errorDetails, err)
     } finally {
       setLoading(false)
     }
   }
+
+  const debouncedFetchConversations = useCallback(() => {
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current)
+    }
+    debounceTimerRef.current = setTimeout(() => {
+      fetchConversations()
+    }, 500)
+  }, [])
 
   const subscribeToMessages = () => {
     if (!user) return
@@ -173,14 +206,55 @@ export function useMessages() {
                 }
               }, 10000)
             }
-          }
-        })
+          )
+          .subscribe((status) => {
+            if (status === 'SUBSCRIBED') {
+              console.log('[Messages] Subscription active')
+              subscriptionActive = true
+              reconnectAttempts = 0
+              stopPolling()
+            } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+              console.warn('[Messages] Subscription error:', status, '- Check RLS policies on messages table in Supabase dashboard')
+              subscriptionActive = false
+              if (isMounted && reconnectAttempts < maxReconnectAttempts) {
+                reconnectAttempts++
+                const delay = Math.min(1000 * Math.pow(2, reconnectAttempts - 1), 30000)
+                console.log(`[Messages] Attempting reconnect in ${delay}ms (attempt ${reconnectAttempts}/${maxReconnectAttempts})`)
+                const timeout = setTimeout(() => {
+                  if (isMounted) {
+                    subscription.unsubscribe()
+                    setupSubscription()
+                  }
+                }, delay)
+                timeoutsRef.add(timeout)
+              } else if (isMounted) {
+                startPolling()
+              }
+            }
+          })
 
-      return () => {
-        isMounted = false
-        subscription.unsubscribe()
-        if (pollInterval) {
-          clearInterval(pollInterval)
+        return () => {
+          isMounted = false
+          subscriptionActive = false
+          subscription.unsubscribe()
+          clearAllTimeouts()
+          stopPolling()
+        }
+      } catch (err) {
+        console.warn('[Messages] Failed to setup subscription:', err)
+        subscriptionActive = false
+        if (isMounted && reconnectAttempts < maxReconnectAttempts) {
+          reconnectAttempts++
+          const delay = Math.min(1000 * Math.pow(2, reconnectAttempts - 1), 30000)
+          console.log(`[Messages] Retrying setup in ${delay}ms`)
+          const timeout = setTimeout(() => {
+            if (isMounted) {
+              setupSubscription()
+            }
+          }, delay)
+          timeoutsRef.add(timeout)
+        } else if (isMounted) {
+          startPolling()
         }
       }
     } catch (err) {
@@ -194,23 +268,26 @@ export function useMessages() {
         }, 10000)
       }
 
-      return () => {
-        isMounted = false
-        if (pollInterval) {
-          clearInterval(pollInterval)
+        return () => {
+          isMounted = false
+          subscriptionActive = false
+          clearAllTimeouts()
+          stopPolling()
         }
       }
     }
+
+    return setupSubscription()
   }
 
   const fetchMessages = useCallback(
     async (otherUserId: string) => {
-      if (!user) return
+      if (!user?.id) return
 
       try {
         const { data, error: err } = await supabase
           .from('messages')
-          .select('*')
+          .select('id,sender_id,recipient_id,content,read,created_at')
           .or(
             `and(sender_id.eq.${user.id},recipient_id.eq.${otherUserId}),and(sender_id.eq.${otherUserId},recipient_id.eq.${user.id})`
           )
@@ -220,8 +297,9 @@ export function useMessages() {
         setMessages((data as Message[]) || [])
         setError(null)
       } catch (err: any) {
-        setError(err.message)
-        console.error('Error fetching messages:', err)
+        const errorMessage = err?.message || (typeof err === 'string' ? err : 'Failed to fetch messages')
+        setError(errorMessage)
+        console.error('Error fetching messages:', errorMessage, err)
       }
     },
     [user]
@@ -244,14 +322,32 @@ export function useMessages() {
           .single()
 
         if (err) throw err
-        setMessages((prev) => [...prev, data as Message])
-        return data as Message
+
+        const message = data as Message
+        setMessages((prev) => [...prev, message])
+
+        // Broadcast message for instant delivery via Broadcast (low-latency)
+        const broadcastChannel = supabase.channel(`messages:${recipientId}`)
+        await broadcastChannel.subscribe()
+        const broadcastResult = await broadcastChannel.send('broadcast', {
+          event: 'message-sent',
+          payload: message,
+        })
+        console.log('[Messages] Broadcast sent:', { broadcastResult })
+
+        // Add small delay to ensure broadcast is delivered before unsubscribing
+        await new Promise(resolve => setTimeout(resolve, 100))
+
+        await broadcastChannel.unsubscribe()
+
+        return message
       } catch (err: any) {
-        setError(err.message)
+        const errorMessage = err?.message || (typeof err === 'string' ? err : 'Failed to send message')
+        setError(errorMessage)
         throw err
       }
     },
-    [user, isPremium]
+    [user]
   )
 
   const markAsRead = useCallback(
@@ -264,8 +360,10 @@ export function useMessages() {
 
         if (err) throw err
       } catch (err: any) {
-        setError(err.message)
-        console.error('Error marking message as read:', err)
+        const errorMessage = err?.message || (typeof err === 'string' ? err : 'Failed to mark message as read')
+        const errorDetails = err?.code ? ` (Code: ${err.code})` : err?.status ? ` (Status: ${err.status})` : ''
+        setError(errorMessage)
+        console.error('Error marking message as read:', errorMessage + errorDetails, err)
       }
     },
     []
@@ -276,13 +374,11 @@ export function useMessages() {
       if (!user) throw new Error('No user logged in')
 
       try {
-        // Check if conversation already exists
         const existingConv = conversations.find((c) => c.other_user_id === otherUserId)
         if (existingConv) {
           return existingConv
         }
 
-        // Create a system message to establish the conversation
         const { error: msgErr } = await supabase
           .from('messages')
           .insert({
@@ -294,7 +390,6 @@ export function useMessages() {
 
         if (msgErr) throw msgErr
 
-        // Fetch updated conversations
         await fetchConversations()
 
         return {
@@ -309,12 +404,13 @@ export function useMessages() {
           unread_count: 0,
         }
       } catch (err: any) {
-        setError(err.message)
-        console.error('Error initiating conversation:', err)
+        const errorMessage = err?.message || (typeof err === 'string' ? err : 'Failed to initiate conversation')
+        setError(errorMessage)
+        console.error('Error initiating conversation:', errorMessage, err)
         throw err
       }
     },
-    [user, conversations, fetchConversations]
+    [user, conversations]
   )
 
   return {

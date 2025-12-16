@@ -7,6 +7,10 @@ import Image from 'next/image'
 import { useMessages } from '@/hooks/useMessages'
 import { useAuth } from '@/context/auth-context'
 import { toast } from 'sonner'
+import MessageBubble from '@/components/message-bubble'
+import MessageContextMenu from '@/components/message-context-menu'
+import TypingIndicator from '@/components/typing-indicator'
+import VideoCallModal from '@/components/video-call-modal'
 
 const getLastSeenText = (timestamp?: string): string => {
   if (!timestamp) return 'Offline'
@@ -44,7 +48,7 @@ interface ChatWindowProps {
 
 export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
   const { user } = useAuth()
-  const { messages, sendMessage, markAsRead, fetchMessages } = useMessages()
+  const { messages, sendMessage, markAsRead, fetchMessages, fetchConversations } = useMessages()
   const [newMessage, setNewMessage] = useState('')
   const [loading, setLoading] = useState(false)
   const [otherUserDetails, setOtherUserDetails] = useState<{ name: string; image: string | null } | null>(null)
@@ -82,7 +86,32 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
         fetchUserDetails()
       }
     }
-  }, [conversation?.other_user_id, fetchMessages, conversation.other_user_name, conversation.other_user_image])
+  }, [conversation?.other_user_id, user?.id, fetchMessages])
+
+  // Mark all unread messages as read when opening the chat
+  useEffect(() => {
+    if (messages.length > 0 && user?.id) {
+      const unreadMessages = messages.filter((msg) => msg.recipient_id === user.id && !msg.read)
+      if (unreadMessages.length > 0) {
+        unreadMessages.forEach((msg) => {
+          markAsRead(msg.id)
+        })
+        // Refresh conversations to clear unread badge
+        fetchConversations()
+      }
+    }
+  }, [conversation?.id, messages.length, user?.id, markAsRead, fetchConversations])
+
+  // Scroll to bottom when messages change
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      gsap.to(messagesContainerRef.current, {
+        scrollTop: messagesContainerRef.current?.scrollHeight,
+        duration: 0.5,
+        ease: 'power2.out',
+      })
+    }
+  }, [messages])
 
   useEffect(() => {
     scrollToBottom()
@@ -95,11 +124,45 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
       setLoading(true)
       await sendMessage(conversation.other_user_id, newMessage)
       setNewMessage('')
+      inputRef.current?.focus()
     } catch (err: any) {
       console.error('Error sending message:', err)
       toast.error(err.message || 'Error sending message')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleContextMenu = (e: React.MouseEvent | React.TouchEvent, messageId: string, content: string, isOwn: boolean) => {
+    e.preventDefault()
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
+    setContextMenu({
+      x: e instanceof MouseEvent ? e.clientX : rect.left,
+      y: e instanceof MouseEvent ? e.clientY : rect.bottom,
+      messageId,
+      content,
+      isOwn,
+    })
+  }
+
+  const handleDeleteMessage = (messageId: string) => {
+    // TODO: Implement message deletion
+    toast.info('Message deletion coming soon!')
+  }
+
+  const handleMessageLongPress = (messageId: string) => {
+    const message = messages.find((m) => m.id === messageId)
+    if (message) {
+      const element = document.getElementById(`message-${messageId}`)
+      if (element) {
+        const rect = element.getBoundingClientRect()
+        handleContextMenu(
+          { currentTarget: element } as unknown as React.MouseEvent,
+          messageId,
+          message.content,
+          message.sender_id === user?.id
+        )
+      }
     }
   }
 
@@ -122,10 +185,10 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
               src={otherUserDetails?.image || conversation.other_user_image || "/placeholder.svg"}
               alt={otherUserDetails?.name || conversation.other_user_name || 'User'}
               fill
-              className="rounded-full object-cover"
+              className="rounded-full object-cover border-2 border-rose-100"
             />
             {conversation.is_online && (
-              <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white z-10" />
+              <div className="absolute bottom-0 right-0 w-3 h-3 md:w-4 md:h-4 bg-green-500 rounded-full border-3 border-white z-10" />
             )}
           </div>
           <div className="min-w-0">
@@ -157,11 +220,8 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
             <p className="text-base lg:text-lg">No messages yet. Start the conversation!</p>
           </div>
         ) : (
-          messages.map((msg) => (
-            <div
-              key={msg.id}
-              className={`flex ${msg.sender_id === user?.id ? 'justify-end' : 'justify-start'}`}
-            >
+          <>
+            {messages.map((msg) => (
               <div
                 className={`max-w-xs lg:max-w-md xl:max-w-lg px-4 py-2 lg:py-3 rounded-2xl ${
                   msg.sender_id === user?.id
@@ -171,8 +231,16 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
               >
                 <p className="text-sm lg:text-base break-words">{msg.content}</p>
               </div>
-            </div>
-          ))
+            ))}
+            {showTypingIndicator && (
+              <div className="flex justify-start">
+                <div className="px-5 md:px-6 py-3 md:py-4 rounded-3xl rounded-bl-none bg-gradient-to-r from-slate-100 to-slate-50">
+                  <TypingIndicator />
+                </div>
+              </div>
+            )}
+            <div ref={messagesEndRef} />
+          </>
         )}
         <div ref={messagesEndRef} />
       </div>
@@ -180,11 +248,12 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
       {/* Input */}
       <div className="p-4 lg:p-6 border-t border-rose-100 flex gap-2 lg:gap-3 flex-shrink-0">
         <input
+          ref={inputRef}
           type="text"
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
           onKeyPress={(e) => e.key === 'Enter' && handleSend()}
-          placeholder="Type a message..."
+          placeholder="Type your message..."
           disabled={loading}
           className="flex-1 px-4 lg:px-6 py-2 lg:py-3 text-sm lg:text-base bg-white border border-rose-200 rounded-full focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
         />
@@ -197,6 +266,28 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
           <Send size={20} className="lg:w-6 lg:h-6" />
         </button>
       </div>
+
+      {/* Context Menu */}
+      {contextMenu && (
+        <MessageContextMenu
+          messageId={contextMenu.messageId}
+          content={contextMenu.content}
+          isOwn={contextMenu.isOwn}
+          x={contextMenu.x}
+          y={contextMenu.y}
+          onClose={() => setContextMenu(null)}
+          onDelete={handleDeleteMessage}
+        />
+      )}
+
+      {/* Video Call Modal */}
+      <VideoCallModal
+        isOpen={callModalOpen}
+        onClose={() => setCallModalOpen(false)}
+        otherUserName={otherUserDetails?.name || conversation.other_user_name || 'User'}
+        otherUserId={conversation.other_user_id}
+        callType={callType}
+      />
     </div>
   )
 }

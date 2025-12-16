@@ -1,13 +1,15 @@
 'use client'
 
-import React, { useState, useEffect, Suspense } from 'react'
+import React, { useState, useEffect, Suspense, useRef } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
+import gsap from 'gsap'
 import ChatWindow from '@/components/chat-window'
 import Image from 'next/image'
 import { useMessages } from '@/hooks/useMessages'
 import { useAuth } from '@/context/auth-context'
 import { useSubscription } from '@/hooks/useSubscription'
+import { X, ArrowLeft, Menu } from 'lucide-react'
 
 function MessagesContentInner() {
   const { user } = useAuth()
@@ -16,6 +18,9 @@ function MessagesContentInner() {
   const searchParams = useSearchParams()
   const userIdParam = searchParams.get('user')
   const [selectedConversation, setSelectedConversation] = useState<any>(null)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [isClosingChat, setIsClosingChat] = useState(false)
+  const chatWindowRef = useRef<HTMLDivElement>(null)
 
   // Auto-select conversation if user_id is in query params
   useEffect(() => {
@@ -28,7 +33,7 @@ function MessagesContentInner() {
           id: userIdParam,
           user_id: user?.id,
           other_user_id: userIdParam,
-          other_user_name: 'User',
+          other_user_name: null,
           other_user_image: null,
           last_message: '',
           last_message_time: new Date().toISOString(),
@@ -36,10 +41,30 @@ function MessagesContentInner() {
           unread_count: 0,
         })
       }
-    } else if (!selectedConversation && conversations.length > 0) {
-      setSelectedConversation(conversations[0])
     }
-  }, [conversations, userIdParam, user?.id, selectedConversation])
+  }, [userIdParam, conversations, user?.id])
+
+  const handleSelectConversation = (conversation: any) => {
+    setSelectedConversation(conversation)
+    setSidebarOpen(false)
+  }
+
+  const handleBackToConversations = () => {
+    if (chatWindowRef.current) {
+      setIsClosingChat(true)
+      gsap.to(chatWindowRef.current, {
+        x: '100%',
+        duration: 0.4,
+        ease: 'power2.in',
+        onComplete: () => {
+          setSelectedConversation(null)
+          setIsClosingChat(false)
+        },
+      })
+    } else {
+      setSelectedConversation(null)
+    }
+  }
 
   if (loading) {
     return (
@@ -97,7 +122,7 @@ function MessagesContentInner() {
 
           <div className="divide-y">
             {conversations.length === 0 ? (
-              <div className="p-4 text-center text-slate-600">No conversations yet</div>
+              <div className="p-4 text-center text-slate-600 text-sm">No conversations yet</div>
             ) : (
               conversations.map((conv) => (
                 <button
@@ -116,7 +141,7 @@ function MessagesContentInner() {
                         className="rounded-full object-cover"
                       />
                       {conv.is_online && (
-                        <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white z-10" />
+                        <div className="absolute bottom-0 right-0 w-2 h-2 md:w-3 md:h-3 bg-green-500 rounded-full border-2 border-white z-10" />
                       )}
                     </div>
                     <div className="flex-1 min-w-0">

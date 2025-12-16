@@ -15,7 +15,6 @@ import {
 import { Heart, MessageCircle } from 'lucide-react'
 
 const MAX_CHAR = 150
-const MIN_CHAR = 20
 
 interface Step5Props {
   onNext: () => void
@@ -68,7 +67,7 @@ const PromptField = ({
       }`}
     />
     <div className="flex items-center justify-between text-xs">
-      <span className={value.length < MIN_CHAR ? 'text-destructive' : 'text-muted-foreground'}>
+      <span className="text-muted-foreground">
         {value.length}/{MAX_CHAR}
       </span>
       {error && <span className="text-destructive text-xs">{error}</span>}
@@ -109,8 +108,6 @@ export function Step5Prompts({
       const trimmed = p.value.trim()
       if (!trimmed) {
         newErrors[p.key] = t('onboarding.step5.required')
-      } else if (trimmed.length < MIN_CHAR) {
-        newErrors[p.key] = t('onboarding.step5.minChars')
       }
     })
 

@@ -67,8 +67,9 @@ export function useProfile() {
       }
       setError(null)
     } catch (err: any) {
-      setError(err.message)
-      console.error('Error fetching profile:', err)
+      const errorMessage = err?.message || (typeof err === 'string' ? err : 'Failed to fetch profile')
+      setError(errorMessage)
+      console.error('Error fetching profile:', errorMessage, err)
     } finally {
       setLoading(false)
     }
@@ -81,28 +82,16 @@ export function useProfile() {
     }
 
     let isMounted = true
-    let timeoutId: NodeJS.Timeout | null = null
 
-    const fetchWithTimeout = async () => {
+    const fetchProfileData = async () => {
       try {
         setLoading(true)
-
-        // Set a timeout to prevent hanging
-        timeoutId = setTimeout(() => {
-          if (isMounted) {
-            setLoading(false)
-            setError('Profile fetch timed out')
-            setProfile(null)
-          }
-        }, 10000)
 
         const { data, error: err } = await supabase
           .from('profiles')
           .select('*')
           .eq('user_id', user.id)
           .single()
-
-        if (timeoutId) clearTimeout(timeoutId)
 
         if (!isMounted) return
 
@@ -117,24 +106,22 @@ export function useProfile() {
         }
         setError(null)
       } catch (err: any) {
-        if (timeoutId) clearTimeout(timeoutId)
         if (isMounted) {
-          setError(err.message)
-          console.error('Error fetching profile:', err)
+          const errorMessage = err?.message || (typeof err === 'string' ? err : 'Failed to fetch profile')
+          setError(errorMessage)
+          console.error('Error fetching profile:', errorMessage, err)
         }
       } finally {
-        if (timeoutId) clearTimeout(timeoutId)
         if (isMounted) {
           setLoading(false)
         }
       }
     }
 
-    fetchWithTimeout()
+    fetchProfileData()
 
     return () => {
       isMounted = false
-      if (timeoutId) clearTimeout(timeoutId)
     }
   }, [user])
 
@@ -156,7 +143,8 @@ export function useProfile() {
         setProfile(newProfile as ProfileData)
         return newProfile as ProfileData
       } catch (err: any) {
-        setError(err.message)
+        const errorMessage = err?.message || (typeof err === 'string' ? err : 'Failed to create profile')
+        setError(errorMessage)
         throw err
       }
     },
@@ -179,7 +167,8 @@ export function useProfile() {
         setProfile(updatedProfile as ProfileData)
         return updatedProfile as ProfileData
       } catch (err: any) {
-        setError(err.message)
+        const errorMessage = err?.message || (typeof err === 'string' ? err : 'Failed to update profile')
+        setError(errorMessage)
         throw err
       }
     },
@@ -212,7 +201,8 @@ export function useProfile() {
 
         return publicUrl
       } catch (err: any) {
-        setError(err.message)
+        const errorMessage = err?.message || (typeof err === 'string' ? err : 'Failed to upload photo')
+        setError(errorMessage)
         throw err
       }
     },
@@ -231,7 +221,8 @@ export function useProfile() {
             profile.main_photo_index === index ? 0 : profile.main_photo_index,
         } as any)
       } catch (err: any) {
-        setError(err.message)
+        const errorMessage = err?.message || (typeof err === 'string' ? err : 'Failed to delete photo')
+        setError(errorMessage)
         throw err
       }
     },

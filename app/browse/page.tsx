@@ -249,7 +249,7 @@ export default function BrowsePage() {
                       <div className="flex items-center justify-between mb-2">
                         <div>
                           <h2 className="text-4xl font-playfair font-bold mb-1">
-                            {currentProfile.full_name || 'User'}, {currentProfile.age || '?'}
+                            {currentProfile.full_name || 'User'}, {currentProfile.birthday ? new Date().getFullYear() - new Date(currentProfile.birthday).getFullYear() : '?'}
                           </h2>
                           <p className="text-white/90 text-lg">{currentProfile.city || 'Location not set'}</p>
                         </div>
@@ -265,7 +265,7 @@ export default function BrowsePage() {
                     <div className="space-y-4">
                       <div className="flex items-center justify-between">
                         <h2 className="text-3xl font-playfair font-bold">
-                          {currentProfile.full_name || 'User'}, {currentProfile.age || '?'}
+                          {currentProfile.full_name || 'User'}, {currentProfile.birthday ? new Date().getFullYear() - new Date(currentProfile.birthday).getFullYear() : '?'}
                         </h2>
                         <button
                           onClick={() => setShowInfo(false)}
@@ -275,13 +275,9 @@ export default function BrowsePage() {
                         </button>
                       </div>
                       <p className="text-white/90 text-lg">{currentProfile.city || 'Location not set'}</p>
-                      <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4">
-                        <p className="text-sm text-white/80 mb-2">About</p>
-                        <p>{currentProfile.bio || 'No bio yet'}</p>
-                      </div>
                       {currentProfile.prompt_1 && (
                         <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4">
-                          <p className="text-sm text-white/80 mb-2">Interests</p>
+                          <p className="text-sm text-white/80 mb-2">About</p>
                           <p>{currentProfile.prompt_1}</p>
                         </div>
                       )}

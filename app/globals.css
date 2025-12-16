@@ -128,21 +128,6 @@
   
   /* Removed invalid @import and manual font classes. Using Next.js font loader instead. */
   
-  /* Added floating hearts animation */
-  @keyframes float-hearts {
-    0% {
-      transform: translateY(0px) translateX(0px);
-      opacity: 1;
-    }
-    100% {
-      transform: translateY(-100vh) translateX(20px);
-      opacity: 0;
-    }
-  }
-  
-  .animate-float-hearts {
-    animation: float-hearts 6s ease-in infinite;
-  }
   
   /* Added soft glow effect */
   .soft-glow {
