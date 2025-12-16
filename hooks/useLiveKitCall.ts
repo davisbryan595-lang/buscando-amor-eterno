@@ -62,7 +62,13 @@ export function useLiveKitCall() {
           }
           const stream = await navigator.mediaDevices.getUserMedia(constraints)
           // Stop the stream after getting permissions - LiveKit will request it again
-          stream.getTracks().forEach(track => track.stop())
+          stream.getTracks().forEach((track) => {
+            try {
+              track.stop()
+            } catch (err) {
+              // Silently handle track stop errors
+            }
+          })
         } catch (permError) {
           if (permError instanceof DOMException) {
             if (permError.name === 'NotAllowedError') {
