@@ -103,12 +103,12 @@ function MessagesContentInner() {
                 <button
                   key={conv.id}
                   onClick={() => setSelectedConversation(conv)}
-                  className={`w-full p-4 text-left hover:bg-rose-100 transition ${
+                  className={`w-full p-4 lg:p-5 text-left hover:bg-rose-100 transition ${
                     selectedConversation?.id === conv.id ? 'bg-rose-100' : ''
                   }`}
                 >
-                  <div className="flex gap-3 items-center">
-                    <div className="relative w-12 h-12">
+                  <div className="flex gap-3 lg:gap-4 items-center">
+                    <div className="relative w-12 h-12 lg:w-14 lg:h-14 flex-shrink-0">
                       <Image
                         src={conv.other_user_image || '/placeholder.svg'}
                         alt={conv.other_user_name || 'User'}
@@ -120,11 +120,11 @@ function MessagesContentInner() {
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-slate-900">{conv.other_user_name || 'User'}</p>
-                      <p className="text-sm text-slate-600 truncate">{conv.last_message}</p>
+                      <p className="font-semibold text-slate-900 text-base lg:text-lg truncate">{conv.other_user_name || 'User'}</p>
+                      <p className="text-sm lg:text-base text-slate-600 truncate">{conv.last_message}</p>
                     </div>
                     {conv.unread_count > 0 && (
-                      <span className="bg-rose-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                      <span className="bg-rose-500 text-white text-xs lg:text-sm rounded-full w-5 h-5 lg:w-6 lg:h-6 flex items-center justify-center flex-shrink-0">
                         {conv.unread_count}
                       </span>
                     )}
