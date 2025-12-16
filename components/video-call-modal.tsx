@@ -509,9 +509,9 @@ export default function VideoCallModal({
           </div>
         </div>
 
-        {/* Connection Stats Panel */}
-        {showStats && isConnected && (
-          <div className="absolute top-20 right-6 z-20 bg-slate-900/95 border border-slate-700 rounded-lg p-4 w-64 backdrop-blur-sm">
+        {/* Connection Stats Panel - Desktop Always Visible, Mobile on Demand */}
+        {isConnected && (showStats || !isMobileView) && (
+          <div className={`${!isMobileView ? 'absolute top-20 right-6 z-30 pointer-events-auto' : 'absolute top-20 right-6 z-30'} bg-slate-900/95 border border-slate-700 rounded-lg p-4 w-64 backdrop-blur-sm`}>
             <h4 className="text-white font-semibold mb-3 text-sm">Connection Stats</h4>
             <div className="space-y-2 text-sm text-gray-300">
               <div className="flex justify-between">
