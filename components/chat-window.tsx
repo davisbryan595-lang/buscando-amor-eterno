@@ -50,7 +50,20 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
   const [newMessage, setNewMessage] = useState('')
   const [loading, setLoading] = useState(false)
   const [otherUserDetails, setOtherUserDetails] = useState<{ name: string; image: string | null } | null>(null)
-  const messagesEndRef = React.useRef<HTMLDivElement>(null)
+  const [callModalOpen, setCallModalOpen] = useState(false)
+  const [callType, setCallType] = useState<'audio' | 'video'>('video')
+  const [contextMenu, setContextMenu] = useState<{
+    x: number
+    y: number
+    messageId: string
+    content: string
+    isOwn: boolean
+  } | null>(null)
+  const [showTypingIndicator] = useState(false)
+
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+  const messagesContainerRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
