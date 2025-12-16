@@ -70,22 +70,33 @@ export function useMessages() {
     try {
       setLoading(true)
 
-      const { data, error: err } = await supabase
+      // Add a timeout for messages fetch (30 seconds)
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Conversations fetch timed out')), 30000)
+      )
+
+      // Limit to recent messages to prevent timeout - only fetch enough to build conversation list
+      const queryPromise = supabase
         .from('messages')
         .select('sender_id, recipient_id, content, created_at, read')
         .or(`sender_id.eq.${user.id},recipient_id.eq.${user.id}`)
         .order('created_at', { ascending: false })
-        .limit(100)
+        .limit(500)
+
+      const result = await Promise.race([queryPromise, timeoutPromise])
+      const { data, error: err } = result as any
 
       if (err) throw err
 
       const conversationMap = new Map<string, any>()
       const userIds = new Set<string>()
 
+      // Process messages to build unique conversations
       data?.forEach((msg: any) => {
         const otherUserId = msg.sender_id === user.id ? msg.recipient_id : msg.sender_id
         userIds.add(otherUserId)
         if (!conversationMap.has(otherUserId)) {
+          const isUnread = msg.recipient_id === user.id && !msg.read
           conversationMap.set(otherUserId, {
             id: otherUserId,
             user_id: user.id,
@@ -94,30 +105,40 @@ export function useMessages() {
             other_user_image: null,
             last_message: msg.content,
             last_message_time: msg.created_at,
-            unread_count: msg.recipient_id === user.id && !msg.read ? 1 : 0,
+            unread_count: isUnread ? 1 : 0,
+            other_user_name: null,
+            other_user_image: null,
+            is_online: false,
           })
+        } else {
+          // Count additional unread messages
+          const conv = conversationMap.get(otherUserId)
+          if (msg.recipient_id === user.id && !msg.read) {
+            conv.unread_count += 1
+          }
         }
       })
 
-      // Fetch user profiles for all conversation partners
-      if (userIds.size > 0) {
-        const { data: profiles, error: profileErr } = await supabase
+      const convArray = Array.from(conversationMap.values())
+
+      // Fetch profile details for conversation participants
+      if (convArray.length > 0) {
+        const userIds = convArray.map((c) => c.other_user_id)
+        const { data: profiles } = await supabase
           .from('profiles')
           .select('user_id, full_name, photos, main_photo_index')
-          .in('user_id', Array.from(userIds))
+          .in('user_id', userIds)
 
-        if (!profileErr && profiles) {
-          profiles.forEach((profile: any) => {
-            const conv = conversationMap.get(profile.user_id)
-            if (conv) {
-              conv.other_user_name = profile.full_name
-              conv.other_user_image = profile.photos?.[profile.main_photo_index || 0] || null
-            }
-          })
-        }
+        profiles?.forEach((profile) => {
+          const conv = convArray.find((c) => c.other_user_id === profile.user_id)
+          if (conv) {
+            conv.other_user_name = profile.full_name
+            conv.other_user_image = profile.photos?.[profile.main_photo_index || 0] || null
+          }
+        })
       }
 
-      setConversations(Array.from(conversationMap.values()))
+      setConversations(convArray)
       setError(null)
       lastFetchRef.current = Date.now()
       pollAttemptsRef.current = 0
@@ -145,64 +166,45 @@ export function useMessages() {
 
     let pollInterval: ReturnType<typeof setInterval> | null = null
     let isMounted = true
-    let subscriptionActive = false
-    let reconnectAttempts = 0
-    const maxReconnectAttempts = 5
-    const timeoutsRef = new Set<ReturnType<typeof setTimeout>>()
+    let lastFetch = 0
+    const MIN_FETCH_INTERVAL = 3000
 
-    const clearAllTimeouts = () => {
-      timeoutsRef.forEach(timeout => clearTimeout(timeout))
-      timeoutsRef.clear()
-    }
-
-    const stopPolling = () => {
-      if (pollInterval) {
-        clearInterval(pollInterval)
-        pollInterval = null
-        console.log('[Messages] Polling stopped')
+    const throttledFetch = () => {
+      const now = Date.now()
+      if (now - lastFetch >= MIN_FETCH_INTERVAL) {
+        lastFetch = now
+        fetchConversations()
       }
     }
 
-    const startPolling = () => {
-      if (isMounted && !pollInterval && !subscriptionActive) {
-        console.log('[Messages] Starting fallback polling')
-        pollInterval = setInterval(() => {
-          if (isMounted && !subscriptionActive) {
-            const timeSinceLastFetch = Date.now() - lastFetchRef.current
-            if (timeSinceLastFetch > 30000) {
-              console.log('[Messages] Polling: fetching conversations')
-              fetchConversations()
+    try {
+      const subscription = supabase
+        .channel(`messages:${user.id}`)
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'messages',
+            filter: `or(sender_id.eq.${user.id},recipient_id.eq.${user.id})`,
+          },
+          (payload) => {
+            if (isMounted) {
+              setMessages((prev) => [payload.new as Message, ...prev])
+              throttledFetch()
             }
           }
-        }, 30000)
-      }
-    }
-
-    const setupSubscription = () => {
-      try {
-        const subscription = supabase
-          .channel(`messages:${user.id}`, {
-            config: {
-              broadcast: { self: true },
-            },
-          })
-          .on(
-            'postgres_changes',
-            {
-              event: 'INSERT',
-              schema: 'public',
-              table: 'messages',
-              filter: `or(sender_id.eq.${user.id},recipient_id.eq.${user.id})`,
-            },
-            (payload) => {
-              if (isMounted && subscriptionActive) {
-                const message = payload.new as Message
-                setMessages((prev) => {
-                  const exists = prev.some((m) => m.id === message.id)
-                  return exists ? prev : [message, ...prev]
-                })
-                debouncedFetchConversations()
-              }
+        )
+        .subscribe((status) => {
+          if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+            console.warn('Message subscription error:', status)
+            // Fall back to polling if realtime fails (less frequent)
+            if (!pollInterval) {
+              pollInterval = setInterval(() => {
+                if (isMounted) {
+                  throttledFetch()
+                }
+              }, 10000)
             }
           )
           .subscribe((status) => {
@@ -254,6 +256,17 @@ export function useMessages() {
         } else if (isMounted) {
           startPolling()
         }
+      }
+    } catch (err) {
+      console.warn('Failed to setup message subscription:', err)
+      // Fall back to polling (less frequent)
+      if (!pollInterval) {
+        pollInterval = setInterval(() => {
+          if (isMounted) {
+            throttledFetch()
+          }
+        }, 10000)
+      }
 
         return () => {
           isMounted = false
