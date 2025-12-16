@@ -299,6 +299,7 @@ export default function VideoCallModal({
             ref={remoteAudioRef}
             autoPlay
             playsInline
+            className="hidden"
           />
         </div>
 
