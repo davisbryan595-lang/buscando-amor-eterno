@@ -203,11 +203,9 @@ export function useIncomingCalls() {
             clearCallTimeout()
           }
         } catch (err) {
-          console.warn('[IncomingCalls] Failed to subscribe:', err)
           if (isMounted && reconnectAttempts < maxReconnectAttempts) {
             reconnectAttempts++
             const delay = Math.min(1000 * Math.pow(2, reconnectAttempts - 1), 30000)
-            console.log(`[IncomingCalls] Retrying in ${delay}ms`)
             const timeout = setTimeout(() => {
               if (isMounted) {
                 subscribeToIncomingCalls()
