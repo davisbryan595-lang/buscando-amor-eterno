@@ -38,13 +38,14 @@ export default function VideoCallModal({
 
   // Send call invitation when modal opens (for outgoing calls)
   useEffect(() => {
-    if (isOpen && !invitationSent && !callInvitationId && user) {
+    if (isOpen && !invitationSent && !callInvitationId && user && !sendingInvitationRef.current) {
       const sendInvitation = async () => {
+        sendingInvitationRef.current = true
         try {
           const roomName = [user.id, otherUserId].sort().join('-')
 
           // Check if invitation already exists
-          const { data: existingInvitation, error: checkErr } = await supabase
+          const { data: existingInvitation } = await supabase
             .from('call_invitations')
             .select('id, status')
             .eq('caller_id', user.id)
@@ -84,6 +85,8 @@ export default function VideoCallModal({
           }
         } catch (err) {
           console.error('Error sending call invitation:', err instanceof Error ? err.message : err)
+        } finally {
+          sendingInvitationRef.current = false
         }
       }
 
