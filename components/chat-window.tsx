@@ -117,7 +117,11 @@ export default function ChatWindow({ conversation }: { conversation: Conversatio
           <button className="p-2 hover:bg-rose-100 rounded-full transition">
             <Phone size={20} className="text-primary" />
           </button>
-          <Link href="/video-date" className="p-2 hover:bg-rose-100 rounded-full transition">
+          <Link
+            href={`/video-date?room=${user?.id}-${conversation.other_user_id}`}
+            className="p-2 hover:bg-rose-100 rounded-full transition"
+            title="Start video call"
+          >
             <Video size={20} className="text-primary" />
           </Link>
         </div>
