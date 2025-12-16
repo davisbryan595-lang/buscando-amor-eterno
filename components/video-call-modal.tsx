@@ -135,57 +135,85 @@ export default function VideoCallModal({
       // Ensure audio element is properly configured
       audioElement.volume = 1.0
       audioElement.muted = false
+      audioElement.autoplay = true
 
-      // Attach audio track
+      const attachAudioTrack = (track: any) => {
+        if (track && track.kind === 'audio') {
+          console.log('Attaching remote audio track:', {
+            sid: track.sid,
+            enabled: track.mediaStreamTrack?.enabled,
+            muted: track.isMuted,
+            readyState: track.mediaStreamTrack?.readyState,
+          })
+
+          // Create a new MediaStream with the audio track
+          const stream = new MediaStream([track.mediaStreamTrack])
+          audioElement.srcObject = stream
+
+          // Ensure element is configured for playback
+          audioElement.muted = false
+          audioElement.volume = 1.0
+
+          // Force play with user gesture fallback
+          const attemptPlay = () => {
+            const playPromise = audioElement.play()
+            if (playPromise !== undefined) {
+              playPromise
+                .then(() => {
+                  console.log('Remote audio playback started successfully')
+                })
+                .catch((err) => {
+                  console.warn('Audio autoplay blocked, waiting for user gesture:', err)
+                  // Set up one-time event listeners for user interaction
+                  const enableAudio = () => {
+                    audioElement.play()
+                      .then(() => console.log('Audio playback started after user gesture'))
+                      .catch((e) => console.error('Audio play failed after gesture:', e))
+                  }
+                  document.addEventListener('click', enableAudio, { once: true })
+                  document.addEventListener('touchstart', enableAudio, { once: true })
+                  document.addEventListener('keydown', enableAudio, { once: true })
+                })
+            }
+          }
+
+          attemptPlay()
+        }
+      }
+
+      // Attach existing audio tracks
       const audioTracks = participant.audioTracks
       if (audioTracks && audioTracks.size > 0) {
-        const audioTrack = Array.from(audioTracks.values())[0]
-        if (audioTrack && audioTrack.track) {
-          audioTrack.track.attach(audioElement)
-
-          // Force play and handle autoplay restrictions
-          const playPromise = audioElement.play()
-          if (playPromise !== undefined) {
-            playPromise
-              .then(() => {
-                console.log('Remote audio playback started successfully')
-              })
-              .catch((err) => {
-                console.error('Audio autoplay blocked:', err)
-                // Try to play again on user interaction
-                const enableAudio = () => {
-                  audioElement.play().catch((e) => console.error('Retry audio play failed:', e))
-                  document.removeEventListener('click', enableAudio)
-                  document.removeEventListener('touchstart', enableAudio)
-                }
-                document.addEventListener('click', enableAudio, { once: true })
-                document.addEventListener('touchstart', enableAudio, { once: true })
-              })
-          }
-
-          return () => {
-            audioTrack.track.detach()
-          }
+        const audioPublication = Array.from(audioTracks.values())[0]
+        if (audioPublication && audioPublication.track) {
+          attachAudioTrack(audioPublication.track)
         }
       }
 
       // Listen for new audio tracks being published
-      const handleTrackSubscribed = (track: any) => {
+      const handleTrackSubscribed = (track: any, publication: any) => {
+        console.log('Track subscribed:', track.kind, 'from', participant.identity)
+        if (track.kind === 'audio') {
+          attachAudioTrack(track)
+        }
+      }
+
+      const handleTrackUnsubscribed = (track: any) => {
+        console.log('Track unsubscribed:', track.kind)
         if (track.kind === 'audio' && audioElement) {
-          track.attach(audioElement)
-          // Ensure playback after attaching new track
-          audioElement.volume = 1.0
-          audioElement.muted = false
-          audioElement.play().catch((err) => {
-            console.error('Error playing newly subscribed audio:', err)
-          })
+          audioElement.srcObject = null
         }
       }
 
       participant.on(ParticipantEvent.TrackSubscribed, handleTrackSubscribed)
+      participant.on(ParticipantEvent.TrackUnsubscribed, handleTrackUnsubscribed)
 
       return () => {
         participant.off(ParticipantEvent.TrackSubscribed, handleTrackSubscribed)
+        participant.off(ParticipantEvent.TrackUnsubscribed, handleTrackUnsubscribed)
+        if (audioElement) {
+          audioElement.srcObject = null
+        }
       }
     }
   }, [participants])
@@ -331,8 +359,7 @@ export default function VideoCallModal({
             ref={remoteAudioRef}
             autoPlay
             playsInline
-            muted={false}
-            className="hidden"
+            style={{ display: 'none' }}
           />
         </div>
 

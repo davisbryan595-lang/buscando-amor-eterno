@@ -152,21 +152,32 @@ export function useLiveKitCall() {
 
         // Handle successful track subscriptions
         room.on(RoomEvent.TrackSubscribed, (track, publication, participant) => {
-          console.log('Track subscribed:', {
+          console.log('✅ Track subscribed:', {
             kind: track.kind,
             participant: participant.identity,
             sid: track.sid,
             enabled: track.mediaStreamTrack?.enabled,
             muted: publication.isMuted,
+            readyState: track.mediaStreamTrack?.readyState,
           })
+
+          // For audio tracks, log additional details
+          if (track.kind === 'audio' && track.mediaStreamTrack) {
+            console.log('🔊 Remote audio track ready:', {
+              trackId: track.mediaStreamTrack.id,
+              label: track.mediaStreamTrack.label,
+              enabled: track.mediaStreamTrack.enabled,
+            })
+          }
         })
 
         // Handle track publications
         room.on(RoomEvent.TrackPublished, (publication, participant) => {
-          console.log('Track published:', {
+          console.log('📤 Track published:', {
             kind: publication.kind,
             participant: participant.identity,
             source: publication.source,
+            muted: publication.isMuted,
           })
         })
 
@@ -180,28 +191,48 @@ export function useLiveKitCall() {
 
         // Enable microphone and camera after connection
         try {
-          await room.localParticipant.setMicrophoneEnabled(true)
-          console.log('Microphone enabled, audio tracks:', room.localParticipant.audioTracks?.size ?? 0)
+          console.log('Enabling local media tracks...')
 
-          if (callType === 'video') {
-            await room.localParticipant.setCameraEnabled(true)
-            console.log('Camera enabled, video tracks:', room.localParticipant.videoTracks?.size ?? 0)
+          // Enable microphone first
+          const micPublication = await room.localParticipant.setMicrophoneEnabled(true)
+          console.log('Microphone enabled:', {
+            trackSid: micPublication?.trackSid,
+            trackName: micPublication?.trackName,
+            isMuted: micPublication?.isMuted,
+            audioTrackCount: room.localParticipant.audioTracks?.size ?? 0,
+          })
+
+          // Verify microphone track is publishing
+          if (room.localParticipant.audioTracks && room.localParticipant.audioTracks.size > 0) {
+            const audioPublication = Array.from(room.localParticipant.audioTracks.values())[0]
+            if (audioPublication.track) {
+              const track = audioPublication.track.mediaStreamTrack
+              console.log('Local audio track details:', {
+                id: track?.id,
+                kind: track?.kind,
+                label: track?.label,
+                enabled: track?.enabled,
+                muted: track?.muted,
+                readyState: track?.readyState,
+              })
+
+              // Ensure track is enabled
+              if (track) {
+                track.enabled = true
+              }
+            }
+          } else {
+            console.warn('No audio tracks found after enabling microphone!')
           }
 
-          // Verify tracks are publishing
-          if (room.localParticipant.audioTracks) {
-            const audioTracks = Array.from(room.localParticipant.audioTracks.values())
-            if (audioTracks.length === 0) {
-              console.warn('No audio tracks after enabling microphone')
-            } else {
-              audioTracks.forEach((pub) => {
-                console.log('Audio track status:', {
-                  muted: pub.isMuted,
-                  enabled: pub.track?.mediaStreamTrack?.enabled,
-                  readyState: pub.track?.mediaStreamTrack?.readyState,
-                })
-              })
-            }
+          // Enable camera for video calls
+          if (callType === 'video') {
+            const camPublication = await room.localParticipant.setCameraEnabled(true)
+            console.log('Camera enabled:', {
+              trackSid: camPublication?.trackSid,
+              trackName: camPublication?.trackName,
+              videoTrackCount: room.localParticipant.videoTracks?.size ?? 0,
+            })
           }
         } catch (publishError) {
           console.error('Error publishing tracks:', publishError)
