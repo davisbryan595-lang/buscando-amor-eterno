@@ -149,6 +149,16 @@ export function useLiveKitCall() {
 
         await Promise.race([connectPromise, timeoutPromise])
 
+        // Enable microphone and camera after connection
+        try {
+          await room.localParticipant.setMicrophoneEnabled(true)
+          if (callType === 'video') {
+            await room.localParticipant.setCameraEnabled(true)
+          }
+        } catch (publishError) {
+          console.error('Error publishing tracks:', publishError)
+        }
+
         setState((prev) => ({
           ...prev,
           room,
