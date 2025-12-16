@@ -1,58 +1,76 @@
-import { AccessToken } from 'livekit-server-sdk'
-import { NextRequest, NextResponse } from 'next/server'
+import { AccessToken } from 'livekit-server-sdk';
+import { NextResponse } from 'next/server';
 
-export async function POST(req: NextRequest) {
+export async function POST(request: Request) {
   try {
-    const { roomName, userName, callType } = await req.json()
+    const { roomName, userName } = await request.json();
 
     if (!roomName || !userName) {
-      return NextResponse.json(
-        { error: 'Missing roomName or userName' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Missing roomName or userName' }, { status: 400 });
     }
 
-    const apiKey = process.env.LIVEKIT_API_KEY
-    const apiSecret = process.env.LIVEKIT_API_SECRET
+    const apiKey = process.env.LIVEKIT_API_KEY;
+    const apiSecret = process.env.LIVEKIT_API_SECRET;
 
     if (!apiKey || !apiSecret) {
-      console.error('[LiveKit Token] Missing credentials:', {
-        hasApiKey: !!apiKey,
-        hasApiSecret: !!apiSecret,
-      })
-      return NextResponse.json(
-        { error: 'LiveKit credentials not configured. Please check environment variables on your deployment platform.' },
-        { status: 500 }
-      )
+      return NextResponse.json({ error: 'LiveKit credentials not configured' }, { status: 500 });
     }
 
     const at = new AccessToken(apiKey, apiSecret, {
       identity: userName,
-      ttl: 3600,
-    })
+      ttl: '10m',
+    });
 
-    // Grant permissions based on call type
     at.addGrant({
-      room: roomName,
       roomJoin: true,
+      room: roomName,
       canPublish: true,
-      canPublishData: true,
       canSubscribe: true,
-    })
+    });
 
-    // Audio-only call: disable video
-    if (callType === 'audio') {
-      // User will manually disable video
+    const token = at.toJwt();
+
+    return NextResponse.json({ token });
+  } catch (err) {
+    console.error('Token generation error:', err);
+    return NextResponse.json({ error: 'Failed to generate token' }, { status: 500 });
+  }
+}
+
+export async function GET(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const room = searchParams.get('room');
+    const identity = searchParams.get('identity');
+
+    if (!room || !identity) {
+      return NextResponse.json({ error: 'Missing room or identity' }, { status: 400 });
     }
 
-    const token = await at.toJwt()
+    const apiKey = process.env.LIVEKIT_API_KEY;
+    const apiSecret = process.env.LIVEKIT_API_SECRET;
 
-    return NextResponse.json({ token })
-  } catch (error) {
-    console.error('Error generating LiveKit token:', error)
-    return NextResponse.json(
-      { error: 'Failed to generate token' },
-      { status: 500 }
-    )
+    if (!apiKey || !apiSecret) {
+      return NextResponse.json({ error: 'LiveKit credentials not configured' }, { status: 500 });
+    }
+
+    const at = new AccessToken(apiKey, apiSecret, {
+      identity,
+      ttl: '10m',
+    });
+
+    at.addGrant({
+      roomJoin: true,
+      room,
+      canPublish: true,
+      canSubscribe: true,
+    });
+
+    const token = at.toJwt();
+
+    return NextResponse.json({ token });
+  } catch (err) {
+    console.error('Token generation error:', err);
+    return NextResponse.json({ error: 'Failed to generate token' }, { status: 500 });
   }
 }
