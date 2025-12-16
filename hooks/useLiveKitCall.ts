@@ -152,21 +152,32 @@ export function useLiveKitCall() {
 
         // Handle successful track subscriptions
         room.on(RoomEvent.TrackSubscribed, (track, publication, participant) => {
-          console.log('Track subscribed:', {
+          console.log('✅ Track subscribed:', {
             kind: track.kind,
             participant: participant.identity,
             sid: track.sid,
             enabled: track.mediaStreamTrack?.enabled,
             muted: publication.isMuted,
+            readyState: track.mediaStreamTrack?.readyState,
           })
+
+          // For audio tracks, log additional details
+          if (track.kind === 'audio' && track.mediaStreamTrack) {
+            console.log('🔊 Remote audio track ready:', {
+              trackId: track.mediaStreamTrack.id,
+              label: track.mediaStreamTrack.label,
+              enabled: track.mediaStreamTrack.enabled,
+            })
+          }
         })
 
         // Handle track publications
         room.on(RoomEvent.TrackPublished, (publication, participant) => {
-          console.log('Track published:', {
+          console.log('📤 Track published:', {
             kind: publication.kind,
             participant: participant.identity,
             source: publication.source,
+            muted: publication.isMuted,
           })
         })
 
