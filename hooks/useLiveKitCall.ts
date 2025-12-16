@@ -202,12 +202,13 @@ export function useLiveKitCall() {
             audioTrackCount: room.localParticipant.audioTracks?.size ?? 0,
           })
 
-          // Verify microphone track is publishing
-          if (room.localParticipant.audioTracks && room.localParticipant.audioTracks.size > 0) {
-            const audioPublication = Array.from(room.localParticipant.audioTracks.values())[0]
+          // Force publish the audio track if it exists
+          const audioPubs = room.localParticipant.audioTracks
+          if (audioPubs && audioPubs.size > 0) {
+            const audioPublication = Array.from(audioPubs.values())[0]
             if (audioPublication.track) {
               const track = audioPublication.track.mediaStreamTrack
-              console.log('Local audio track details:', {
+              console.log('✅ Local audio track details:', {
                 id: track?.id,
                 kind: track?.kind,
                 label: track?.label,
@@ -220,10 +221,36 @@ export function useLiveKitCall() {
               if (track) {
                 track.enabled = true
               }
+              console.log('📤 Audio track published:', audioPublication.trackSid)
             }
           } else {
-            console.warn('No audio tracks found after enabling microphone!')
+            // Fallback: manually create and publish if enable didn't work
+            console.warn('⚠️ No audio tracks found after enabling microphone! Using fallback publish...')
+            try {
+              const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+              const audioTrack = stream.getAudioTracks()[0]
+              if (audioTrack) {
+                await room.localParticipant.publishTrack(audioTrack)
+                console.log('✅ Manually published audio track:', {
+                  trackId: audioTrack.id,
+                  label: audioTrack.label,
+                  enabled: audioTrack.enabled,
+                })
+              } else {
+                throw new Error('No audio track found in getUserMedia stream')
+              }
+            } catch (fallbackError) {
+              console.error('❌ Fallback audio publish failed:', fallbackError)
+              throw new Error('Failed to publish audio track: ' + (fallbackError instanceof Error ? fallbackError.message : 'Unknown error'))
+            }
           }
+
+          // Final check: verify audio is publishing
+          const finalAudioPubs = room.localParticipant.audioTracks
+          if (!finalAudioPubs || finalAudioPubs.size === 0) {
+            throw new Error('Still no audio track after fallback — check mic permissions/device')
+          }
+          console.log('🎙️ Final audio publication check passed. Audio track count:', finalAudioPubs.size)
 
           // Enable camera for video calls
           if (callType === 'video') {
@@ -287,8 +314,25 @@ export function useLiveKitCall() {
     if (roomRef.current?.localParticipant) {
       try {
         await roomRef.current.localParticipant.setMicrophoneEnabled(enabled)
+        const audioTrackCount = roomRef.current.localParticipant.audioTracks?.size ?? 0
+        console.log(`🎙️ Audio toggled ${enabled ? 'on' : 'off'}. Audio tracks: ${audioTrackCount}`)
+
+        // If enabling audio but no tracks exist, use fallback
+        if (enabled && audioTrackCount === 0) {
+          console.warn('⚠️ No audio tracks after toggle. Attempting fallback...')
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+          const audioTrack = stream.getAudioTracks()[0]
+          if (audioTrack) {
+            await roomRef.current.localParticipant.publishTrack(audioTrack)
+            console.log('✅ Fallback audio published')
+          }
+        }
       } catch (err) {
-        console.error('Error toggling audio:', err)
+        console.error('❌ Error toggling audio:', err)
+        setState((prev) => ({
+          ...prev,
+          error: `Failed to toggle audio: ${err instanceof Error ? err.message : 'Unknown error'}`,
+        }))
       }
     }
   }, [])
