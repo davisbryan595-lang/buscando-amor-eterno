@@ -174,6 +174,7 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
             </div>
           ))
         )}
+        <div ref={messagesEndRef} />
       </div>
 
       {/* Input */}
