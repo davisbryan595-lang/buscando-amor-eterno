@@ -84,6 +84,10 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
     }
   }, [conversation?.other_user_id, fetchMessages, conversation.other_user_name, conversation.other_user_image])
 
+  useEffect(() => {
+    scrollToBottom()
+  }, [messages])
+
   const handleSend = async () => {
     if (!newMessage.trim() || !user) return
 
