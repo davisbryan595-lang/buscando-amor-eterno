@@ -544,6 +544,14 @@ export default function VideoCallModal({
 
         {/* Video Container */}
         <div className="flex-1 relative bg-black overflow-hidden">
+          {/* Desktop Connection Status Banner */}
+          {!isMobileView && isConnected && (
+            <div className="absolute top-24 left-6 z-30 flex items-center gap-2 px-4 py-2 bg-green-500/20 border border-green-500/50 rounded-lg">
+              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+              <span className="text-green-300 text-sm font-medium">Call Connected</span>
+            </div>
+          )}
+
           {/* Connecting State */}
           {isConnecting && (
             <div className="absolute inset-0 flex items-center justify-center z-20 bg-black/60 backdrop-blur-sm">
