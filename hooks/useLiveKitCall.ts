@@ -1,11 +1,11 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
-import { Room, Participant, RoomEvent, ParticipantEvent, createLocalAudioTrack } from 'livekit-client'
+import { Room, Participant, RoomEvent, LocalParticipant, RemoteParticipant } from 'livekit-client'
 import { useAuth } from '@/context/auth-context'
 
 export interface CallState {
   room: Room | null
   participants: Participant[]
-  localParticipant: Participant | null
+  localParticipant: LocalParticipant | null
   isConnecting: boolean
   isConnected: boolean
   error: string | null
@@ -22,34 +22,53 @@ export function useLiveKitCall() {
     error: null,
   })
   const roomRef = useRef<Room | null>(null)
+  const cleanupListenersRef = useRef<Array<() => void>>([])
+
+  const safeSetState = useCallback((updater: (prev: CallState) => CallState) => {
+    setState((prev) => {
+      const next = updater(prev)
+      return next
+    })
+  }, [])
+
+  const removeAllListeners = useCallback(() => {
+    cleanupListenersRef.current.forEach(cleanup => cleanup())
+    cleanupListenersRef.current = []
+  }, [])
 
   const joinCall = useCallback(
     async (otherUserId: string, callType: 'audio' | 'video') => {
       if (!user) {
-        setState((prev) => ({ ...prev, error: 'User not authenticated' }))
+        safeSetState((prev) => ({ ...prev, error: 'User not authenticated' }))
         return
       }
 
+      let room: Room | null = null
+
       try {
-        setState((prev) => ({ ...prev, isConnecting: true, error: null }))
+        safeSetState((prev) => ({ ...prev, isConnecting: true, error: null }))
 
         // Request media permissions first
         try {
           const constraints = {
-            audio: true,
-            video: callType === 'video' ? { width: 640, height: 480 } : false,
+            audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+            video: callType === 'video' ? { width: { ideal: 640 }, height: { ideal: 480 } } : false,
           }
-          await navigator.mediaDevices.getUserMedia(constraints)
+          const stream = await navigator.mediaDevices.getUserMedia(constraints)
+          // Stop the stream after getting permissions - LiveKit will request it again
+          stream.getTracks().forEach(track => track.stop())
         } catch (permError) {
-          if (permError instanceof DOMException && permError.name === 'NotAllowedError') {
-            throw new Error('Camera/microphone permissions denied. Please allow access in browser settings.')
-          } else if (permError instanceof DOMException && permError.name === 'NotFoundError') {
-            throw new Error('Camera or microphone not found on your device.')
+          if (permError instanceof DOMException) {
+            if (permError.name === 'NotAllowedError') {
+              throw new Error('Camera/microphone permissions denied. Please allow access in browser settings.')
+            } else if (permError.name === 'NotFoundError') {
+              throw new Error('Camera or microphone not found on your device.')
+            }
           }
           throw permError
         }
 
-        // Generate room name (same for both users)
+        // Generate room name
         const roomName = [user.id, otherUserId].sort().join('-')
 
         // Get token from backend
@@ -76,13 +95,13 @@ export function useLiveKitCall() {
 
         const { token } = await tokenResponse.json()
 
-        // Create and connect to room
+        // Create room with proper configuration
         const liveKitUrl = process.env.NEXT_PUBLIC_LIVEKIT_URL
         if (!liveKitUrl) {
           throw new Error('LiveKit URL not configured')
         }
 
-        const room = new Room({
+        room = new Room({
           audioCaptureDefaults: {
             autoGainControl: true,
             echoCancellation: true,
@@ -105,23 +124,23 @@ export function useLiveKitCall() {
 
         roomRef.current = room
 
-        // Handle room events
-        room.on(RoomEvent.ParticipantConnected, (participant: Participant) => {
-          setState((prev) => ({
+        // Setup room event listeners
+        const handleParticipantConnected = (participant: Participant) => {
+          safeSetState((prev) => ({
             ...prev,
             participants: [...prev.participants, participant],
           }))
-        })
+        }
 
-        room.on(RoomEvent.ParticipantDisconnected, (participant: Participant) => {
-          setState((prev) => ({
+        const handleParticipantDisconnected = (participant: Participant) => {
+          safeSetState((prev) => ({
             ...prev,
             participants: prev.participants.filter((p) => p.sid !== participant.sid),
           }))
-        })
+        }
 
-        room.on(RoomEvent.Disconnected, () => {
-          setState((prev) => ({
+        const handleDisconnected = () => {
+          safeSetState((prev) => ({
             ...prev,
             isConnected: false,
             room: null,
@@ -129,56 +148,30 @@ export function useLiveKitCall() {
             localParticipant: null,
           }))
           roomRef.current = null
-        })
+          removeAllListeners()
+        }
 
-        // Handle connection errors
-        room.on(RoomEvent.Error, (error: Error) => {
-          const errorMessage = error instanceof Error ? error.message : 'Connection error occurred'
-          setState((prev) => ({
+        const handleRoomError = (error: Error) => {
+          safeSetState((prev) => ({
             ...prev,
-            error: errorMessage,
+            error: error instanceof Error ? error.message : 'Connection error occurred',
             isConnecting: false,
           }))
-          console.error('Room error:', error)
           if (roomRef.current) {
-            roomRef.current.disconnect()
+            roomRef.current.disconnect().catch(() => {})
           }
-        })
+        }
 
-        // Handle media track subscription failures
-        room.on(RoomEvent.TrackSubscriptionFailed, (trackSid: string, participant: Participant) => {
-          console.warn('Failed to subscribe to track:', trackSid, 'from participant:', participant.identity)
-        })
+        room.on(RoomEvent.ParticipantConnected, handleParticipantConnected)
+        room.on(RoomEvent.ParticipantDisconnected, handleParticipantDisconnected)
+        room.on(RoomEvent.Disconnected, handleDisconnected)
+        room.on(RoomEvent.Error, handleRoomError)
 
-        // Handle successful track subscriptions
-        room.on(RoomEvent.TrackSubscribed, (track, publication, participant) => {
-          console.log('✅ Track subscribed:', {
-            kind: track.kind,
-            participant: participant.identity,
-            sid: track.sid,
-            enabled: track.mediaStreamTrack?.enabled,
-            muted: publication.isMuted,
-            readyState: track.mediaStreamTrack?.readyState,
-          })
-
-          // For audio tracks, log additional details
-          if (track.kind === 'audio' && track.mediaStreamTrack) {
-            console.log('🔊 Remote audio track ready:', {
-              trackId: track.mediaStreamTrack.id,
-              label: track.mediaStreamTrack.label,
-              enabled: track.mediaStreamTrack.enabled,
-            })
-          }
-        })
-
-        // Handle track publications
-        room.on(RoomEvent.TrackPublished, (publication, participant) => {
-          console.log('📤 Track published:', {
-            kind: publication.kind,
-            participant: participant.identity,
-            source: publication.source,
-            muted: publication.isMuted,
-          })
+        cleanupListenersRef.current.push(() => {
+          room?.off(RoomEvent.ParticipantConnected, handleParticipantConnected)
+          room?.off(RoomEvent.ParticipantDisconnected, handleParticipantDisconnected)
+          room?.off(RoomEvent.Disconnected, handleDisconnected)
+          room?.off(RoomEvent.Error, handleRoomError)
         })
 
         // Connect to room with timeout
@@ -189,107 +182,46 @@ export function useLiveKitCall() {
 
         await Promise.race([connectPromise, timeoutPromise])
 
-        // Enable microphone and camera after connection
+        // Enable media with proper sequencing
         try {
-          console.log('Enabling local media tracks...')
-
-          // Enable microphone first
-          const micPublication = await room.localParticipant.setMicrophoneEnabled(true)
-          console.log('Microphone enabled:', {
-            trackSid: micPublication?.trackSid,
-            trackName: micPublication?.trackName,
-            isMuted: micPublication?.isMuted,
-            audioTrackCount: room.localParticipant.audioTracks?.size ?? 0,
-          })
-
-          // Verify microphone track is publishing
-          let audioTrackFound = false
-          // Wait a bit for the track to be registered
-          for (let i = 0; i < 10; i++) {
-            if (room.localParticipant.audioTracks && room.localParticipant.audioTracks.size > 0) {
-              audioTrackFound = true
-              break
-            }
-            await new Promise((resolve) => setTimeout(resolve, 200))
-          }
-
-          if (audioTrackFound) {
-            const audioPublication = Array.from(room.localParticipant.audioTracks.values())[0]
-            if (audioPublication.track) {
-              const track = audioPublication.track.mediaStreamTrack
-              console.log('✅ Local audio track details:', {
-                id: track?.id,
-                kind: track?.kind,
-                label: track?.label,
-                enabled: track?.enabled,
-                muted: track?.muted,
-                readyState: track?.readyState,
-              })
-
-              // Ensure track is enabled
-              if (track) {
-                track.enabled = true
-              }
-              console.log('📤 Audio track published:', audioPublication.trackSid)
-            }
-          } else {
-            console.warn('No audio tracks found after enabling microphone! Using fallback publish...')
-
-            // Fallback: manually create and publish audio track
-            try {
-              const audioTrack = await createLocalAudioTrack({
-                echoCancellation: true,
-                noiseSuppression: true,
-                autoGainControl: true,
-              })
-              const publication = await room.localParticipant.publishTrack(audioTrack)
-              console.log('✅ Manually published audio track:', {
-                trackId: audioTrack.mediaStreamTrack.id,
-                label: audioTrack.mediaStreamTrack.label,
-                enabled: audioTrack.mediaStreamTrack.enabled,
-                publicationSid: publication?.trackSid,
-              })
-
-              // Wait a bit for the track to be registered in the map
-              await new Promise((resolve) => setTimeout(resolve, 500))
-
-              // Verify again
-              if (room.localParticipant.audioTracks.size === 0) {
-                // If we have a publication, we can consider it a success even if the map isn't updated yet
-                if (publication) {
-                  console.warn('Audio track published but not yet in localParticipant.audioTracks map')
-                } else {
-                  throw new Error('Still no audio track after fallback — check mic permissions/device')
-                }
-              }
-            } catch (fallbackError) {
-              console.error('Fallback publish failed:', fallbackError)
-              throw new Error('Still no audio track after fallback — check mic permissions/device')
-            }
-          }
-
-          // Final check: verify audio is publishing
-          const finalAudioPubs = room.localParticipant.audioTracks
-          if (!finalAudioPubs || finalAudioPubs.size === 0) {
-            throw new Error('Still no audio track after fallback — check mic permissions/device')
-          }
-          console.log('🎙️ Final audio publication check passed. Audio track count:', finalAudioPubs.size)
+          // Enable microphone
+          await room.localParticipant.setMicrophoneEnabled(true)
 
           // Enable camera for video calls
           if (callType === 'video') {
-            const camPublication = await room.localParticipant.setCameraEnabled(true)
-            console.log('Camera enabled:', {
-              trackSid: camPublication?.trackSid,
-              trackName: camPublication?.trackName,
-              videoTrackCount: room.localParticipant.videoTracks?.size ?? 0,
-            })
+            await room.localParticipant.setCameraEnabled(true)
           }
-        } catch (publishError) {
-          console.error('Error publishing tracks:', publishError)
-          throw new Error('Failed to enable microphone/camera: ' + (publishError instanceof Error ? publishError.message : 'Unknown error'))
+
+          // Wait for tracks to be ready
+          await new Promise<void>((resolve, reject) => {
+            const maxWaitTime = 5000
+            const startTime = Date.now()
+
+            const checkTracks = () => {
+              const hasAudio = (room?.localParticipant.audioTracks?.size ?? 0) > 0
+              const hasVideo = callType === 'video' ? (room?.localParticipant.videoTracks?.size ?? 0) > 0 : true
+
+              if (hasAudio && hasVideo) {
+                resolve()
+                return
+              }
+
+              if (Date.now() - startTime > maxWaitTime) {
+                reject(new Error('Timeout waiting for media tracks to be ready'))
+                return
+              }
+
+              setTimeout(checkTracks, 100)
+            }
+
+            checkTracks()
+          })
+        } catch (mediaError) {
+          throw new Error(`Failed to enable media: ${mediaError instanceof Error ? mediaError.message : 'Unknown error'}`)
         }
 
-        setState((prev) => ({
+        // Update state with successful connection
+        safeSetState((prev) => ({
           ...prev,
           room,
           localParticipant: room.localParticipant,
@@ -299,18 +231,17 @@ export function useLiveKitCall() {
         }))
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Failed to join call'
-        setState((prev) => ({
+        safeSetState((prev) => ({
           ...prev,
           error: errorMessage,
           isConnecting: false,
         }))
-        console.error('Error joining call:', err)
         if (roomRef.current) {
-          roomRef.current.disconnect()
+          roomRef.current.disconnect().catch(() => {})
         }
       }
     },
-    [user]
+    [user, safeSetState, removeAllListeners]
   )
 
   const leaveCall = useCallback(async () => {
@@ -320,66 +251,55 @@ export function useLiveKitCall() {
         roomRef.current = null
       }
     } catch (err) {
-      console.warn('Error disconnecting from call:', err)
+      // Silently handle disconnect errors
     } finally {
-      setState({
+      removeAllListeners()
+      safeSetState(() => ({
         room: null,
         participants: [],
         localParticipant: null,
         isConnecting: false,
         isConnected: false,
         error: null,
-      })
+      }))
     }
-  }, [])
+  }, [removeAllListeners, safeSetState])
 
   const toggleAudio = useCallback(async (enabled: boolean) => {
     if (roomRef.current?.localParticipant) {
       try {
         await roomRef.current.localParticipant.setMicrophoneEnabled(enabled)
-        const audioTrackCount = roomRef.current.localParticipant.audioTracks?.size ?? 0
-        console.log(`🎙️ Audio toggled ${enabled ? 'on' : 'off'}. Audio tracks: ${audioTrackCount}`)
-
-        // If enabling audio but no tracks exist, use fallback
-        if (enabled && audioTrackCount === 0) {
-          console.warn('⚠️ No audio tracks after toggle. Attempting fallback...')
-          const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-          const audioTrack = stream.getAudioTracks()[0]
-          if (audioTrack) {
-            await roomRef.current.localParticipant.publishTrack(audioTrack)
-            console.log('✅ Fallback audio published')
-          }
-        }
       } catch (err) {
-        console.error('❌ Error toggling audio:', err)
-        setState((prev) => ({
+        safeSetState((prev) => ({
           ...prev,
-          error: `Failed to toggle audio: ${err instanceof Error ? err.message : 'Unknown error'}`,
+          error: `Failed to ${enabled ? 'enable' : 'disable'} audio`,
         }))
       }
     }
-  }, [])
+  }, [safeSetState])
 
   const toggleVideo = useCallback(async (enabled: boolean) => {
     if (roomRef.current?.localParticipant) {
       try {
         await roomRef.current.localParticipant.setCameraEnabled(enabled)
       } catch (err) {
-        console.error('Error toggling video:', err)
+        safeSetState((prev) => ({
+          ...prev,
+          error: `Failed to ${enabled ? 'enable' : 'disable'} video`,
+        }))
       }
     }
-  }, [])
+  }, [safeSetState])
 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
+      removeAllListeners()
       if (roomRef.current) {
-        roomRef.current.disconnect().catch((err) => {
-          console.warn('Error during cleanup disconnect:', err)
-        })
+        roomRef.current.disconnect().catch(() => {})
       }
     }
-  }, [])
+  }, [removeAllListeners])
 
   return {
     ...state,
