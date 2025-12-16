@@ -459,7 +459,7 @@ export default function VideoCallModal({
     <div className={containerClasses}>
       <div className={modalClasses}>
         {/* Header */}
-        <div className="bg-gradient-to-b from-black/90 via-black/50 to-transparent px-6 py-4 flex items-center justify-between absolute top-0 left-0 right-0 z-10">
+        <div className="bg-gradient-to-b from-black/90 via-black/50 to-transparent px-6 py-4 flex items-center justify-between absolute top-0 left-0 right-0 z-20 pointer-events-none">
           <div className="flex-1">
             <h3 className="text-white font-semibold text-lg">
               {callType === 'video' ? 'Video Call' : 'Audio Call'}
@@ -468,7 +468,7 @@ export default function VideoCallModal({
           </div>
 
           {/* Connection Status & Stats */}
-          <div className="flex items-center gap-4 mr-4">
+          <div className="flex items-center gap-4 mr-4 pointer-events-auto">
             {/* Call Duration */}
             <div className="flex items-center gap-2 text-white text-sm font-medium">
               <Timer size={16} />
@@ -486,6 +486,7 @@ export default function VideoCallModal({
                     ? 'bg-yellow-500/20 text-yellow-300'
                     : 'bg-slate-700 text-gray-300'
                 }`}
+                aria-label="Toggle connection stats"
               >
                 {connectionErrorRef.current || stats.quality === 'poor' ? (
                   <WifiOff size={14} />
