@@ -99,6 +99,15 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
       {/* Header */}
       <div className="p-4 lg:p-6 border-b border-rose-100 flex items-center justify-between flex-shrink-0">
         <div className="flex items-center gap-3 lg:gap-4 min-w-0">
+          {onBack && (
+            <button
+              onClick={onBack}
+              className="md:hidden p-2 hover:bg-rose-100 rounded-full transition flex-shrink-0"
+              aria-label="Back to conversations"
+            >
+              <ArrowLeft size={20} className="text-slate-700" />
+            </button>
+          )}
           <div className="relative w-12 h-12 lg:w-14 lg:h-14 flex-shrink-0">
             <Image
               src={otherUserDetails?.image || conversation.other_user_image || "/placeholder.svg"}
