@@ -44,8 +44,6 @@ export default function VideoCallModal({
         sendingInvitationRef.current = true
         try {
           const roomName = [user.id, otherUserId].sort().join('-')
-
-          // Use upsert to handle both insert and update cases
           const expiresAt = new Date()
           expiresAt.setMinutes(expiresAt.getMinutes() + 5)
 
@@ -81,6 +79,17 @@ export default function VideoCallModal({
       sendInvitation()
     }
   }, [isOpen, invitationSent, callInvitationId, user, otherUserId, callType])
+
+  // Clean up listeners when modal closes
+  useEffect(() => {
+    return () => {
+      if (!isOpen && participantListenerRef.current && trackSubscribedHandlerRef.current) {
+        participantListenerRef.current.off(ParticipantEvent.TrackSubscribed, trackSubscribedHandlerRef.current)
+        participantListenerRef.current = null
+        trackSubscribedHandlerRef.current = null
+      }
+    }
+  }, [isOpen])
 
   // Start call when modal opens
   useEffect(() => {
