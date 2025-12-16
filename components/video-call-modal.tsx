@@ -53,12 +53,12 @@ export default function VideoCallModal({
             })
 
           if (err) {
-            console.error('Error sending call invitation:', err)
+            console.error('Error sending call invitation:', err?.message || err)
           } else {
             setInvitationSent(true)
           }
         } catch (err) {
-          console.error('Error sending call invitation:', err)
+          console.error('Error sending call invitation:', err instanceof Error ? err.message : err)
         }
       }
 
