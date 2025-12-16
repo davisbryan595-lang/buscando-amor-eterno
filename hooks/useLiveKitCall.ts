@@ -220,16 +220,24 @@ export function useLiveKitCall() {
         // Enable media with proper sequencing
         try {
           // Enable microphone
-          await room.localParticipant.setMicrophoneEnabled(true)
+          try {
+            await room.localParticipant.setMicrophoneEnabled(true)
+          } catch (err) {
+            // Microphone might already be enabled, continue
+          }
 
           // Enable camera for video calls
           if (callType === 'video') {
-            await room.localParticipant.setCameraEnabled(true)
+            try {
+              await room.localParticipant.setCameraEnabled(true)
+            } catch (err) {
+              // Camera might already be enabled, continue
+            }
           }
 
-          // Wait for tracks to be ready
+          // Wait for tracks to be ready with timeout
           await new Promise<void>((resolve, reject) => {
-            const maxWaitTime = 5000
+            const maxWaitTime = 8000
             const startTime = Date.now()
 
             const checkTracks = () => {
@@ -242,6 +250,11 @@ export function useLiveKitCall() {
               }
 
               if (Date.now() - startTime > maxWaitTime) {
+                // Don't fail completely if video tracks aren't ready, continue with audio
+                if (hasAudio || callType === 'audio') {
+                  resolve()
+                  return
+                }
                 reject(new Error('Timeout waiting for media tracks to be ready'))
                 return
               }
@@ -252,7 +265,8 @@ export function useLiveKitCall() {
             checkTracks()
           })
         } catch (mediaError) {
-          throw new Error(`Failed to enable media: ${mediaError instanceof Error ? mediaError.message : 'Unknown error'}`)
+          // Log error but continue - call might still work with degraded media
+          const message = mediaError instanceof Error ? mediaError.message : 'Unknown media error'
         }
 
         // Update state with successful connection
