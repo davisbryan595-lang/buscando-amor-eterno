@@ -115,6 +115,7 @@ export function useLiveKitCall() {
           setState((prev) => ({
             ...prev,
             isConnected: false,
+            isConnecting: false,
             room: null,
             participants: [],
             localParticipant: null,
@@ -134,6 +135,16 @@ export function useLiveKitCall() {
           if (roomRef.current) {
             roomRef.current.disconnect()
           }
+        })
+
+        // Handle reconnection completion
+        room.on(RoomEvent.Reconnected, () => {
+          setState((prev) => ({
+            ...prev,
+            error: null,
+            isConnecting: false,
+          }))
+          console.log('Room reconnected successfully')
         })
 
         // Handle media track subscription failures
