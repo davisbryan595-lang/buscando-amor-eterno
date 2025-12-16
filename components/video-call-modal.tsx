@@ -45,6 +45,9 @@ export default function VideoCallModal({
           const roomName = [user.id, otherUserId].sort().join('-')
 
           // Use upsert to handle both insert and update cases
+          const expiresAt = new Date()
+          expiresAt.setMinutes(expiresAt.getMinutes() + 5)
+
           const { error: err } = await supabase
             .from('call_invitations')
             .upsert(
@@ -54,6 +57,7 @@ export default function VideoCallModal({
                 call_type: callType,
                 room_name: roomName,
                 status: 'pending',
+                expires_at: expiresAt.toISOString(),
                 updated_at: new Date().toISOString(),
               },
               {
