@@ -83,8 +83,17 @@ export function useLiveKitCall() {
         }
 
         const room = new Room({
-          audio: true,
-          video: callType === 'video',
+          audioCaptureDefaults: {
+            autoGainControl: true,
+            echoCancellation: true,
+            noiseSuppression: true,
+          },
+          videoCaptureDefaults: {
+            resolution: {
+              width: 640,
+              height: 480,
+            },
+          },
           adaptiveStream: true,
           dynacast: true,
           reconnectPolicy: {
@@ -141,6 +150,26 @@ export function useLiveKitCall() {
           console.warn('Failed to subscribe to track:', trackSid, 'from participant:', participant.identity)
         })
 
+        // Handle successful track subscriptions
+        room.on(RoomEvent.TrackSubscribed, (track, publication, participant) => {
+          console.log('Track subscribed:', {
+            kind: track.kind,
+            participant: participant.identity,
+            sid: track.sid,
+            enabled: track.mediaStreamTrack?.enabled,
+            muted: publication.isMuted,
+          })
+        })
+
+        // Handle track publications
+        room.on(RoomEvent.TrackPublished, (publication, participant) => {
+          console.log('Track published:', {
+            kind: publication.kind,
+            participant: participant.identity,
+            source: publication.source,
+          })
+        })
+
         // Connect to room with timeout
         const connectPromise = room.connect(liveKitUrl, token)
         const timeoutPromise = new Promise<void>((_, reject) =>
@@ -152,11 +181,29 @@ export function useLiveKitCall() {
         // Enable microphone and camera after connection
         try {
           await room.localParticipant.setMicrophoneEnabled(true)
+          console.log('Microphone enabled, audio tracks:', room.localParticipant.audioTracks.size)
+
           if (callType === 'video') {
             await room.localParticipant.setCameraEnabled(true)
+            console.log('Camera enabled, video tracks:', room.localParticipant.videoTracks.size)
+          }
+
+          // Verify tracks are publishing
+          const audioTracks = Array.from(room.localParticipant.audioTracks.values())
+          if (audioTracks.length === 0) {
+            console.warn('No audio tracks after enabling microphone')
+          } else {
+            audioTracks.forEach((pub) => {
+              console.log('Audio track status:', {
+                muted: pub.isMuted,
+                enabled: pub.track?.mediaStreamTrack?.enabled,
+                readyState: pub.track?.mediaStreamTrack?.readyState,
+              })
+            })
           }
         } catch (publishError) {
           console.error('Error publishing tracks:', publishError)
+          throw new Error('Failed to enable microphone/camera: ' + (publishError instanceof Error ? publishError.message : 'Unknown error'))
         }
 
         setState((prev) => ({
