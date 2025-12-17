@@ -158,23 +158,23 @@ export default function BrowsePage() {
 
   if (!currentProfile) {
     return (
-      <main className="min-h-screen bg-gradient-to-br from-rose-50 to-pink-50">
+      <main className="h-screen bg-gradient-to-br from-rose-50 to-pink-50 flex flex-col">
         <Navigation />
-        <div className="pt-24 pb-12 px-4 flex items-center justify-center min-h-[80vh]">
-          <div className="text-center">
+        <div className="flex-1 flex items-center justify-center px-4">
+          <div className="text-center max-w-md">
             <Heart className="w-20 h-20 text-rose-300 mx-auto mb-6" />
-            <h1 className="text-3xl font-playfair font-bold text-slate-900 mb-2">
-              No More Profiles
+            <h1 className="text-3xl font-playfair font-bold text-slate-900 mb-4">
+              No New Profiles Yet
             </h1>
-            <p className="text-slate-600 mb-6">
-              Check back later for new members
+            <p className="text-slate-600 mb-8">
+              You've reviewed all available profiles that match your preferences. We'll notify you when someone suitable appears!
             </p>
-            <button
-              onClick={() => setCurrentIndex(0)}
-              className="px-8 py-3 bg-rose-700 text-white rounded-full hover:bg-rose-800 transition-colors"
+            <Link
+              href="/messages"
+              className="inline-block px-8 py-3 bg-rose-700 text-white rounded-full font-semibold hover:bg-rose-800 transition-colors"
             >
-              Start Over
-            </button>
+              View Messages
+            </Link>
           </div>
         </div>
         <Footer />
