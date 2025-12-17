@@ -28,29 +28,25 @@ export function generateAgoraToken(
   expirationTimeInSeconds: number = 3600
 ): string {
   const VERSION = '007'
-  const appIdBuffer = Buffer.from(appId)
-  const channelNameBuffer = Buffer.from(channelName)
-  const uidBuffer = Buffer.alloc(4)
-  uidBuffer.writeUInt32BE(uid, 0)
-  const expireBuffer = Buffer.alloc(4)
   const currentTimestamp = Math.floor(Date.now() / 1000)
   const expireTimestamp = currentTimestamp + expirationTimeInSeconds
-  expireBuffer.writeUInt32BE(expireTimestamp, 0)
 
-  const messageBuffer = Buffer.concat([
-    appIdBuffer,
-    channelNameBuffer,
-    uidBuffer,
-    expireBuffer,
+  // Create the message to sign
+  const msg = Buffer.concat([
+    Buffer.from(appId, 'utf-8'),
+    Buffer.from(channelName, 'utf-8'),
+    Buffer.alloc(4), // reserved (4 bytes of 0)
+    Buffer.alloc(4), // reserved (4 bytes of 0)
   ])
 
-  const signature = crypto
-    .createHmac('sha256', appCertificate)
-    .update(messageBuffer)
-    .digest()
+  // Sign with HMAC-SHA256
+  let hmac = crypto.createHmac('sha256', appCertificate)
+  hmac.update(msg)
+  const signature = hmac.digest()
 
-  const signedBuffer = Buffer.concat([messageBuffer, signature])
-  const token = `${VERSION}${appIdBuffer.toString('hex')}${signedBuffer.toString('hex')}`
+  // Create final message buffer
+  const finalMsg = Buffer.concat([msg, signature])
+  const token = VERSION + appId + ':' + finalMsg.toString('hex')
 
   return token
 }
