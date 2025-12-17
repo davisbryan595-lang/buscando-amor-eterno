@@ -292,22 +292,24 @@ export default function AgoraVideoCall({
           )}
         </button>
 
-        {/* Camera toggle button */}
-        <button
-          onClick={toggleVideo}
-          className={`p-4 rounded-full transition ${
-            isCameraOff
-              ? 'bg-red-500 hover:bg-red-600'
-              : 'bg-slate-700 hover:bg-slate-600'
-          }`}
-          aria-label={isCameraOff ? 'Turn on camera' : 'Turn off camera'}
-        >
-          {isCameraOff ? (
-            <VideoOff size={24} className="text-white" />
-          ) : (
-            <VideoIcon size={24} className="text-white" />
-          )}
-        </button>
+        {/* Camera toggle button - only for video calls */}
+        {!isAudioOnly && (
+          <button
+            onClick={toggleVideo}
+            className={`p-4 rounded-full transition ${
+              isCameraOff
+                ? 'bg-red-500 hover:bg-red-600'
+                : 'bg-slate-700 hover:bg-slate-600'
+            }`}
+            aria-label={isCameraOff ? 'Turn on camera' : 'Turn off camera'}
+          >
+            {isCameraOff ? (
+              <VideoOff size={24} className="text-white" />
+            ) : (
+              <VideoIcon size={24} className="text-white" />
+            )}
+          </button>
+        )}
 
         {/* End call button */}
         <button
