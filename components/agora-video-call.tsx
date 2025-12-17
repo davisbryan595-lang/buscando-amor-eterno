@@ -452,6 +452,26 @@ export default function AgoraVideoCall({
         ) : null}
       </div>
 
+      {/* Header with call info */}
+      <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-black/90 via-black/50 to-transparent px-6 py-4 z-20 flex items-center justify-between">
+        <div className="flex-1">
+          <h3 className="text-white font-semibold text-lg">Video Call</h3>
+          <p className="text-gray-300 text-sm">{partnerName}</p>
+        </div>
+        <div className="flex items-center gap-4">
+          <div className="text-white text-sm font-medium">
+            {formatDuration(callDuration)}
+          </div>
+          <button
+            onClick={endCall}
+            className="p-2 hover:bg-red-500/20 rounded-lg transition text-white"
+            aria-label="End call"
+          >
+            <X size={24} />
+          </button>
+        </div>
+      </div>
+
       {/* Local video - floating bubble */}
       <div className="absolute bottom-24 right-6 w-28 h-40 rounded-2xl overflow-hidden border-4 border-primary soft-glow-lg z-20 bg-slate-900">
         <div
