@@ -69,16 +69,15 @@ export default function CallManager({ children }: CallManagerProps) {
         onReject={handleRejectCall}
       />
 
-      {/* Outgoing call modal when incoming call is accepted */}
+      {/* Agora video/audio call when incoming call is accepted */}
       {acceptedCallData && (
-        <VideoCallModal
-          isOpen={true}
-          onClose={handleCloseOutgoingCall}
-          otherUserName={acceptedCallData.callerName}
-          otherUserId={acceptedCallData.callerId}
-          callType={acceptedCallData.callType}
-          callInvitationId={acceptedCallData.callId}
-        />
+        <div className="fixed inset-0 z-[9999] bg-black">
+          <AgoraVideoCall
+            partnerId={acceptedCallData.callerId}
+            partnerName={acceptedCallData.callerName}
+            callType={acceptedCallData.callType}
+          />
+        </div>
       )}
     </>
   )
