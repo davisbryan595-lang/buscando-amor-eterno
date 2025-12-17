@@ -276,15 +276,41 @@ export default function AgoraVideoCall({
 
   const endCall = async () => {
     try {
+      // Clear call timer
+      if (callTimerRef.current) {
+        clearInterval(callTimerRef.current)
+      }
+
+      // Update call status in database
+      if (user) {
+        const roomName = [user.id, partnerId].sort().join('-')
+        try {
+          await supabase
+            .from('call_invitations')
+            .update({ status: 'ended' })
+            .eq('room_name', roomName)
+        } catch (err) {
+          // Silently handle
+        }
+      }
+
+      // Stop and close audio track
       if (localAudioTrack) {
+        await localAudioTrack.setEnabled(false)
         localAudioTrack.close()
       }
+
+      // Stop and close video track
       if (localVideoTrack) {
+        await localVideoTrack.setEnabled(false)
         localVideoTrack.close()
       }
+
+      // Leave the channel
       if (client) {
         await client.leave()
       }
+
       router.push('/messages')
     } catch (err) {
       console.error('Error ending call:', err)
