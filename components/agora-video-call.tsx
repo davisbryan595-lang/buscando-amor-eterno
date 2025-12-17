@@ -39,6 +39,7 @@ export default function AgoraVideoCall({
   const [isMuted, setIsMuted] = useState(false)
   const [isCameraOff, setIsCameraOff] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [isConnected, setIsConnected] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [otherUserImage, setOtherUserImage] = useState<string | null>(null)
   const [callDuration, setCallDuration] = useState(0)
@@ -120,6 +121,7 @@ export default function AgoraVideoCall({
         }
 
         // Fetch Agora token from server
+        console.log('Fetching Agora token for partner:', partnerId)
         const tokenResponse = await fetch('/api/agora/token', {
           method: 'POST',
           headers: {
@@ -130,16 +132,28 @@ export default function AgoraVideoCall({
         })
 
         if (!tokenResponse.ok) {
-          const errorData = await tokenResponse.json()
-          const errorMsg = errorData.error || 'Failed to get call token'
+          let errorMsg = `Token request failed with status ${tokenResponse.status}`
+          try {
+            const errorData = await tokenResponse.json()
+            errorMsg = errorData.error || errorMsg
+          } catch (err) {
+            console.error('Failed to parse error response:', err)
+          }
+
+          console.error('Token fetch failed:', {
+            status: tokenResponse.status,
+            error: errorMsg,
+          })
 
           // Provide more specific error messages
           if (errorMsg.includes('Not a valid match')) {
             setError('You can only call users you have matched with')
           } else if (errorMsg.includes('Unauthorized')) {
             setError('Authentication failed. Please log in again.')
+          } else if (errorMsg.includes('Invalid')) {
+            setError('Invalid call request. Please try again.')
           } else {
-            setError(errorMsg)
+            setError(errorMsg || 'Failed to connect call. Please try again.')
           }
           return
         }
@@ -154,21 +168,57 @@ export default function AgoraVideoCall({
         agoraClient.on('user-published', async (user, mediaType) => {
           await agoraClient.subscribe(user, mediaType)
           if (mediaType === 'video') {
-            setRemoteUsers((prevUsers) => [
-              ...prevUsers.filter((u) => u.uid !== user.uid),
-              user,
-            ])
+            setRemoteUsers((prevUsers) => {
+              const isFirstRemoteUser = prevUsers.length === 0
+              const updated = [
+                ...prevUsers.filter((u) => u.uid !== user.uid),
+                user,
+              ]
+              // Start timer when first remote user connects
+              if (isFirstRemoteUser) {
+                setIsConnected(true)
+                callStartTimeRef.current = Date.now()
+                if (callTimerRef.current) {
+                  clearInterval(callTimerRef.current)
+                }
+                callTimerRef.current = setInterval(() => {
+                  setCallDuration(Math.floor((Date.now() - callStartTimeRef.current) / 1000))
+                }, 1000)
+              }
+              return updated
+            })
           }
           if (mediaType === 'audio') {
             user.audioTrack?.play()
+            // Also mark as connected if audio arrives (for audio-only calls)
+            setIsConnected(true)
+            if (callStartTimeRef.current === 0) {
+              callStartTimeRef.current = Date.now()
+              if (callTimerRef.current) {
+                clearInterval(callTimerRef.current)
+              }
+              callTimerRef.current = setInterval(() => {
+                setCallDuration(Math.floor((Date.now() - callStartTimeRef.current) / 1000))
+              }, 1000)
+            }
           }
         })
 
         // Handle remote user unpublished event
         agoraClient.on('user-unpublished', (user) => {
-          setRemoteUsers((prevUsers) =>
-            prevUsers.filter((u) => u.uid !== user.uid)
-          )
+          setRemoteUsers((prevUsers) => {
+            const updated = prevUsers.filter((u) => u.uid !== user.uid)
+            // If no more remote users, stop the timer
+            if (updated.length === 0) {
+              if (callTimerRef.current) {
+                clearInterval(callTimerRef.current)
+                callTimerRef.current = null
+              }
+              setIsConnected(false)
+              callStartTimeRef.current = 0
+            }
+            return updated
+          })
         })
 
         // Create local audio and video tracks
@@ -192,19 +242,16 @@ export default function AgoraVideoCall({
           videoTrack.play(localVideoContainerRef.current)
         }
 
-        // Start call timer
-        callStartTimeRef.current = Date.now()
-        if (callTimerRef.current) {
-          clearInterval(callTimerRef.current)
-        }
-        callTimerRef.current = setInterval(() => {
-          setCallDuration(Math.floor((Date.now() - callStartTimeRef.current) / 1000))
-        }, 1000)
-
+        // UI is ready immediately after publishing local tracks
+        // Timer will start when remote user connects
         setLoading(false)
       } catch (err: any) {
-        console.error('Call initialization error:', err)
-        setError(err.message || 'Failed to initialize call')
+        console.error('Call initialization error:', {
+          message: err.message,
+          stack: err.stack,
+          code: err.code,
+        })
+        setError(err.message || 'Failed to initialize call. Please try again.')
         setLoading(false)
       }
     }
@@ -386,9 +433,11 @@ export default function AgoraVideoCall({
                 <div className="text-center">
                   <p className="text-white text-2xl font-semibold">{partnerName}</p>
                   <p className="text-gray-300 text-sm mt-2">Audio call in progress</p>
-                  <p className="text-primary text-lg font-semibold mt-4">
-                    {formatDuration(callDuration)}
-                  </p>
+                  {isConnected && (
+                    <p className="text-primary text-lg font-semibold mt-4">
+                      {formatDuration(callDuration)}
+                    </p>
+                  )}
                 </div>
               </div>
             </>
@@ -399,10 +448,12 @@ export default function AgoraVideoCall({
               </div>
               <p className="text-white text-xl font-semibold">{partnerName}</p>
               <p className="text-gray-400 text-sm mt-2">Audio call in progress</p>
-              <p className="text-primary text-lg font-semibold mt-4">
-                {formatDuration(callDuration)}
-              </p>
-              {!remoteUser && (
+              {isConnected && (
+                <p className="text-primary text-lg font-semibold mt-4">
+                  {formatDuration(callDuration)}
+                </p>
+              )}
+              {!isConnected && (
                 <div className="flex items-center justify-center gap-2 text-slate-400 mt-6">
                   <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
                   <span>Waiting for {partnerName}...</span>
@@ -466,9 +517,11 @@ export default function AgoraVideoCall({
           <p className="text-gray-300 text-sm">{partnerName}</p>
         </div>
         <div className="flex items-center gap-4">
-          <div className="text-white text-sm font-medium">
-            {formatDuration(callDuration)}
-          </div>
+          {isConnected && (
+            <div className="text-white text-sm font-medium">
+              {formatDuration(callDuration)}
+            </div>
+          )}
           <button
             onClick={endCall}
             className="p-2 hover:bg-red-500/20 rounded-lg transition text-white"
