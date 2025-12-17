@@ -1,17 +1,11 @@
 'use client'
 
-import React, { useMemo, useEffect, useRef } from 'react'
-import gsap from 'gsap'
-import { ScrollTrigger } from 'gsap/ScrollTrigger'
+import React, { useMemo } from 'react'
 import { Heart, MessageCircle, Video, Users, Lock, Zap } from 'lucide-react'
 import { useLanguage } from '@/lib/i18n-context'
 
-gsap.registerPlugin(ScrollTrigger)
-
 export default function Features() {
   const { t } = useLanguage()
-  const sectionRef = useRef<HTMLDivElement>(null)
-  const gridRef = useRef<HTMLDivElement>(null)
 
   const features = useMemo(() => [
     {
@@ -45,34 +39,6 @@ export default function Features() {
       descKey: 'features.instantNotificationsDesc',
     },
   ], [])
-
-  useEffect(() => {
-    if (!gridRef.current) return
-
-    const cards = Array.from(gridRef.current.children) as HTMLElement[]
-    if (cards.length === 0) return
-
-    gsap.from(cards, {
-      opacity: 0,
-      y: 30,
-      duration: 0.6,
-      stagger: 0.1,
-      scrollTrigger: {
-        trigger: sectionRef.current,
-        start: 'top 80%',
-        end: 'top 20%',
-        toggleActions: 'play none none reverse',
-      },
-    })
-
-    return () => {
-      ScrollTrigger.getAll().forEach((trigger) => {
-        if (trigger.vars.trigger === sectionRef.current) {
-          trigger.kill()
-        }
-      })
-    }
-  }, [])
 
   return (
     <section ref={sectionRef} className="py-16 md:py-20 px-4 bg-white">
