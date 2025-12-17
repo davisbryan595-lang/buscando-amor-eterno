@@ -78,6 +78,8 @@ export default function AgoraVideoCall({
 
     const initializeCall = async () => {
       try {
+        // Initialize Agora SDK
+        const agoraSDK = await initAgoraSDK()
         // Get session for authorization
         const session = await getSession()
         if (!session) {
