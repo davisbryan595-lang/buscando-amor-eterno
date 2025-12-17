@@ -109,8 +109,8 @@ export default function AgoraVideoCall({
         const tracksToPublish = videoTrack ? [audioTrack, videoTrack] : [audioTrack]
         await agoraClient.publish(tracksToPublish)
 
-        // Play local video
-        if (localVideoContainerRef.current) {
+        // Play local video (for video calls only)
+        if (!isAudioOnly && videoTrack && localVideoContainerRef.current) {
           videoTrack.play(localVideoContainerRef.current)
         }
 
