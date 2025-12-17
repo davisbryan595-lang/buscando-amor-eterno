@@ -2,7 +2,7 @@
 
 import React, { useState, useCallback } from 'react'
 import IncomingCallModal from '@/components/incoming-call-modal'
-import VideoCallModal from '@/components/video-call-modal'
+import AgoraVideoCall from '@/components/agora-video-call'
 import { useIncomingCalls } from '@/hooks/useIncomingCalls'
 
 interface CallManagerProps {
