@@ -39,6 +39,7 @@ export default function AgoraVideoCall({
   const [isMuted, setIsMuted] = useState(false)
   const [isCameraOff, setIsCameraOff] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [isConnected, setIsConnected] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [otherUserImage, setOtherUserImage] = useState<string | null>(null)
   const [callDuration, setCallDuration] = useState(0)
