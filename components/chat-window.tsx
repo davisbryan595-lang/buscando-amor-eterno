@@ -47,8 +47,10 @@ interface ChatWindowProps {
 export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
   const { user } = useAuth()
   const { messages, sendMessage, markAsRead, fetchMessages, fetchConversations } = useMessages()
+  const { startCall } = useStartCall()
   const [newMessage, setNewMessage] = useState('')
   const [loading, setLoading] = useState(false)
+  const [callingState, setCallingState] = useState<'idle' | 'calling'>('idle')
   const [otherUserDetails, setOtherUserDetails] = useState<{ name: string; image: string | null } | null>(null)
   const [contextMenu, setContextMenu] = useState<{
     x: number
