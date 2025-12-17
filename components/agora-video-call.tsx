@@ -207,12 +207,24 @@ export default function AgoraVideoCall({
     return () => {
       // Cleanup
       const cleanup = async () => {
+        // Clear call timer
+        if (callTimerRef.current) {
+          clearInterval(callTimerRef.current)
+        }
+
+        // Stop and close audio track
         if (localAudioTrack) {
+          await localAudioTrack.setEnabled(false)
           localAudioTrack.close()
         }
+
+        // Stop and close video track
         if (localVideoTrack) {
+          await localVideoTrack.setEnabled(false)
           localVideoTrack.close()
         }
+
+        // Leave the channel
         if (client) {
           await client.leave()
         }
