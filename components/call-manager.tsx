@@ -11,7 +11,6 @@ interface CallManagerProps {
 
 export default function CallManager({ children }: CallManagerProps) {
   const { incomingCall, acceptCall, rejectCall, clearCall } = useIncomingCalls()
-  const [showOutgoingCallModal, setShowOutgoingCallModal] = useState(false)
   const [acceptedCallData, setAcceptedCallData] = useState<{
     callId: string
     callerId: string
@@ -53,8 +52,7 @@ export default function CallManager({ children }: CallManagerProps) {
     [rejectCall, clearCall]
   )
 
-  const handleCloseOutgoingCall = useCallback(() => {
-    setShowOutgoingCallModal(false)
+  const handleCloseCall = useCallback(() => {
     setAcceptedCallData(null)
     // Clear any remaining call state
     clearCall()
