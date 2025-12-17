@@ -246,8 +246,12 @@ export default function AgoraVideoCall({
         // Timer will start when remote user connects
         setLoading(false)
       } catch (err: any) {
-        console.error('Call initialization error:', err)
-        setError(err.message || 'Failed to initialize call')
+        console.error('Call initialization error:', {
+          message: err.message,
+          stack: err.stack,
+          code: err.code,
+        })
+        setError(err.message || 'Failed to initialize call. Please try again.')
         setLoading(false)
       }
     }
