@@ -2,33 +2,17 @@
 
 import React, { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import dynamic from 'next/dynamic'
 import { useAuth } from '@/context/auth-context'
 import { supabase } from '@/lib/supabase'
 import Navigation from '@/components/navigation'
 import Footer from '@/components/footer'
-import { Lock, ArrowLeft, Video } from 'lucide-react'
-
-const AgoraVideoCall = dynamic(
-  () => import('@/components/agora-video-call'),
-  { ssr: false, loading: () => <VideoCallLoader /> }
-)
-
-function VideoCallLoader() {
-  return (
-    <div className="fixed inset-0 bg-slate-900 flex items-center justify-center z-50">
-      <div className="text-center">
-        <div className="w-12 h-12 rounded-full border-4 border-primary border-t-transparent animate-spin mx-auto mb-4" />
-        <p className="text-white font-medium">Connecting call...</p>
-      </div>
-    </div>
-  )
-}
+import VideoCallModal from '@/components/video-call-modal'
+import { Lock, ArrowLeft } from 'lucide-react'
 
 export default function VideoDateContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { user } = useAuth()
+  const { user, loading: authLoading } = useAuth()
   const [partnerName, setPartnerName] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loadingPartner, setLoadingPartner] = useState(true)
@@ -37,6 +21,11 @@ export default function VideoDateContent() {
   const callType = (searchParams.get('type') as 'audio' | 'video') || 'video'
 
   useEffect(() => {
+    // Wait for auth to load before proceeding
+    if (authLoading) {
+      return
+    }
+
     // Check if partner ID is provided
     if (!partnerId) {
       setError('No partner specified. Please start a call from your messages.')
@@ -44,7 +33,7 @@ export default function VideoDateContent() {
       return
     }
 
-    // Check authentication
+    // Check authentication - if not authenticated, redirect to login
     if (!user) {
       router.push('/login')
       return
@@ -55,8 +44,8 @@ export default function VideoDateContent() {
       try {
         const { data, error: fetchError } = await supabase
           .from('profiles')
-          .select('display_name')
-          .eq('id', partnerId)
+          .select('full_name')
+          .eq('user_id', partnerId)
           .single()
 
         if (fetchError || !data) {
@@ -64,7 +53,7 @@ export default function VideoDateContent() {
           return
         }
 
-        setPartnerName(data.display_name)
+        setPartnerName(data.full_name)
       } catch (err: any) {
         console.error('Error fetching partner:', err)
         setError('Failed to load partner information')
@@ -74,7 +63,7 @@ export default function VideoDateContent() {
     }
 
     fetchPartnerName()
-  }, [user, partnerId, router])
+  }, [user, partnerId, router, authLoading])
 
   // Show error if no partner or authentication issues
   if (error || !user) {
@@ -112,12 +101,16 @@ export default function VideoDateContent() {
     )
   }
 
-  // Render the Agora video call when partner is loaded
-  if (!loadingPartner && partnerId) {
+  // Render the video call modal when partner is loaded
+  if (!loadingPartner && partnerId && user) {
     return (
-      <div className="fixed inset-0 bg-slate-900 z-50">
-        <AgoraVideoCall partnerId={partnerId} partnerName={partnerName || undefined} callType={callType} />
-      </div>
+      <VideoCallModal
+        isOpen={true}
+        onClose={() => router.push('/messages')}
+        otherUserId={partnerId}
+        otherUserName={partnerName || 'User'}
+        callType={callType}
+      />
     )
   }
 

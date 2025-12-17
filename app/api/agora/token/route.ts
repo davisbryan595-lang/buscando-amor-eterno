@@ -15,6 +15,7 @@ export async function POST(request: NextRequest) {
   try {
     // Validate environment variables
     if (!supabaseUrl || !supabaseServiceKey || !agoraAppId) {
+      console.error('Missing required environment variables')
       return NextResponse.json(
         { error: 'Server configuration error' },
         { status: 500 }
@@ -41,8 +42,9 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    const { data, error } = await supabase.auth.getUser()
-    if (error || !data.user) {
+    const { data, error: authError } = await supabase.auth.getUser()
+    if (authError || !data.user) {
+      console.warn('Auth verification failed:', authError?.message)
       return NextResponse.json(
         { error: 'Unauthorized: Invalid or expired token' },
         { status: 401 }
@@ -52,7 +54,16 @@ export async function POST(request: NextRequest) {
     const userId = data.user.id
 
     // Get partner ID from request body
-    const body = await request.json()
+    let body: any
+    try {
+      body = await request.json()
+    } catch (err) {
+      return NextResponse.json(
+        { error: 'Invalid request body' },
+        { status: 400 }
+      )
+    }
+
     const partnerId = body.partnerId
 
     if (!partnerId || !isValidUserId(partnerId)) {
@@ -69,6 +80,14 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Prevent calling yourself
+    if (userId === partnerId) {
+      return NextResponse.json(
+        { error: 'Cannot call yourself' },
+        { status: 400 }
+      )
+    }
+
     // Verify that the partner is a matched contact
     const { data: match, error: matchError } = await supabase
       .from('matches')
@@ -79,7 +98,24 @@ export async function POST(request: NextRequest) {
       .eq('status', 'matched')
       .single()
 
-    if (matchError || !match) {
+    if (matchError) {
+      if (matchError.code === 'PGRST116') {
+        // No match found
+        console.warn('No match found between users:', userId, partnerId)
+        return NextResponse.json(
+          { error: 'Not a valid match' },
+          { status: 403 }
+        )
+      }
+      // Other database errors
+      console.error('Match query error:', matchError.message)
+      return NextResponse.json(
+        { error: 'Failed to verify match' },
+        { status: 500 }
+      )
+    }
+
+    if (!match) {
       return NextResponse.json(
         { error: 'Not a valid match' },
         { status: 403 }
@@ -97,7 +133,7 @@ export async function POST(request: NextRequest) {
       channelName,
     })
   } catch (err: any) {
-    console.error('Token generation error:', err)
+    console.error('Token generation error:', err.message || err)
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
