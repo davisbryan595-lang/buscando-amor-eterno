@@ -121,6 +121,7 @@ export default function AgoraVideoCall({
         }
 
         // Fetch Agora token from server
+        console.log('Fetching Agora token for partner:', partnerId)
         const tokenResponse = await fetch('/api/agora/token', {
           method: 'POST',
           headers: {
@@ -131,16 +132,28 @@ export default function AgoraVideoCall({
         })
 
         if (!tokenResponse.ok) {
-          const errorData = await tokenResponse.json()
-          const errorMsg = errorData.error || 'Failed to get call token'
+          let errorMsg = `Token request failed with status ${tokenResponse.status}`
+          try {
+            const errorData = await tokenResponse.json()
+            errorMsg = errorData.error || errorMsg
+          } catch (err) {
+            console.error('Failed to parse error response:', err)
+          }
+
+          console.error('Token fetch failed:', {
+            status: tokenResponse.status,
+            error: errorMsg,
+          })
 
           // Provide more specific error messages
           if (errorMsg.includes('Not a valid match')) {
             setError('You can only call users you have matched with')
           } else if (errorMsg.includes('Unauthorized')) {
             setError('Authentication failed. Please log in again.')
+          } else if (errorMsg.includes('Invalid')) {
+            setError('Invalid call request. Please try again.')
           } else {
-            setError(errorMsg)
+            setError(errorMsg || 'Failed to connect call. Please try again.')
           }
           return
         }
