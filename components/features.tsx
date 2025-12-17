@@ -11,7 +11,7 @@ gsap.registerPlugin(ScrollTrigger)
 export default function Features() {
   const { t } = useLanguage()
   const sectionRef = useRef<HTMLDivElement>(null)
-  const cardsRef = useRef<(HTMLDivElement | null)[]>([])
+  const gridRef = useRef<HTMLDivElement>(null)
 
   const features = useMemo(() => [
     {
@@ -47,9 +47,9 @@ export default function Features() {
   ], [])
 
   useEffect(() => {
-    if (!sectionRef.current) return
+    if (!gridRef.current) return
 
-    const cards = cardsRef.current.filter(Boolean)
+    const cards = Array.from(gridRef.current.children) as HTMLElement[]
     if (cards.length === 0) return
 
     gsap.from(cards, {
@@ -72,7 +72,7 @@ export default function Features() {
         }
       })
     }
-  }, [features])
+  }, [])
 
   return (
     <section ref={sectionRef} className="py-16 md:py-20 px-4 bg-white">
