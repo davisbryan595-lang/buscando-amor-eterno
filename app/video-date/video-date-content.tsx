@@ -151,14 +151,52 @@ export default function VideoDateContent() {
     )
   }
 
-  // Render the agora video call when partner is loaded
-  if (!loadingPartner && partnerId && user) {
+  // Show waiting screen for outgoing calls
+  if (mode === 'outgoing' && !callAccepted && !callRejected) {
+    return (
+      <main className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800">
+        <Navigation />
+        <div className="pt-24 pb-12 px-4 h-screen flex flex-col">
+          <div className="max-w-4xl mx-auto w-full flex-1 flex flex-col items-center justify-center">
+            <div className="text-center">
+              {partnerImage && (
+                <div className="mb-8 flex justify-center">
+                  <img
+                    src={partnerImage}
+                    alt={partnerName || 'Calling'}
+                    className="w-32 h-32 rounded-full object-cover border-4 border-primary shadow-lg"
+                  />
+                </div>
+              )}
+              <div className="w-16 h-16 rounded-full border-4 border-primary border-t-transparent animate-spin mx-auto mb-6" />
+              <h2 className="text-3xl font-bold text-white mb-2">
+                {partnerName || 'Calling'}
+              </h2>
+              <p className="text-slate-300 mb-8">Waiting for {partnerName || 'them'} to accept...</p>
+              <button
+                onClick={() => router.push('/messages')}
+                className="inline-flex items-center gap-2 px-6 py-3 bg-rose-600 hover:bg-rose-700 text-white rounded-full transition"
+              >
+                <Phone size={20} className="rotate-[135deg]" />
+                End Call
+              </button>
+            </div>
+          </div>
+        </div>
+      </main>
+    )
+  }
+
+  // Render the agora video call when partner is loaded and (incoming or outgoing accepted)
+  if (!loadingPartner && partnerId && user && (mode !== 'outgoing' || callAccepted)) {
     return (
       <div className="w-full h-screen bg-black">
         <AgoraVideoCall
           partnerId={partnerId}
           partnerName={partnerName || 'User'}
           callType={callType}
+          mode={mode}
+          callId={callId}
         />
       </div>
     )
