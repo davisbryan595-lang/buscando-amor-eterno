@@ -289,14 +289,6 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
         />
       )}
 
-      {/* Video Call Modal */}
-      <VideoCallModal
-        isOpen={callModalOpen}
-        onClose={() => setCallModalOpen(false)}
-        otherUserName={otherUserDetails?.name || conversation.other_user_name || 'User'}
-        otherUserId={conversation.other_user_id}
-        callType={callType}
-      />
     </div>
   )
 }
