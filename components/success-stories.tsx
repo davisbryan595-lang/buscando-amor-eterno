@@ -86,6 +86,10 @@ export default function SuccessStories() {
         duration: 0.5,
       }, 0.2)
     }
+
+    return () => {
+      tl.kill()
+    }
   }, [currentIndex])
 
   const story = stories[currentIndex]
