@@ -298,6 +298,42 @@ export function useLiveKitCall() {
   const leaveCall = useCallback(async () => {
     try {
       if (roomRef.current) {
+        // Stop all local tracks before disconnecting
+        const localParticipant = roomRef.current.localParticipant
+        if (localParticipant) {
+          // Disable microphone
+          try {
+            await localParticipant.setMicrophoneEnabled(false)
+          } catch (err) {
+            // Silently handle
+          }
+
+          // Disable camera
+          try {
+            await localParticipant.setCameraEnabled(false)
+          } catch (err) {
+            // Silently handle
+          }
+
+          // Stop all audio and video tracks
+          localParticipant.audioTracks.forEach((trackRef) => {
+            try {
+              trackRef.track?.stop()
+            } catch (err) {
+              // Silently handle
+            }
+          })
+
+          localParticipant.videoTracks.forEach((trackRef) => {
+            try {
+              trackRef.track?.stop()
+            } catch (err) {
+              // Silently handle
+            }
+          })
+        }
+
+        // Disconnect from the room
         await roomRef.current.disconnect()
         roomRef.current = null
       }
