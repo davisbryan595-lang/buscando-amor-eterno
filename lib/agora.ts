@@ -18,30 +18,43 @@ export function generateChannelName(userId1: string, userId2: string): string {
 }
 
 /**
- * Generates an Agora RTC token for a user to join a channel
- * This should ONLY be called server-side
+ * Generates an Agora RTC token using the Agora token algorithm
+ * Based on Agora's AccessToken implementation
  */
 export function generateAgoraToken(
   appId: string,
   channelName: string,
   uid: number,
-  expirationTimeInSeconds: number = 600 // 10 minutes default
+  expirationTimeInSeconds: number = 3600 // 1 hour default
 ): string {
-  const timestamp = Math.floor(Date.now() / 1000)
-  const expireTime = timestamp + expirationTimeInSeconds
+  const VERSION = '007'
+  const currentTime = Math.floor(Date.now() / 1000)
+  const expireTime = currentTime + expirationTimeInSeconds
 
-  // Build token string
-  const tokenString = `${appId}${channelName}${uid}${expireTime}`
-  
-  // Generate signature
-  const hmac = crypto.createHmac('sha256', appCertificate)
-  hmac.update(tokenString)
-  const signature = hmac.digest('hex')
+  // Prepare the token data
+  const channelNameBytes = Buffer.from(channelName, 'utf-8')
+  const uidStr = String(uid)
+  const uidBytes = Buffer.from(uidStr, 'utf-8')
 
-  // Build final token
-  const token = Buffer.from(
-    `${appId}:${channelName}:${uid}:${expireTime}:${signature}`
-  ).toString('base64')
+  // Build message to sign
+  const message = Buffer.concat([
+    Buffer.from(appId, 'utf-8'),
+    Buffer.from([0]),
+    channelNameBytes,
+    Buffer.from([0]),
+    uidBytes,
+    Buffer.from([0]),
+    Buffer.from(String(expireTime), 'utf-8'),
+  ])
+
+  // Sign the message using HMAC-SHA256
+  const signature = crypto
+    .createHmac('sha256', appCertificate)
+    .update(message)
+    .digest('hex')
+
+  // Build the final token
+  const token = `${VERSION}${appId}${currentTime}${expireTime}${signature}`
 
   return token
 }
