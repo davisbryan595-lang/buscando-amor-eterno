@@ -6,7 +6,7 @@ import { useAuth } from '@/context/auth-context'
 import { supabase } from '@/lib/supabase'
 import Navigation from '@/components/navigation'
 import Footer from '@/components/footer'
-import VideoCallModal from '@/components/video-call-modal'
+import AgoraVideoCall from '@/components/agora-video-call'
 import { Lock, ArrowLeft } from 'lucide-react'
 
 export default function VideoDateContent() {
@@ -101,16 +101,16 @@ export default function VideoDateContent() {
     )
   }
 
-  // Render the video call modal when partner is loaded
+  // Render the agora video call when partner is loaded
   if (!loadingPartner && partnerId && user) {
     return (
-      <VideoCallModal
-        isOpen={true}
-        onClose={() => router.push('/messages')}
-        otherUserId={partnerId}
-        otherUserName={partnerName || 'User'}
-        callType={callType}
-      />
+      <div className="w-full h-screen bg-black">
+        <AgoraVideoCall
+          partnerId={partnerId}
+          partnerName={partnerName || 'User'}
+          callType={callType}
+        />
+      </div>
     )
   }
 

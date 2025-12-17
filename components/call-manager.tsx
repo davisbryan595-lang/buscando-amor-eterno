@@ -2,7 +2,7 @@
 
 import React, { useState, useCallback } from 'react'
 import IncomingCallModal from '@/components/incoming-call-modal'
-import VideoCallModal from '@/components/video-call-modal'
+import AgoraVideoCall from '@/components/agora-video-call'
 import { useIncomingCalls } from '@/hooks/useIncomingCalls'
 
 interface CallManagerProps {
@@ -11,7 +11,6 @@ interface CallManagerProps {
 
 export default function CallManager({ children }: CallManagerProps) {
   const { incomingCall, acceptCall, rejectCall, clearCall } = useIncomingCalls()
-  const [showOutgoingCallModal, setShowOutgoingCallModal] = useState(false)
   const [acceptedCallData, setAcceptedCallData] = useState<{
     callId: string
     callerId: string
@@ -53,8 +52,7 @@ export default function CallManager({ children }: CallManagerProps) {
     [rejectCall, clearCall]
   )
 
-  const handleCloseOutgoingCall = useCallback(() => {
-    setShowOutgoingCallModal(false)
+  const handleCloseCall = useCallback(() => {
     setAcceptedCallData(null)
     // Clear any remaining call state
     clearCall()
@@ -71,16 +69,15 @@ export default function CallManager({ children }: CallManagerProps) {
         onReject={handleRejectCall}
       />
 
-      {/* Outgoing call modal when incoming call is accepted */}
+      {/* Agora video/audio call when incoming call is accepted */}
       {acceptedCallData && (
-        <VideoCallModal
-          isOpen={true}
-          onClose={handleCloseOutgoingCall}
-          otherUserName={acceptedCallData.callerName}
-          otherUserId={acceptedCallData.callerId}
-          callType={acceptedCallData.callType}
-          callInvitationId={acceptedCallData.callId}
-        />
+        <div className="fixed inset-0 z-[9999] bg-black">
+          <AgoraVideoCall
+            partnerId={acceptedCallData.callerId}
+            partnerName={acceptedCallData.callerName}
+            callType={acceptedCallData.callType}
+          />
+        </div>
       )}
     </>
   )

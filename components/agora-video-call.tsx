@@ -1,11 +1,22 @@
 'use client'
 
 import React, { useEffect, useRef, useState } from 'react'
-import AgoraRTC, { IAgoraRTCClient, IAgoraRTCRemoteUser } from 'agora-rtc-sdk-ng'
 import { Mic, MicOff, Video as VideoIcon, VideoOff, Phone, X } from 'lucide-react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/context/auth-context'
+import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
+import Image from 'next/image'
+
+// Lazy load Agora SDK only on client side
+let AgoraRTC: any = null
+let initAgoraSDK = async () => {
+  if (!AgoraRTC) {
+    const mod = await import('agora-rtc-sdk-ng')
+    AgoraRTC = mod.default
+  }
+  return AgoraRTC
+}
 
 interface AgoraCallProps {
   partnerId: string
@@ -21,28 +32,54 @@ export default function AgoraVideoCall({
   const router = useRouter()
   const { user, getSession } = useAuth()
   const isAudioOnly = callType === 'audio'
-  const [client, setClient] = useState<IAgoraRTCClient | null>(null)
-  const [localAudioTrack, setLocalAudioTrack] =
-    useState<ReturnType<typeof AgoraRTC.createMicrophoneAudioTrack> | null>(
-      null
-    )
-  const [localVideoTrack, setLocalVideoTrack] =
-    useState<ReturnType<typeof AgoraRTC.createCameraVideoTrack> | null>(null)
-  const [remoteUsers, setRemoteUsers] = useState<IAgoraRTCRemoteUser[]>([])
+  const [client, setClient] = useState<any>(null)
+  const [localAudioTrack, setLocalAudioTrack] = useState<any>(null)
+  const [localVideoTrack, setLocalVideoTrack] = useState<any>(null)
+  const [remoteUsers, setRemoteUsers] = useState<any[]>([])
   const [isMuted, setIsMuted] = useState(false)
   const [isCameraOff, setIsCameraOff] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [otherUserImage, setOtherUserImage] = useState<string | null>(null)
+  const [callDuration, setCallDuration] = useState(0)
   const localVideoContainerRef = useRef<HTMLDivElement>(null)
   const remoteVideoContainerRef = useRef<HTMLDivElement>(null)
+  const callStartTimeRef = useRef<number>(0)
+  const callTimerRef = useRef<NodeJS.Timeout | null>(null)
 
   const appId = process.env.NEXT_PUBLIC_AGORA_APP_ID
+
+  // Fetch other user's profile picture
+  useEffect(() => {
+    const fetchOtherUserProfile = async () => {
+      try {
+        const { data } = await supabase
+          .from('profiles')
+          .select('photos, main_photo_index')
+          .eq('user_id', partnerId)
+          .single()
+
+        if (data?.photos && data.photos.length > 0) {
+          const mainIndex = data.main_photo_index || 0
+          setOtherUserImage(data.photos[mainIndex] || null)
+        }
+      } catch (err) {
+        // Silently handle profile fetch errors
+      }
+    }
+
+    if (partnerId) {
+      fetchOtherUserProfile()
+    }
+  }, [partnerId])
 
   useEffect(() => {
     if (!user || !partnerId || !appId) return
 
     const initializeCall = async () => {
       try {
+        // Initialize Agora SDK
+        const agoraSDK = await initAgoraSDK()
         // Get session for authorization
         const session = await getSession()
         if (!session) {
@@ -110,7 +147,7 @@ export default function AgoraVideoCall({
         const { token, uid, channelName } = await tokenResponse.json()
 
         // Initialize Agora client
-        const agoraClient = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' })
+        const agoraClient = agoraSDK.createClient({ mode: 'rtc', codec: 'vp8' })
         setClient(agoraClient)
 
         // Handle remote user published event
@@ -135,8 +172,8 @@ export default function AgoraVideoCall({
         })
 
         // Create local audio and video tracks
-        const audioTrack = await AgoraRTC.createMicrophoneAudioTrack()
-        const videoTrack = isAudioOnly ? null : await AgoraRTC.createCameraVideoTrack()
+        const audioTrack = await agoraSDK.createMicrophoneAudioTrack()
+        const videoTrack = isAudioOnly ? null : await agoraSDK.createCameraVideoTrack()
 
         setLocalAudioTrack(audioTrack)
         if (videoTrack) {
@@ -155,6 +192,15 @@ export default function AgoraVideoCall({
           videoTrack.play(localVideoContainerRef.current)
         }
 
+        // Start call timer
+        callStartTimeRef.current = Date.now()
+        if (callTimerRef.current) {
+          clearInterval(callTimerRef.current)
+        }
+        callTimerRef.current = setInterval(() => {
+          setCallDuration(Math.floor((Date.now() - callStartTimeRef.current) / 1000))
+        }, 1000)
+
         setLoading(false)
       } catch (err: any) {
         console.error('Call initialization error:', err)
@@ -168,12 +214,24 @@ export default function AgoraVideoCall({
     return () => {
       // Cleanup
       const cleanup = async () => {
+        // Clear call timer
+        if (callTimerRef.current) {
+          clearInterval(callTimerRef.current)
+        }
+
+        // Stop and close audio track
         if (localAudioTrack) {
+          await localAudioTrack.setEnabled(false)
           localAudioTrack.close()
         }
+
+        // Stop and close video track
         if (localVideoTrack) {
+          await localVideoTrack.setEnabled(false)
           localVideoTrack.close()
         }
+
+        // Leave the channel
         if (client) {
           await client.leave()
         }
@@ -225,15 +283,41 @@ export default function AgoraVideoCall({
 
   const endCall = async () => {
     try {
+      // Clear call timer
+      if (callTimerRef.current) {
+        clearInterval(callTimerRef.current)
+      }
+
+      // Update call status in database
+      if (user) {
+        const roomName = [user.id, partnerId].sort().join('-')
+        try {
+          await supabase
+            .from('call_invitations')
+            .update({ status: 'ended' })
+            .eq('room_name', roomName)
+        } catch (err) {
+          // Silently handle
+        }
+      }
+
+      // Stop and close audio track
       if (localAudioTrack) {
+        await localAudioTrack.setEnabled(false)
         localAudioTrack.close()
       }
+
+      // Stop and close video track
       if (localVideoTrack) {
+        await localVideoTrack.setEnabled(false)
         localVideoTrack.close()
       }
+
+      // Leave the channel
       if (client) {
         await client.leave()
       }
+
       router.push('/messages')
     } catch (err) {
       console.error('Error ending call:', err)
@@ -271,21 +355,90 @@ export default function AgoraVideoCall({
 
   const remoteUser = remoteUsers[0]
 
+  const formatDuration = (seconds: number) => {
+    const minutes = Math.floor(seconds / 60)
+    const secs = seconds % 60
+    return `${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`
+  }
+
   if (isAudioOnly) {
     return (
       <div className="relative w-full h-full bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-24 h-24 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-8">
-            <Phone size={48} className="text-primary" />
-          </div>
-          <h2 className="text-2xl font-semibold text-white mb-2">Audio Call</h2>
-          <p className="text-slate-300 mb-8">Connected with {partnerName}</p>
-          {!remoteUser && (
-            <div className="flex items-center justify-center gap-2 text-slate-400">
-              <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-              <span>Waiting for {partnerName}...</span>
+        <div className="absolute inset-0 flex items-center justify-center">
+          {otherUserImage ? (
+            <>
+              {/* Background with blur effect */}
+              <div
+                className="absolute inset-0 bg-cover bg-center blur-xl opacity-40"
+                style={{ backgroundImage: `url('${otherUserImage}')` }}
+              />
+              {/* Profile picture circle */}
+              <div className="relative z-10 flex flex-col items-center gap-6">
+                <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-white shadow-2xl">
+                  <Image
+                    src={otherUserImage}
+                    alt={partnerName || 'User'}
+                    width={128}
+                    height={128}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div className="text-center">
+                  <p className="text-white text-2xl font-semibold">{partnerName}</p>
+                  <p className="text-gray-300 text-sm mt-2">Audio call in progress</p>
+                  <p className="text-primary text-lg font-semibold mt-4">
+                    {formatDuration(callDuration)}
+                  </p>
+                </div>
+              </div>
+            </>
+          ) : (
+            <div className="text-center">
+              <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary to-rose-700 flex items-center justify-center mx-auto mb-6 shadow-2xl">
+                <Phone className="w-12 h-12 text-white" />
+              </div>
+              <p className="text-white text-xl font-semibold">{partnerName}</p>
+              <p className="text-gray-400 text-sm mt-2">Audio call in progress</p>
+              <p className="text-primary text-lg font-semibold mt-4">
+                {formatDuration(callDuration)}
+              </p>
+              {!remoteUser && (
+                <div className="flex items-center justify-center gap-2 text-slate-400 mt-6">
+                  <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                  <span>Waiting for {partnerName}...</span>
+                </div>
+              )}
             </div>
           )}
+        </div>
+
+        {/* Controls Footer */}
+        <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-black/80 to-transparent flex items-center justify-center gap-4 z-10 px-4">
+          {/* Mute button */}
+          <button
+            onClick={toggleAudio}
+            className={`p-4 rounded-full transition ${
+              isMuted
+                ? 'bg-red-500 hover:bg-red-600'
+                : 'bg-slate-700 hover:bg-slate-600'
+            }`}
+            aria-label={isMuted ? 'Unmute' : 'Mute'}
+          >
+            {isMuted ? (
+              <MicOff size={24} className="text-white" />
+            ) : (
+              <Mic size={24} className="text-white" />
+            )}
+          </button>
+
+          {/* End call button */}
+          <button
+            onClick={endCall}
+            className="p-4 rounded-full bg-primary hover:bg-rose-700 transition"
+            aria-label="End call"
+          >
+            <Phone size={24} className="text-white rotate-[135deg]" />
+          </button>
         </div>
       </div>
     )
@@ -304,6 +457,26 @@ export default function AgoraVideoCall({
             <p className="text-white font-medium">Waiting for {partnerName}...</p>
           </div>
         ) : null}
+      </div>
+
+      {/* Header with call info */}
+      <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-black/90 via-black/50 to-transparent px-6 py-4 z-20 flex items-center justify-between">
+        <div className="flex-1">
+          <h3 className="text-white font-semibold text-lg">Video Call</h3>
+          <p className="text-gray-300 text-sm">{partnerName}</p>
+        </div>
+        <div className="flex items-center gap-4">
+          <div className="text-white text-sm font-medium">
+            {formatDuration(callDuration)}
+          </div>
+          <button
+            onClick={endCall}
+            className="p-2 hover:bg-red-500/20 rounded-lg transition text-white"
+            aria-label="End call"
+          >
+            <X size={24} />
+          </button>
+        </div>
       </div>
 
       {/* Local video - floating bubble */}
