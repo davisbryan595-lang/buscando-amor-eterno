@@ -34,6 +34,7 @@ export default function VideoDateContent() {
   const [loadingPartner, setLoadingPartner] = useState(true)
 
   const partnerId = searchParams.get('partner')
+  const callType = (searchParams.get('type') as 'audio' | 'video') || 'video'
 
   useEffect(() => {
     // Check if partner ID is provided
@@ -83,7 +84,7 @@ export default function VideoDateContent() {
         <div className="pt-24 pb-12 px-4 h-screen flex flex-col">
           <div className="max-w-4xl mx-auto w-full flex-1 flex flex-col">
             <h1 className="text-3xl md:text-4xl font-playfair font-bold mb-6 text-slate-900">
-              Start a Video Date
+              Start a Call
             </h1>
             <div className="flex-1 bg-gradient-to-br from-slate-100 to-slate-50 rounded-xl overflow-hidden soft-glow-lg flex items-center justify-center">
               <div className="bg-white p-8 rounded-2xl text-center soft-glow-lg max-w-md">
@@ -115,7 +116,7 @@ export default function VideoDateContent() {
   if (!loadingPartner && partnerId) {
     return (
       <div className="fixed inset-0 bg-slate-900 z-50">
-        <AgoraVideoCall partnerId={partnerId} partnerName={partnerName || undefined} />
+        <AgoraVideoCall partnerId={partnerId} partnerName={partnerName || undefined} callType={callType} />
       </div>
     )
   }

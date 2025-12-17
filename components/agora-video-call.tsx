@@ -10,14 +10,17 @@ import { toast } from 'sonner'
 interface AgoraCallProps {
   partnerId: string
   partnerName?: string
+  callType?: 'audio' | 'video'
 }
 
 export default function AgoraVideoCall({
   partnerId,
   partnerName,
+  callType = 'video',
 }: AgoraCallProps) {
   const router = useRouter()
   const { user, getSession } = useAuth()
+  const isAudioOnly = callType === 'audio'
   const [client, setClient] = useState<IAgoraRTCClient | null>(null)
   const [localAudioTrack, setLocalAudioTrack] =
     useState<ReturnType<typeof AgoraRTC.createMicrophoneAudioTrack> | null>(
@@ -92,19 +95,22 @@ export default function AgoraVideoCall({
 
         // Create local audio and video tracks
         const audioTrack = await AgoraRTC.createMicrophoneAudioTrack()
-        const videoTrack = await AgoraRTC.createCameraVideoTrack()
+        const videoTrack = isAudioOnly ? null : await AgoraRTC.createCameraVideoTrack()
 
         setLocalAudioTrack(audioTrack)
-        setLocalVideoTrack(videoTrack)
+        if (videoTrack) {
+          setLocalVideoTrack(videoTrack)
+        }
 
         // Join channel
         await agoraClient.join(appId, channelName, token, uid)
 
         // Publish local tracks
-        await agoraClient.publish([audioTrack, videoTrack])
+        const tracksToPublish = videoTrack ? [audioTrack, videoTrack] : [audioTrack]
+        await agoraClient.publish(tracksToPublish)
 
-        // Play local video
-        if (localVideoContainerRef.current) {
+        // Play local video (for video calls only)
+        if (!isAudioOnly && videoTrack && localVideoContainerRef.current) {
           videoTrack.play(localVideoContainerRef.current)
         }
 
@@ -133,7 +139,7 @@ export default function AgoraVideoCall({
       }
       cleanup()
     }
-  }, [user, partnerId, appId, getSession])
+  }, [user, partnerId, appId, getSession, isAudioOnly])
 
   // Play remote video when remote users change
   useEffect(() => {
@@ -224,6 +230,26 @@ export default function AgoraVideoCall({
 
   const remoteUser = remoteUsers[0]
 
+  if (isAudioOnly) {
+    return (
+      <div className="relative w-full h-full bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-24 h-24 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-8">
+            <Phone size={48} className="text-primary" />
+          </div>
+          <h2 className="text-2xl font-semibold text-white mb-2">Audio Call</h2>
+          <p className="text-slate-300 mb-8">Connected with {partnerName}</p>
+          {!remoteUser && (
+            <div className="flex items-center justify-center gap-2 text-slate-400">
+              <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+              <span>Waiting for {partnerName}...</span>
+            </div>
+          )}
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="relative w-full h-full bg-gradient-to-br from-slate-900 to-slate-800">
       {/* Remote video - full screen */}
@@ -266,22 +292,24 @@ export default function AgoraVideoCall({
           )}
         </button>
 
-        {/* Camera toggle button */}
-        <button
-          onClick={toggleVideo}
-          className={`p-4 rounded-full transition ${
-            isCameraOff
-              ? 'bg-red-500 hover:bg-red-600'
-              : 'bg-slate-700 hover:bg-slate-600'
-          }`}
-          aria-label={isCameraOff ? 'Turn on camera' : 'Turn off camera'}
-        >
-          {isCameraOff ? (
-            <VideoOff size={24} className="text-white" />
-          ) : (
-            <VideoIcon size={24} className="text-white" />
-          )}
-        </button>
+        {/* Camera toggle button - only for video calls */}
+        {!isAudioOnly && (
+          <button
+            onClick={toggleVideo}
+            className={`p-4 rounded-full transition ${
+              isCameraOff
+                ? 'bg-red-500 hover:bg-red-600'
+                : 'bg-slate-700 hover:bg-slate-600'
+            }`}
+            aria-label={isCameraOff ? 'Turn on camera' : 'Turn off camera'}
+          >
+            {isCameraOff ? (
+              <VideoOff size={24} className="text-white" />
+            ) : (
+              <VideoIcon size={24} className="text-white" />
+            )}
+          </button>
+        )}
 
         {/* End call button */}
         <button
