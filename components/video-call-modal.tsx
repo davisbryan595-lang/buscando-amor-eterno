@@ -393,20 +393,32 @@ export default function VideoCallModal({
   const handleEndCall = async () => {
     try {
       // Update call status in database
-      if (invitationSent && user) {
+      if (user) {
         const roomName = [user.id, otherUserId].sort().join('-')
-        await supabase
-          .from('call_invitations')
-          .update({ status: 'ended' })
-          .eq('room_name', roomName)
-          .eq('caller_id', user.id)
-          .catch(() => {})
-      } else if (callInvitationId) {
-        await supabase
-          .from('call_invitations')
-          .update({ status: 'ended' })
-          .eq('id', callInvitationId)
-          .catch(() => {})
+        try {
+          await supabase
+            .from('call_invitations')
+            .update({ status: 'ended' })
+            .eq('room_name', roomName)
+            .match({
+              caller_id: user.id,
+              recipient_id: otherUserId,
+            })
+        } catch (err) {
+          // Try the other direction (if they initiated the call)
+          try {
+            await supabase
+              .from('call_invitations')
+              .update({ status: 'ended' })
+              .eq('room_name', roomName)
+              .match({
+                caller_id: otherUserId,
+                recipient_id: user.id,
+              })
+          } catch (err2) {
+            // Silently handle errors
+          }
+        }
       }
     } catch (err) {
       // Silently handle errors
@@ -427,11 +439,10 @@ export default function VideoCallModal({
       clearInterval(statsIntervalRef.current)
     }
 
-    // Reset invitation state
-    setInvitationSent(false)
-
-    // Leave the call
+    // Leave the call first
     await leaveCall()
+
+    // Close the modal and return to messages
     onClose()
   }
 
