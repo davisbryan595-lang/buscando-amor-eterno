@@ -196,18 +196,37 @@ export default function Navigation() {
           <Link href="/chat-room" className="block text-foreground hover:text-primary transition py-2" onClick={() => setMenuOpen(false)}>
             {t('common.lounge')}
           </Link>
+
+          <div className="border-t border-rose-100 pt-3 mt-3">
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Language</p>
+            <button
+              onClick={() => handleLanguageChange('en')}
+              className={`block w-full text-left px-4 py-2 rounded-lg transition ${language === 'en' ? 'bg-rose-50 text-primary font-semibold' : 'text-foreground hover:bg-rose-50'}`}
+            >
+              English
+            </button>
+            <button
+              onClick={() => handleLanguageChange('es')}
+              className={`block w-full text-left px-4 py-2 rounded-lg transition ${language === 'es' ? 'bg-rose-50 text-primary font-semibold' : 'text-foreground hover:bg-rose-50'}`}
+            >
+              Español
+            </button>
+          </div>
+
           {!user && (
             <>
-              <Link href="/login" className="block text-foreground hover:text-primary transition py-2" onClick={() => setMenuOpen(false)}>
-                {t('common.logIn')}
-              </Link>
-              <Link
-                href="/signup"
-                className="block px-6 py-2 bg-primary text-white rounded-full hover:bg-rose-700 transition font-semibold text-center"
-                onClick={() => setMenuOpen(false)}
-              >
-                {t('common.joinForPrice')}
-              </Link>
+              <div className="border-t border-rose-100 pt-3 mt-3 space-y-3">
+                <Link href="/login" className="block text-foreground hover:text-primary transition py-2" onClick={() => setMenuOpen(false)}>
+                  {t('common.logIn')}
+                </Link>
+                <Link
+                  href="/signup"
+                  className="block px-6 py-2 bg-primary text-white rounded-full hover:bg-rose-700 transition font-semibold text-center"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  {t('common.joinForPrice')}
+                </Link>
+              </div>
             </>
           )}
         </div>
