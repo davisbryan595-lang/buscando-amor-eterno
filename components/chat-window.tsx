@@ -49,8 +49,6 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
   const [newMessage, setNewMessage] = useState('')
   const [loading, setLoading] = useState(false)
   const [otherUserDetails, setOtherUserDetails] = useState<{ name: string; image: string | null } | null>(null)
-  const [callModalOpen, setCallModalOpen] = useState(false)
-  const [callType, setCallType] = useState<'audio' | 'video'>('video')
   const [contextMenu, setContextMenu] = useState<{
     x: number
     y: number
