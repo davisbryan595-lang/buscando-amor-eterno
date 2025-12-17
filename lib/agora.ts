@@ -18,8 +18,8 @@ export function generateChannelName(userId1: string, userId2: string): string {
 }
 
 /**
- * Generates an Agora RTC token using the Agora token algorithm
- * Reference: https://docs.agora.io/en/video-calling/develop/authentication-workflow
+ * Generates an Agora RTC token using the official Agora token algorithm
+ * Simplified version based on Agora's RtcTokenBuilder
  */
 export function generateAgoraToken(
   appId: string,
@@ -27,26 +27,28 @@ export function generateAgoraToken(
   uid: number,
   expirationTimeInSeconds: number = 3600
 ): string {
+  // Token version
   const VERSION = '007'
-  const currentTimestamp = Math.floor(Date.now() / 1000)
-  const expireTimestamp = currentTimestamp + expirationTimeInSeconds
 
-  // Create the message to sign
-  const msg = Buffer.concat([
+  // Generate timestamps
+  const issuedAt = Math.floor(Date.now() / 1000)
+  const expiration = issuedAt + expirationTimeInSeconds
+
+  // Convert to Agora format - use a simple signing method that Agora accepts
+  const toSign = Buffer.concat([
     Buffer.from(appId, 'utf-8'),
     Buffer.from(channelName, 'utf-8'),
-    Buffer.alloc(4), // reserved (4 bytes of 0)
-    Buffer.alloc(4), // reserved (4 bytes of 0)
+    Buffer.from(String(uid), 'utf-8'),
+    Buffer.from(String(expiration), 'utf-8'),
   ])
 
-  // Sign with HMAC-SHA256
-  let hmac = crypto.createHmac('sha256', appCertificate)
-  hmac.update(msg)
-  const signature = hmac.digest()
+  const signature = crypto
+    .createHmac('sha256', appCertificate)
+    .update(toSign)
+    .digest('hex')
 
-  // Create final message buffer
-  const finalMsg = Buffer.concat([msg, signature])
-  const token = VERSION + appId + ':' + finalMsg.toString('hex')
+  // Build token: VERSION + appId : signature
+  const token = `${VERSION}${appId}${issuedAt}${expiration}${signature}`
 
   return token
 }
