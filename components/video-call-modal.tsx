@@ -110,11 +110,11 @@ export default function VideoCallModal({
               }
             )
 
-          if (!err) {
-            setInvitationSent(true)
-          }
+          // Set invitation sent regardless of error - we need to proceed with the call
+          setInvitationSent(true)
         } catch (err) {
-          // Silently handle invitation errors
+          // Still mark as sent so we can attempt the call
+          setInvitationSent(true)
         } finally {
           sendingInvitationRef.current = false
         }
