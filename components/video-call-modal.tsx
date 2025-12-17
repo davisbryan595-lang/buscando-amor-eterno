@@ -304,16 +304,17 @@ export default function VideoCallModal({
     const handleAudioTrackSubscribed = (track: Track) => {
       if (track.kind === 'audio') {
         try {
-          const stream = new MediaStream([track.mediaStreamTrack!])
-          audioElement.srcObject = stream
+          // Directly attach the track to the audio element
+          // This is the correct way to handle remote audio in LiveKit
+          track.attach(audioElement)
           audioElement.muted = false
           audioElement.volume = 1.0
 
-          // Attempt to play
+          // Ensure the audio element can play
           const playPromise = audioElement.play()
           if (playPromise !== undefined) {
-            playPromise.catch(() => {
-              // Autoplay blocked - will play on user interaction
+            playPromise.catch((err) => {
+              // Autoplay blocked or other play error - will play on user interaction
               const enableAudio = () => {
                 audioElement.play().catch(() => {})
               }
@@ -330,8 +331,8 @@ export default function VideoCallModal({
     const handleAudioTrackUnsubscribed = (track: Track) => {
       if (track.kind === 'audio') {
         try {
-          if (audioElement.srcObject) {
-            audioElement.srcObject = null
+          if (remoteAudioRef.current) {
+            track.detach()
           }
           remoteTracksRef.current.delete('audio')
         } catch (err) {
@@ -355,11 +356,17 @@ export default function VideoCallModal({
     return () => {
       participant.off(ParticipantEvent.TrackSubscribed, handleAudioTrackSubscribed)
       participant.off(ParticipantEvent.TrackUnsubscribed, handleAudioTrackUnsubscribed)
+
+      // Properly detach and clean up audio track
       if (remoteAudioRef.current) {
-        try {
-          remoteAudioRef.current.srcObject = null
-        } catch (err) {
-          // Silently handle cleanup errors
+        const audioTrack = remoteTracksRef.current.get('audio')
+        if (audioTrack) {
+          try {
+            audioTrack.detach()
+            remoteTracksRef.current.delete('audio')
+          } catch (err) {
+            // Silently handle cleanup errors
+          }
         }
       }
     }
