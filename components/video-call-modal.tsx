@@ -427,6 +427,9 @@ export default function VideoCallModal({
       clearInterval(statsIntervalRef.current)
     }
 
+    // Reset invitation state
+    setInvitationSent(false)
+
     // Leave the call
     await leaveCall()
     onClose()
@@ -448,8 +451,8 @@ export default function VideoCallModal({
 
   const isMobileView = isMobile
   const containerClasses = isMobileView
-    ? 'fixed inset-0 z-[99] flex flex-col pointer-events-auto'
-    : 'fixed inset-0 bg-black/50 flex items-center justify-center z-[99] pointer-events-auto'
+    ? 'fixed inset-0 z-[9999] flex flex-col pointer-events-auto'
+    : 'fixed inset-0 bg-black/50 flex items-center justify-center z-[9999] pointer-events-auto'
 
   const modalClasses = isMobileView
     ? 'w-full h-full bg-black'

@@ -10,7 +10,7 @@ interface CallManagerProps {
 }
 
 export default function CallManager({ children }: CallManagerProps) {
-  const { incomingCall, acceptCall, rejectCall } = useIncomingCalls()
+  const { incomingCall, acceptCall, rejectCall, clearCall } = useIncomingCalls()
   const [showOutgoingCallModal, setShowOutgoingCallModal] = useState(false)
   const [acceptedCallData, setAcceptedCallData] = useState<{
     callId: string
@@ -30,29 +30,35 @@ export default function CallManager({ children }: CallManagerProps) {
             callerName: incomingCall.caller_name || 'Unknown',
             callType: incomingCall.call_type,
           })
+          // Clear the incoming call notification
+          clearCall()
         }
       } catch (err) {
         // Silently handle errors
       }
     },
-    [acceptCall, incomingCall]
+    [acceptCall, incomingCall, clearCall]
   )
 
   const handleRejectCall = useCallback(
     async (callId: string) => {
       try {
         await rejectCall(callId)
+        // Clear the incoming call notification
+        clearCall()
       } catch (err) {
         // Silently handle errors
       }
     },
-    [rejectCall]
+    [rejectCall, clearCall]
   )
 
   const handleCloseOutgoingCall = useCallback(() => {
     setShowOutgoingCallModal(false)
     setAcceptedCallData(null)
-  }, [])
+    // Clear any remaining call state
+    clearCall()
+  }, [clearCall])
 
   return (
     <>

@@ -113,43 +113,53 @@ function MessagesContentInner() {
 
 
   return (
-    <div className="pt-20 pb-4 px-4 lg:px-6 h-screen flex flex-col">
-      <div className="max-w-7xl mx-auto w-full flex-1 flex gap-4 lg:gap-6 min-h-0">
-        <div className={`w-full md:w-80 lg:w-96 bg-gradient-to-b from-white to-rose-50 rounded-xl border border-rose-100 overflow-y-auto flex-shrink-0 ${selectedConversation ? 'hidden md:block' : 'block'}`}>
-          <div className="p-4 lg:p-6 border-b border-rose-100 sticky top-0 bg-white z-10">
-            <h2 className="text-xl lg:text-2xl font-bold text-slate-900">Messages</h2>
+    <div className="pt-16 sm:pt-20 pb-4 px-0 sm:px-4 lg:px-6 h-screen flex flex-col">
+      <div className="max-w-7xl mx-auto w-full flex-1 flex flex-col md:flex-row gap-0 md:gap-4 lg:gap-6 min-h-0">
+        <div className={`w-full md:w-80 lg:w-96 bg-gradient-to-b from-white to-rose-50 rounded-none md:rounded-xl border-0 md:border border-rose-100 overflow-y-auto flex-shrink-0 flex flex-col ${selectedConversation ? 'hidden md:flex' : 'flex'}`}>
+          <div className="px-4 py-3 sm:p-4 lg:p-6 border-b border-rose-100 sticky top-0 bg-white z-10 flex items-center justify-between">
+            <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-slate-900">Messages</h2>
+            {selectedConversation && (
+              <button
+                onClick={() => setSelectedConversation(null)}
+                className="md:hidden p-2 hover:bg-rose-100 rounded-full transition"
+                aria-label="Close chat"
+              >
+                <X size={20} className="text-slate-700" />
+              </button>
+            )}
           </div>
 
-          <div className="divide-y">
+          <div className="divide-y flex-1 overflow-y-auto">
             {conversations.length === 0 ? (
               <div className="p-4 text-center text-slate-600 text-sm">No conversations yet</div>
             ) : (
               conversations.map((conv) => (
                 <button
                   key={conv.id}
-                  onClick={() => setSelectedConversation(conv)}
-                  className={`w-full p-4 lg:p-5 text-left hover:bg-rose-100 transition ${
+                  onClick={() => handleSelectConversation(conv)}
+                  className={`w-full px-3 py-3 sm:px-4 sm:py-4 lg:p-5 text-left hover:bg-rose-100 transition ${
                     selectedConversation?.id === conv.id ? 'bg-rose-100' : ''
                   }`}
                 >
-                  <div className="flex gap-3 lg:gap-4 items-center">
-                    <div className="relative w-12 h-12 lg:w-14 lg:h-14 flex-shrink-0">
+                  <div className="flex gap-2 sm:gap-3 lg:gap-4 items-center">
+                    <div className="relative w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 flex-shrink-0">
                       <Image
                         src={conv.other_user_image || '/placeholder.svg'}
                         alt={conv.other_user_name || 'User'}
                         fill
                         className="rounded-full object-cover"
+                        priority
                       />
                       {conv.is_online && (
-                        <div className="absolute bottom-0 right-0 w-2 h-2 md:w-3 md:h-3 bg-green-500 rounded-full border-2 border-white z-10" />
+                        <div className="absolute bottom-0 right-0 w-2 h-2 sm:w-2.5 sm:h-2.5 md:w-3 md:h-3 bg-green-500 rounded-full border-2 border-white z-10" />
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-slate-900 text-base lg:text-lg truncate">{conv.other_user_name || 'User'}</p>
-                      <p className="text-sm lg:text-base text-slate-600 truncate">{conv.last_message}</p>
+                      <p className="font-semibold text-slate-900 text-sm sm:text-base lg:text-lg truncate">{conv.other_user_name || 'User'}</p>
+                      <p className="text-xs sm:text-sm lg:text-base text-slate-600 truncate">{conv.last_message}</p>
                     </div>
                     {conv.unread_count > 0 && (
-                      <span className="bg-rose-500 text-white text-xs lg:text-sm rounded-full w-5 h-5 lg:w-6 lg:h-6 flex items-center justify-center flex-shrink-0">
+                      <span className="bg-rose-500 text-white text-xs rounded-full w-5 h-5 lg:w-6 lg:h-6 flex items-center justify-center flex-shrink-0">
                         {conv.unread_count}
                       </span>
                     )}
@@ -161,10 +171,10 @@ function MessagesContentInner() {
         </div>
 
         {selectedConversation && (
-          <div className={`flex-1 flex min-w-0 ${selectedConversation ? 'flex' : 'hidden md:flex'}`}>
+          <div ref={chatWindowRef} className={`w-full md:flex-1 flex min-w-0 ${selectedConversation ? 'flex' : 'hidden md:flex'}`}>
             <ChatWindow
               conversation={selectedConversation}
-              onBack={() => setSelectedConversation(null)}
+              onBack={handleBackToConversations}
             />
           </div>
         )}
