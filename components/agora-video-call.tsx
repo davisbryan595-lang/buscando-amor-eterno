@@ -56,16 +56,10 @@ export default function AgoraVideoCall({
           const expiresAt = new Date()
           expiresAt.setMinutes(expiresAt.getMinutes() + 5)
 
-          const { error: invitationError } = await fetch('/api/supabase', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${session.access_token}`,
-            },
-            body: JSON.stringify({
-              table: 'call_invitations',
-              operation: 'upsert',
-              data: {
+          const { error: invitationError } = await supabase
+            .from('call_invitations')
+            .upsert(
+              {
                 caller_id: user.id,
                 recipient_id: partnerId,
                 call_type: callType,
@@ -74,20 +68,15 @@ export default function AgoraVideoCall({
                 expires_at: expiresAt.toISOString(),
                 updated_at: new Date().toISOString(),
               },
-              options: {
+              {
                 onConflict: 'caller_id,recipient_id,room_name',
-              },
-            }),
-          })
-            .then(res => res.json())
-            .then(data => ({ error: data.error }))
-            .catch(err => {
-              // Silently handle invitation error - call can still proceed
-              console.warn('Failed to send call invitation:', err)
-              return { error: null }
-            })
+              }
+            )
 
-          // Continue even if invitation fails
+          if (invitationError) {
+            // Silently handle invitation error - call can still proceed
+            console.warn('Failed to send call invitation:', invitationError)
+          }
         } catch (err) {
           // Silently handle invitation error
           console.warn('Error creating call invitation:', err)
