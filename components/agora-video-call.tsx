@@ -500,9 +500,11 @@ export default function AgoraVideoCall({
           <p className="text-gray-300 text-sm">{partnerName}</p>
         </div>
         <div className="flex items-center gap-4">
-          <div className="text-white text-sm font-medium">
-            {formatDuration(callDuration)}
-          </div>
+          {isConnected && (
+            <div className="text-white text-sm font-medium">
+              {formatDuration(callDuration)}
+            </div>
+          )}
           <button
             onClick={endCall}
             className="p-2 hover:bg-red-500/20 rounded-lg transition text-white"
