@@ -12,7 +12,7 @@ interface CallManagerProps {
 export default function CallManager({ children }: CallManagerProps) {
   const { incomingCall, acceptCall, rejectCall, clearCall } = useIncomingCalls()
   const [acceptedCallData, setAcceptedCallData] = useState<{
-    callId: string
+    invitationId: string
     callerId: string
     callerName: string
     callType: 'audio' | 'video'
@@ -24,7 +24,7 @@ export default function CallManager({ children }: CallManagerProps) {
         await acceptCall(callId)
         if (incomingCall) {
           setAcceptedCallData({
-            callId,
+            invitationId: callId,
             callerId: incomingCall.caller_id,
             callerName: incomingCall.caller_name || 'Unknown',
             callType: incomingCall.call_type,
@@ -76,6 +76,8 @@ export default function CallManager({ children }: CallManagerProps) {
             partnerId={acceptedCallData.callerId}
             partnerName={acceptedCallData.callerName}
             callType={acceptedCallData.callType}
+            mode="incoming"
+            callId={acceptedCallData.invitationId}
           />
         </div>
       )}

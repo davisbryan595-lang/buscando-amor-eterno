@@ -7,18 +7,23 @@ import { supabase } from '@/lib/supabase'
 import Navigation from '@/components/navigation'
 import Footer from '@/components/footer'
 import AgoraVideoCall from '@/components/agora-video-call'
-import { Lock, ArrowLeft } from 'lucide-react'
+import { Lock, ArrowLeft, Phone } from 'lucide-react'
 
 export default function VideoDateContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { user, loading: authLoading } = useAuth()
   const [partnerName, setPartnerName] = useState<string | null>(null)
+  const [partnerImage, setPartnerImage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loadingPartner, setLoadingPartner] = useState(true)
+  const [callAccepted, setCallAccepted] = useState(false)
+  const [callRejected, setCallRejected] = useState(false)
 
   const partnerId = searchParams.get('partner')
   const callType = (searchParams.get('type') as 'audio' | 'video') || 'video'
+  const mode = searchParams.get('mode') as 'outgoing' | 'incoming' | null
+  const callId = searchParams.get('callId')
 
   useEffect(() => {
     // Wait for auth to load before proceeding
@@ -39,12 +44,12 @@ export default function VideoDateContent() {
       return
     }
 
-    // Fetch partner name
+    // Fetch partner name and image
     const fetchPartnerName = async () => {
       try {
         const { data, error: fetchError } = await supabase
           .from('profiles')
-          .select('full_name')
+          .select('full_name, photos, main_photo_index')
           .eq('user_id', partnerId)
           .single()
 
@@ -54,6 +59,10 @@ export default function VideoDateContent() {
         }
 
         setPartnerName(data.full_name)
+        const mainPhoto = data.photos?.[data.main_photo_index || 0]
+        if (mainPhoto) {
+          setPartnerImage(mainPhoto)
+        }
       } catch (err: any) {
         console.error('Error fetching partner:', err)
         setError('Failed to load partner information')
@@ -64,6 +73,55 @@ export default function VideoDateContent() {
 
     fetchPartnerName()
   }, [user, partnerId, router, authLoading])
+
+  // For outgoing calls, listen for acceptance via real-time subscription
+  useEffect(() => {
+    if (mode !== 'outgoing' || !callId || !user) return
+
+    let isMounted = true
+    let subscription: any = null
+
+    const setupSubscription = () => {
+      try {
+        subscription = supabase
+          .channel(`call-status:${callId}`)
+          .on(
+            'postgres_changes',
+            {
+              event: 'UPDATE',
+              schema: 'public',
+              table: 'call_invitations',
+              filter: `id=eq.${callId}`,
+            },
+            (payload: any) => {
+              if (isMounted) {
+                const status = payload.new.status
+                if (status === 'accepted') {
+                  setCallAccepted(true)
+                } else if (status === 'declined') {
+                  setCallRejected(true)
+                  setError('Call was declined')
+                } else if (status === 'ended') {
+                  setError('Call has ended')
+                }
+              }
+            }
+          )
+          .subscribe()
+      } catch (err) {
+        console.error('Error setting up call status subscription:', err)
+      }
+    }
+
+    setupSubscription()
+
+    return () => {
+      isMounted = false
+      if (subscription) {
+        supabase.removeChannel(subscription)
+      }
+    }
+  }, [mode, callId, user])
 
   // Show error if no partner or authentication issues
   if (error || !user) {
@@ -101,14 +159,52 @@ export default function VideoDateContent() {
     )
   }
 
-  // Render the agora video call when partner is loaded
-  if (!loadingPartner && partnerId && user) {
+  // Show waiting screen for outgoing calls
+  if (mode === 'outgoing' && !callAccepted && !callRejected) {
+    return (
+      <main className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800">
+        <Navigation />
+        <div className="pt-24 pb-12 px-4 h-screen flex flex-col">
+          <div className="max-w-4xl mx-auto w-full flex-1 flex flex-col items-center justify-center">
+            <div className="text-center">
+              {partnerImage && (
+                <div className="mb-8 flex justify-center">
+                  <img
+                    src={partnerImage}
+                    alt={partnerName || 'Calling'}
+                    className="w-32 h-32 rounded-full object-cover border-4 border-primary shadow-lg"
+                  />
+                </div>
+              )}
+              <div className="w-16 h-16 rounded-full border-4 border-primary border-t-transparent animate-spin mx-auto mb-6" />
+              <h2 className="text-3xl font-bold text-white mb-2">
+                {partnerName || 'Calling'}
+              </h2>
+              <p className="text-slate-300 mb-8">Waiting for {partnerName || 'them'} to accept...</p>
+              <button
+                onClick={() => router.push('/messages')}
+                className="inline-flex items-center gap-2 px-6 py-3 bg-rose-600 hover:bg-rose-700 text-white rounded-full transition"
+              >
+                <Phone size={20} className="rotate-[135deg]" />
+                End Call
+              </button>
+            </div>
+          </div>
+        </div>
+      </main>
+    )
+  }
+
+  // Render the agora video call when partner is loaded and (incoming or outgoing accepted)
+  if (!loadingPartner && partnerId && user && (mode !== 'outgoing' || callAccepted)) {
     return (
       <div className="w-full h-screen bg-black">
         <AgoraVideoCall
           partnerId={partnerId}
           partnerName={partnerName || 'User'}
           callType={callType}
+          mode={mode}
+          callId={callId}
         />
       </div>
     )

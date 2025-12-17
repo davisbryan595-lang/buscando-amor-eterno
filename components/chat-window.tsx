@@ -5,6 +5,7 @@ import { Send, Phone, Video, ArrowLeft } from 'lucide-react'
 import Image from 'next/image'
 import { useMessages } from '@/hooks/useMessages'
 import { useAuth } from '@/context/auth-context'
+import { useStartCall } from '@/hooks/useStartCall'
 import { toast } from 'sonner'
 import MessageContextMenu from '@/components/message-context-menu'
 import TypingIndicator from '@/components/typing-indicator'
@@ -46,8 +47,10 @@ interface ChatWindowProps {
 export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
   const { user } = useAuth()
   const { messages, sendMessage, markAsRead, fetchMessages, fetchConversations } = useMessages()
+  const { startCall } = useStartCall()
   const [newMessage, setNewMessage] = useState('')
   const [loading, setLoading] = useState(false)
+  const [callingState, setCallingState] = useState<'idle' | 'calling'>('idle')
   const [otherUserDetails, setOtherUserDetails] = useState<{ name: string; image: string | null } | null>(null)
   const [contextMenu, setContextMenu] = useState<{
     x: number
@@ -164,6 +167,32 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
     }
   }
 
+  const handleStartAudioCall = async () => {
+    setCallingState('calling')
+    try {
+      await startCall(
+        conversation.other_user_id,
+        otherUserDetails?.name || conversation.other_user_name || 'User',
+        'audio'
+      )
+    } finally {
+      setCallingState('calling')
+    }
+  }
+
+  const handleStartVideoCall = async () => {
+    setCallingState('calling')
+    try {
+      await startCall(
+        conversation.other_user_id,
+        otherUserDetails?.name || conversation.other_user_name || 'User',
+        'video'
+      )
+    } finally {
+      setCallingState('calling')
+    }
+  }
+
   return (
     <div className="bg-gradient-to-b from-white to-rose-50 rounded-none md:rounded-xl border-0 md:border border-rose-100 flex flex-col h-full w-full soft-glow">
       {/* Header */}
@@ -199,20 +228,22 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
         </div>
 
         <div className="flex gap-1 sm:gap-2 lg:gap-3 flex-shrink-0">
-          <a
-            href={`/video-date?partner=${conversation.other_user_id}&type=audio`}
-            className="p-1.5 sm:p-2 lg:p-3 hover:bg-rose-100 rounded-full transition"
+          <button
+            onClick={handleStartAudioCall}
+            disabled={callingState === 'calling'}
+            className="p-1.5 sm:p-2 lg:p-3 hover:bg-rose-100 disabled:opacity-50 disabled:cursor-not-allowed rounded-full transition"
             title="Start audio call"
           >
             <Phone size={16} className="sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-primary" />
-          </a>
-          <a
-            href={`/video-date?partner=${conversation.other_user_id}&type=video`}
-            className="p-1.5 sm:p-2 lg:p-3 hover:bg-rose-100 rounded-full transition"
+          </button>
+          <button
+            onClick={handleStartVideoCall}
+            disabled={callingState === 'calling'}
+            className="p-1.5 sm:p-2 lg:p-3 hover:bg-rose-100 disabled:opacity-50 disabled:cursor-not-allowed rounded-full transition"
             title="Start video call"
           >
             <Video size={16} className="sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-primary" />
-          </a>
+          </button>
         </div>
       </div>
 

@@ -22,12 +22,16 @@ interface AgoraCallProps {
   partnerId: string
   partnerName?: string
   callType?: 'audio' | 'video'
+  mode?: 'outgoing' | 'incoming' | null
+  callId?: string | null
 }
 
 export default function AgoraVideoCall({
   partnerId,
   partnerName,
   callType = 'video',
+  mode = null,
+  callId = null,
 }: AgoraCallProps) {
   const router = useRouter()
   const { user, getSession } = useAuth()
@@ -94,36 +98,18 @@ export default function AgoraVideoCall({
           return
         }
 
-        // Send call invitation to the recipient
-        try {
-          const roomName = [user.id, partnerId].sort().join('-')
-          const expiresAt = new Date()
-          expiresAt.setMinutes(expiresAt.getMinutes() + 5)
-
-          const { error: invitationError } = await supabase
-            .from('call_invitations')
-            .upsert(
-              {
-                caller_id: user.id,
-                recipient_id: partnerId,
-                call_type: callType,
-                room_name: roomName,
-                status: 'pending',
-                expires_at: expiresAt.toISOString(),
-                updated_at: new Date().toISOString(),
-              },
-              {
-                onConflict: 'caller_id,recipient_id,room_name',
-              }
-            )
-
-          if (invitationError) {
-            // Silently handle invitation error - call can still proceed
-            console.warn('Failed to send call invitation:', invitationError)
+        // For incoming calls, the invitation is already created by the caller
+        // For outgoing calls, the invitation was created when they clicked the call button
+        // Only need to mark it as active when the call starts
+        if (mode === 'outgoing' && callId) {
+          try {
+            await supabase
+              .from('call_invitations')
+              .update({ status: 'active' })
+              .eq('id', callId)
+          } catch (err) {
+            console.warn('Failed to update call status to active:', err)
           }
-        } catch (err) {
-          // Silently handle invitation error
-          console.warn('Error creating call invitation:', err)
         }
 
         // Fetch Agora token from server
