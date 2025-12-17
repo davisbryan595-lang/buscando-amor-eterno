@@ -69,10 +69,10 @@ export default function ChatWindow({ conversation }: { conversation: Conversatio
         </div>
 
         <div className="flex gap-2">
-          <button className="p-2 hover:bg-rose-100 rounded-full transition">
-            <Phone size={20} className="text-primary" />
+          <button className="p-2 hover:bg-rose-100 rounded-full transition" disabled>
+            <Phone size={20} className="text-slate-400" />
           </button>
-          <Link href="/video-date" className="p-2 hover:bg-rose-100 rounded-full transition">
+          <Link href={`/video-date?partner=${conversation.other_user_id}`} className="p-2 hover:bg-rose-100 rounded-full transition">
             <Video size={20} className="text-primary" />
           </Link>
         </div>
