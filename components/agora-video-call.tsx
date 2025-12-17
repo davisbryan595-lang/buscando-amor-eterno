@@ -393,7 +393,7 @@ export default function AgoraVideoCall({
               <p className="text-white text-xl font-semibold">{partnerName}</p>
               <p className="text-gray-400 text-sm mt-2">Audio call in progress</p>
               <p className="text-primary text-lg font-semibold mt-4">
-                {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
+                {formatDuration(callDuration)}
               </p>
               {!remoteUser && (
                 <div className="flex items-center justify-center gap-2 text-slate-400 mt-6">
