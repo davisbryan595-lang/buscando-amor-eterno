@@ -11,12 +11,12 @@ export interface AgoraTokenResponse {
 /**
  * Generates a private channel name from two user IDs
  * Uses sorted IDs to ensure consistent naming regardless of call direction
- * Removes hyphens from UUIDs as Agora channel names don't support hyphens
+ * Keeps names under 64 bytes for Agora compatibility by using first 8 chars of each UUID
  */
 export function generateChannelName(userId1: string, userId2: string): string {
   const sorted = [userId1, userId2].sort()
-  const id1 = sorted[0].replace(/-/g, '')
-  const id2 = sorted[1].replace(/-/g, '')
+  const id1 = sorted[0].replace(/-/g, '').slice(0, 8)
+  const id2 = sorted[1].replace(/-/g, '').slice(0, 8)
   return `match${id1}${id2}`
 }
 
