@@ -139,7 +139,7 @@ export default function AgoraVideoCall({
       }
       cleanup()
     }
-  }, [user, partnerId, appId, getSession])
+  }, [user, partnerId, appId, getSession, isAudioOnly])
 
   // Play remote video when remote users change
   useEffect(() => {
