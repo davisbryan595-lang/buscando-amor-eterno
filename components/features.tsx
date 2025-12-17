@@ -47,7 +47,12 @@ export default function Features() {
   ], [])
 
   useEffect(() => {
-    gsap.from(cardsRef.current.filter(Boolean), {
+    if (!sectionRef.current) return
+
+    const cards = cardsRef.current.filter(Boolean)
+    if (cards.length === 0) return
+
+    gsap.from(cards, {
       opacity: 0,
       y: 30,
       duration: 0.6,
@@ -67,7 +72,7 @@ export default function Features() {
         }
       })
     }
-  }, [])
+  }, [features])
 
   return (
     <section ref={sectionRef} className="py-16 md:py-20 px-4 bg-white">
