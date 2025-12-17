@@ -167,6 +167,32 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
     }
   }
 
+  const handleStartAudioCall = async () => {
+    setCallingState('calling')
+    try {
+      await startCall(
+        conversation.other_user_id,
+        otherUserDetails?.name || conversation.other_user_name || 'User',
+        'audio'
+      )
+    } finally {
+      setCallingState('calling')
+    }
+  }
+
+  const handleStartVideoCall = async () => {
+    setCallingState('calling')
+    try {
+      await startCall(
+        conversation.other_user_id,
+        otherUserDetails?.name || conversation.other_user_name || 'User',
+        'video'
+      )
+    } finally {
+      setCallingState('calling')
+    }
+  }
+
   return (
     <div className="bg-gradient-to-b from-white to-rose-50 rounded-none md:rounded-xl border-0 md:border border-rose-100 flex flex-col h-full w-full soft-glow">
       {/* Header */}
