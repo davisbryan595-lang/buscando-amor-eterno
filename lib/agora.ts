@@ -26,6 +26,19 @@ export function generateAgoraToken(
   uid: number,
   expirationTimeInSeconds: number = 3600
 ): string {
+  if (!appId) {
+    throw new Error('Agora App ID is required')
+  }
+  if (!appCertificate) {
+    throw new Error('Agora certificate is not configured')
+  }
+  if (!channelName) {
+    throw new Error('Channel name is required')
+  }
+  if (uid < 0) {
+    throw new Error('Invalid UID value')
+  }
+
   const currentTimestamp = Math.floor(Date.now() / 1000)
   const expiration = currentTimestamp + expirationTimeInSeconds
 
@@ -37,6 +50,10 @@ export function generateAgoraToken(
     RtcRole.PUBLISHER,
     expiration
   )
+
+  if (!token) {
+    throw new Error('Failed to build Agora token')
+  }
 
   return token
 }
