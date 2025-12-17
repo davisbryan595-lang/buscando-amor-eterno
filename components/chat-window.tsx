@@ -1,14 +1,13 @@
 'use client'
 
 import React, { useState, useEffect, useRef } from 'react'
-import { Send, Phone, Video, ArrowLeft } from 'lucide-react'
+import { Send, Phone, Video } from 'lucide-react'
 import Image from 'next/image'
 import { useMessages } from '@/hooks/useMessages'
 import { useAuth } from '@/context/auth-context'
 import { toast } from 'sonner'
 import MessageContextMenu from '@/components/message-context-menu'
 import TypingIndicator from '@/components/typing-indicator'
-import VideoCallModal from '@/components/video-call-modal'
 
 const getLastSeenText = (timestamp?: string): string => {
   if (!timestamp) return 'Offline'
