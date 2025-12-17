@@ -113,7 +113,7 @@ function MessagesContentInner() {
 
 
   return (
-    <div className="pt-12 sm:pt-16 md:pt-20 pb-4 px-0 sm:px-4 lg:px-6 h-[calc(100vh-5rem)] md:h-[calc(100vh-5rem)] flex flex-col overflow-hidden">
+    <div className="h-full w-full pb-4 px-0 sm:px-4 lg:px-6 flex flex-col overflow-hidden">
       <div className="max-w-7xl mx-auto w-full flex-1 flex flex-col md:flex-row gap-0 md:gap-4 lg:gap-6 min-h-0 overflow-hidden">
         <div className={`w-full md:w-80 lg:w-96 bg-gradient-to-b from-white to-rose-50 rounded-none md:rounded-xl border-0 md:border border-rose-100 flex-shrink-0 flex flex-col overflow-hidden ${selectedConversation ? 'hidden md:flex' : 'flex'}`}>
           <div className="px-4 py-3 sm:p-4 lg:p-6 border-b border-rose-100 sticky top-0 bg-gradient-to-b from-white to-rose-50 z-10 flex items-center justify-between">
