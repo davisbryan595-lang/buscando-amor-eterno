@@ -50,6 +50,49 @@ export default function AgoraVideoCall({
           return
         }
 
+        // Send call invitation to the recipient
+        try {
+          const roomName = [user.id, partnerId].sort().join('-')
+          const expiresAt = new Date()
+          expiresAt.setMinutes(expiresAt.getMinutes() + 5)
+
+          const { error: invitationError } = await fetch('/api/supabase', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${session.access_token}`,
+            },
+            body: JSON.stringify({
+              table: 'call_invitations',
+              operation: 'upsert',
+              data: {
+                caller_id: user.id,
+                recipient_id: partnerId,
+                call_type: callType,
+                room_name: roomName,
+                status: 'pending',
+                expires_at: expiresAt.toISOString(),
+                updated_at: new Date().toISOString(),
+              },
+              options: {
+                onConflict: 'caller_id,recipient_id,room_name',
+              },
+            }),
+          })
+            .then(res => res.json())
+            .then(data => ({ error: data.error }))
+            .catch(err => {
+              // Silently handle invitation error - call can still proceed
+              console.warn('Failed to send call invitation:', err)
+              return { error: null }
+            })
+
+          // Continue even if invitation fails
+        } catch (err) {
+          // Silently handle invitation error
+          console.warn('Error creating call invitation:', err)
+        }
+
         // Fetch Agora token from server
         const tokenResponse = await fetch('/api/agora/token', {
           method: 'POST',
@@ -62,7 +105,16 @@ export default function AgoraVideoCall({
 
         if (!tokenResponse.ok) {
           const errorData = await tokenResponse.json()
-          setError(errorData.error || 'Failed to get call token')
+          const errorMsg = errorData.error || 'Failed to get call token'
+
+          // Provide more specific error messages
+          if (errorMsg.includes('Not a valid match')) {
+            setError('You can only call users you have matched with')
+          } else if (errorMsg.includes('Unauthorized')) {
+            setError('Authentication failed. Please log in again.')
+          } else {
+            setError(errorMsg)
+          }
           return
         }
 
