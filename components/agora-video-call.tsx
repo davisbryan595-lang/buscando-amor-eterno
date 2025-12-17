@@ -5,7 +5,9 @@ import AgoraRTC, { IAgoraRTCClient, IAgoraRTCRemoteUser } from 'agora-rtc-sdk-ng
 import { Mic, MicOff, Video as VideoIcon, VideoOff, Phone, X } from 'lucide-react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/context/auth-context'
+import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
+import Image from 'next/image'
 
 interface AgoraCallProps {
   partnerId: string
