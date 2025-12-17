@@ -1,29 +1,22 @@
 'use client'
 
-import React, { useEffect, useRef, useState, Suspense } from 'react'
-import dynamic from 'next/dynamic'
-
-// Dynamically import Agora SDK to avoid server-side rendering issues
-const AgoraRTC = dynamic(
-  () => import('agora-rtc-sdk-ng').then((mod) => ({ default: mod })),
-  { ssr: false }
-)
-
-let AgoraRTCClient: any = null
-let IAgoraRTCRemoteUser: any = null
-
-const loadAgoraSDK = async () => {
-  if (!AgoraRTCClient) {
-    const mod = await import('agora-rtc-sdk-ng')
-    AgoraRTCClient = mod
-  }
-}
+import React, { useEffect, useRef, useState } from 'react'
 import { Mic, MicOff, Video as VideoIcon, VideoOff, Phone, X } from 'lucide-react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/context/auth-context'
 import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
 import Image from 'next/image'
+
+// Lazy load Agora SDK only on client side
+let AgoraRTC: any = null
+let initAgoraSDK = async () => {
+  if (!AgoraRTC) {
+    const mod = await import('agora-rtc-sdk-ng')
+    AgoraRTC = mod.default
+  }
+  return AgoraRTC
+}
 
 interface AgoraCallProps {
   partnerId: string
