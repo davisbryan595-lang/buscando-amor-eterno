@@ -66,12 +66,14 @@ export async function POST(request: NextRequest) {
     }
 
     const userId = data.user.id
+    console.log('Token request from user:', userId)
 
     // Get partner ID from request body
     let body: any
     try {
       body = await request.json()
     } catch (err) {
+      console.error('Failed to parse request body:', err)
       return NextResponse.json(
         { error: 'Invalid request body' },
         { status: 400 }
@@ -81,6 +83,7 @@ export async function POST(request: NextRequest) {
     const partnerId = body.partnerId
 
     if (!partnerId || !isValidUserId(partnerId)) {
+      console.warn('Invalid partner ID:', partnerId)
       return NextResponse.json(
         { error: 'Invalid partner ID' },
         { status: 400 }
@@ -88,6 +91,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (!isValidUserId(userId)) {
+      console.warn('Invalid user ID:', userId)
       return NextResponse.json(
         { error: 'Invalid user ID' },
         { status: 400 }
@@ -96,6 +100,7 @@ export async function POST(request: NextRequest) {
 
     // Prevent calling yourself
     if (userId === partnerId) {
+      console.warn('User attempting to call themselves:', userId)
       return NextResponse.json(
         { error: 'Cannot call yourself' },
         { status: 400 }
