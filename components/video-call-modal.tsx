@@ -399,6 +399,41 @@ export default function VideoCallModal({
   // Handle end call with proper cleanup
   const handleEndCall = async () => {
     try {
+      // Clear stats interval immediately
+      if (statsIntervalRef.current) {
+        clearInterval(statsIntervalRef.current)
+      }
+
+      // Clean up all tracks before leaving the room
+      remoteTracksRef.current.forEach((track) => {
+        try {
+          track.detach()
+        } catch (err) {
+          // Silently handle errors
+        }
+      })
+      remoteTracksRef.current.clear()
+
+      // Clean up local video element
+      if (localVideoRef.current) {
+        try {
+          localVideoRef.current.srcObject = null
+          localVideoRef.current.pause()
+        } catch (err) {
+          // Silently handle errors
+        }
+      }
+
+      // Clean up remote audio element
+      if (remoteAudioRef.current) {
+        try {
+          remoteAudioRef.current.pause()
+          remoteAudioRef.current.srcObject = null
+        } catch (err) {
+          // Silently handle errors
+        }
+      }
+
       // Update call status in database
       if (user) {
         const roomName = [user.id, otherUserId].sort().join('-')
@@ -431,22 +466,7 @@ export default function VideoCallModal({
       // Silently handle errors
     }
 
-    // Clean up tracks
-    remoteTracksRef.current.forEach((track) => {
-      try {
-        track.detach()
-      } catch (err) {
-        // Silently handle errors
-      }
-    })
-    remoteTracksRef.current.clear()
-
-    // Clear stats interval
-    if (statsIntervalRef.current) {
-      clearInterval(statsIntervalRef.current)
-    }
-
-    // Leave the call first
+    // Leave the call - this properly disconnects and cleans up the room
     await leaveCall()
 
     // Close the modal and return to messages
