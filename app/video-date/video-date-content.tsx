@@ -116,7 +116,7 @@ export default function VideoDateContent() {
   if (!loadingPartner && partnerId) {
     return (
       <div className="fixed inset-0 bg-slate-900 z-50">
-        <AgoraVideoCall partnerId={partnerId} partnerName={partnerName || undefined} />
+        <AgoraVideoCall partnerId={partnerId} partnerName={partnerName || undefined} callType={callType} />
       </div>
     )
   }
