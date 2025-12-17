@@ -431,10 +431,12 @@ export default function AgoraVideoCall({
               </div>
               <p className="text-white text-xl font-semibold">{partnerName}</p>
               <p className="text-gray-400 text-sm mt-2">Audio call in progress</p>
-              <p className="text-primary text-lg font-semibold mt-4">
-                {formatDuration(callDuration)}
-              </p>
-              {!remoteUser && (
+              {isConnected && (
+                <p className="text-primary text-lg font-semibold mt-4">
+                  {formatDuration(callDuration)}
+                </p>
+              )}
+              {!isConnected && (
                 <div className="flex items-center justify-center gap-2 text-slate-400 mt-6">
                   <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
                   <span>Waiting for {partnerName}...</span>
