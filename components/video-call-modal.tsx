@@ -427,6 +427,9 @@ export default function VideoCallModal({
       clearInterval(statsIntervalRef.current)
     }
 
+    // Reset invitation state
+    setInvitationSent(false)
+
     // Leave the call
     await leaveCall()
     onClose()
