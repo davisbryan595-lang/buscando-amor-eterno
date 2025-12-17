@@ -182,7 +182,15 @@ export default function Navigation() {
             )}
           </div>
           {isMounted && user ? (
-            <AccountMenu />
+            <>
+              <button
+                onClick={() => setMenuOpen(!menuOpen)}
+                className="p-2 hover:bg-rose-50 rounded-lg transition"
+              >
+                {menuOpen ? <X size={24} /> : <Menu size={24} />}
+              </button>
+              <AccountMenu />
+            </>
           ) : isMounted ? (
             <button
               onClick={() => setMenuOpen(!menuOpen)}
@@ -195,32 +203,37 @@ export default function Navigation() {
       </div>
 
       {/* Mobile Menu */}
-      {menuOpen && isMounted && !user && (
+      {menuOpen && isMounted && (
         <div className="md:hidden bg-white border-t border-rose-100 py-4 px-4 space-y-3">
-          <Link href="/" className="block text-foreground hover:text-primary transition py-2">
+          <Link href="/" className="block text-foreground hover:text-primary transition py-2" onClick={() => setMenuOpen(false)}>
             {t('common.home')}
           </Link>
-          <Link href="/browse" className="block text-foreground hover:text-primary transition py-2">
+          <Link href="/browse" className="block text-foreground hover:text-primary transition py-2" onClick={() => setMenuOpen(false)}>
             {t('common.browse')}
           </Link>
-          <Link href="/pricing" className="block text-foreground hover:text-primary transition py-2">
+          <Link href="/pricing" className="block text-foreground hover:text-primary transition py-2" onClick={() => setMenuOpen(false)}>
             {t('common.pricing')}
           </Link>
-          <Link href="/messages" className="block text-foreground hover:text-primary transition py-2">
+          <Link href="/messages" className="block text-foreground hover:text-primary transition py-2" onClick={() => setMenuOpen(false)}>
             {t('common.messages')}
           </Link>
-          <Link href="/chat-room" className="block text-foreground hover:text-primary transition py-2">
+          <Link href="/chat-room" className="block text-foreground hover:text-primary transition py-2" onClick={() => setMenuOpen(false)}>
             {t('common.lounge')}
           </Link>
-          <Link href="/login" className="block text-foreground hover:text-primary transition py-2">
-            {t('common.logIn')}
-          </Link>
-          <Link
-            href="/signup"
-            className="block px-6 py-2 bg-primary text-white rounded-full hover:bg-rose-700 transition font-semibold text-center"
-          >
-            {t('common.joinForPrice')}
-          </Link>
+          {!user && (
+            <>
+              <Link href="/login" className="block text-foreground hover:text-primary transition py-2" onClick={() => setMenuOpen(false)}>
+                {t('common.logIn')}
+              </Link>
+              <Link
+                href="/signup"
+                className="block px-6 py-2 bg-primary text-white rounded-full hover:bg-rose-700 transition font-semibold text-center"
+                onClick={() => setMenuOpen(false)}
+              >
+                {t('common.joinForPrice')}
+              </Link>
+            </>
+          )}
         </div>
       )}
     </nav>
