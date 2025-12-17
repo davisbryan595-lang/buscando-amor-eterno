@@ -1,4 +1,4 @@
-import crypto from 'crypto'
+import { RtcTokenBuilder, RtcRole } from 'agora-token'
 
 const appCertificate = process.env.AGORA_APP_CERTIFICATE || ''
 
@@ -18,8 +18,7 @@ export function generateChannelName(userId1: string, userId2: string): string {
 }
 
 /**
- * Generates an Agora RTC token using the official Agora token algorithm
- * Simplified version based on Agora's RtcTokenBuilder
+ * Generates an Agora RTC token using the official Agora SDK
  */
 export function generateAgoraToken(
   appId: string,
@@ -27,28 +26,17 @@ export function generateAgoraToken(
   uid: number,
   expirationTimeInSeconds: number = 3600
 ): string {
-  // Token version
-  const VERSION = '007'
+  const currentTimestamp = Math.floor(Date.now() / 1000)
+  const expiration = currentTimestamp + expirationTimeInSeconds
 
-  // Generate timestamps
-  const issuedAt = Math.floor(Date.now() / 1000)
-  const expiration = issuedAt + expirationTimeInSeconds
-
-  // Convert to Agora format - use a simple signing method that Agora accepts
-  const toSign = Buffer.concat([
-    Buffer.from(appId, 'utf-8'),
-    Buffer.from(channelName, 'utf-8'),
-    Buffer.from(String(uid), 'utf-8'),
-    Buffer.from(String(expiration), 'utf-8'),
-  ])
-
-  const signature = crypto
-    .createHmac('sha256', appCertificate)
-    .update(toSign)
-    .digest('hex')
-
-  // Build token: VERSION + appId : signature
-  const token = `${VERSION}${appId}${issuedAt}${expiration}${signature}`
+  const token = RtcTokenBuilder.buildTokenWithUid(
+    appId,
+    appCertificate,
+    channelName,
+    uid,
+    RtcRole.PUBLISHER,
+    expiration
+  )
 
   return token
 }
