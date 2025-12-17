@@ -1,65 +1,96 @@
 'use client'
 
-import React from 'react'
+import React, { useMemo, useEffect, useRef } from 'react'
+import gsap from 'gsap'
+import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { Heart, MessageCircle, Video, Users, Lock, Zap } from 'lucide-react'
+import { useLanguage } from '@/lib/i18n-context'
 
-const features = [
-  {
-    icon: Heart,
-    title: 'Smart Matching',
-    description: 'Our algorithm finds compatible partners based on your values and interests.',
-  },
-  {
-    icon: MessageCircle,
-    title: 'Real Conversations',
-    description: 'Chat with matches instantly and build meaningful connections.',
-  },
-  {
-    icon: Video,
-    title: 'Video Dates',
-    description: 'Meet face-to-face virtually before deciding to meet in person.',
-  },
-  {
-    icon: Users,
-    title: 'Global Community',
-    description: 'Connect with singles from over 100 countries worldwide.',
-  },
-  {
-    icon: Lock,
-    title: 'Verified Profiles',
-    description: 'All members are verified to ensure authenticity and safety.',
-  },
-  {
-    icon: Zap,
-    title: 'Instant Notifications',
-    description: 'Never miss a message with real-time notifications.',
-  },
-]
+gsap.registerPlugin(ScrollTrigger)
 
 export default function Features() {
+  const { t } = useLanguage()
+  const sectionRef = useRef<HTMLDivElement>(null)
+  const cardsRef = useRef<(HTMLDivElement | null)[]>([])
+
+  const features = useMemo(() => [
+    {
+      icon: Heart,
+      titleKey: 'features.smartMatching',
+      descKey: 'features.smartMatchingDesc',
+    },
+    {
+      icon: MessageCircle,
+      titleKey: 'features.realConversations',
+      descKey: 'features.realConversationsDesc',
+    },
+    {
+      icon: Video,
+      titleKey: 'features.videoDates',
+      descKey: 'features.videoDatesDesc',
+    },
+    {
+      icon: Users,
+      titleKey: 'features.globalCommunity',
+      descKey: 'features.globalCommunityDesc',
+    },
+    {
+      icon: Lock,
+      titleKey: 'features.verifiedProfiles',
+      descKey: 'features.verifiedProfilesDesc',
+    },
+    {
+      icon: Zap,
+      titleKey: 'features.instantNotifications',
+      descKey: 'features.instantNotificationsDesc',
+    },
+  ], [])
+
+  useEffect(() => {
+    const ctx = gsap.context(() => {
+      gsap.from(cardsRef.current, {
+        opacity: 0,
+        y: 30,
+        duration: 0.6,
+        stagger: 0.1,
+        scrollTrigger: {
+          trigger: sectionRef.current,
+          start: 'top 80%',
+          end: 'top 20%',
+          toggleActions: 'play none none reverse',
+        },
+      })
+    }, sectionRef)
+
+    return () => ctx.revert()
+  }, [])
+
   return (
-    <section className="py-20 px-4 bg-white">
-      <div className="max-w-6xl mx-auto">
-        <h2 className="text-4xl md:text-5xl font-playfair font-bold text-center mb-4 text-slate-900">
-          Why Choose Buscando Amor Eterno
+    <section ref={sectionRef} className="py-16 md:py-20 px-4 bg-white">
+      <div className="w-full max-w-6xl mx-auto">
+        <h2 className="text-3xl sm:text-4xl md:text-5xl font-playfair font-bold text-center mb-3 md:mb-4 text-slate-900">
+          {t('features.sectionTitle')}
         </h2>
-        <p className="text-center text-slate-600 mb-12 text-lg">
-          The platform designed to help you find your soulmate
+        <p className="text-center text-slate-600 mb-10 md:mb-12 text-base md:text-lg">
+          {t('features.sectionDescription')}
         </p>
 
-        <div className="grid md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-8">
           {features.map((feature, index) => {
             const Icon = feature.icon
             return (
               <div
                 key={index}
-                className="p-8 rounded-xl bg-gradient-to-br from-white to-rose-50 border border-rose-100 hover:soft-glow transition"
+                ref={(el) => {
+                  if (el) cardsRef.current[index] = el
+                }}
+                className="p-6 md:p-8 rounded-xl bg-gradient-to-br from-white to-rose-50 border border-rose-100 hover:soft-glow transition"
               >
                 <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center mb-4 text-white">
                   <Icon size={24} />
                 </div>
-                <h3 className="text-xl font-bold text-slate-900 mb-2">{feature.title}</h3>
-                <p className="text-slate-600">{feature.description}</p>
+                <h3 className="text-lg md:text-xl font-bold text-slate-900 mb-2">{t(feature.titleKey)}</h3>
+                <p className="text-sm md:text-base text-slate-600">{t(feature.descKey)}</p>
               </div>
             )
           })}

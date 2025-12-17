@@ -4,6 +4,7 @@ import './globals.css'
 import { AuthProvider } from '@/context/auth-context'
 import { I18nProvider } from '@/lib/i18n-context'
 import { Preloader } from '@/components/preloader'
+import CallManager from '@/components/call-manager'
 
 const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
@@ -23,19 +24,10 @@ export const metadata: Metadata = {
   icons: {
     icon: [
       {
-        url: '/icon-light-32x32.png',
-        media: '(prefers-color-scheme: light)',
-      },
-      {
-        url: '/icon-dark-32x32.png',
-        media: '(prefers-color-scheme: dark)',
-      },
-      {
-        url: '/icon.svg',
+        url: '/placeholder-logo.svg',
         type: 'image/svg+xml',
       },
     ],
-    apple: '/apple-icon.png',
   },
 }
 
@@ -47,16 +39,21 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-
         <script async src="https://cdn.onesignal.com/sdks/onesignal.js"></script>
         <script dangerouslySetInnerHTML={{
           __html: `
             window.OneSignal = window.OneSignal || [];
-            OneSignal.push(function() {
-              OneSignal.init({
-                appId: "onesignal-app-id-12345678",
+            if (typeof window !== 'undefined' && window.OneSignal) {
+              OneSignal.push(function() {
+                try {
+                  OneSignal.init({
+                    appId: "onesignal-app-id-12345678",
+                  });
+                } catch (err) {
+                  console.warn('OneSignal initialization failed:', err);
+                }
               });
-            });
+            }
           `,
         }} />
       </head>
@@ -64,7 +61,9 @@ export default function RootLayout({
         <Preloader />
         <I18nProvider>
           <AuthProvider>
-            {children}
+            <CallManager>
+              {children}
+            </CallManager>
           </AuthProvider>
         </I18nProvider>
       </body>

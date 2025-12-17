@@ -6,12 +6,10 @@ import Hero from '@/components/hero'
 import SuccessStories from '@/components/success-stories'
 import Features from '@/components/features'
 import Footer from '@/components/footer'
-import FloatingHearts from '@/components/floating-hearts'
 
 export default function HomePage() {
   return (
     <main className="min-h-screen bg-white overflow-hidden">
-      <FloatingHearts />
       <Navigation />
       <Hero />
       <SuccessStories />

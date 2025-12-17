@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/auth-context'
 import { useLanguage } from '@/lib/i18n-context'
 import { useProfile } from '@/hooks/useProfile'
-import { Step1Auth } from '@/components/onboarding/step-1-auth'
 import { Step2Profile } from '@/components/onboarding/step-2-profile'
 import { StepPersonality } from '@/components/onboarding/step-0-preferences'
 import { Step3Location } from '@/components/onboarding/step-3-location'
@@ -18,7 +17,7 @@ import { Loader, ChevronLeft, Globe } from 'lucide-react'
 import { toast } from 'sonner'
 import confetti from 'canvas-confetti'
 
-type OnboardingStep = 1 | 2 | 'personality' | 3 | 4 | 5 | 6 | 'complete'
+type OnboardingStep = 2 | 'personality' | 3 | 4 | 5 | 6 | 'complete'
 
 interface OnboardingData {
   // Step 2
@@ -59,7 +58,7 @@ interface OnboardingData {
   dealbreakers: string[]
 }
 
-const TOTAL_STEPS = 7
+const TOTAL_STEPS = 6
 
 export default function OnboardingPage() {
   const router = useRouter()
@@ -67,7 +66,7 @@ export default function OnboardingPage() {
   const { t, language, setLanguage } = useLanguage()
   const { createProfile, profile, loading: profileLoading, uploadPhoto } = useProfile()
 
-  const [currentStep, setCurrentStep] = useState<OnboardingStep>(1)
+  const [currentStep, setCurrentStep] = useState<OnboardingStep>(2)
   const [loading, setLoading] = useState(false)
   const [data, setData] = useState<Partial<OnboardingData>>({})
 
@@ -91,22 +90,35 @@ export default function OnboardingPage() {
 
   const getProgressPercent = (step: OnboardingStep) => {
     const stepOrder: Record<OnboardingStep, number> = {
-      1: 1,
-      2: 2,
-      'personality': 3,
-      3: 4,
-      4: 5,
-      5: 6,
-      6: 7,
+      2: 1,
+      'personality': 2,
+      3: 3,
+      4: 4,
+      5: 5,
+      6: 6,
       'complete': TOTAL_STEPS,
     }
     return step === 'complete' ? 100 : (stepOrder[step] / TOTAL_STEPS) * 100
   }
 
+  const getStepNumber = (step: OnboardingStep): number => {
+    const stepOrder: Record<OnboardingStep, number> = {
+      2: 1,
+      'personality': 2,
+      3: 3,
+      4: 4,
+      5: 5,
+      6: 6,
+      'complete': TOTAL_STEPS,
+    }
+    return stepOrder[step]
+  }
+
   const progressPercent = getProgressPercent(currentStep)
+  const stepNumber = getStepNumber(currentStep)
 
   const handleNext = () => {
-    const stepSequence: OnboardingStep[] = [1, 2, 'personality', 3, 4, 5, 6, 'complete']
+    const stepSequence: OnboardingStep[] = [2, 'personality', 3, 4, 5, 6, 'complete']
     const currentIndex = stepSequence.indexOf(currentStep)
 
     if (currentStep === 6) {
@@ -119,10 +131,10 @@ export default function OnboardingPage() {
   }
 
   const handleBack = () => {
-    const stepSequence: OnboardingStep[] = [1, 2, 'personality', 3, 4, 5, 6, 'complete']
+    const stepSequence: OnboardingStep[] = [2, 'personality', 3, 4, 5, 6, 'complete']
     const currentIndex = stepSequence.indexOf(currentStep)
 
-    if (currentStep > 1 && currentStep !== 'complete' && currentIndex > 0) {
+    if (currentStep !== 2 && currentStep !== 'complete' && currentIndex > 0) {
       setCurrentStep(stepSequence[currentIndex - 1])
       window.scrollTo(0, 0)
     }
@@ -202,7 +214,7 @@ export default function OnboardingPage() {
       <div className="sticky top-0 z-40 bg-white/80 backdrop-blur-lg border-b border-secondary">
         <div className="max-w-2xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            {currentStep > 1 && currentStep !== 'complete' && (
+            {currentStep !== 2 && currentStep !== 'complete' && (
               <Button
                 onClick={handleBack}
                 variant="ghost"
@@ -221,7 +233,7 @@ export default function OnboardingPage() {
             {currentStep !== 'complete' && (
               <span className="text-sm font-semibold text-muted-foreground">
                 {t('onboarding.progress', {
-                  current: currentStep,
+                  current: stepNumber,
                   total: TOTAL_STEPS,
                 })}
               </span>
@@ -243,7 +255,7 @@ export default function OnboardingPage() {
           <div className="max-w-2xl mx-auto px-4 pb-4">
             <Progress value={progressPercent} className="h-1 rounded-full" />
             <p className="text-xs text-muted-foreground mt-2 text-center">
-              Step {currentStep === 'personality' ? 3 : (typeof currentStep === 'number' && currentStep > 2 ? currentStep + 1 : currentStep)} of {TOTAL_STEPS}
+              Step {stepNumber} of {TOTAL_STEPS}
             </p>
           </div>
         )}
@@ -251,8 +263,6 @@ export default function OnboardingPage() {
 
       {/* Content */}
       <div className="max-w-2xl mx-auto px-4 py-12 pb-20">
-        {currentStep === 1 && <Step1Auth onNext={handleNext} />}
-
         {currentStep === 2 && (
           <Step2Profile
             onNext={handleNext}

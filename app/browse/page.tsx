@@ -7,15 +7,19 @@ import Footer from '@/components/footer'
 import { useProfileProtection } from '@/hooks/useProfileProtection'
 import { useBrowseProfiles } from '@/hooks/useBrowseProfiles'
 import { useSubscription } from '@/hooks/useSubscription'
-import { Heart, X, Star, Info, Loader, Lock } from 'lucide-react'
+import { useProfile } from '@/hooks/useProfile'
+import { useNotifications } from '@/hooks/useNotifications'
+import { Heart, X, Star, Info, Loader, AlertCircle } from 'lucide-react'
 import Image from 'next/image'
 import { toast } from 'sonner'
 
 export default function BrowsePage() {
   // Protect this route - require complete profile
   const { isLoading } = useProfileProtection(true, '/onboarding')
-  const { profiles, loading: profilesLoading, likeProfile, dislikeProfile, superLikeProfile } = useBrowseProfiles()
+  const { profiles, loading: profilesLoading, error: profilesError, likeProfile, dislikeProfile, superLikeProfile } = useBrowseProfiles()
   const { isPremium, loading: subLoading } = useSubscription()
+  const { profile } = useProfile()
+  const { notifications, dismissNotification } = useNotifications()
 
   const [currentIndex, setCurrentIndex] = useState(0)
   const [showInfo, setShowInfo] = useState(false)
@@ -23,6 +27,7 @@ export default function BrowsePage() {
   const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | 'super' | null>(null)
   const [dragOffset, setDragOffset] = useState(0)
   const [isDragging, setIsDragging] = useState(false)
+  const [isActing, setIsActing] = useState(false)
 
   if (isLoading || profilesLoading) {
     return (
@@ -32,43 +37,65 @@ export default function BrowsePage() {
     )
   }
 
+  if (profilesError) {
+    return (
+      <main className="min-h-screen bg-gradient-to-br from-rose-50 to-pink-50">
+        <Navigation />
+        <div className="pt-24 pb-12 px-4 flex items-center justify-center min-h-[80vh]">
+          <div className="text-center max-w-md">
+            <AlertCircle className="w-16 h-16 text-rose-400 mx-auto mb-6" />
+            <h1 className="text-2xl font-playfair font-bold text-slate-900 mb-2">
+              Unable to Load Profiles
+            </h1>
+            <p className="text-slate-600 mb-6">{profilesError}</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="px-8 py-3 bg-rose-700 text-white rounded-full hover:bg-rose-800 transition-colors"
+            >
+              Try Again
+            </button>
+          </div>
+        </div>
+        <Footer />
+      </main>
+    )
+  }
+
   const currentProfile = profiles[currentIndex]
   const hasMoreProfiles = currentIndex < profiles.length - 1
 
   const handleSwipe = async (direction: 'left' | 'right' | 'super') => {
-    if (!currentProfile) return
+    if (!currentProfile || isActing) return
 
-    // Check if trying to like without premium
-    if ((direction === 'right' || direction === 'super') && !isPremium) {
-      setShowPaywall(true)
-      return
-    }
-
+    setIsActing(true)
+    let actionSucceeded = false
     try {
       if (direction === 'left') {
-        await dislikeProfile(currentProfile.id)
+        await dislikeProfile(currentProfile.user_id)
+        actionSucceeded = true
       } else if (direction === 'right' || direction === 'super') {
-        await likeProfile(currentProfile.id)
+        await likeProfile(currentProfile.user_id, currentProfile.id)
+        actionSucceeded = true
       }
     } catch (err: any) {
-      console.error('Error swiping:', err)
-      if (err.message?.includes('Premium subscription required')) {
-        setShowPaywall(true)
-      } else {
-        toast.error(err.message || 'Error liking profile')
-      }
+      const errorMessage = err instanceof Error ? err.message : JSON.stringify(err)
+      console.error('Error swiping:', errorMessage)
+      toast.error(errorMessage || 'Error liking profile')
     }
 
-    // Only animate if action succeeded
-    if (direction === 'left') {
-      setSwipeDirection(direction)
+    // Animate and move to next profile if action succeeded
+    if (actionSucceeded) {
+      setSwipeDirection(direction === 'left' ? 'left' : direction === 'right' ? 'right' : 'super')
       setTimeout(() => {
         if (currentIndex < profiles.length - 1) {
           setCurrentIndex(currentIndex + 1)
         }
         setSwipeDirection(null)
         setShowInfo(false)
+        setIsActing(false)
       }, 300)
+    } else {
+      setIsActing(false)
     }
   }
 
@@ -125,7 +152,28 @@ export default function BrowsePage() {
   return (
     <main className="min-h-screen bg-gradient-to-br from-rose-50 to-pink-50 overflow-hidden">
       <Navigation />
-      
+
+      {/* Profile Incomplete Warning Banner */}
+      {profile && !profile.profile_complete && (
+        <div className="bg-amber-50 border-b-2 border-amber-200">
+          <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0" />
+              <div>
+                <p className="font-semibold text-amber-900">Your profile is hidden</p>
+                <p className="text-sm text-amber-700">Complete your profile setup to become visible to other members</p>
+              </div>
+            </div>
+            <Link
+              href="/onboarding"
+              className="px-4 py-2 bg-amber-600 text-white rounded-full font-semibold hover:bg-amber-700 transition whitespace-nowrap text-sm"
+            >
+              Complete Setup
+            </Link>
+          </div>
+        </div>
+      )}
+
       <div className="pt-24 pb-12 px-4 flex items-center justify-center min-h-[90vh]">
         <div className="w-full max-w-md relative">
           {/* Card Container */}
@@ -201,7 +249,7 @@ export default function BrowsePage() {
                       <div className="flex items-center justify-between mb-2">
                         <div>
                           <h2 className="text-4xl font-playfair font-bold mb-1">
-                            {currentProfile.full_name || 'User'}, {currentProfile.age || '?'}
+                            {currentProfile.full_name || 'User'}, {currentProfile.birthday ? new Date().getFullYear() - new Date(currentProfile.birthday).getFullYear() : '?'}
                           </h2>
                           <p className="text-white/90 text-lg">{currentProfile.city || 'Location not set'}</p>
                         </div>
@@ -217,7 +265,7 @@ export default function BrowsePage() {
                     <div className="space-y-4">
                       <div className="flex items-center justify-between">
                         <h2 className="text-3xl font-playfair font-bold">
-                          {currentProfile.full_name || 'User'}, {currentProfile.age || '?'}
+                          {currentProfile.full_name || 'User'}, {currentProfile.birthday ? new Date().getFullYear() - new Date(currentProfile.birthday).getFullYear() : '?'}
                         </h2>
                         <button
                           onClick={() => setShowInfo(false)}
@@ -227,13 +275,9 @@ export default function BrowsePage() {
                         </button>
                       </div>
                       <p className="text-white/90 text-lg">{currentProfile.city || 'Location not set'}</p>
-                      <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4">
-                        <p className="text-sm text-white/80 mb-2">About</p>
-                        <p>{currentProfile.bio || 'No bio yet'}</p>
-                      </div>
                       {currentProfile.prompt_1 && (
                         <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4">
-                          <p className="text-sm text-white/80 mb-2">Interests</p>
+                          <p className="text-sm text-white/80 mb-2">About</p>
                           <p>{currentProfile.prompt_1}</p>
                         </div>
                       )}
@@ -261,23 +305,26 @@ export default function BrowsePage() {
           <div className="flex items-center justify-center gap-6">
             <button
               onClick={() => handleSwipe('left')}
-              className="w-16 h-16 bg-white rounded-full shadow-lg flex items-center justify-center hover:scale-110 transition-transform active:scale-95"
+              disabled={isActing}
+              className="w-16 h-16 bg-white rounded-full shadow-lg flex items-center justify-center hover:scale-110 transition-transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
               aria-label="Pass"
             >
               <X className="w-8 h-8 text-rose-700" />
             </button>
-            
+
             <button
               onClick={() => handleSwipe('super')}
-              className="w-14 h-14 bg-white rounded-full shadow-lg flex items-center justify-center hover:scale-110 transition-transform active:scale-95"
+              disabled={isActing}
+              className="w-14 h-14 bg-white rounded-full shadow-lg flex items-center justify-center hover:scale-110 transition-transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
               aria-label="Super Like"
             >
               <Star className="w-6 h-6 text-blue-500 fill-blue-500" />
             </button>
-            
+
             <button
               onClick={() => handleSwipe('right')}
-              className="w-16 h-16 bg-rose-700 rounded-full shadow-lg flex items-center justify-center hover:scale-110 transition-transform active:scale-95"
+              disabled={isActing}
+              className="w-16 h-16 bg-rose-700 rounded-full shadow-lg flex items-center justify-center hover:scale-110 transition-transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
               aria-label="Like"
             >
               <Heart className="w-8 h-8 text-white fill-white" />
@@ -293,58 +340,7 @@ export default function BrowsePage() {
 
       <Footer />
 
-      {/* Paywall Modal */}
-      {showPaywall && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
-          <div className="bg-white rounded-3xl max-w-md w-full p-8 space-y-6">
-            <div className="w-16 h-16 bg-rose-100 rounded-full flex items-center justify-center mx-auto">
-              <Lock className="w-8 h-8 text-primary" />
-            </div>
 
-            <div>
-              <h2 className="text-2xl font-playfair font-bold text-slate-900 mb-2">
-                Unlock Liking
-              </h2>
-              <p className="text-slate-600">
-                Upgrade to premium to like and connect with profiles.
-              </p>
-            </div>
-
-            <div className="bg-gradient-to-br from-white to-rose-50 border-2 border-primary rounded-2xl p-4">
-              <p className="text-4xl font-playfair font-bold text-primary mb-2">
-                $12<span className="text-sm text-slate-600">/mo</span>
-              </p>
-              <ul className="space-y-2 text-slate-700 mb-4 text-sm">
-                <li className="flex items-center gap-2">
-                  ✓ Unlimited likes
-                </li>
-                <li className="flex items-center gap-2">
-                  ✓ Send messages
-                </li>
-                <li className="flex items-center gap-2">
-                  ✓ See who liked you
-                </li>
-              </ul>
-            </div>
-
-            <div className="space-y-3">
-              <Link
-                href="/pricing"
-                className="block py-3 bg-primary text-white rounded-full font-semibold hover:bg-rose-700 transition text-center"
-              >
-                Upgrade to Premium
-              </Link>
-
-              <button
-                onClick={() => setShowPaywall(false)}
-                className="w-full py-3 border-2 border-slate-300 text-slate-700 rounded-full font-semibold hover:bg-slate-50 transition"
-              >
-                Not Now
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </main>
   )
 }

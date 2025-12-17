@@ -44,20 +44,12 @@ export function useProfile() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    if (!user) {
-      setLoading(false)
-      return
-    }
-
-    fetchProfile()
-  }, [user])
-
-  const fetchProfile = async () => {
+  const fetchProfile = useCallback(async () => {
     if (!user) return
 
     try {
       setLoading(true)
+
       const { data, error: err } = await supabase
         .from('profiles')
         .select('*')
@@ -75,12 +67,63 @@ export function useProfile() {
       }
       setError(null)
     } catch (err: any) {
-      setError(err.message)
-      console.error('Error fetching profile:', err)
+      const errorMessage = err?.message || (typeof err === 'string' ? err : 'Failed to fetch profile')
+      setError(errorMessage)
+      console.error('Error fetching profile:', errorMessage, err)
     } finally {
       setLoading(false)
     }
-  }
+  }, [user])
+
+  useEffect(() => {
+    if (!user) {
+      setLoading(false)
+      return
+    }
+
+    let isMounted = true
+
+    const fetchProfileData = async () => {
+      try {
+        setLoading(true)
+
+        const { data, error: err } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('user_id', user.id)
+          .single()
+
+        if (!isMounted) return
+
+        if (err && err.code !== 'PGRST116') {
+          throw err
+        }
+
+        if (data) {
+          setProfile(data as ProfileData)
+        } else {
+          setProfile(null)
+        }
+        setError(null)
+      } catch (err: any) {
+        if (isMounted) {
+          const errorMessage = err?.message || (typeof err === 'string' ? err : 'Failed to fetch profile')
+          setError(errorMessage)
+          console.error('Error fetching profile:', errorMessage, err)
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false)
+        }
+      }
+    }
+
+    fetchProfileData()
+
+    return () => {
+      isMounted = false
+    }
+  }, [user])
 
   const createProfile = useCallback(
     async (data: Partial<ProfileData>) => {
@@ -100,7 +143,8 @@ export function useProfile() {
         setProfile(newProfile as ProfileData)
         return newProfile as ProfileData
       } catch (err: any) {
-        setError(err.message)
+        const errorMessage = err?.message || (typeof err === 'string' ? err : 'Failed to create profile')
+        setError(errorMessage)
         throw err
       }
     },
@@ -123,7 +167,8 @@ export function useProfile() {
         setProfile(updatedProfile as ProfileData)
         return updatedProfile as ProfileData
       } catch (err: any) {
-        setError(err.message)
+        const errorMessage = err?.message || (typeof err === 'string' ? err : 'Failed to update profile')
+        setError(errorMessage)
         throw err
       }
     },
@@ -132,7 +177,7 @@ export function useProfile() {
 
   const uploadPhoto = useCallback(
     async (file: File, index: number) => {
-      if (!user || !profile) throw new Error('No user or profile')
+      if (!user) throw new Error('No user logged in')
 
       try {
         const fileName = `${user.id}/${Date.now()}-${file.name}`
@@ -146,14 +191,18 @@ export function useProfile() {
           .from('profile-photos')
           .getPublicUrl(fileName)
 
-        const currentPhotos = profile.photos || []
-        const newPhotos = [...currentPhotos]
-        newPhotos[index] = publicUrl
+        // If profile exists, update it with the new photo
+        if (profile) {
+          const currentPhotos = profile.photos || []
+          const newPhotos = [...currentPhotos]
+          newPhotos[index] = publicUrl
+          await updateProfile({ photos: newPhotos } as any)
+        }
 
-        await updateProfile({ photos: newPhotos } as any)
         return publicUrl
       } catch (err: any) {
-        setError(err.message)
+        const errorMessage = err?.message || (typeof err === 'string' ? err : 'Failed to upload photo')
+        setError(errorMessage)
         throw err
       }
     },
@@ -172,7 +221,8 @@ export function useProfile() {
             profile.main_photo_index === index ? 0 : profile.main_photo_index,
         } as any)
       } catch (err: any) {
-        setError(err.message)
+        const errorMessage = err?.message || (typeof err === 'string' ? err : 'Failed to delete photo')
+        setError(errorMessage)
         throw err
       }
     },

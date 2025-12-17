@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
+import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/auth-context'
 import { useLanguage } from '@/lib/i18n-context'
@@ -18,7 +19,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { AccountMenu } from '@/components/account-menu'
-import { Loader, LogOut, Trash2, Download, Camera, X, Plus } from 'lucide-react'
+import { Loader, LogOut, Trash2, Download, Camera, X, Plus, AlertCircle } from 'lucide-react'
 import { toast } from 'sonner'
 import { ProfilePhotosTab } from '@/components/profile/photos-tab'
 import { ProfilePromptsTab } from '@/components/profile/prompts-tab'
@@ -114,6 +115,35 @@ export default function ProfilePage() {
   return (
     <div className="min-h-screen bg-white">
       <Navigation />
+
+      {/* Hero Image Section */}
+      {profile?.photos?.[profile.main_photo_index || 0] && (
+        <div className="relative h-80 w-full overflow-hidden bg-gray-200">
+          <Image
+            src={profile.photos[profile.main_photo_index || 0]}
+            alt={profile.full_name || 'Profile'}
+            fill
+            className="object-cover"
+            priority
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+        </div>
+      )}
+
+      {/* Profile Incomplete Warning Banner */}
+      {!profile.profile_complete && (
+        <div className="bg-red-50 border-b-2 border-red-200">
+          <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0" />
+              <div>
+                <p className="font-semibold text-red-900">Your profile is incomplete</p>
+                <p className="text-sm text-red-700">Complete all sections below to become visible to other members</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="pt-24 pb-20 px-4">
         <div className="max-w-4xl mx-auto">

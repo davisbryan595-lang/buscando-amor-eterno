@@ -2,11 +2,13 @@ import { useCallback, useState, useEffect } from 'react'
 import { useAuth } from '@/context/auth-context'
 import { supabase } from '@/lib/supabase'
 import { useSubscription } from './useSubscription'
+import { useProfile } from './useProfile'
 import type { ProfileData } from './useProfile'
 
 export function useBrowseProfiles() {
   const { user } = useAuth()
   const { isPremium } = useSubscription()
+  const { profile: currentProfile } = useProfile()
   const [profiles, setProfiles] = useState<ProfileData[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -17,7 +19,44 @@ export function useBrowseProfiles() {
       return
     }
 
-    fetchProfiles()
+    let isMounted = true
+
+    const fetchProfilesData = async () => {
+      try {
+        setLoading(true)
+
+        const { data, error: err } = await supabase
+          .from('profiles')
+          .select('id,user_id,full_name,birthday,city,country,photos,main_photo_index,created_at,prompt_1')
+          .neq('user_id', user.id)
+          .eq('profile_complete', true)
+          .order('created_at', { ascending: false })
+          .limit(100)
+
+        if (!isMounted) return
+
+        if (err) throw err
+        setProfiles((data as ProfileData[]) || [])
+        setError(null)
+      } catch (err: any) {
+        if (isMounted) {
+          const errorMessage = err?.message || (typeof err === 'string' ? err : 'Failed to fetch profiles')
+          setError(errorMessage)
+          console.error('Error fetching profiles:', errorMessage, err)
+          setProfiles([])
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false)
+        }
+      }
+    }
+
+    fetchProfilesData()
+
+    return () => {
+      isMounted = false
+    }
   }, [user])
 
   const fetchProfiles = async () => {
@@ -27,7 +66,7 @@ export function useBrowseProfiles() {
       setLoading(true)
       const { data, error: err } = await supabase
         .from('profiles')
-        .select('*')
+        .select('id,user_id,full_name,birthday,city,country,photos,main_photo_index,created_at,prompt_1')
         .neq('user_id', user.id)
         .eq('profile_complete', true)
         .order('created_at', { ascending: false })
@@ -37,8 +76,9 @@ export function useBrowseProfiles() {
       setProfiles((data as ProfileData[]) || [])
       setError(null)
     } catch (err: any) {
-      setError(err.message)
-      console.error('Error fetching profiles:', err)
+      const errorMessage = err?.message || (typeof err === 'string' ? err : 'Failed to fetch profiles')
+      setError(errorMessage)
+      console.error('Error fetching profiles:', errorMessage, err)
       setProfiles([])
     } finally {
       setLoading(false)
@@ -46,22 +86,36 @@ export function useBrowseProfiles() {
   }
 
   const likeProfile = useCallback(
-    async (profileId: string) => {
+    async (likedUserId: string, likedProfileId?: string) => {
       if (!user) throw new Error('No user logged in')
-      if (!isPremium) throw new Error('Premium subscription required to like profiles')
 
       try {
         const { error: err } = await supabase
           .from('likes')
-          .insert({
+          .upsert({
             user_id: user.id,
-            liked_user_id: profileId,
+            liked_user_id: likedUserId,
             status: 'liked',
+          }, {
+            onConflict: 'user_id,liked_user_id'
           })
 
         if (err) throw err
+
+        // Only create notification if we have the liked profile ID
+        if (likedProfileId) {
+          const { error: notifErr } = await supabase.from('notifications').insert({
+            recipient_id: likedUserId,
+            liker_id: user.id,
+            liked_profile_id: likedProfileId,
+          })
+
+          if (notifErr) {
+            console.warn('Warning: notification not created:', notifErr.message)
+          }
+        }
       } catch (err: any) {
-        console.error('Error liking profile:', err)
+        console.error('Error liking profile:', err instanceof Error ? err.message : JSON.stringify(err))
         throw err
       }
     },
@@ -69,21 +123,23 @@ export function useBrowseProfiles() {
   )
 
   const dislikeProfile = useCallback(
-    async (profileId: string) => {
+    async (likedUserId: string) => {
       if (!user) throw new Error('No user logged in')
 
       try {
         const { error: err } = await supabase
           .from('likes')
-          .insert({
+          .upsert({
             user_id: user.id,
-            liked_user_id: profileId,
+            liked_user_id: likedUserId,
             status: 'disliked',
+          }, {
+            onConflict: 'user_id,liked_user_id'
           })
 
         if (err) throw err
       } catch (err: any) {
-        console.error('Error disliking profile:', err)
+        console.error('Error disliking profile:', err instanceof Error ? err.message : JSON.stringify(err))
         throw err
       }
     },
@@ -91,22 +147,36 @@ export function useBrowseProfiles() {
   )
 
   const superLikeProfile = useCallback(
-    async (profileId: string) => {
+    async (likedUserId: string, likedProfileId?: string) => {
       if (!user) throw new Error('No user logged in')
-      if (!isPremium) throw new Error('Premium subscription required to super like profiles')
 
       try {
         const { error: err } = await supabase
           .from('likes')
-          .insert({
+          .upsert({
             user_id: user.id,
-            liked_user_id: profileId,
+            liked_user_id: likedUserId,
             status: 'liked',
+          }, {
+            onConflict: 'user_id,liked_user_id'
           })
 
         if (err) throw err
+
+        // Only create notification if we have the liked profile ID
+        if (likedProfileId) {
+          const { error: notifErr } = await supabase.from('notifications').insert({
+            recipient_id: likedUserId,
+            liker_id: user.id,
+            liked_profile_id: likedProfileId,
+          })
+
+          if (notifErr) {
+            console.warn('Warning: notification not created:', notifErr.message)
+          }
+        }
       } catch (err: any) {
-        console.error('Error super liking profile:', err)
+        console.error('Error super liking profile:', err instanceof Error ? err.message : JSON.stringify(err))
         throw err
       }
     },

@@ -27,13 +27,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const initializeAuth = async () => {
       try {
-        const { data: { session: sessionData } } = await supabase.auth.getSession()
+        const { data: { session: sessionData }, error } = await supabase.auth.getSession()
+
+        if (error) throw error
+
         if (isMounted) {
           setSession(sessionData)
           setUser(sessionData?.user ?? null)
         }
       } catch (error) {
         console.error('Error initializing auth:', error)
+        if (isMounted) {
+          setSession(null)
+          setUser(null)
+        }
       } finally {
         if (isMounted) {
           setLoading(false)
@@ -48,32 +55,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setSession(sessionData)
         setUser(sessionData?.user ?? null)
 
-        // Create user record and subscription if signing in and user record doesn't exist
         if ((event === 'SIGNED_IN' || event === 'USER_UPDATED') && sessionData?.user) {
           try {
-            // Check if user record exists
-            const { data: existingUser } = await supabase
+            const { data: existingUser, error: checkError } = await supabase
               .from('users')
               .select('id')
               .eq('id', sessionData.user.id)
-              .single()
+              .maybeSingle()
+
+            if (checkError && checkError.code !== 'PGRST116') {
+              throw checkError
+            }
 
             if (!existingUser) {
-              // Create user record
-              await supabase.from('users').insert({
+              const { error: userError } = await supabase.from('users').insert({
                 id: sessionData.user.id,
                 email: sessionData.user.email || '',
               })
 
-              // Create free subscription
-              await supabase.from('subscriptions').insert({
+              if (userError && userError.code !== 'PGRST103') throw userError
+
+              const { error: subError } = await supabase.from('subscriptions').insert({
                 user_id: sessionData.user.id,
                 plan: 'free',
                 status: 'active',
               })
+
+              if (subError && subError.code !== 'PGRST103') throw subError
             }
           } catch (err) {
-            console.error('Error creating user profile:', err)
+            console.error('Error creating user profile:', err instanceof Error ? err.message : JSON.stringify(err))
           }
         }
       }
@@ -95,20 +106,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Create user record and free subscription in database
     if (data.user) {
       try {
-        // Create user record
-        await supabase.from('users').insert({
+        // Create user record with upsert to avoid conflicts
+        const { error: userError } = await supabase.from('users').upsert({
           id: data.user.id,
           email: email,
         })
 
-        // Create free subscription
-        await supabase.from('subscriptions').insert({
+        if (userError) {
+          console.error('Error creating user profile:', userError.message || JSON.stringify(userError))
+          throw userError
+        }
+
+        // Create free subscription with upsert to avoid conflicts
+        const { error: subError } = await supabase.from('subscriptions').upsert({
           user_id: data.user.id,
           plan: 'free',
           status: 'active',
         })
+
+        if (subError) {
+          console.error('Error creating subscription:', subError)
+          throw subError
+        }
       } catch (err) {
-        console.error('Error creating user profile:', err)
+        console.error('Error in user setup:', err)
+        throw err
       }
     }
   }
@@ -122,8 +144,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const signOut = async () => {
-    const { error } = await supabase.auth.signOut()
-    if (error) throw error
+    try {
+      const signOutPromise = supabase.auth.signOut({ scope: 'local' })
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Sign out request timed out')), 5000)
+      )
+
+      const result = await Promise.race([signOutPromise, timeoutPromise]) as any
+      if (result?.error) throw result.error
+
+      setSession(null)
+      setUser(null)
+    } catch (err) {
+      console.error('Error signing out:', err)
+      setSession(null)
+      setUser(null)
+    }
   }
 
   const signInWithOAuth = async (provider: 'google' | 'apple') => {

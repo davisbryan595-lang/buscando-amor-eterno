@@ -1,4 +1,4 @@
-import { useCallback, useState, useEffect } from 'react'
+import { useCallback, useState, useEffect, useRef } from 'react'
 import { useAuth } from '@/context/auth-context'
 import { supabase } from '@/lib/supabase'
 import { useSubscription } from './useSubscription'
@@ -32,88 +32,222 @@ export function useMessages() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const pollAttemptsRef = useRef(0)
+  const lastFetchRef = useRef(0)
+
   useEffect(() => {
     if (!user) {
       setLoading(false)
       return
     }
 
-    fetchConversations()
-    subscribeToMessages()
-  }, [user])
+    let isMounted = true
+
+    const initialize = async () => {
+      if (isMounted) {
+        await fetchConversations()
+      }
+    }
+
+    initialize()
+    const unsubscribe = subscribeToMessages()
+
+    return () => {
+      isMounted = false
+      if (unsubscribe) {
+        unsubscribe()
+      }
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current)
+      }
+    }
+  }, [user?.id])
 
   const fetchConversations = async () => {
     if (!user) return
 
     try {
       setLoading(true)
-      const { data, error: err } = await supabase
+
+      // Add a timeout for messages fetch (30 seconds)
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Conversations fetch timed out')), 30000)
+      )
+
+      // Limit to recent messages to prevent timeout - only fetch enough to build conversation list
+      const queryPromise = supabase
         .from('messages')
-        .select('sender_id, recipient_id, content, created_at')
+        .select('sender_id, recipient_id, content, created_at, read')
         .or(`sender_id.eq.${user.id},recipient_id.eq.${user.id}`)
         .order('created_at', { ascending: false })
+        .limit(500)
+
+      const result = await Promise.race([queryPromise, timeoutPromise])
+      const { data, error: err } = result as any
 
       if (err) throw err
 
       const conversationMap = new Map<string, any>()
+      const userIds = new Set<string>()
 
+      // Process messages to build unique conversations
       data?.forEach((msg: any) => {
         const otherUserId = msg.sender_id === user.id ? msg.recipient_id : msg.sender_id
+        userIds.add(otherUserId)
         if (!conversationMap.has(otherUserId)) {
+          const isUnread = msg.recipient_id === user.id && !msg.read
           conversationMap.set(otherUserId, {
             id: otherUserId,
             user_id: user.id,
             other_user_id: otherUserId,
+            other_user_name: null,
+            other_user_image: null,
             last_message: msg.content,
             last_message_time: msg.created_at,
-            unread_count: msg.recipient_id === user.id && !msg.read ? 1 : 0,
+            unread_count: isUnread ? 1 : 0,
+            other_user_name: null,
+            other_user_image: null,
+            is_online: false,
           })
+        } else {
+          // Count additional unread messages
+          const conv = conversationMap.get(otherUserId)
+          if (msg.recipient_id === user.id && !msg.read) {
+            conv.unread_count += 1
+          }
         }
       })
 
-      setConversations(Array.from(conversationMap.values()))
+      const convArray = Array.from(conversationMap.values())
+
+      // Fetch profile details for conversation participants
+      if (convArray.length > 0) {
+        const userIds = convArray.map((c) => c.other_user_id)
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('user_id, full_name, photos, main_photo_index')
+          .in('user_id', userIds)
+
+        profiles?.forEach((profile) => {
+          const conv = convArray.find((c) => c.other_user_id === profile.user_id)
+          if (conv) {
+            conv.other_user_name = profile.full_name
+            conv.other_user_image = profile.photos?.[profile.main_photo_index || 0] || null
+          }
+        })
+      }
+
+      setConversations(convArray)
       setError(null)
+      lastFetchRef.current = Date.now()
+      pollAttemptsRef.current = 0
     } catch (err: any) {
-      setError(err.message)
-      console.error('Error fetching conversations:', err)
+      const errorMessage = err?.message || (typeof err === 'string' ? err : 'Failed to fetch conversations')
+      const errorDetails = err?.code ? ` (Code: ${err.code})` : err?.status ? ` (Status: ${err.status})` : ''
+      setError(errorMessage)
+      console.error('Error fetching conversations:', errorMessage + errorDetails, err)
     } finally {
       setLoading(false)
     }
   }
 
+  const debouncedFetchConversations = useCallback(() => {
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current)
+    }
+    debounceTimerRef.current = setTimeout(() => {
+      fetchConversations()
+    }, 500)
+  }, [])
+
   const subscribeToMessages = () => {
     if (!user) return
 
-    const subscription = supabase
-      .channel(`messages:${user.id}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'messages',
-          filter: `or(sender_id.eq.${user.id},recipient_id.eq.${user.id})`,
-        },
-        (payload) => {
-          setMessages((prev) => [payload.new as Message, ...prev])
-          fetchConversations()
-        }
-      )
-      .subscribe()
+    let pollInterval: ReturnType<typeof setInterval> | null = null
+    let isMounted = true
+    let lastFetch = 0
+    const MIN_FETCH_INTERVAL = 3000
 
-    return () => {
-      subscription.unsubscribe()
+    const throttledFetch = () => {
+      const now = Date.now()
+      if (now - lastFetch >= MIN_FETCH_INTERVAL) {
+        lastFetch = now
+        fetchConversations()
+      }
+    }
+
+    const stopPolling = () => {
+      if (pollInterval) {
+        clearInterval(pollInterval)
+        pollInterval = null
+      }
+    }
+
+    try {
+      const subscription = supabase
+        .channel(`messages:${user.id}`)
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'messages',
+            filter: `or(sender_id.eq.${user.id},recipient_id.eq.${user.id})`,
+          },
+          (payload) => {
+            if (isMounted) {
+              setMessages((prev) => [payload.new as Message, ...prev])
+              throttledFetch()
+            }
+          }
+        )
+        .subscribe((status) => {
+          if (status === 'SUBSCRIBED') {
+            console.log('[Messages] Subscription active')
+            stopPolling()
+          } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+            console.warn('[Messages] Subscription error:', status, '- Check RLS policies on messages table in Supabase dashboard')
+            if (!pollInterval && isMounted) {
+              pollInterval = setInterval(() => {
+                if (isMounted) {
+                  throttledFetch()
+                }
+              }, 10000)
+            }
+          }
+        })
+
+      return () => {
+        isMounted = false
+        subscription.unsubscribe()
+        stopPolling()
+      }
+    } catch (err) {
+      console.warn('Failed to setup message subscription:', err)
+      if (!pollInterval) {
+        pollInterval = setInterval(() => {
+          if (isMounted) {
+            throttledFetch()
+          }
+        }, 10000)
+      }
+
+      return () => {
+        isMounted = false
+        stopPolling()
+      }
     }
   }
 
   const fetchMessages = useCallback(
     async (otherUserId: string) => {
-      if (!user) return
+      if (!user?.id) return
 
       try {
         const { data, error: err } = await supabase
           .from('messages')
-          .select('*')
+          .select('id,sender_id,recipient_id,content,read,created_at')
           .or(
             `and(sender_id.eq.${user.id},recipient_id.eq.${otherUserId}),and(sender_id.eq.${otherUserId},recipient_id.eq.${user.id})`
           )
@@ -123,8 +257,9 @@ export function useMessages() {
         setMessages((data as Message[]) || [])
         setError(null)
       } catch (err: any) {
-        setError(err.message)
-        console.error('Error fetching messages:', err)
+        const errorMessage = err?.message || (typeof err === 'string' ? err : 'Failed to fetch messages')
+        setError(errorMessage)
+        console.error('Error fetching messages:', errorMessage, err)
       }
     },
     [user]
@@ -133,7 +268,6 @@ export function useMessages() {
   const sendMessage = useCallback(
     async (recipientId: string, content: string) => {
       if (!user) throw new Error('No user logged in')
-      if (!isPremium) throw new Error('Premium subscription required to send messages')
 
       try {
         const { data, error: err } = await supabase
@@ -148,14 +282,32 @@ export function useMessages() {
           .single()
 
         if (err) throw err
-        setMessages((prev) => [...prev, data as Message])
-        return data as Message
+
+        const message = data as Message
+        setMessages((prev) => [...prev, message])
+
+        // Broadcast message for instant delivery via Broadcast (low-latency)
+        const broadcastChannel = supabase.channel(`messages:${recipientId}`)
+        await broadcastChannel.subscribe()
+        const broadcastResult = await broadcastChannel.send('broadcast', {
+          event: 'message-sent',
+          payload: message,
+        })
+        console.log('[Messages] Broadcast sent:', { broadcastResult })
+
+        // Add small delay to ensure broadcast is delivered before unsubscribing
+        await new Promise(resolve => setTimeout(resolve, 100))
+
+        await broadcastChannel.unsubscribe()
+
+        return message
       } catch (err: any) {
-        setError(err.message)
+        const errorMessage = err?.message || (typeof err === 'string' ? err : 'Failed to send message')
+        setError(errorMessage)
         throw err
       }
     },
-    [user, isPremium]
+    [user]
   )
 
   const markAsRead = useCallback(
@@ -168,11 +320,57 @@ export function useMessages() {
 
         if (err) throw err
       } catch (err: any) {
-        setError(err.message)
-        console.error('Error marking message as read:', err)
+        const errorMessage = err?.message || (typeof err === 'string' ? err : 'Failed to mark message as read')
+        const errorDetails = err?.code ? ` (Code: ${err.code})` : err?.status ? ` (Status: ${err.status})` : ''
+        setError(errorMessage)
+        console.error('Error marking message as read:', errorMessage + errorDetails, err)
       }
     },
     []
+  )
+
+  const initiateConversation = useCallback(
+    async (otherUserId: string) => {
+      if (!user) throw new Error('No user logged in')
+
+      try {
+        const existingConv = conversations.find((c) => c.other_user_id === otherUserId)
+        if (existingConv) {
+          return existingConv
+        }
+
+        const { error: msgErr } = await supabase
+          .from('messages')
+          .insert({
+            sender_id: user.id,
+            recipient_id: otherUserId,
+            content: '👋 Conversation started',
+            read: false,
+          })
+
+        if (msgErr) throw msgErr
+
+        await fetchConversations()
+
+        return {
+          id: otherUserId,
+          user_id: user.id,
+          other_user_id: otherUserId,
+          other_user_name: null,
+          other_user_image: null,
+          last_message: '👋 Conversation started',
+          last_message_time: new Date().toISOString(),
+          is_online: false,
+          unread_count: 0,
+        }
+      } catch (err: any) {
+        const errorMessage = err?.message || (typeof err === 'string' ? err : 'Failed to initiate conversation')
+        setError(errorMessage)
+        console.error('Error initiating conversation:', errorMessage, err)
+        throw err
+      }
+    },
+    [user, conversations]
   )
 
   return {
@@ -184,5 +382,6 @@ export function useMessages() {
     fetchMessages,
     sendMessage,
     markAsRead,
+    initiateConversation,
   }
 }
