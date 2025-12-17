@@ -230,6 +230,26 @@ export default function AgoraVideoCall({
 
   const remoteUser = remoteUsers[0]
 
+  if (isAudioOnly) {
+    return (
+      <div className="relative w-full h-full bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-24 h-24 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-8">
+            <Phone size={48} className="text-primary" />
+          </div>
+          <h2 className="text-2xl font-semibold text-white mb-2">Audio Call</h2>
+          <p className="text-slate-300 mb-8">Connected with {partnerName}</p>
+          {!remoteUser && (
+            <div className="flex items-center justify-center gap-2 text-slate-400">
+              <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+              <span>Waiting for {partnerName}...</span>
+            </div>
+          )}
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="relative w-full h-full bg-gradient-to-br from-slate-900 to-slate-800">
       {/* Remote video - full screen */}
