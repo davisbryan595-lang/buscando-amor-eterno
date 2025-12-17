@@ -44,6 +44,30 @@ export default function AgoraVideoCall({
 
   const appId = process.env.NEXT_PUBLIC_AGORA_APP_ID
 
+  // Fetch other user's profile picture
+  useEffect(() => {
+    const fetchOtherUserProfile = async () => {
+      try {
+        const { data } = await supabase
+          .from('profiles')
+          .select('photos, main_photo_index')
+          .eq('user_id', partnerId)
+          .single()
+
+        if (data?.photos && data.photos.length > 0) {
+          const mainIndex = data.main_photo_index || 0
+          setOtherUserImage(data.photos[mainIndex] || null)
+        }
+      } catch (err) {
+        // Silently handle profile fetch errors
+      }
+    }
+
+    if (partnerId) {
+      fetchOtherUserProfile()
+    }
+  }, [partnerId])
+
   useEffect(() => {
     if (!user || !partnerId || !appId) return
 
