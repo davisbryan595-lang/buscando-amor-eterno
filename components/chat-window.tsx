@@ -1,14 +1,13 @@
 'use client'
 
 import React, { useState, useEffect, useRef } from 'react'
-import { Send, Phone, Video, ArrowLeft } from 'lucide-react'
+import { Send, Phone, Video } from 'lucide-react'
 import Image from 'next/image'
 import { useMessages } from '@/hooks/useMessages'
 import { useAuth } from '@/context/auth-context'
 import { toast } from 'sonner'
 import MessageContextMenu from '@/components/message-context-menu'
 import TypingIndicator from '@/components/typing-indicator'
-import VideoCallModal from '@/components/video-call-modal'
 
 const getLastSeenText = (timestamp?: string): string => {
   if (!timestamp) return 'Offline'
@@ -50,8 +49,6 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
   const [newMessage, setNewMessage] = useState('')
   const [loading, setLoading] = useState(false)
   const [otherUserDetails, setOtherUserDetails] = useState<{ name: string; image: string | null } | null>(null)
-  const [callModalOpen, setCallModalOpen] = useState(false)
-  const [callType, setCallType] = useState<'audio' | 'video'>('video')
   const [contextMenu, setContextMenu] = useState<{
     x: number
     y: number
@@ -202,25 +199,19 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
 
         <div className="flex gap-2 lg:gap-3 flex-shrink-0">
           <button
-            onClick={() => {
-              setCallType('audio')
-              setCallModalOpen(true)
-            }}
-            className="p-2 lg:p-3 hover:bg-rose-100 rounded-full transition"
-            title="Start audio call"
+            disabled
+            className="p-2 lg:p-3 hover:bg-rose-100 rounded-full transition cursor-not-allowed"
+            title="Audio calls coming soon"
           >
-            <Phone size={20} className="text-primary lg:w-6 lg:h-6" />
+            <Phone size={20} className="text-slate-400 lg:w-6 lg:h-6" />
           </button>
-          <button
-            onClick={() => {
-              setCallType('video')
-              setCallModalOpen(true)
-            }}
+          <a
+            href={`/video-date?partner=${conversation.other_user_id}`}
             className="p-2 lg:p-3 hover:bg-rose-100 rounded-full transition"
             title="Start video call"
           >
             <Video size={20} className="text-primary lg:w-6 lg:h-6" />
-          </button>
+          </a>
         </div>
       </div>
 
@@ -298,14 +289,6 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
         />
       )}
 
-      {/* Video Call Modal */}
-      <VideoCallModal
-        isOpen={callModalOpen}
-        onClose={() => setCallModalOpen(false)}
-        otherUserName={otherUserDetails?.name || conversation.other_user_name || 'User'}
-        otherUserId={conversation.other_user_id}
-        callType={callType}
-      />
     </div>
   )
 }

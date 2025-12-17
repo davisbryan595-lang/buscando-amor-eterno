@@ -83,12 +83,13 @@ export default function ProfileModal({
               <MessageCircle size={20} />
             </Link>
 
-            <Link
-              href="/video-date"
-              className="py-3 rounded-full font-semibold bg-primary text-white hover:bg-rose-700 transition flex items-center justify-center gap-2"
+            <button
+              disabled
+              title="Video calls available from messages"
+              className="py-3 rounded-full font-semibold bg-slate-300 text-slate-500 cursor-not-allowed flex items-center justify-center gap-2"
             >
               <Video size={20} />
-            </Link>
+            </button>
           </div>
 
           <button
