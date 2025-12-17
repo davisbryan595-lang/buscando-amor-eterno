@@ -198,15 +198,15 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
         </div>
 
         <div className="flex gap-2 lg:gap-3 flex-shrink-0">
-          <button
-            disabled
-            className="p-2 lg:p-3 hover:bg-rose-100 rounded-full transition cursor-not-allowed"
-            title="Audio calls coming soon"
-          >
-            <Phone size={20} className="text-slate-400 lg:w-6 lg:h-6" />
-          </button>
           <a
-            href={`/video-date?partner=${conversation.other_user_id}`}
+            href={`/video-date?partner=${conversation.other_user_id}&type=audio`}
+            className="p-2 lg:p-3 hover:bg-rose-100 rounded-full transition"
+            title="Start audio call"
+          >
+            <Phone size={20} className="text-primary lg:w-6 lg:h-6" />
+          </a>
+          <a
+            href={`/video-date?partner=${conversation.other_user_id}&type=video`}
             className="p-2 lg:p-3 hover:bg-rose-100 rounded-full transition"
             title="Start video call"
           >
