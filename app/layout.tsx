@@ -37,7 +37,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <script async src="https://cdn.onesignal.com/sdks/onesignal.js"></script>
         <script dangerouslySetInnerHTML={{
