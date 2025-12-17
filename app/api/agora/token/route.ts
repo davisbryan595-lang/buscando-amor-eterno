@@ -108,30 +108,19 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify that the partner is a matched contact
+    // Check if either user liked the other with 'matched' status
     console.log('Verifying match between:', { userId, partnerId })
-    const { data: match, error: matchError } = await supabase
-      .from('matches')
-      .select('id')
-      .or(
-        `and(user_id.eq.${userId},matched_user_id.eq.${partnerId}),and(user_id.eq.${partnerId},matched_user_id.eq.${userId})`
-      )
+    const { data: likes, error: likesError } = await supabase
+      .from('likes')
+      .select('id, status')
+      .or(`and(user_id.eq.${userId},liked_user_id.eq.${partnerId}),and(user_id.eq.${partnerId},liked_user_id.eq.${userId})`)
       .eq('status', 'matched')
-      .single()
 
-    if (matchError) {
-      if (matchError.code === 'PGRST116') {
-        // No match found
-        console.warn('No match found between users:', { userId, partnerId })
-        return NextResponse.json(
-          { error: 'Not a valid match' },
-          { status: 403 }
-        )
-      }
-      // Other database errors
+    if (likesError) {
       console.error('Match query error:', {
-        code: matchError.code,
-        message: matchError.message,
-        details: matchError.details,
+        code: likesError.code,
+        message: likesError.message,
+        details: likesError.details,
       })
       return NextResponse.json(
         { error: 'Failed to verify match' },
@@ -139,8 +128,9 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    if (!match) {
-      console.warn('Match not found for users:', { userId, partnerId })
+    // Check if there's at least one match record between the two users
+    if (!likes || likes.length === 0) {
+      console.warn('No match found between users:', { userId, partnerId })
       return NextResponse.json(
         { error: 'Not a valid match' },
         { status: 403 }
