@@ -35,8 +35,12 @@ export default function AgoraVideoCall({
   const [isCameraOff, setIsCameraOff] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [otherUserImage, setOtherUserImage] = useState<string | null>(null)
+  const [callDuration, setCallDuration] = useState(0)
   const localVideoContainerRef = useRef<HTMLDivElement>(null)
   const remoteVideoContainerRef = useRef<HTMLDivElement>(null)
+  const callStartTimeRef = useRef<number>(0)
+  const callTimerRef = useRef<NodeJS.Timeout | null>(null)
 
   const appId = process.env.NEXT_PUBLIC_AGORA_APP_ID
 
