@@ -15,7 +15,12 @@ export default function Footer() {
   const columnsRef = useRef<(HTMLDivElement | null)[]>([])
 
   useEffect(() => {
-    gsap.from(columnsRef.current.filter(Boolean), {
+    if (!footerRef.current) return
+
+    const columns = columnsRef.current.filter(Boolean)
+    if (columns.length === 0) return
+
+    gsap.from(columns, {
       opacity: 0,
       y: 20,
       duration: 0.6,
