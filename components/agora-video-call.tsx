@@ -1,7 +1,23 @@
 'use client'
 
-import React, { useEffect, useRef, useState } from 'react'
-import AgoraRTC, { IAgoraRTCClient, IAgoraRTCRemoteUser } from 'agora-rtc-sdk-ng'
+import React, { useEffect, useRef, useState, Suspense } from 'react'
+import dynamic from 'next/dynamic'
+
+// Dynamically import Agora SDK to avoid server-side rendering issues
+const AgoraRTC = dynamic(
+  () => import('agora-rtc-sdk-ng').then((mod) => ({ default: mod })),
+  { ssr: false }
+)
+
+let AgoraRTCClient: any = null
+let IAgoraRTCRemoteUser: any = null
+
+const loadAgoraSDK = async () => {
+  if (!AgoraRTCClient) {
+    const mod = await import('agora-rtc-sdk-ng')
+    AgoraRTCClient = mod
+  }
+}
 import { Mic, MicOff, Video as VideoIcon, VideoOff, Phone, X } from 'lucide-react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/context/auth-context'
