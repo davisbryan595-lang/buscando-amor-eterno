@@ -383,8 +383,36 @@ export function useLiveKitCall() {
     return () => {
       removeAllListeners()
       if (roomRef.current) {
-        roomRef.current.disconnect().catch(() => {})
+        const room = roomRef.current
         roomRef.current = null
+
+        // Stop all local tracks
+        try {
+          const localParticipant = room.localParticipant
+          if (localParticipant) {
+            // Disable and stop all tracks
+            localParticipant.audioTracks.forEach((trackRef) => {
+              try {
+                trackRef.track?.stop()
+              } catch (err) {
+                // Silently handle
+              }
+            })
+
+            localParticipant.videoTracks.forEach((trackRef) => {
+              try {
+                trackRef.track?.stop()
+              } catch (err) {
+                // Silently handle
+              }
+            })
+          }
+        } catch (err) {
+          // Silently handle
+        }
+
+        // Disconnect from the room
+        room.disconnect().catch(() => {})
       }
       // Ensure state is cleared to prevent any lingering references
       setState({
