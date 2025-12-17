@@ -15,9 +15,23 @@ export async function POST(request: NextRequest) {
   try {
     // Validate environment variables
     if (!supabaseUrl || !supabaseServiceKey || !agoraAppId) {
-      console.error('Missing required environment variables')
+      console.error('Missing required environment variables', {
+        supabaseUrl: !!supabaseUrl,
+        supabaseServiceKey: !!supabaseServiceKey,
+        agoraAppId: !!agoraAppId,
+      })
       return NextResponse.json(
         { error: 'Server configuration error' },
+        { status: 500 }
+      )
+    }
+
+    // Additional validation for Agora certificate
+    const agoraCertificate = process.env.AGORA_APP_CERTIFICATE
+    if (!agoraCertificate) {
+      console.error('Missing AGORA_APP_CERTIFICATE environment variable')
+      return NextResponse.json(
+        { error: 'Server configuration error: missing Agora certificate' },
         { status: 500 }
       )
     }
@@ -125,7 +139,25 @@ export async function POST(request: NextRequest) {
     // Generate channel name and Agora token
     const channelName = generateChannelName(userId, partnerId)
     const agoraUid = userIdToAgoraUid(userId)
-    const agoraToken = generateAgoraToken(agoraAppId, channelName, agoraUid)
+
+    let agoraToken: string
+    try {
+      agoraToken = generateAgoraToken(agoraAppId, channelName, agoraUid)
+    } catch (tokenError: any) {
+      console.error('Failed to generate Agora token:', tokenError.message || tokenError)
+      return NextResponse.json(
+        { error: 'Failed to generate video token' },
+        { status: 500 }
+      )
+    }
+
+    if (!agoraToken) {
+      console.error('Agora token generation returned empty token')
+      return NextResponse.json(
+        { error: 'Failed to generate video token' },
+        { status: 500 }
+      )
+    }
 
     return NextResponse.json({
       token: agoraToken,
@@ -133,9 +165,12 @@ export async function POST(request: NextRequest) {
       channelName,
     })
   } catch (err: any) {
-    console.error('Token generation error:', err.message || err)
+    console.error('Token generation error:', {
+      message: err.message || String(err),
+      stack: err.stack,
+    })
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Internal server error', details: err.message },
       { status: 500 }
     )
   }
