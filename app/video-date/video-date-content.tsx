@@ -28,7 +28,7 @@ function VideoCallLoader() {
 export default function VideoDateContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { user } = useAuth()
+  const { user, loading: authLoading } = useAuth()
   const [partnerName, setPartnerName] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loadingPartner, setLoadingPartner] = useState(true)
@@ -37,6 +37,11 @@ export default function VideoDateContent() {
   const callType = (searchParams.get('type') as 'audio' | 'video') || 'video'
 
   useEffect(() => {
+    // Wait for auth to load before proceeding
+    if (authLoading) {
+      return
+    }
+
     // Check if partner ID is provided
     if (!partnerId) {
       setError('No partner specified. Please start a call from your messages.')
@@ -44,7 +49,7 @@ export default function VideoDateContent() {
       return
     }
 
-    // Check authentication
+    // Check authentication - if not authenticated, redirect to login
     if (!user) {
       router.push('/login')
       return
@@ -55,8 +60,8 @@ export default function VideoDateContent() {
       try {
         const { data, error: fetchError } = await supabase
           .from('profiles')
-          .select('display_name')
-          .eq('id', partnerId)
+          .select('full_name')
+          .eq('user_id', partnerId)
           .single()
 
         if (fetchError || !data) {
@@ -64,7 +69,7 @@ export default function VideoDateContent() {
           return
         }
 
-        setPartnerName(data.display_name)
+        setPartnerName(data.full_name)
       } catch (err: any) {
         console.error('Error fetching partner:', err)
         setError('Failed to load partner information')
@@ -74,7 +79,7 @@ export default function VideoDateContent() {
     }
 
     fetchPartnerName()
-  }, [user, partnerId, router])
+  }, [user, partnerId, router, authLoading])
 
   // Show error if no partner or authentication issues
   if (error || !user) {
