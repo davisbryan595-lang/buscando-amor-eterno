@@ -172,8 +172,8 @@ export default function AgoraVideoCall({
         })
 
         // Create local audio and video tracks
-        const audioTrack = await AgoraRTC.createMicrophoneAudioTrack()
-        const videoTrack = isAudioOnly ? null : await AgoraRTC.createCameraVideoTrack()
+        const audioTrack = await agoraSDK.createMicrophoneAudioTrack()
+        const videoTrack = isAudioOnly ? null : await agoraSDK.createCameraVideoTrack()
 
         setLocalAudioTrack(audioTrack)
         if (videoTrack) {
