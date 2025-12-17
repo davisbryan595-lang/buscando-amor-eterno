@@ -16,9 +16,11 @@ interface AgoraCallProps {
 export default function AgoraVideoCall({
   partnerId,
   partnerName,
+  callType = 'video',
 }: AgoraCallProps) {
   const router = useRouter()
   const { user, getSession } = useAuth()
+  const isAudioOnly = callType === 'audio'
   const [client, setClient] = useState<IAgoraRTCClient | null>(null)
   const [localAudioTrack, setLocalAudioTrack] =
     useState<ReturnType<typeof AgoraRTC.createMicrophoneAudioTrack> | null>(
