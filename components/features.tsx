@@ -1,17 +1,11 @@
 'use client'
 
-import React, { useMemo, useEffect, useRef } from 'react'
-import gsap from 'gsap'
-import { ScrollTrigger } from 'gsap/ScrollTrigger'
+import React, { useMemo } from 'react'
 import { Heart, MessageCircle, Video, Users, Lock, Zap } from 'lucide-react'
 import { useLanguage } from '@/lib/i18n-context'
 
-gsap.registerPlugin(ScrollTrigger)
-
 export default function Features() {
   const { t } = useLanguage()
-  const sectionRef = useRef<HTMLDivElement>(null)
-  const cardsRef = useRef<(HTMLDivElement | null)[]>([])
 
   const features = useMemo(() => [
     {
@@ -46,27 +40,8 @@ export default function Features() {
     },
   ], [])
 
-  useEffect(() => {
-    const ctx = gsap.context(() => {
-      gsap.from(cardsRef.current, {
-        opacity: 0,
-        y: 30,
-        duration: 0.6,
-        stagger: 0.1,
-        scrollTrigger: {
-          trigger: sectionRef.current,
-          start: 'top 80%',
-          end: 'top 20%',
-          toggleActions: 'play none none reverse',
-        },
-      })
-    }, sectionRef)
-
-    return () => ctx.revert()
-  }, [])
-
   return (
-    <section ref={sectionRef} className="py-16 md:py-20 px-4 bg-white">
+    <section className="py-16 md:py-20 px-4 bg-white">
       <div className="w-full max-w-6xl mx-auto">
         <h2 className="text-3xl sm:text-4xl md:text-5xl font-playfair font-bold text-center mb-3 md:mb-4 text-slate-900">
           {t('features.sectionTitle')}
@@ -81,9 +56,6 @@ export default function Features() {
             return (
               <div
                 key={index}
-                ref={(el) => {
-                  if (el) cardsRef.current[index] = el
-                }}
                 className="p-6 md:p-8 rounded-xl bg-gradient-to-br from-white to-rose-50 border border-rose-100 hover:soft-glow transition"
               >
                 <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center mb-4 text-white">
