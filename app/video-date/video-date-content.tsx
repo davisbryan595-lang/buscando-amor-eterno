@@ -101,16 +101,16 @@ export default function VideoDateContent() {
     )
   }
 
-  // Render the video call modal when partner is loaded
+  // Render the agora video call when partner is loaded
   if (!loadingPartner && partnerId && user) {
     return (
-      <VideoCallModal
-        isOpen={true}
-        onClose={() => router.push('/messages')}
-        otherUserId={partnerId}
-        otherUserName={partnerName || 'User'}
-        callType={callType}
-      />
+      <div className="w-full h-screen bg-black">
+        <AgoraVideoCall
+          partnerId={partnerId}
+          partnerName={partnerName || 'User'}
+          callType={callType}
+        />
+      </div>
     )
   }
 
