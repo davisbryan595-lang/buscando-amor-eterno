@@ -30,6 +30,8 @@ export default function AgoraVideoCall({
   partnerId,
   partnerName,
   callType = 'video',
+  mode = null,
+  callId = null,
 }: AgoraCallProps) {
   const router = useRouter()
   const { user, getSession } = useAuth()
