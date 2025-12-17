@@ -10,6 +10,7 @@ import { toast } from 'sonner'
 interface AgoraCallProps {
   partnerId: string
   partnerName?: string
+  callType?: 'audio' | 'video'
 }
 
 export default function AgoraVideoCall({
