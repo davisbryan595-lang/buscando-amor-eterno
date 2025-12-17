@@ -2,24 +2,12 @@
 
 import React, { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import dynamic from 'next/dynamic'
 import { useAuth } from '@/context/auth-context'
 import { supabase } from '@/lib/supabase'
 import Navigation from '@/components/navigation'
 import Footer from '@/components/footer'
 import VideoCallModal from '@/components/video-call-modal'
-import { Lock, ArrowLeft, Video } from 'lucide-react'
-
-function VideoCallLoader() {
-  return (
-    <div className="fixed inset-0 bg-slate-900 flex items-center justify-center z-50">
-      <div className="text-center">
-        <div className="w-12 h-12 rounded-full border-4 border-primary border-t-transparent animate-spin mx-auto mb-4" />
-        <p className="text-white font-medium">Connecting call...</p>
-      </div>
-    </div>
-  )
-}
+import { Lock, ArrowLeft } from 'lucide-react'
 
 export default function VideoDateContent() {
   const router = useRouter()
