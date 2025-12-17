@@ -74,44 +74,52 @@ export default function VideoDateContent() {
     fetchPartnerName()
   }, [user, partnerId, router, authLoading])
 
-  // For outgoing calls, listen for acceptance
+  // For outgoing calls, listen for acceptance via real-time subscription
   useEffect(() => {
     if (mode !== 'outgoing' || !callId || !user) return
 
     let isMounted = true
+    let subscription: any = null
 
-    const checkCallStatus = async () => {
+    const setupSubscription = () => {
       try {
-        const { data } = await supabase
-          .from('call_invitations')
-          .select('status')
-          .eq('id', callId)
-          .single()
-
-        if (isMounted && data) {
-          if (data.status === 'accepted') {
-            setCallAccepted(true)
-          } else if (data.status === 'declined') {
-            setCallRejected(true)
-            setError('Call was declined')
-          } else if (data.status === 'ended') {
-            setError('Call has ended')
-          }
-        }
+        subscription = supabase
+          .channel(`call-status:${callId}`)
+          .on(
+            'postgres_changes',
+            {
+              event: 'UPDATE',
+              schema: 'public',
+              table: 'call_invitations',
+              filter: `id=eq.${callId}`,
+            },
+            (payload: any) => {
+              if (isMounted) {
+                const status = payload.new.status
+                if (status === 'accepted') {
+                  setCallAccepted(true)
+                } else if (status === 'declined') {
+                  setCallRejected(true)
+                  setError('Call was declined')
+                } else if (status === 'ended') {
+                  setError('Call has ended')
+                }
+              }
+            }
+          )
+          .subscribe()
       } catch (err) {
-        console.error('Error checking call status:', err)
+        console.error('Error setting up call status subscription:', err)
       }
     }
 
-    // Check immediately
-    checkCallStatus()
-
-    // Poll every 500ms for status changes
-    const interval = setInterval(checkCallStatus, 500)
+    setupSubscription()
 
     return () => {
       isMounted = false
-      clearInterval(interval)
+      if (subscription) {
+        supabase.removeChannel(subscription)
+      }
     }
   }, [mode, callId, user])
 
