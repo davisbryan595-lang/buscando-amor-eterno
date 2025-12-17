@@ -76,6 +76,8 @@ export default function CallManager({ children }: CallManagerProps) {
             partnerId={acceptedCallData.callerId}
             partnerName={acceptedCallData.callerName}
             callType={acceptedCallData.callType}
+            mode="incoming"
+            callId={acceptedCallData.invitationId}
           />
         </div>
       )}
