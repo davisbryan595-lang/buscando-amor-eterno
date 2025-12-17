@@ -248,7 +248,7 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
       </div>
 
       {/* Messages */}
-      <div ref={messagesContainerRef} className="flex-1 overflow-y-auto px-3 py-3 sm:p-4 lg:p-6 space-y-2 sm:space-y-3 lg:space-y-4 min-h-0">
+      <div ref={messagesContainerRef} className="flex-1 overflow-y-auto overflow-x-hidden px-3 py-3 sm:p-4 lg:p-6 space-y-2 sm:space-y-3 lg:space-y-4 min-h-0">
         {messages.length === 0 ? (
           <div className="flex items-center justify-center h-full text-slate-500">
             <p className="text-sm sm:text-base lg:text-lg">No messages yet. Start the conversation!</p>
