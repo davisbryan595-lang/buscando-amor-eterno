@@ -155,13 +155,39 @@ export default function AgoraVideoCall({
         agoraClient.on('user-published', async (user, mediaType) => {
           await agoraClient.subscribe(user, mediaType)
           if (mediaType === 'video') {
-            setRemoteUsers((prevUsers) => [
-              ...prevUsers.filter((u) => u.uid !== user.uid),
-              user,
-            ])
+            setRemoteUsers((prevUsers) => {
+              const isFirstRemoteUser = prevUsers.length === 0
+              const updated = [
+                ...prevUsers.filter((u) => u.uid !== user.uid),
+                user,
+              ]
+              // Start timer when first remote user connects
+              if (isFirstRemoteUser) {
+                setIsConnected(true)
+                callStartTimeRef.current = Date.now()
+                if (callTimerRef.current) {
+                  clearInterval(callTimerRef.current)
+                }
+                callTimerRef.current = setInterval(() => {
+                  setCallDuration(Math.floor((Date.now() - callStartTimeRef.current) / 1000))
+                }, 1000)
+              }
+              return updated
+            })
           }
           if (mediaType === 'audio') {
             user.audioTrack?.play()
+            // Also mark as connected if audio arrives (for audio-only calls)
+            setIsConnected(true)
+            if (callStartTimeRef.current === 0) {
+              callStartTimeRef.current = Date.now()
+              if (callTimerRef.current) {
+                clearInterval(callTimerRef.current)
+              }
+              callTimerRef.current = setInterval(() => {
+                setCallDuration(Math.floor((Date.now() - callStartTimeRef.current) / 1000))
+              }, 1000)
+            }
           }
         })
 
