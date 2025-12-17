@@ -75,41 +75,13 @@ export function useMessages() {
         setTimeout(() => reject(new Error('Conversations fetch timed out')), 60000)
       )
 
-      // Fetch only messages where user is sender (more efficient than .or clause)
-      const senderMessagesPromise = supabase
+      // Fetch messages more efficiently with smaller limit
+      const queryPromise = supabase
         .from('messages')
         .select('sender_id, recipient_id, content, created_at, read')
-        .eq('sender_id', user.id)
+        .or(`sender_id.eq.${user.id},recipient_id.eq.${user.id}`)
         .order('created_at', { ascending: false })
-        .limit(100)
-
-      // Fetch messages where user is recipient
-      const recipientMessagesPromise = supabase
-        .from('messages')
-        .select('sender_id, recipient_id, content, created_at, read')
-        .eq('recipient_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(100)
-
-      // Race both queries against timeout
-      const [senderResult, recipientResult] = await Promise.all([
-        Promise.race([senderMessagesPromise, timeoutPromise]),
-        Promise.race([recipientMessagesPromise, timeoutPromise])
-      ])
-
-      const { data: senderData, error: senderErr } = senderResult as any
-      const { data: recipientData, error: recipientErr } = recipientResult as any
-
-      if (senderErr) throw senderErr
-      if (recipientErr) throw recipientErr
-
-      // Combine both result sets
-      const combinedData = [...(senderData || []), ...(recipientData || [])]
-        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-        .slice(0, 150) // Keep only top 150 most recent
-
-      const queryPromise = Promise.resolve({ data: combinedData, error: null })
-      const result = await Promise.race([queryPromise, timeoutPromise])
+        .limit(150)
 
       const result = await Promise.race([queryPromise, timeoutPromise])
       const { data, error: err } = result as any
