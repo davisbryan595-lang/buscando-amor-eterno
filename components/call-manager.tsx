@@ -24,7 +24,7 @@ export default function CallManager({ children }: CallManagerProps) {
         await acceptCall(callId)
         if (incomingCall) {
           setAcceptedCallData({
-            callId,
+            invitationId: callId,
             callerId: incomingCall.caller_id,
             callerName: incomingCall.caller_name || 'Unknown',
             callType: incomingCall.call_type,
