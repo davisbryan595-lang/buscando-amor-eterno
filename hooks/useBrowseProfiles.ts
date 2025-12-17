@@ -90,6 +90,7 @@ export function useBrowseProfiles() {
       if (!user) throw new Error('No user logged in')
 
       try {
+        // Create or update the like record
         const { error: err } = await supabase
           .from('likes')
           .upsert({
@@ -101,6 +102,30 @@ export function useBrowseProfiles() {
           })
 
         if (err) throw err
+
+        // Check if the other user has already liked this user (mutual like)
+        const { data: mutualLike, error: checkErr } = await supabase
+          .from('likes')
+          .select('id, status')
+          .eq('user_id', likedUserId)
+          .eq('liked_user_id', user.id)
+          .maybeSingle()
+
+        if (checkErr) {
+          console.warn('Warning: could not check for mutual like:', checkErr.message)
+        }
+
+        // If mutual like found, update both records to 'matched'
+        if (mutualLike && mutualLike.status === 'liked') {
+          const { error: updateErr } = await supabase
+            .from('likes')
+            .update({ status: 'matched' })
+            .or(`and(user_id.eq.${user.id},liked_user_id.eq.${likedUserId}),and(user_id.eq.${likedUserId},liked_user_id.eq.${user.id})`)
+
+          if (updateErr) {
+            console.warn('Warning: could not update mutual match status:', updateErr.message)
+          }
+        }
 
         // Only create notification if we have the liked profile ID
         if (likedProfileId) {
