@@ -1,10 +1,10 @@
 'use client'
 
-import React, { useEffect, useState, dynamic } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import dynamic from 'next/dynamic'
 import { useAuth } from '@/context/auth-context'
 import { supabase } from '@/lib/supabase'
-import dynamic from 'next/dynamic'
 import Navigation from '@/components/navigation'
 import Footer from '@/components/footer'
 import { Lock, ArrowLeft, Video } from 'lucide-react'
