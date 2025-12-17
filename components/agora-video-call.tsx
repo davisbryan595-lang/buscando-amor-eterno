@@ -193,9 +193,19 @@ export default function AgoraVideoCall({
 
         // Handle remote user unpublished event
         agoraClient.on('user-unpublished', (user) => {
-          setRemoteUsers((prevUsers) =>
-            prevUsers.filter((u) => u.uid !== user.uid)
-          )
+          setRemoteUsers((prevUsers) => {
+            const updated = prevUsers.filter((u) => u.uid !== user.uid)
+            // If no more remote users, stop the timer
+            if (updated.length === 0) {
+              if (callTimerRef.current) {
+                clearInterval(callTimerRef.current)
+                callTimerRef.current = null
+              }
+              setIsConnected(false)
+              callStartTimeRef.current = 0
+            }
+            return updated
+          })
         })
 
         // Create local audio and video tracks
