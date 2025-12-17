@@ -355,9 +355,6 @@ export default function AgoraVideoCall({
   }
 
   if (isAudioOnly) {
-    const minutes = Math.floor(callDuration / 60)
-    const seconds = callDuration % 60
-
     return (
       <div className="relative w-full h-full bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-center">
         <div className="absolute inset-0 flex items-center justify-center">
