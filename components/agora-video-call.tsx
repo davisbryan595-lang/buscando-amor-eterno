@@ -95,16 +95,19 @@ export default function AgoraVideoCall({
 
         // Create local audio and video tracks
         const audioTrack = await AgoraRTC.createMicrophoneAudioTrack()
-        const videoTrack = await AgoraRTC.createCameraVideoTrack()
+        const videoTrack = isAudioOnly ? null : await AgoraRTC.createCameraVideoTrack()
 
         setLocalAudioTrack(audioTrack)
-        setLocalVideoTrack(videoTrack)
+        if (videoTrack) {
+          setLocalVideoTrack(videoTrack)
+        }
 
         // Join channel
         await agoraClient.join(appId, channelName, token, uid)
 
         // Publish local tracks
-        await agoraClient.publish([audioTrack, videoTrack])
+        const tracksToPublish = videoTrack ? [audioTrack, videoTrack] : [audioTrack]
+        await agoraClient.publish(tracksToPublish)
 
         // Play local video
         if (localVideoContainerRef.current) {
