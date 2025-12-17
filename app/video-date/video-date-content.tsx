@@ -7,18 +7,23 @@ import { supabase } from '@/lib/supabase'
 import Navigation from '@/components/navigation'
 import Footer from '@/components/footer'
 import AgoraVideoCall from '@/components/agora-video-call'
-import { Lock, ArrowLeft } from 'lucide-react'
+import { Lock, ArrowLeft, Phone } from 'lucide-react'
 
 export default function VideoDateContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { user, loading: authLoading } = useAuth()
   const [partnerName, setPartnerName] = useState<string | null>(null)
+  const [partnerImage, setPartnerImage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loadingPartner, setLoadingPartner] = useState(true)
+  const [callAccepted, setCallAccepted] = useState(false)
+  const [callRejected, setCallRejected] = useState(false)
 
   const partnerId = searchParams.get('partner')
   const callType = (searchParams.get('type') as 'audio' | 'video') || 'video'
+  const mode = searchParams.get('mode') as 'outgoing' | 'incoming' | null
+  const callId = searchParams.get('callId')
 
   useEffect(() => {
     // Wait for auth to load before proceeding
