@@ -77,6 +77,12 @@ export default function AgoraVideoCall({
   useEffect(() => {
     if (!user || !partnerId || !appId) return
 
+    // Prevent calling yourself
+    if (user.id === partnerId) {
+      setError('You cannot call yourself')
+      return
+    }
+
     const initializeCall = async () => {
       try {
         // Initialize Agora SDK
