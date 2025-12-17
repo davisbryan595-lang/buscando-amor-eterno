@@ -7,12 +7,8 @@ import { useAuth } from '@/context/auth-context'
 import { supabase } from '@/lib/supabase'
 import Navigation from '@/components/navigation'
 import Footer from '@/components/footer'
+import VideoCallModal from '@/components/video-call-modal'
 import { Lock, ArrowLeft, Video } from 'lucide-react'
-
-const AgoraVideoCall = dynamic(
-  () => import('@/components/agora-video-call'),
-  { ssr: false, loading: () => <VideoCallLoader /> }
-)
 
 function VideoCallLoader() {
   return (
