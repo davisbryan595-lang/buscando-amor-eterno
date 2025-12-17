@@ -147,7 +147,7 @@ export default function AgoraVideoCall({
         const { token, uid, channelName } = await tokenResponse.json()
 
         // Initialize Agora client
-        const agoraClient = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' })
+        const agoraClient = agoraSDK.createClient({ mode: 'rtc', codec: 'vp8' })
         setClient(agoraClient)
 
         // Handle remote user published event
