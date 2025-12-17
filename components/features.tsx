@@ -84,15 +84,12 @@ export default function Features() {
           {t('features.sectionDescription')}
         </p>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-8">
+        <div ref={gridRef} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-8">
           {features.map((feature, index) => {
             const Icon = feature.icon
             return (
               <div
                 key={index}
-                ref={(el) => {
-                  if (el) cardsRef.current[index] = el
-                }}
                 className="p-6 md:p-8 rounded-xl bg-gradient-to-br from-white to-rose-50 border border-rose-100 hover:soft-glow transition"
               >
                 <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center mb-4 text-white">
