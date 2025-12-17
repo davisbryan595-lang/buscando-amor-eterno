@@ -19,42 +19,38 @@ export function generateChannelName(userId1: string, userId2: string): string {
 
 /**
  * Generates an Agora RTC token using the Agora token algorithm
- * Based on Agora's AccessToken implementation
+ * Reference: https://docs.agora.io/en/video-calling/develop/authentication-workflow
  */
 export function generateAgoraToken(
   appId: string,
   channelName: string,
   uid: number,
-  expirationTimeInSeconds: number = 3600 // 1 hour default
+  expirationTimeInSeconds: number = 3600
 ): string {
   const VERSION = '007'
-  const currentTime = Math.floor(Date.now() / 1000)
-  const expireTime = currentTime + expirationTimeInSeconds
+  const appIdBuffer = Buffer.from(appId)
+  const channelNameBuffer = Buffer.from(channelName)
+  const uidBuffer = Buffer.alloc(4)
+  uidBuffer.writeUInt32BE(uid, 0)
+  const expireBuffer = Buffer.alloc(4)
+  const currentTimestamp = Math.floor(Date.now() / 1000)
+  const expireTimestamp = currentTimestamp + expirationTimeInSeconds
+  expireBuffer.writeUInt32BE(expireTimestamp, 0)
 
-  // Prepare the token data
-  const channelNameBytes = Buffer.from(channelName, 'utf-8')
-  const uidStr = String(uid)
-  const uidBytes = Buffer.from(uidStr, 'utf-8')
-
-  // Build message to sign
-  const message = Buffer.concat([
-    Buffer.from(appId, 'utf-8'),
-    Buffer.from([0]),
-    channelNameBytes,
-    Buffer.from([0]),
-    uidBytes,
-    Buffer.from([0]),
-    Buffer.from(String(expireTime), 'utf-8'),
+  const messageBuffer = Buffer.concat([
+    appIdBuffer,
+    channelNameBuffer,
+    uidBuffer,
+    expireBuffer,
   ])
 
-  // Sign the message using HMAC-SHA256
   const signature = crypto
     .createHmac('sha256', appCertificate)
-    .update(message)
-    .digest('hex')
+    .update(messageBuffer)
+    .digest()
 
-  // Build the final token
-  const token = `${VERSION}${appId}${currentTime}${expireTime}${signature}`
+  const signedBuffer = Buffer.concat([messageBuffer, signature])
+  const token = `${VERSION}${appIdBuffer.toString('hex')}${signedBuffer.toString('hex')}`
 
   return token
 }
