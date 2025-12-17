@@ -245,13 +245,21 @@ export function useMessages() {
       if (!user?.id) return
 
       try {
-        const { data, error: err } = await supabase
+        // Add timeout for individual message fetch (30 seconds)
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Message fetch timed out')), 30000)
+        )
+
+        const queryPromise = supabase
           .from('messages')
           .select('id,sender_id,recipient_id,content,read,created_at')
           .or(
             `and(sender_id.eq.${user.id},recipient_id.eq.${otherUserId}),and(sender_id.eq.${otherUserId},recipient_id.eq.${user.id})`
           )
           .order('created_at', { ascending: true })
+
+        const result = await Promise.race([queryPromise, timeoutPromise])
+        const { data, error: err } = result as any
 
         if (err) throw err
         setMessages((data as Message[]) || [])
