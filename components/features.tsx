@@ -41,7 +41,7 @@ export default function Features() {
   ], [])
 
   return (
-    <section className="py-16 md:py-20 px-4 bg-white">
+    <section className="py-16 md:py-20 px-4 bg-white border-4 border-red-500">
       <div className="w-full max-w-6xl mx-auto">
         <h2 className="text-3xl sm:text-4xl md:text-5xl font-playfair font-bold text-center mb-3 md:mb-4 text-slate-900">
           {t('features.sectionTitle')}
