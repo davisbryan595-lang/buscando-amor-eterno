@@ -165,9 +165,12 @@ export async function POST(request: NextRequest) {
       channelName,
     })
   } catch (err: any) {
-    console.error('Token generation error:', err.message || err)
+    console.error('Token generation error:', {
+      message: err.message || String(err),
+      stack: err.stack,
+    })
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Internal server error', details: err.message },
       { status: 500 }
     )
   }
