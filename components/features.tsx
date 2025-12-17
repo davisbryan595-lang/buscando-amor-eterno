@@ -47,22 +47,26 @@ export default function Features() {
   ], [])
 
   useEffect(() => {
-    const ctx = gsap.context(() => {
-      gsap.from(cardsRef.current, {
-        opacity: 0,
-        y: 30,
-        duration: 0.6,
-        stagger: 0.1,
-        scrollTrigger: {
-          trigger: sectionRef.current,
-          start: 'top 80%',
-          end: 'top 20%',
-          toggleActions: 'play none none reverse',
-        },
-      })
-    }, sectionRef)
+    gsap.from(cardsRef.current.filter(Boolean), {
+      opacity: 0,
+      y: 30,
+      duration: 0.6,
+      stagger: 0.1,
+      scrollTrigger: {
+        trigger: sectionRef.current,
+        start: 'top 80%',
+        end: 'top 20%',
+        toggleActions: 'play none none reverse',
+      },
+    })
 
-    return () => ctx.revert()
+    return () => {
+      ScrollTrigger.getAll().forEach((trigger) => {
+        if (trigger.vars.trigger === sectionRef.current) {
+          trigger.kill()
+        }
+      })
+    }
   }, [])
 
   return (
