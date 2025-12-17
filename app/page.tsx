@@ -12,8 +12,8 @@ export default function HomePage() {
     <main className="w-full bg-white">
       <Navigation />
       <Hero />
-      <SuccessStories />
       <Features />
+      <SuccessStories />
       <Footer />
     </main>
   )
