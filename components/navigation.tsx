@@ -137,7 +137,7 @@ export default function Navigation() {
         </div>
 
         {/* Mobile Menu Button */}
-        <div className="md:hidden flex items-center gap-4">
+        <div className="md:hidden flex items-center gap-2">
           <div className="relative">
             <button
               onClick={() => setNotificationsOpen(!notificationsOpen)}
@@ -155,30 +155,6 @@ export default function Navigation() {
                 notifications={notifications}
                 onDismiss={handleNotificationDismiss}
               />
-            )}
-          </div>
-          <div className="relative">
-            <button
-              onClick={() => setLangDropdown(!langDropdown)}
-              className="p-2 hover:bg-rose-50 rounded-full transition"
-            >
-              <Globe size={20} className="text-primary" />
-            </button>
-            {langDropdown && (
-              <div className="absolute right-0 mt-2 bg-white border border-rose-100 rounded-lg shadow-lg z-50">
-                <button
-                  onClick={() => handleLanguageChange('en')}
-                  className={`block w-full text-left px-4 py-2 hover:bg-rose-50 ${language === 'en' ? 'bg-rose-50 text-primary font-semibold' : 'text-foreground'}`}
-                >
-                  English
-                </button>
-                <button
-                  onClick={() => handleLanguageChange('es')}
-                  className={`block w-full text-left px-4 py-2 hover:bg-rose-50 ${language === 'es' ? 'bg-rose-50 text-primary font-semibold' : 'text-foreground'}`}
-                >
-                  Español
-                </button>
-              </div>
             )}
           </div>
           {isMounted && user ? (
