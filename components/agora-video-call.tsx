@@ -185,6 +185,15 @@ export default function AgoraVideoCall({
           videoTrack.play(localVideoContainerRef.current)
         }
 
+        // Start call timer
+        callStartTimeRef.current = Date.now()
+        if (callTimerRef.current) {
+          clearInterval(callTimerRef.current)
+        }
+        callTimerRef.current = setInterval(() => {
+          setCallDuration(Math.floor((Date.now() - callStartTimeRef.current) / 1000))
+        }, 1000)
+
         setLoading(false)
       } catch (err: any) {
         console.error('Call initialization error:', err)
