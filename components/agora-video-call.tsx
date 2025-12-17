@@ -22,6 +22,8 @@ interface AgoraCallProps {
   partnerId: string
   partnerName?: string
   callType?: 'audio' | 'video'
+  mode?: 'outgoing' | 'incoming' | null
+  callId?: string | null
 }
 
 export default function AgoraVideoCall({
