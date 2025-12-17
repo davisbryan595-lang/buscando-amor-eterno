@@ -118,6 +118,7 @@ export function useLiveKitCall() {
             autoGainControl: true,
             echoCancellation: true,
             noiseSuppression: true,
+            sampleRate: 48000,
           },
           videoCaptureDefaults: {
             resolution: {
@@ -126,7 +127,7 @@ export function useLiveKitCall() {
             },
           },
           adaptiveStream: true,
-          dynacast: true,
+          dynacast: false,
           autoSubscribe: true,
           maxParticipants: 2,
           reconnectPolicy: {
