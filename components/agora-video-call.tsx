@@ -146,7 +146,9 @@ export default function AgoraVideoCall({
           })
 
           // Provide more specific error messages
-          if (errorMsg.includes('Not a valid match')) {
+          if (errorMsg.includes('Cannot call yourself')) {
+            setError('You cannot call yourself')
+          } else if (errorMsg.includes('Not a valid match')) {
             setError('You can only call users you have matched with')
           } else if (errorMsg.includes('Unauthorized')) {
             setError('Authentication failed. Please log in again.')
