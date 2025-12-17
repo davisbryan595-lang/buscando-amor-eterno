@@ -32,14 +32,10 @@ export default function AgoraVideoCall({
   const router = useRouter()
   const { user, getSession } = useAuth()
   const isAudioOnly = callType === 'audio'
-  const [client, setClient] = useState<IAgoraRTCClient | null>(null)
-  const [localAudioTrack, setLocalAudioTrack] =
-    useState<ReturnType<typeof AgoraRTC.createMicrophoneAudioTrack> | null>(
-      null
-    )
-  const [localVideoTrack, setLocalVideoTrack] =
-    useState<ReturnType<typeof AgoraRTC.createCameraVideoTrack> | null>(null)
-  const [remoteUsers, setRemoteUsers] = useState<IAgoraRTCRemoteUser[]>([])
+  const [client, setClient] = useState<any>(null)
+  const [localAudioTrack, setLocalAudioTrack] = useState<any>(null)
+  const [localVideoTrack, setLocalVideoTrack] = useState<any>(null)
+  const [remoteUsers, setRemoteUsers] = useState<any[]>([])
   const [isMuted, setIsMuted] = useState(false)
   const [isCameraOff, setIsCameraOff] = useState(false)
   const [loading, setLoading] = useState(true)
