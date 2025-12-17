@@ -34,6 +34,7 @@ export default function VideoDateContent() {
   const [loadingPartner, setLoadingPartner] = useState(true)
 
   const partnerId = searchParams.get('partner')
+  const callType = (searchParams.get('type') as 'audio' | 'video') || 'video'
 
   useEffect(() => {
     // Check if partner ID is provided
