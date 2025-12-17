@@ -108,6 +108,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify that the partner is a matched contact
+    console.log('Verifying match between:', { userId, partnerId })
     const { data: match, error: matchError } = await supabase
       .from('matches')
       .select('id')
@@ -120,14 +121,18 @@ export async function POST(request: NextRequest) {
     if (matchError) {
       if (matchError.code === 'PGRST116') {
         // No match found
-        console.warn('No match found between users:', userId, partnerId)
+        console.warn('No match found between users:', { userId, partnerId })
         return NextResponse.json(
           { error: 'Not a valid match' },
           { status: 403 }
         )
       }
       // Other database errors
-      console.error('Match query error:', matchError.message)
+      console.error('Match query error:', {
+        code: matchError.code,
+        message: matchError.message,
+        details: matchError.details,
+      })
       return NextResponse.json(
         { error: 'Failed to verify match' },
         { status: 500 }
@@ -135,6 +140,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (!match) {
+      console.warn('Match not found for users:', { userId, partnerId })
       return NextResponse.json(
         { error: 'Not a valid match' },
         { status: 403 }
@@ -145,11 +151,16 @@ export async function POST(request: NextRequest) {
     const channelName = generateChannelName(userId, partnerId)
     const agoraUid = userIdToAgoraUid(userId)
 
+    console.log('Generating token:', { channelName, agoraUid, userId })
+
     let agoraToken: string
     try {
       agoraToken = generateAgoraToken(agoraAppId, channelName, agoraUid)
     } catch (tokenError: any) {
-      console.error('Failed to generate Agora token:', tokenError.message || tokenError)
+      console.error('Failed to generate Agora token:', {
+        message: tokenError.message || String(tokenError),
+        stack: tokenError.stack,
+      })
       return NextResponse.json(
         { error: 'Failed to generate video token' },
         { status: 500 }
@@ -157,13 +168,17 @@ export async function POST(request: NextRequest) {
     }
 
     if (!agoraToken) {
-      console.error('Agora token generation returned empty token')
+      console.error('Agora token generation returned empty token', {
+        channelName,
+        agoraUid,
+      })
       return NextResponse.json(
         { error: 'Failed to generate video token' },
         { status: 500 }
       )
     }
 
+    console.log('Token generated successfully')
     return NextResponse.json({
       token: agoraToken,
       uid: agoraUid,
