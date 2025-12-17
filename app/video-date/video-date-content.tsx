@@ -44,12 +44,12 @@ export default function VideoDateContent() {
       return
     }
 
-    // Fetch partner name
+    // Fetch partner name and image
     const fetchPartnerName = async () => {
       try {
         const { data, error: fetchError } = await supabase
           .from('profiles')
-          .select('full_name')
+          .select('full_name, photos, main_photo_index')
           .eq('user_id', partnerId)
           .single()
 
@@ -59,6 +59,10 @@ export default function VideoDateContent() {
         }
 
         setPartnerName(data.full_name)
+        const mainPhoto = data.photos?.[data.main_photo_index || 0]
+        if (mainPhoto) {
+          setPartnerImage(mainPhoto)
+        }
       } catch (err: any) {
         console.error('Error fetching partner:', err)
         setError('Failed to load partner information')
@@ -69,6 +73,47 @@ export default function VideoDateContent() {
 
     fetchPartnerName()
   }, [user, partnerId, router, authLoading])
+
+  // For outgoing calls, listen for acceptance
+  useEffect(() => {
+    if (mode !== 'outgoing' || !callId || !user) return
+
+    let isMounted = true
+
+    const checkCallStatus = async () => {
+      try {
+        const { data } = await supabase
+          .from('call_invitations')
+          .select('status')
+          .eq('id', callId)
+          .single()
+
+        if (isMounted && data) {
+          if (data.status === 'accepted') {
+            setCallAccepted(true)
+          } else if (data.status === 'declined') {
+            setCallRejected(true)
+            setError('Call was declined')
+          } else if (data.status === 'ended') {
+            setError('Call has ended')
+          }
+        }
+      } catch (err) {
+        console.error('Error checking call status:', err)
+      }
+    }
+
+    // Check immediately
+    checkCallStatus()
+
+    // Poll every 500ms for status changes
+    const interval = setInterval(checkCallStatus, 500)
+
+    return () => {
+      isMounted = false
+      clearInterval(interval)
+    }
+  }, [mode, callId, user])
 
   // Show error if no partner or authentication issues
   if (error || !user) {
