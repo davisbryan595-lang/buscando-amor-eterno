@@ -237,8 +237,8 @@ export function useMessages() {
       let isMounted = true
 
       try {
-        const subscription = supabase
-          .channel(`conversation:${user.id}:${otherUserId}`)
+        const channel = supabase
+          .channel(`messages:${user.id}:${otherUserId}`)
           .on(
             'postgres_changes',
             {
@@ -248,24 +248,32 @@ export function useMessages() {
               filter: `or(and(sender_id.eq.${user.id},recipient_id.eq.${otherUserId}),and(sender_id.eq.${otherUserId},recipient_id.eq.${user.id}))`,
             },
             (payload) => {
+              console.log('[Conversation] New message payload:', payload)
               if (isMounted) {
                 const newMessage = payload.new as Message
-                setMessages((prev) => {
-                  const isDuplicate = prev.some(m => m.id === newMessage.id)
-                  return isDuplicate ? prev : [...prev, newMessage]
+                setMessages((prevMessages) => {
+                  if (prevMessages.some(msg => msg.id === newMessage.id)) {
+                    console.log('[Conversation] Duplicate message prevented:', newMessage.id)
+                    return prevMessages
+                  }
+                  console.log('[Conversation] Adding new message to state:', newMessage.id)
+                  return [...prevMessages, newMessage]
                 })
               }
             }
           )
           .subscribe((status) => {
+            console.log(`[Conversation] Subscription status for ${otherUserId}:`, status)
             if (status === 'SUBSCRIBED') {
               console.log(`[Conversation] Real-time updates active for ${otherUserId}`)
+            } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+              console.warn(`[Conversation] Subscription error for ${otherUserId}:`, status, '- Check RLS policies on messages table')
             }
           })
 
         return () => {
           isMounted = false
-          subscription.unsubscribe()
+          supabase.removeChannel(channel)
         }
       } catch (err) {
         console.warn('Failed to setup conversation subscription:', err)
