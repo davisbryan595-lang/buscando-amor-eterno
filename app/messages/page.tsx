@@ -1,12 +1,19 @@
+'use client'
+
+import { useState } from 'react'
 import Navigation from '@/components/navigation'
 import { MessagesContent } from '@/components/messages-content'
 
 export default function MessagesPage() {
+  const [isChatOpen, setIsChatOpen] = useState(false)
+
   return (
     <main className="h-screen bg-white flex flex-col overflow-hidden">
-      <Navigation />
+      <div className={`${isChatOpen ? 'md:block hidden' : 'block'}`}>
+        <Navigation />
+      </div>
       <div className="flex-1 overflow-hidden">
-        <MessagesContent />
+        <MessagesContent onChatOpenChange={setIsChatOpen} isChatOpen={isChatOpen} />
       </div>
     </main>
   )
