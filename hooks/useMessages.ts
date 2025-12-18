@@ -197,14 +197,18 @@ export function useMessages() {
           },
           (payload) => {
             if (isMounted) {
-              setMessages((prev) => [payload.new as Message, ...prev])
+              const newMessage = payload.new as Message
+              setMessages((prev) => {
+                const isDuplicate = prev.some(m => m.id === newMessage.id)
+                return isDuplicate ? prev : [...prev, newMessage]
+              })
               throttledFetch()
             }
           }
         )
         .subscribe((status) => {
           if (status === 'SUBSCRIBED') {
-            console.log('[Messages] Subscription active')
+            console.log('[Messages] Real-time subscription active')
             stopPolling()
           } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
             console.warn('[Messages] Subscription error:', status, '- Check RLS policies on messages table in Supabase dashboard')
@@ -239,6 +243,51 @@ export function useMessages() {
       }
     }
   }
+
+  const subscribeToConversation = useCallback(
+    (otherUserId: string) => {
+      if (!user) return
+
+      let isMounted = true
+
+      try {
+        const subscription = supabase
+          .channel(`conversation:${user.id}:${otherUserId}`)
+          .on(
+            'postgres_changes',
+            {
+              event: 'INSERT',
+              schema: 'public',
+              table: 'messages',
+              filter: `or(and(sender_id.eq.${user.id},recipient_id.eq.${otherUserId}),and(sender_id.eq.${otherUserId},recipient_id.eq.${user.id}))`,
+            },
+            (payload) => {
+              if (isMounted) {
+                const newMessage = payload.new as Message
+                setMessages((prev) => {
+                  const isDuplicate = prev.some(m => m.id === newMessage.id)
+                  return isDuplicate ? prev : [...prev, newMessage]
+                })
+              }
+            }
+          )
+          .subscribe((status) => {
+            if (status === 'SUBSCRIBED') {
+              console.log(`[Conversation] Real-time updates active for ${otherUserId}`)
+            }
+          })
+
+        return () => {
+          isMounted = false
+          subscription.unsubscribe()
+        }
+      } catch (err) {
+        console.warn('Failed to setup conversation subscription:', err)
+        return
+      }
+    },
+    [user]
+  )
 
   const fetchMessages = useCallback(
     async (otherUserId: string) => {
