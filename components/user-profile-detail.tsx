@@ -156,16 +156,40 @@ export function UserProfileDetail({ userId, onBack, compact = false }: UserProfi
         {/* Bio */}
         {userProfile.prompt_1 && (
           <div>
-            <h3 className="text-sm font-semibold text-slate-900 mb-2">About</h3>
-            <p className="text-slate-700 leading-relaxed">{userProfile.prompt_1}</p>
+            <h3 className="text-sm md:text-base font-semibold text-slate-900 mb-2">About</h3>
+            <p className="text-sm md:text-base text-slate-700 leading-relaxed">{userProfile.prompt_1}</p>
           </div>
         )}
 
         {/* Additional Prompts */}
         {userProfile.prompt_2 && (
-          <div className="bg-rose-50 rounded-lg p-4">
-            <p className="text-sm text-slate-600 mb-1">What they're looking for</p>
-            <p className="text-slate-900">{userProfile.prompt_2}</p>
+          <div className="bg-rose-50 rounded-lg p-3 md:p-4">
+            <p className="text-xs md:text-sm text-slate-600 mb-1">What they're looking for</p>
+            <p className="text-sm md:text-base text-slate-900">{userProfile.prompt_2}</p>
+          </div>
+        )}
+        {userProfile.prompt_3 && (
+          <div className="bg-rose-50 rounded-lg p-3 md:p-4">
+            <p className="text-xs md:text-sm text-slate-600 mb-1">Interests</p>
+            <p className="text-sm md:text-base text-slate-900">{userProfile.prompt_3}</p>
+          </div>
+        )}
+        {userProfile.prompt_4 && (
+          <div className="bg-rose-50 rounded-lg p-3 md:p-4">
+            <p className="text-xs md:text-sm text-slate-600 mb-1">A perfect weekend</p>
+            <p className="text-sm md:text-base text-slate-900">{userProfile.prompt_4}</p>
+          </div>
+        )}
+        {userProfile.prompt_5 && (
+          <div className="bg-rose-50 rounded-lg p-3 md:p-4">
+            <p className="text-xs md:text-sm text-slate-600 mb-1">Fun fact</p>
+            <p className="text-sm md:text-base text-slate-900">{userProfile.prompt_5}</p>
+          </div>
+        )}
+        {userProfile.prompt_6 && (
+          <div className="bg-rose-50 rounded-lg p-3 md:p-4">
+            <p className="text-xs md:text-sm text-slate-600 mb-1">Looking for</p>
+            <p className="text-sm md:text-base text-slate-900">{userProfile.prompt_6}</p>
           </div>
         )}
 
