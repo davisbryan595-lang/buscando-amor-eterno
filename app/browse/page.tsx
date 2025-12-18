@@ -307,14 +307,14 @@ export default function BrowsePage() {
                       </div>
                     </>
                   ) : (
-                    <div className="space-y-4">
+                    <div className="space-y-4 max-h-[calc(100vh-400px)] overflow-y-auto">
                       <div className="flex items-center justify-between">
                         <h2 className="text-3xl font-playfair font-bold">
                           {currentProfile.full_name || 'User'}, {currentProfile.birthday ? new Date().getFullYear() - new Date(currentProfile.birthday).getFullYear() : '?'}
                         </h2>
                         <button
                           onClick={() => setShowInfo(false)}
-                          className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center"
+                          className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center flex-shrink-0"
                         >
                           <X className="w-5 h-5" />
                         </button>
@@ -326,6 +326,22 @@ export default function BrowsePage() {
                           <p>{currentProfile.prompt_1}</p>
                         </div>
                       )}
+                      {mutualPreferences.length > 0 && (
+                        <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4">
+                          <MutualPreferencesBadges
+                            mutualPreferences={mutualPreferences}
+                            showLabel={true}
+                            maxBadges={4}
+                          />
+                        </div>
+                      )}
+                      <button
+                        onClick={() => router.push(`/profile/${currentProfile.user_id}`)}
+                        className="w-full bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-2xl p-3 text-white font-semibold flex items-center justify-center gap-2 transition-colors"
+                      >
+                        <ExternalLink className="w-4 h-4" />
+                        View Full Profile
+                      </button>
                     </div>
                   )}
                 </div>
