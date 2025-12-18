@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import Navigation from '@/components/navigation'
 import Footer from '@/components/footer'
 import { useAuth } from '@/context/auth-context'
@@ -10,11 +11,14 @@ import { useBrowseProfiles } from '@/hooks/useBrowseProfiles'
 import { useSubscription } from '@/hooks/useSubscription'
 import { useProfile } from '@/hooks/useProfile'
 import { useNotifications } from '@/hooks/useNotifications'
-import { Heart, X, Star, Info, Loader, AlertCircle } from 'lucide-react'
+import { useUserProfile } from '@/hooks/useUserProfile'
+import { MutualPreferencesBadges } from '@/components/mutual-preferences-badges'
+import { Heart, X, Star, Info, Loader, AlertCircle, ExternalLink } from 'lucide-react'
 import Image from 'next/image'
 import { toast } from 'sonner'
 
 export default function BrowsePage() {
+  const router = useRouter()
   const { user, loading: authLoading } = useAuth()
   // Protect this route - require complete profile
   const { isLoading } = useProfileProtection(true, '/onboarding')
@@ -30,6 +34,11 @@ export default function BrowsePage() {
   const [dragOffset, setDragOffset] = useState(0)
   const [isDragging, setIsDragging] = useState(false)
   const [isActing, setIsActing] = useState(false)
+
+  const currentProfile = profiles[currentIndex]
+  const { mutualPreferences, loading: profileLoading } = useUserProfile(
+    currentProfile?.user_id || null
+  )
 
   if (authLoading || isLoading || profilesLoading) {
     return (
@@ -98,7 +107,6 @@ export default function BrowsePage() {
     )
   }
 
-  const currentProfile = profiles[currentIndex]
   const hasMoreProfiles = currentIndex < profiles.length - 1
 
   const handleSwipe = async (direction: 'left' | 'right' | 'super') => {
@@ -280,44 +288,60 @@ export default function BrowsePage() {
                 )}
 
                 {/* Profile Info */}
-                <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
+                <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-4 md:p-6 text-white">
                   {!showInfo ? (
                     <>
-                      <div className="flex items-center justify-between mb-2">
-                        <div>
-                          <h2 className="text-4xl font-playfair font-bold mb-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="min-w-0 flex-1">
+                          <h2 className="text-2xl sm:text-3xl md:text-4xl font-playfair font-bold mb-1 line-clamp-1">
                             {currentProfile.full_name || 'User'}, {currentProfile.birthday ? new Date().getFullYear() - new Date(currentProfile.birthday).getFullYear() : '?'}
                           </h2>
-                          <p className="text-white/90 text-lg">{currentProfile.city || 'Location not set'}</p>
+                          <p className="text-white/90 text-base sm:text-lg line-clamp-1">{currentProfile.city || 'Location not set'}</p>
                         </div>
                         <button
                           onClick={() => setShowInfo(true)}
-                          className="w-12 h-12 bg-rose-700/80 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-rose-700 transition-colors"
+                          className="w-10 h-10 sm:w-12 sm:h-12 bg-rose-700/80 hover:bg-rose-700 backdrop-blur-sm rounded-full flex items-center justify-center transition-colors flex-shrink-0"
                         >
-                          <Info className="w-6 h-6" />
+                          <Info className="w-5 h-5 sm:w-6 sm:h-6" />
                         </button>
                       </div>
                     </>
                   ) : (
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <h2 className="text-3xl font-playfair font-bold">
+                    <div className="space-y-3 sm:space-y-4 max-h-[calc(100vh-400px)] overflow-y-auto px-0 sm:px-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <h2 className="text-2xl sm:text-3xl font-playfair font-bold line-clamp-2">
                           {currentProfile.full_name || 'User'}, {currentProfile.birthday ? new Date().getFullYear() - new Date(currentProfile.birthday).getFullYear() : '?'}
                         </h2>
                         <button
                           onClick={() => setShowInfo(false)}
-                          className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center"
+                          className="w-9 h-9 sm:w-10 sm:h-10 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full flex items-center justify-center flex-shrink-0 transition-colors"
                         >
-                          <X className="w-5 h-5" />
+                          <X className="w-4 h-4 sm:w-5 sm:h-5" />
                         </button>
                       </div>
-                      <p className="text-white/90 text-lg">{currentProfile.city || 'Location not set'}</p>
+                      <p className="text-white/90 text-base sm:text-lg line-clamp-1">{currentProfile.city || 'Location not set'}</p>
                       {currentProfile.prompt_1 && (
-                        <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4">
-                          <p className="text-sm text-white/80 mb-2">About</p>
-                          <p>{currentProfile.prompt_1}</p>
+                        <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-3 sm:p-4">
+                          <p className="text-xs sm:text-sm text-white/80 mb-2">About</p>
+                          <p className="text-sm sm:text-base line-clamp-4">{currentProfile.prompt_1}</p>
                         </div>
                       )}
+                      {mutualPreferences.length > 0 && (
+                        <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-3 sm:p-4 text-sm">
+                          <MutualPreferencesBadges
+                            mutualPreferences={mutualPreferences}
+                            showLabel={true}
+                            maxBadges={4}
+                          />
+                        </div>
+                      )}
+                      <button
+                        onClick={() => router.push(`/profile/${currentProfile.user_id}`)}
+                        className="w-full bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-2xl p-2 sm:p-3 text-white font-semibold flex items-center justify-center gap-2 transition-colors text-sm sm:text-base"
+                      >
+                        <ExternalLink className="w-4 h-4" />
+                        View Full Profile
+                      </button>
                     </div>
                   )}
                 </div>

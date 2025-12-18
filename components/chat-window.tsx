@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import { Send, Phone, Video, ArrowLeft } from 'lucide-react'
 import Image from 'next/image'
 import { useMessages } from '@/hooks/useMessages'
@@ -9,6 +10,7 @@ import { useStartCall } from '@/hooks/useStartCall'
 import { toast } from 'sonner'
 import MessageContextMenu from '@/components/message-context-menu'
 import TypingIndicator from '@/components/typing-indicator'
+import { AnimatedMessage } from '@/components/animated-message'
 
 const getLastSeenText = (timestamp?: string): string => {
   if (!timestamp) return 'Offline'
@@ -45,8 +47,9 @@ interface ChatWindowProps {
 }
 
 export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
+  const router = useRouter()
   const { user } = useAuth()
-  const { messages, sendMessage, markAsRead, fetchMessages, fetchConversations } = useMessages()
+  const { messages, sendMessage, markAsRead, fetchMessages, fetchConversations, subscribeToConversation } = useMessages()
   const { startCall } = useStartCall()
   const [newMessage, setNewMessage] = useState('')
   const [loading, setLoading] = useState(false)
@@ -60,18 +63,26 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
     isOwn: boolean
   } | null>(null)
   const [showTypingIndicator] = useState(false)
+  const [previousMessageCount, setPreviousMessageCount] = useState(0)
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const messagesContainerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const unsubscribeRef = useRef<(() => void) | null>(null)
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' })
+    }
   }
 
   useEffect(() => {
     if (conversation?.other_user_id) {
+      setPreviousMessageCount(0)
       fetchMessages(conversation.other_user_id)
+
+      // Subscribe to real-time updates for this conversation
+      unsubscribeRef.current = subscribeToConversation(conversation.other_user_id) || null
 
       // Fetch full user details if not available in conversation
       if (!conversation.other_user_name || !conversation.other_user_image) {
@@ -96,8 +107,14 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
         }
         fetchUserDetails()
       }
+
+      return () => {
+        if (unsubscribeRef.current) {
+          unsubscribeRef.current()
+        }
+      }
     }
-  }, [conversation?.other_user_id, user?.id, fetchMessages])
+  }, [conversation?.other_user_id, user?.id, fetchMessages, subscribeToConversation])
 
   // Mark all unread messages as read when opening the chat
   useEffect(() => {
@@ -113,10 +130,17 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
     }
   }, [conversation?.id, messages.length, user?.id, markAsRead, fetchConversations])
 
-  // Scroll to bottom when messages change
+  // Scroll to bottom when new messages arrive
   useEffect(() => {
-    scrollToBottom()
-  }, [messages])
+    // Only auto-scroll if a new message was added
+    if (messages.length > previousMessageCount) {
+      const timer = setTimeout(() => {
+        scrollToBottom()
+      }, 50)
+      setPreviousMessageCount(messages.length)
+      return () => clearTimeout(timer)
+    }
+  }, [messages, previousMessageCount])
 
   const handleSend = async () => {
     if (!newMessage.trim() || !user) return
@@ -197,10 +221,16 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
     <div className="bg-gradient-to-b from-white to-rose-50 rounded-none md:rounded-xl border-0 md:border border-rose-100 flex flex-col h-full w-full soft-glow overflow-hidden">
       {/* Header */}
       <div className="sticky top-16 md:top-24 z-20 px-3 py-3 sm:p-4 lg:p-6 border-b border-rose-100 flex items-center justify-between flex-shrink-0 gap-2 bg-gradient-to-b from-white to-rose-50">
-        <div className="flex items-center gap-2 sm:gap-3 lg:gap-4 min-w-0 flex-1">
+        <button
+          onClick={() => router.push(`/profile/${conversation.other_user_id}`)}
+          className="flex items-center gap-2 sm:gap-3 lg:gap-4 min-w-0 flex-1 hover:opacity-80 transition rounded-lg p-1 -m-1"
+        >
           {onBack && (
             <button
-              onClick={onBack}
+              onClick={(e) => {
+                e.stopPropagation()
+                onBack()
+              }}
               className="md:hidden p-1.5 sm:p-2 hover:bg-rose-100 rounded-full transition flex-shrink-0"
               aria-label="Back to conversations"
             >
@@ -225,7 +255,7 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
               {conversation.is_online ? 'Online' : getLastSeenText(conversation.last_message_time)}
             </p>
           </div>
-        </div>
+        </button>
 
         <div className="flex gap-1 sm:gap-2 lg:gap-3 flex-shrink-0">
           <button
@@ -256,22 +286,13 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
         ) : (
           <>
             {messages.map((msg) => (
-              <div
+              <AnimatedMessage
                 key={msg.id}
-                className={`flex w-full ${msg.sender_id === user?.id ? 'justify-end' : 'justify-start'}`}
-              >
-                <div
-                  id={`message-${msg.id}`}
-                  onContextMenu={(e) => handleContextMenu(e, msg.id, msg.content, msg.sender_id === user?.id)}
-                  className={`max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg px-3 sm:px-4 py-1.5 sm:py-2 lg:py-3 rounded-2xl ${
-                    msg.sender_id === user?.id
-                      ? 'bg-primary text-white rounded-br-none'
-                      : 'bg-slate-200 text-slate-900 rounded-bl-none'
-                  }`}
-                >
-                  <p className="text-xs sm:text-sm lg:text-base break-words">{msg.content}</p>
-                </div>
-              </div>
+                id={msg.id}
+                content={msg.content}
+                isOwn={msg.sender_id === user?.id}
+                onContextMenu={handleContextMenu}
+              />
             ))}
             {showTypingIndicator && (
               <div className="flex justify-start">
