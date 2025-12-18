@@ -179,7 +179,7 @@ function MessagesContentInner({ onChatOpenChange, isChatOpen }: MessagesContentI
         </div>
 
         {selectedConversation && (
-          <div ref={chatWindowRef} className={`w-full flex-1 md:flex-1 flex min-w-0 ${selectedConversation ? 'flex' : 'hidden md:flex'}`}>
+          <div ref={chatWindowRef} className={`w-full flex-1 md:flex-1 flex min-w-0 overflow-hidden ${selectedConversation ? 'flex' : 'hidden md:flex'}`}>
             <ChatWindow
               conversation={selectedConversation}
               onBack={handleBackToConversations}
