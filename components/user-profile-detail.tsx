@@ -181,66 +181,117 @@ export function UserProfileDetail({ userId, onBack, compact = false }: UserProfi
           </>
         )}
 
-        {/* Preferences */}
+        {/* Preferences Section */}
         {(userProfile.relationship_type ||
           userProfile.religion ||
           userProfile.wants_kids ||
           userProfile.smoking ||
-          userProfile.drinking) && (
+          userProfile.drinking ||
+          userProfile.love_language ||
+          userProfile.height_cm ||
+          userProfile.age_range_min ||
+          userProfile.age_range_max ||
+          userProfile.distance_radius) && (
           <>
             <Separator />
             <div>
-              <h3 className="text-sm font-semibold text-slate-900 mb-3">Details</h3>
-              <div className="grid grid-cols-2 gap-3">
+              <h3 className="text-base md:text-lg font-semibold text-slate-900 mb-4">
+                Their Preferences
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 md:gap-3">
                 {userProfile.relationship_type && (
-                  <div className="bg-slate-50 rounded-lg p-3">
-                    <p className="text-xs text-slate-600 mb-1">Looking for</p>
-                    <p className="text-sm font-medium text-slate-900">
+                  <div className="bg-slate-50 rounded-lg p-3 md:p-4">
+                    <p className="text-xs md:text-sm text-slate-600 mb-1">Looking for</p>
+                    <p className="text-sm md:text-base font-medium text-slate-900 break-words">
                       {userProfile.relationship_type}
                     </p>
                   </div>
                 )}
                 {userProfile.religion && (
-                  <div className="bg-slate-50 rounded-lg p-3">
-                    <p className="text-xs text-slate-600 mb-1">Religion</p>
-                    <p className="text-sm font-medium text-slate-900">
+                  <div className="bg-slate-50 rounded-lg p-3 md:p-4">
+                    <p className="text-xs md:text-sm text-slate-600 mb-1">Religion</p>
+                    <p className="text-sm md:text-base font-medium text-slate-900 break-words">
                       {userProfile.religion}
                     </p>
                   </div>
                 )}
                 {userProfile.wants_kids && (
-                  <div className="bg-slate-50 rounded-lg p-3">
-                    <p className="text-xs text-slate-600 mb-1">Kids</p>
-                    <p className="text-sm font-medium text-slate-900">
+                  <div className="bg-slate-50 rounded-lg p-3 md:p-4">
+                    <p className="text-xs md:text-sm text-slate-600 mb-1">Kids</p>
+                    <p className="text-sm md:text-base font-medium text-slate-900 break-words">
                       {userProfile.wants_kids}
                     </p>
                   </div>
                 )}
                 {userProfile.smoking && (
-                  <div className="bg-slate-50 rounded-lg p-3">
-                    <p className="text-xs text-slate-600 mb-1">Smoking</p>
-                    <p className="text-sm font-medium text-slate-900">
+                  <div className="bg-slate-50 rounded-lg p-3 md:p-4">
+                    <p className="text-xs md:text-sm text-slate-600 mb-1">Smoking</p>
+                    <p className="text-sm md:text-base font-medium text-slate-900 break-words">
                       {userProfile.smoking}
                     </p>
                   </div>
                 )}
                 {userProfile.drinking && (
-                  <div className="bg-slate-50 rounded-lg p-3">
-                    <p className="text-xs text-slate-600 mb-1">Drinking</p>
-                    <p className="text-sm font-medium text-slate-900">
+                  <div className="bg-slate-50 rounded-lg p-3 md:p-4">
+                    <p className="text-xs md:text-sm text-slate-600 mb-1">Drinking</p>
+                    <p className="text-sm md:text-base font-medium text-slate-900 break-words">
                       {userProfile.drinking}
                     </p>
                   </div>
                 )}
-                {userProfile.height_cm && (
-                  <div className="bg-slate-50 rounded-lg p-3">
-                    <p className="text-xs text-slate-600 mb-1">Height</p>
-                    <p className="text-sm font-medium text-slate-900">
+                {userProfile.love_language && (
+                  <div className="bg-slate-50 rounded-lg p-3 md:p-4">
+                    <p className="text-xs md:text-sm text-slate-600 mb-1">Love Language</p>
+                    <p className="text-sm md:text-base font-medium text-slate-900 break-words">
+                      {userProfile.love_language}
+                    </p>
+                  </div>
+                )}
+                {userProfile.height_cm && userProfile.height_cm > 0 && (
+                  <div className="bg-slate-50 rounded-lg p-3 md:p-4">
+                    <p className="text-xs md:text-sm text-slate-600 mb-1">Height</p>
+                    <p className="text-sm md:text-base font-medium text-slate-900">
                       {userProfile.height_cm} cm
                     </p>
                   </div>
                 )}
+                {userProfile.age_range_min && userProfile.age_range_max && (
+                  <div className="bg-slate-50 rounded-lg p-3 md:p-4">
+                    <p className="text-xs md:text-sm text-slate-600 mb-1">Age Range</p>
+                    <p className="text-sm md:text-base font-medium text-slate-900">
+                      {userProfile.age_range_min} - {userProfile.age_range_max}
+                    </p>
+                  </div>
+                )}
+                {userProfile.distance_radius && (
+                  <div className="bg-slate-50 rounded-lg p-3 md:p-4">
+                    <p className="text-xs md:text-sm text-slate-600 mb-1">Distance Radius</p>
+                    <p className="text-sm md:text-base font-medium text-slate-900">
+                      {userProfile.distance_radius} km
+                    </p>
+                  </div>
+                )}
               </div>
+
+              {/* Dealbreakers */}
+              {userProfile.dealbreakers && userProfile.dealbreakers.length > 0 && (
+                <div className="mt-4 md:mt-6 p-3 md:p-4 bg-red-50 rounded-lg border border-red-100">
+                  <p className="text-xs md:text-sm font-semibold text-red-900 mb-2">
+                    Dealbreakers ⚠️
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {userProfile.dealbreakers.map((dealbreaker) => (
+                      <span
+                        key={dealbreaker}
+                        className="inline-block bg-red-100 text-red-700 text-xs md:text-sm px-2.5 md:px-3 py-1 md:py-1.5 rounded-full font-medium"
+                      >
+                        {dealbreaker.charAt(0).toUpperCase() +
+                          dealbreaker.slice(1).replace(/([A-Z])/g, ' $1')}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </>
         )}
