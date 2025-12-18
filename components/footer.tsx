@@ -15,22 +15,31 @@ export default function Footer() {
   const columnsRef = useRef<(HTMLDivElement | null)[]>([])
 
   useEffect(() => {
-    const ctx = gsap.context(() => {
-      gsap.from(columnsRef.current, {
-        opacity: 0,
-        y: 20,
-        duration: 0.6,
-        stagger: 0.1,
-        scrollTrigger: {
-          trigger: footerRef.current,
-          start: 'top 80%',
-          end: 'top 20%',
-          toggleActions: 'play none none reverse',
-        },
-      })
-    }, footerRef)
+    if (!footerRef.current) return
 
-    return () => ctx.revert()
+    const columns = columnsRef.current.filter(Boolean)
+    if (columns.length === 0) return
+
+    gsap.from(columns, {
+      opacity: 0,
+      y: 20,
+      duration: 0.6,
+      stagger: 0.1,
+      scrollTrigger: {
+        trigger: footerRef.current,
+        start: 'top 80%',
+        end: 'top 20%',
+        toggleActions: 'play none none reverse',
+      },
+    })
+
+    return () => {
+      ScrollTrigger.getAll().forEach((trigger) => {
+        if (trigger.vars.trigger === footerRef.current) {
+          trigger.kill()
+        }
+      })
+    }
   }, [])
 
   return (
