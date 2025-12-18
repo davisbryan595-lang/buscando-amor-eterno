@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { use } from 'react'
 import { useRouter } from 'next/navigation'
 import Navigation from '@/components/navigation'
 import Footer from '@/components/footer'
@@ -8,14 +8,15 @@ import { UserProfileDetail } from '@/components/user-profile-detail'
 import { useAuth } from '@/context/auth-context'
 
 interface UserProfilePageProps {
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
 
 export default function UserProfilePage({ params }: UserProfilePageProps) {
   const router = useRouter()
   const { user, loading } = useAuth()
+  const { id } = use(params)
 
   if (loading) {
     return (
@@ -57,7 +58,7 @@ export default function UserProfilePage({ params }: UserProfilePageProps) {
       <div className="pt-24 pb-12 px-4">
         <div className="max-w-2xl mx-auto">
           <UserProfileDetail
-            userId={params.id}
+            userId={id}
             onBack={() => router.back()}
           />
         </div>
