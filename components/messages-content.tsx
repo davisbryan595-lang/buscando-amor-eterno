@@ -11,7 +11,12 @@ import { useAuth } from '@/context/auth-context'
 import { useSubscription } from '@/hooks/useSubscription'
 import { X, ArrowLeft, Menu } from 'lucide-react'
 
-function MessagesContentInner() {
+interface MessagesContentInnerProps {
+  onChatOpenChange?: (isOpen: boolean) => void
+  isChatOpen?: boolean
+}
+
+function MessagesContentInner({ onChatOpenChange, isChatOpen }: MessagesContentInnerProps) {
   const { user } = useAuth()
   const { isPremium, loading: subLoading } = useSubscription()
   const { conversations, loading, error } = useMessages()
