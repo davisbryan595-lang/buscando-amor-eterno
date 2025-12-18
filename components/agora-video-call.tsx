@@ -354,9 +354,22 @@ export default function AgoraVideoCall({
         localVideoTrack.close()
       }
 
+      // Unpublish all tracks before leaving
+      if (client) {
+        await client.unpublish()
+      }
+
       // Leave the channel
       if (client) {
         await client.leave()
+      }
+
+      // Clear video containers
+      if (localVideoContainerRef.current) {
+        localVideoContainerRef.current.innerHTML = ""
+      }
+      if (remoteVideoContainerRef.current) {
+        remoteVideoContainerRef.current.innerHTML = ""
       }
 
       router.push('/messages')
