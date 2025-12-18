@@ -322,19 +322,19 @@ export function UserProfileDetail({ userId, onBack, compact = false }: UserProfi
 
         {/* Action Buttons */}
         {!compact && (
-          <div className="flex gap-3 pt-4">
+          <div className="flex gap-2 sm:gap-3 pt-4 mt-4">
             <Button
               onClick={handleDislike}
               disabled={isActing}
               variant="outline"
-              className="flex-1"
+              className="flex-1 text-sm md:text-base py-2 md:py-3"
             >
               Pass
             </Button>
             <Button
               onClick={handleLike}
               disabled={isActing}
-              className="flex-1 gap-2 bg-rose-700 hover:bg-rose-800"
+              className="flex-1 gap-2 bg-rose-700 hover:bg-rose-800 text-sm md:text-base py-2 md:py-3"
             >
               <Heart className="w-4 h-4" />
               Like
