@@ -440,5 +440,6 @@ export function useMessages() {
     sendMessage,
     markAsRead,
     initiateConversation,
+    subscribeToConversation,
   }
 }
