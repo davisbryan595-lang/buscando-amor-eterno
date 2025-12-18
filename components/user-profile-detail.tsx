@@ -102,7 +102,7 @@ export function UserProfileDetail({ userId, onBack, compact = false }: UserProfi
       )}
 
       {/* Profile Images */}
-      <div className="relative h-96 md:h-[500px] w-full bg-slate-200 overflow-hidden">
+      <div className="relative h-64 sm:h-80 md:h-96 lg:h-[500px] w-full bg-slate-200 overflow-hidden">
         <Image
           src={profileImage}
           alt={userProfile.full_name || 'User profile'}
@@ -111,11 +111,11 @@ export function UserProfileDetail({ userId, onBack, compact = false }: UserProfi
           priority
         />
         {userProfile.photos && userProfile.photos.length > 1 && (
-          <div className="absolute bottom-4 left-4 right-4 flex gap-1">
+          <div className="absolute bottom-3 sm:bottom-4 left-3 sm:left-4 right-3 sm:right-4 flex gap-1">
             {userProfile.photos.slice(0, 4).map((_, index) => (
               <div
                 key={index}
-                className={`h-1.5 flex-1 rounded-full ${
+                className={`h-1 sm:h-1.5 flex-1 rounded-full ${
                   index === (userProfile.main_photo_index || 0)
                     ? 'bg-white'
                     : 'bg-white/50'
