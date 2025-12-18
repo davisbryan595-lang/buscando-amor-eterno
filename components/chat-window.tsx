@@ -10,6 +10,7 @@ import { useStartCall } from '@/hooks/useStartCall'
 import { toast } from 'sonner'
 import MessageContextMenu from '@/components/message-context-menu'
 import TypingIndicator from '@/components/typing-indicator'
+import { AnimatedMessage } from '@/components/animated-message'
 
 const getLastSeenText = (timestamp?: string): string => {
   if (!timestamp) return 'Offline'
