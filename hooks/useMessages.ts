@@ -248,18 +248,27 @@ export function useMessages() {
               filter: `or(and(sender_id.eq.${user.id},recipient_id.eq.${otherUserId}),and(sender_id.eq.${otherUserId},recipient_id.eq.${user.id}))`,
             },
             (payload) => {
+              console.log('[Conversation] Message payload received:', payload)
               if (isMounted) {
                 const newMessage = payload.new as Message
                 setMessages((prev) => {
                   const isDuplicate = prev.some(m => m.id === newMessage.id)
-                  return isDuplicate ? prev : [...prev, newMessage]
+                  if (isDuplicate) {
+                    console.log('[Conversation] Duplicate message ignored:', newMessage.id)
+                    return prev
+                  }
+                  console.log('[Conversation] Adding new message to state:', newMessage.id)
+                  return [...prev, newMessage]
                 })
               }
             }
           )
           .subscribe((status) => {
+            console.log(`[Conversation] Subscription status for ${otherUserId}:`, status)
             if (status === 'SUBSCRIBED') {
               console.log(`[Conversation] Real-time updates active for ${otherUserId}`)
+            } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+              console.warn(`[Conversation] Subscription error for ${otherUserId}:`, status, '- Check RLS policies on messages table')
             }
           })
 
