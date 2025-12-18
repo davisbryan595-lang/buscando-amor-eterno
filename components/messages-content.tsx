@@ -52,6 +52,7 @@ function MessagesContentInner({ onChatOpenChange, isChatOpen }: MessagesContentI
   const handleSelectConversation = (conversation: any) => {
     setSelectedConversation(conversation)
     setSidebarOpen(false)
+    onChatOpenChange?.(true)
   }
 
   const handleBackToConversations = () => {
@@ -64,10 +65,12 @@ function MessagesContentInner({ onChatOpenChange, isChatOpen }: MessagesContentI
         onComplete: () => {
           setSelectedConversation(null)
           setIsClosingChat(false)
+          onChatOpenChange?.(false)
         },
       })
     } else {
       setSelectedConversation(null)
+      onChatOpenChange?.(false)
     }
   }
 
