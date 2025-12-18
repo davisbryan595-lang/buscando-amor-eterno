@@ -127,23 +127,23 @@ export function UserProfileDetail({ userId, onBack, compact = false }: UserProfi
       </div>
 
       {/* Profile Info */}
-      <div className="p-4 md:p-6 space-y-4">
+      <div className="p-3 sm:p-4 md:p-6 space-y-3 md:space-y-4">
         {/* Name and Age */}
         <div>
-          <div className="flex items-baseline gap-2 mb-2">
-            <h1 className="text-3xl md:text-4xl font-playfair font-bold text-slate-900">
+          <div className="flex items-baseline gap-2 mb-2 flex-wrap">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-playfair font-bold text-slate-900">
               {userProfile.full_name || 'User'}
             </h1>
-            <span className="text-2xl md:text-3xl font-playfair text-slate-700">
+            <span className="text-xl sm:text-2xl md:text-3xl font-playfair text-slate-700">
               {userAge}
             </span>
           </div>
 
           {/* Location */}
           {userProfile.city && (
-            <div className="flex items-center gap-2 text-slate-600 mb-3">
-              <MapPin className="w-4 h-4" />
-              <span>
+            <div className="flex items-center gap-1 sm:gap-2 text-slate-600 mb-3 flex-wrap">
+              <MapPin className="w-4 h-4 flex-shrink-0" />
+              <span className="text-sm sm:text-base">
                 {userProfile.city}
                 {userProfile.country && `, ${userProfile.country}`}
               </span>
