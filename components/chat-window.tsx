@@ -124,21 +124,16 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
         unreadMessages.forEach((msg) => {
           markAsRead(msg.id)
         })
-        // Refresh conversations to clear unread badge
-        fetchConversations()
       }
     }
-  }, [conversation?.id, messages.length, user?.id, markAsRead, fetchConversations])
+  }, [conversation?.id, user?.id, messages, markAsRead])
 
   // Scroll to bottom when new messages arrive
   useEffect(() => {
-    // Only auto-scroll if a new message was added
+    // Auto-scroll when new messages arrive
     if (messages.length > previousMessageCount) {
-      const timer = setTimeout(() => {
-        scrollToBottom()
-      }, 50)
+      scrollToBottom()
       setPreviousMessageCount(messages.length)
-      return () => clearTimeout(timer)
     }
   }, [messages, previousMessageCount])
 

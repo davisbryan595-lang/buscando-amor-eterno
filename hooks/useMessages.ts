@@ -164,25 +164,7 @@ export function useMessages() {
   const subscribeToMessages = () => {
     if (!user) return
 
-    let pollInterval: ReturnType<typeof setInterval> | null = null
     let isMounted = true
-    let lastFetch = 0
-    const MIN_FETCH_INTERVAL = 3000
-
-    const throttledFetch = () => {
-      const now = Date.now()
-      if (now - lastFetch >= MIN_FETCH_INTERVAL) {
-        lastFetch = now
-        fetchConversations()
-      }
-    }
-
-    const stopPolling = () => {
-      if (pollInterval) {
-        clearInterval(pollInterval)
-        pollInterval = null
-      }
-    }
 
     try {
       const subscription = supabase
@@ -202,45 +184,49 @@ export function useMessages() {
                 const isDuplicate = prev.some(m => m.id === newMessage.id)
                 return isDuplicate ? prev : [...prev, newMessage]
               })
-              throttledFetch()
+
+              // Update conversations list with new message
+              setConversations((prev) => {
+                const otherUserId = newMessage.sender_id === user.id ? newMessage.recipient_id : newMessage.sender_id
+                const updated = prev.map((conv) => {
+                  if (conv.other_user_id === otherUserId) {
+                    return {
+                      ...conv,
+                      last_message: newMessage.content,
+                      last_message_time: newMessage.created_at,
+                      unread_count: newMessage.recipient_id === user.id && !newMessage.read
+                        ? conv.unread_count + 1
+                        : conv.unread_count,
+                    }
+                  }
+                  return conv
+                })
+
+                // If conversation doesn't exist, fetch it once to get full details
+                if (!updated.some((c) => c.other_user_id === otherUserId)) {
+                  fetchConversations()
+                }
+
+                return updated
+              })
             }
           }
         )
         .subscribe((status) => {
           if (status === 'SUBSCRIBED') {
             console.log('[Messages] Real-time subscription active')
-            stopPolling()
           } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
-            console.warn('[Messages] Subscription error:', status, '- Check RLS policies on messages table in Supabase dashboard')
-            if (!pollInterval && isMounted) {
-              pollInterval = setInterval(() => {
-                if (isMounted) {
-                  throttledFetch()
-                }
-              }, 10000)
-            }
+            console.warn('[Messages] Subscription error:', status, '- Check RLS policies on messages table')
           }
         })
 
       return () => {
         isMounted = false
         subscription.unsubscribe()
-        stopPolling()
       }
     } catch (err) {
       console.warn('Failed to setup message subscription:', err)
-      if (!pollInterval) {
-        pollInterval = setInterval(() => {
-          if (isMounted) {
-            throttledFetch()
-          }
-        }, 10000)
-      }
-
-      return () => {
-        isMounted = false
-        stopPolling()
-      }
+      return
     }
   }
 
@@ -327,6 +313,19 @@ export function useMessages() {
       if (!user) throw new Error('No user logged in')
 
       try {
+        // Optimistic update: add message to state immediately
+        const tempMessage: Message = {
+          id: `temp-${Date.now()}`,
+          sender_id: user.id,
+          recipient_id: recipientId,
+          content,
+          read: false,
+          created_at: new Date().toISOString(),
+        }
+
+        setMessages((prev) => [...prev, tempMessage])
+
+        // Insert into database - postgres_changes subscription will sync this
         const { data, error: err } = await supabase
           .from('messages')
           .insert({
@@ -340,25 +339,16 @@ export function useMessages() {
 
         if (err) throw err
 
-        const message = data as Message
-        setMessages((prev) => [...prev, message])
+        // Replace temp message with real message from DB
+        const realMessage = data as Message
+        setMessages((prev) =>
+          prev.map((msg) => msg.id === tempMessage.id ? realMessage : msg)
+        )
 
-        // Broadcast message for instant delivery via Broadcast (low-latency)
-        const broadcastChannel = supabase.channel(`messages:${recipientId}`)
-        await broadcastChannel.subscribe()
-        const broadcastResult = await broadcastChannel.send('broadcast', {
-          event: 'message-sent',
-          payload: message,
-        })
-        console.log('[Messages] Broadcast sent:', { broadcastResult })
-
-        // Add small delay to ensure broadcast is delivered before unsubscribing
-        await new Promise(resolve => setTimeout(resolve, 100))
-
-        await broadcastChannel.unsubscribe()
-
-        return message
+        return realMessage
       } catch (err: any) {
+        // Remove optimistic message on error
+        setMessages((prev) => prev.filter((msg) => !msg.id.startsWith('temp-')))
         const errorMessage = err?.message || (typeof err === 'string' ? err : 'Failed to send message')
         setError(errorMessage)
         throw err
@@ -370,6 +360,18 @@ export function useMessages() {
   const markAsRead = useCallback(
     async (messageId: string) => {
       try {
+        // Optimistic update: mark as read in state immediately
+        setMessages((prev) =>
+          prev.map((msg) => msg.id === messageId ? { ...msg, read: true } : msg)
+        )
+        setConversations((prev) =>
+          prev.map((conv) => ({
+            ...conv,
+            unread_count: Math.max(0, conv.unread_count - 1),
+          }))
+        )
+
+        // Update in database
         const { error: err } = await supabase
           .from('messages')
           .update({ read: true })
@@ -378,9 +380,8 @@ export function useMessages() {
         if (err) throw err
       } catch (err: any) {
         const errorMessage = err?.message || (typeof err === 'string' ? err : 'Failed to mark message as read')
-        const errorDetails = err?.code ? ` (Code: ${err.code})` : err?.status ? ` (Status: ${err.status})` : ''
         setError(errorMessage)
-        console.error('Error marking message as read:', errorMessage + errorDetails, err)
+        console.error('Error marking message as read:', errorMessage, err)
       }
     },
     []
