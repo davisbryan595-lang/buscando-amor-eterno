@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import Navigation from '@/components/navigation'
 import Footer from '@/components/footer'
 import { useAuth } from '@/context/auth-context'
@@ -10,7 +11,9 @@ import { useBrowseProfiles } from '@/hooks/useBrowseProfiles'
 import { useSubscription } from '@/hooks/useSubscription'
 import { useProfile } from '@/hooks/useProfile'
 import { useNotifications } from '@/hooks/useNotifications'
-import { Heart, X, Star, Info, Loader, AlertCircle } from 'lucide-react'
+import { useUserProfile } from '@/hooks/useUserProfile'
+import { MutualPreferencesBadges } from '@/components/mutual-preferences-badges'
+import { Heart, X, Star, Info, Loader, AlertCircle, ExternalLink } from 'lucide-react'
 import Image from 'next/image'
 import { toast } from 'sonner'
 
