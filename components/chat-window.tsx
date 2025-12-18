@@ -286,22 +286,13 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
         ) : (
           <>
             {messages.map((msg) => (
-              <div
+              <AnimatedMessage
                 key={msg.id}
-                className={`flex w-full ${msg.sender_id === user?.id ? 'justify-end' : 'justify-start'}`}
-              >
-                <div
-                  id={`message-${msg.id}`}
-                  onContextMenu={(e) => handleContextMenu(e, msg.id, msg.content, msg.sender_id === user?.id)}
-                  className={`max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg px-3 sm:px-4 py-1.5 sm:py-2 lg:py-3 rounded-2xl ${
-                    msg.sender_id === user?.id
-                      ? 'bg-primary text-white rounded-br-none'
-                      : 'bg-slate-200 text-slate-900 rounded-bl-none'
-                  }`}
-                >
-                  <p className="text-xs sm:text-sm lg:text-base break-words">{msg.content}</p>
-                </div>
-              </div>
+                id={msg.id}
+                content={msg.content}
+                isOwn={msg.sender_id === user?.id}
+                onContextMenu={handleContextMenu}
+              />
             ))}
             {showTypingIndicator && (
               <div className="flex justify-start">
