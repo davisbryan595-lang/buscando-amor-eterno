@@ -169,60 +169,52 @@ export function useMessages() {
     try {
       const subscription = supabase
         .channel(`messages:${user.id}`)
-        .on(
-          'postgres_changes',
-          {
-            event: 'INSERT',
-            schema: 'public',
-            table: 'messages',
-            filter: `or(sender_id.eq.${user.id},recipient_id.eq.${user.id})`,
-          },
-          (payload) => {
-            if (isMounted) {
-              const newMessage = payload.new as Message
-              setMessages((prev) => {
-                const isDuplicate = prev.some(m => m.id === newMessage.id)
-                return isDuplicate ? prev : [...prev, newMessage]
-              })
+        .on('broadcast', { event: 'new_message' }, (payload) => {
+          if (isMounted) {
+            console.log('[Messages] New message via broadcast:', payload.payload)
+            const newMessage = payload.payload as Message
 
-              // Update conversations list with new message
-              setConversations((prev) => {
-                const otherUserId = newMessage.sender_id === user.id ? newMessage.recipient_id : newMessage.sender_id
-                const updated = prev.map((conv) => {
-                  if (conv.other_user_id === otherUserId) {
-                    return {
-                      ...conv,
-                      last_message: newMessage.content,
-                      last_message_time: newMessage.created_at,
-                      unread_count: newMessage.recipient_id === user.id && !newMessage.read
-                        ? conv.unread_count + 1
-                        : conv.unread_count,
-                    }
+            setMessages((prev) => {
+              const isDuplicate = prev.some(m => m.id === newMessage.id)
+              return isDuplicate ? prev : [...prev, newMessage]
+            })
+
+            // Update conversations list with new message
+            setConversations((prev) => {
+              const otherUserId = newMessage.sender_id === user.id ? newMessage.recipient_id : newMessage.sender_id
+              const updated = prev.map((conv) => {
+                if (conv.other_user_id === otherUserId) {
+                  return {
+                    ...conv,
+                    last_message: newMessage.content,
+                    last_message_time: newMessage.created_at,
+                    unread_count: newMessage.recipient_id === user.id && !newMessage.read
+                      ? conv.unread_count + 1
+                      : conv.unread_count,
                   }
-                  return conv
-                })
-
-                // If conversation doesn't exist, fetch it once to get full details
-                if (!updated.some((c) => c.other_user_id === otherUserId)) {
-                  fetchConversations()
                 }
-
-                return updated
+                return conv
               })
-            }
+
+              // If conversation doesn't exist, fetch it once to get full details
+              if (!updated.some((c) => c.other_user_id === otherUserId)) {
+                fetchConversations()
+              }
+
+              return updated
+            })
           }
-        )
+        })
         .subscribe((status) => {
+          console.log('[Messages] Broadcast subscription status:', status)
           if (status === 'SUBSCRIBED') {
-            console.log('[Messages] Real-time subscription active')
-          } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
-            console.warn('[Messages] Subscription error:', status, '- Check RLS policies on messages table')
+            console.log('[Messages] Real-time broadcast subscription active')
           }
         })
 
       return () => {
         isMounted = false
-        subscription.unsubscribe()
+        supabase.removeChannel(subscription)
       }
     } catch (err) {
       console.warn('Failed to setup message subscription:', err)
@@ -239,35 +231,24 @@ export function useMessages() {
       try {
         const channel = supabase
           .channel(`messages:${user.id}:${otherUserId}`)
-          .on(
-            'postgres_changes',
-            {
-              event: 'INSERT',
-              schema: 'public',
-              table: 'messages',
-              filter: `or(and(sender_id.eq.${user.id},recipient_id.eq.${otherUserId}),and(sender_id.eq.${otherUserId},recipient_id.eq.${user.id}))`,
-            },
-            (payload) => {
-              console.log('[Conversation] New message payload:', payload)
-              if (isMounted) {
-                const newMessage = payload.new as Message
-                setMessages((prevMessages) => {
-                  if (prevMessages.some(msg => msg.id === newMessage.id)) {
-                    console.log('[Conversation] Duplicate message prevented:', newMessage.id)
-                    return prevMessages
-                  }
-                  console.log('[Conversation] Adding new message to state:', newMessage.id)
-                  return [...prevMessages, newMessage]
-                })
-              }
+          .on('broadcast', { event: 'new_message' }, (payload) => {
+            console.log('[Conversation] New message via broadcast:', payload.payload)
+            if (isMounted) {
+              const newMessage = payload.payload as Message
+              setMessages((prevMessages) => {
+                if (prevMessages.some(msg => msg.id === newMessage.id)) {
+                  console.log('[Conversation] Duplicate message prevented:', newMessage.id)
+                  return prevMessages
+                }
+                console.log('[Conversation] Adding new message to state:', newMessage.id)
+                return [...prevMessages, newMessage]
+              })
             }
-          )
+          })
           .subscribe((status) => {
-            console.log(`[Conversation] Subscription status for ${otherUserId}:`, status)
+            console.log(`[Conversation] Broadcast subscription status for ${otherUserId}:`, status)
             if (status === 'SUBSCRIBED') {
-              console.log(`[Conversation] Real-time updates active for ${otherUserId}`)
-            } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
-              console.warn(`[Conversation] Subscription error for ${otherUserId}:`, status, '- Check RLS policies on messages table')
+              console.log(`[Conversation] Real-time broadcast updates active for ${otherUserId}`)
             }
           })
 
@@ -333,7 +314,7 @@ export function useMessages() {
 
         setMessages((prev) => [...prev, tempMessage])
 
-        // Insert into database - postgres_changes subscription will sync this
+        // Insert into database
         const { data, error: err } = await supabase
           .from('messages')
           .insert({
@@ -347,11 +328,27 @@ export function useMessages() {
 
         if (err) throw err
 
-        // Replace temp message with real message from DB
         const realMessage = data as Message
+
+        // Replace temp message with real message from DB
         setMessages((prev) =>
           prev.map((msg) => msg.id === tempMessage.id ? realMessage : msg)
         )
+
+        // Broadcast to all relevant channels so subscribers get instant update
+        const conversationChannel = supabase.channel(`messages:${user.id}:${recipientId}`)
+        await conversationChannel.send({
+          type: 'broadcast',
+          event: 'new_message',
+          payload: realMessage,
+        })
+
+        const userChannel = supabase.channel(`messages:${user.id}`)
+        await userChannel.send({
+          type: 'broadcast',
+          event: 'new_message',
+          payload: realMessage,
+        })
 
         return realMessage
       } catch (err: any) {
