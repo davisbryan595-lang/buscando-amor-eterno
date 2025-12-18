@@ -49,7 +49,7 @@ interface ChatWindowProps {
 export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
   const router = useRouter()
   const { user } = useAuth()
-  const { messages, sendMessage, markAsRead, fetchMessages, fetchConversations } = useMessages()
+  const { messages, sendMessage, markAsRead, fetchMessages, fetchConversations, subscribeToConversation } = useMessages()
   const { startCall } = useStartCall()
   const [newMessage, setNewMessage] = useState('')
   const [loading, setLoading] = useState(false)
@@ -63,18 +63,26 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
     isOwn: boolean
   } | null>(null)
   const [showTypingIndicator] = useState(false)
+  const [previousMessageCount, setPreviousMessageCount] = useState(0)
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const messagesContainerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const unsubscribeRef = useRef<(() => void) | null>(null)
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' })
+    }
   }
 
   useEffect(() => {
     if (conversation?.other_user_id) {
+      setPreviousMessageCount(0)
       fetchMessages(conversation.other_user_id)
+
+      // Subscribe to real-time updates for this conversation
+      unsubscribeRef.current = subscribeToConversation(conversation.other_user_id) || null
 
       // Fetch full user details if not available in conversation
       if (!conversation.other_user_name || !conversation.other_user_image) {
@@ -99,8 +107,14 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
         }
         fetchUserDetails()
       }
+
+      return () => {
+        if (unsubscribeRef.current) {
+          unsubscribeRef.current()
+        }
+      }
     }
-  }, [conversation?.other_user_id, user?.id, fetchMessages])
+  }, [conversation?.other_user_id, user?.id, fetchMessages, subscribeToConversation])
 
   // Mark all unread messages as read when opening the chat
   useEffect(() => {
