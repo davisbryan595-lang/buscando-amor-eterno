@@ -307,27 +307,27 @@ export default function BrowsePage() {
                       </div>
                     </>
                   ) : (
-                    <div className="space-y-4 max-h-[calc(100vh-400px)] overflow-y-auto">
-                      <div className="flex items-center justify-between">
-                        <h2 className="text-3xl font-playfair font-bold">
+                    <div className="space-y-3 sm:space-y-4 max-h-[calc(100vh-400px)] overflow-y-auto px-0 sm:px-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <h2 className="text-2xl sm:text-3xl font-playfair font-bold line-clamp-2">
                           {currentProfile.full_name || 'User'}, {currentProfile.birthday ? new Date().getFullYear() - new Date(currentProfile.birthday).getFullYear() : '?'}
                         </h2>
                         <button
                           onClick={() => setShowInfo(false)}
-                          className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center flex-shrink-0"
+                          className="w-9 h-9 sm:w-10 sm:h-10 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full flex items-center justify-center flex-shrink-0 transition-colors"
                         >
-                          <X className="w-5 h-5" />
+                          <X className="w-4 h-4 sm:w-5 sm:h-5" />
                         </button>
                       </div>
-                      <p className="text-white/90 text-lg">{currentProfile.city || 'Location not set'}</p>
+                      <p className="text-white/90 text-base sm:text-lg line-clamp-1">{currentProfile.city || 'Location not set'}</p>
                       {currentProfile.prompt_1 && (
-                        <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4">
-                          <p className="text-sm text-white/80 mb-2">About</p>
-                          <p>{currentProfile.prompt_1}</p>
+                        <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-3 sm:p-4">
+                          <p className="text-xs sm:text-sm text-white/80 mb-2">About</p>
+                          <p className="text-sm sm:text-base line-clamp-4">{currentProfile.prompt_1}</p>
                         </div>
                       )}
                       {mutualPreferences.length > 0 && (
-                        <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4">
+                        <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-3 sm:p-4 text-sm">
                           <MutualPreferencesBadges
                             mutualPreferences={mutualPreferences}
                             showLabel={true}
@@ -337,7 +337,7 @@ export default function BrowsePage() {
                       )}
                       <button
                         onClick={() => router.push(`/profile/${currentProfile.user_id}`)}
-                        className="w-full bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-2xl p-3 text-white font-semibold flex items-center justify-center gap-2 transition-colors"
+                        className="w-full bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-2xl p-2 sm:p-3 text-white font-semibold flex items-center justify-center gap-2 transition-colors text-sm sm:text-base"
                       >
                         <ExternalLink className="w-4 h-4" />
                         View Full Profile
