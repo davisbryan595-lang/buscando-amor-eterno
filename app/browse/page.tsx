@@ -18,6 +18,7 @@ import Image from 'next/image'
 import { toast } from 'sonner'
 
 export default function BrowsePage() {
+  const router = useRouter()
   const { user, loading: authLoading } = useAuth()
   // Protect this route - require complete profile
   const { isLoading } = useProfileProtection(true, '/onboarding')
@@ -33,6 +34,11 @@ export default function BrowsePage() {
   const [dragOffset, setDragOffset] = useState(0)
   const [isDragging, setIsDragging] = useState(false)
   const [isActing, setIsActing] = useState(false)
+
+  const currentProfile = profiles[currentIndex]
+  const { mutualPreferences, loading: profileLoading } = useUserProfile(
+    currentProfile?.user_id || null
+  )
 
   if (authLoading || isLoading || profilesLoading) {
     return (
