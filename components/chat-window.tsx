@@ -130,10 +130,17 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
     }
   }, [conversation?.id, messages.length, user?.id, markAsRead, fetchConversations])
 
-  // Scroll to bottom when messages change
+  // Scroll to bottom when new messages arrive
   useEffect(() => {
-    scrollToBottom()
-  }, [messages])
+    // Only auto-scroll if a new message was added
+    if (messages.length > previousMessageCount) {
+      const timer = setTimeout(() => {
+        scrollToBottom()
+      }, 50)
+      setPreviousMessageCount(messages.length)
+      return () => clearTimeout(timer)
+    }
+  }, [messages, previousMessageCount])
 
   const handleSend = async () => {
     if (!newMessage.trim() || !user) return
