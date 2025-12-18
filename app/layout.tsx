@@ -22,12 +22,7 @@ export const metadata: Metadata = {
   description: 'Nearly 50% of the world is single. You deserve eternal love. Join our premium soulmate dating platform with profiles, messaging, and video chat.',
   generator: 'v0.app',
   icons: {
-    icon: [
-      {
-        url: '/placeholder-logo.svg',
-        type: 'image/svg+xml',
-      },
-    ],
+    icon: 'https://cdn.builder.io/api/v1/image/assets%2F5517f718aa7348e88214250292563028%2F09ca0588ac3741678f0d49e142dede0b?format=webp&width=800',
   },
 }
 
