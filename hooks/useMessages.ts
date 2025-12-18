@@ -313,6 +313,19 @@ export function useMessages() {
       if (!user) throw new Error('No user logged in')
 
       try {
+        // Optimistic update: add message to state immediately
+        const tempMessage: Message = {
+          id: `temp-${Date.now()}`,
+          sender_id: user.id,
+          recipient_id: recipientId,
+          content,
+          read: false,
+          created_at: new Date().toISOString(),
+        }
+
+        setMessages((prev) => [...prev, tempMessage])
+
+        // Insert into database - postgres_changes subscription will sync this
         const { data, error: err } = await supabase
           .from('messages')
           .insert({
@@ -326,25 +339,16 @@ export function useMessages() {
 
         if (err) throw err
 
-        const message = data as Message
-        setMessages((prev) => [...prev, message])
+        // Replace temp message with real message from DB
+        const realMessage = data as Message
+        setMessages((prev) =>
+          prev.map((msg) => msg.id === tempMessage.id ? realMessage : msg)
+        )
 
-        // Broadcast message for instant delivery via Broadcast (low-latency)
-        const broadcastChannel = supabase.channel(`messages:${recipientId}`)
-        await broadcastChannel.subscribe()
-        const broadcastResult = await broadcastChannel.send('broadcast', {
-          event: 'message-sent',
-          payload: message,
-        })
-        console.log('[Messages] Broadcast sent:', { broadcastResult })
-
-        // Add small delay to ensure broadcast is delivered before unsubscribing
-        await new Promise(resolve => setTimeout(resolve, 100))
-
-        await broadcastChannel.unsubscribe()
-
-        return message
+        return realMessage
       } catch (err: any) {
+        // Remove optimistic message on error
+        setMessages((prev) => prev.filter((msg) => !msg.id.startsWith('temp-')))
         const errorMessage = err?.message || (typeof err === 'string' ? err : 'Failed to send message')
         setError(errorMessage)
         throw err
