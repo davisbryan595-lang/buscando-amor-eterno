@@ -107,7 +107,6 @@ export default function BrowsePage() {
     )
   }
 
-  const currentProfile = profiles[currentIndex]
   const hasMoreProfiles = currentIndex < profiles.length - 1
 
   const handleSwipe = async (direction: 'left' | 'right' | 'super') => {
