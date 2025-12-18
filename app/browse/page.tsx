@@ -288,21 +288,21 @@ export default function BrowsePage() {
                 )}
 
                 {/* Profile Info */}
-                <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
+                <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-4 md:p-6 text-white">
                   {!showInfo ? (
                     <>
-                      <div className="flex items-center justify-between mb-2">
-                        <div>
-                          <h2 className="text-4xl font-playfair font-bold mb-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="min-w-0 flex-1">
+                          <h2 className="text-2xl sm:text-3xl md:text-4xl font-playfair font-bold mb-1 line-clamp-1">
                             {currentProfile.full_name || 'User'}, {currentProfile.birthday ? new Date().getFullYear() - new Date(currentProfile.birthday).getFullYear() : '?'}
                           </h2>
-                          <p className="text-white/90 text-lg">{currentProfile.city || 'Location not set'}</p>
+                          <p className="text-white/90 text-base sm:text-lg line-clamp-1">{currentProfile.city || 'Location not set'}</p>
                         </div>
                         <button
                           onClick={() => setShowInfo(true)}
-                          className="w-12 h-12 bg-rose-700/80 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-rose-700 transition-colors"
+                          className="w-10 h-10 sm:w-12 sm:h-12 bg-rose-700/80 hover:bg-rose-700 backdrop-blur-sm rounded-full flex items-center justify-center transition-colors flex-shrink-0"
                         >
-                          <Info className="w-6 h-6" />
+                          <Info className="w-5 h-5 sm:w-6 sm:h-6" />
                         </button>
                       </div>
                     </>
