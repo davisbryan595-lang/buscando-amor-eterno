@@ -197,11 +197,13 @@ export function UserProfileDetail({ userId, onBack, compact = false }: UserProfi
         {mutualPreferences.length > 0 && (
           <>
             <Separator />
-            <MutualPreferencesBadges
-              mutualPreferences={mutualPreferences}
-              showLabel={true}
-              maxBadges={10}
-            />
+            <div className="text-sm md:text-base">
+              <MutualPreferencesBadges
+                mutualPreferences={mutualPreferences}
+                showLabel={true}
+                maxBadges={10}
+              />
+            </div>
           </>
         )}
 
