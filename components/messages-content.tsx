@@ -17,6 +17,7 @@ interface MessagesContentInnerProps {
 }
 
 function MessagesContentInner({ onChatOpenChange, isChatOpen }: MessagesContentInnerProps) {
+  const router = useRouter()
   const { user } = useAuth()
   const { isPremium, loading: subLoading } = useSubscription()
   const { conversations, loading, error } = useMessages()
