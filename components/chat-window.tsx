@@ -124,11 +124,9 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
         unreadMessages.forEach((msg) => {
           markAsRead(msg.id)
         })
-        // Refresh conversations to clear unread badge
-        fetchConversations()
       }
     }
-  }, [conversation?.id, messages.length, user?.id, markAsRead, fetchConversations])
+  }, [conversation?.id, user?.id, messages, markAsRead])
 
   // Scroll to bottom when new messages arrive
   useEffect(() => {
