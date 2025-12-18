@@ -46,6 +46,7 @@ interface ChatWindowProps {
 }
 
 export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
+  const router = useRouter()
   const { user } = useAuth()
   const { messages, sendMessage, markAsRead, fetchMessages, fetchConversations } = useMessages()
   const { startCall } = useStartCall()
