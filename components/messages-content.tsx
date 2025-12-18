@@ -199,10 +199,15 @@ function MessagesContentInner({ onChatOpenChange, isChatOpen }: MessagesContentI
   )
 }
 
-export function MessagesContent() {
+interface MessagesContentProps {
+  onChatOpenChange?: (isOpen: boolean) => void
+  isChatOpen?: boolean
+}
+
+export function MessagesContent({ onChatOpenChange, isChatOpen }: MessagesContentProps) {
   return (
     <Suspense fallback={<div className="pt-24 pb-12 px-4 h-screen flex items-center justify-center"><p className="text-slate-600">Loading...</p></div>}>
-      <MessagesContentInner />
+      <MessagesContentInner onChatOpenChange={onChatOpenChange} isChatOpen={isChatOpen} />
     </Suspense>
   )
 }
