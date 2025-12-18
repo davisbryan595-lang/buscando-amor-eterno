@@ -55,8 +55,8 @@ export default function UserProfilePage({ params }: UserProfilePageProps) {
     <main className="min-h-screen bg-gradient-to-br from-rose-50 to-pink-50">
       <Navigation />
 
-      <div className="pt-24 pb-12 px-4">
-        <div className="max-w-2xl mx-auto">
+      <div className="pt-20 md:pt-24 pb-12 px-0 md:px-4">
+        <div className="max-w-2xl mx-auto w-full md:rounded-2xl overflow-hidden md:overflow-visible">
           <UserProfileDetail
             userId={id}
             onBack={() => router.back()}
