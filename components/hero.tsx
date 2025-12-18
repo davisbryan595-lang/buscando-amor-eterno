@@ -16,64 +16,66 @@ export default function Hero() {
   const statsRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    const ctx = gsap.context(() => {
-      const tl = gsap.timeline()
+    if (!titleRef.current) return
 
-      // Hero title animation
-      tl.from(titleRef.current, {
+    const tl = gsap.timeline()
+
+    // Hero title animation
+    tl.from(titleRef.current, {
+      opacity: 0,
+      y: 30,
+      duration: 0.8,
+    }, 0)
+
+    // Subtitle animation
+    tl.from(
+      subtitleRef.current,
+      {
         opacity: 0,
-        y: 30,
+        y: 20,
         duration: 0.8,
-      }, 0)
+      },
+      0.2
+    )
 
-      // Subtitle animation
-      tl.from(
-        subtitleRef.current,
-        {
-          opacity: 0,
-          y: 20,
-          duration: 0.8,
-        },
-        0.2
-      )
+    // Description animation
+    tl.from(
+      descriptionRef.current,
+      {
+        opacity: 0,
+        y: 20,
+        duration: 0.8,
+      },
+      0.4
+    )
 
-      // Description animation
-      tl.from(
-        descriptionRef.current,
-        {
-          opacity: 0,
-          y: 20,
-          duration: 0.8,
-        },
-        0.4
-      )
+    // Buttons animation
+    tl.from(
+      buttonsRef.current?.children,
+      {
+        opacity: 0,
+        y: 20,
+        duration: 0.6,
+        stagger: 0.15,
+      },
+      0.6
+    )
 
-      // Buttons animation
-      tl.from(
-        buttonsRef.current?.children,
-        {
-          opacity: 0,
-          y: 20,
-          duration: 0.6,
-          stagger: 0.15,
-        },
-        0.6
-      )
+    // Stats animation
+    tl.from(
+      statsRef.current?.children,
+      {
+        opacity: 0,
+        scale: 0.9,
+        duration: 0.6,
+        stagger: 0.1,
+      },
+      0.8
+    )
 
-      // Stats animation
-      tl.from(
-        statsRef.current?.children,
-        {
-          opacity: 0,
-          scale: 0.9,
-          duration: 0.6,
-          stagger: 0.1,
-        },
-        0.8
-      )
-    }, heroRef)
-
-    return () => ctx.revert()
+    return () => {
+      tl.kill()
+    }
   }, [])
 
   return (

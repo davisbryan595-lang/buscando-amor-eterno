@@ -4,6 +4,7 @@ import React, { useState } from 'react'
 import Link from 'next/link'
 import Navigation from '@/components/navigation'
 import Footer from '@/components/footer'
+import { useAuth } from '@/context/auth-context'
 import { useProfileProtection } from '@/hooks/useProfileProtection'
 import { useBrowseProfiles } from '@/hooks/useBrowseProfiles'
 import { useSubscription } from '@/hooks/useSubscription'
@@ -14,6 +15,7 @@ import Image from 'next/image'
 import { toast } from 'sonner'
 
 export default function BrowsePage() {
+  const { user, loading: authLoading } = useAuth()
   // Protect this route - require complete profile
   const { isLoading } = useProfileProtection(true, '/onboarding')
   const { profiles, loading: profilesLoading, error: profilesError, likeProfile, dislikeProfile, superLikeProfile } = useBrowseProfiles()
@@ -29,10 +31,45 @@ export default function BrowsePage() {
   const [isDragging, setIsDragging] = useState(false)
   const [isActing, setIsActing] = useState(false)
 
-  if (isLoading || profilesLoading) {
+  if (authLoading || isLoading || profilesLoading) {
     return (
-      <main className="min-h-screen flex items-center justify-center">
+      <main className="h-screen bg-gradient-to-br from-rose-50 to-pink-50 flex items-center justify-center">
         <Loader className="animate-spin" size={40} />
+      </main>
+    )
+  }
+
+  // Check if user is logged in
+  if (!user) {
+    return (
+      <main className="h-screen bg-gradient-to-br from-rose-50 to-pink-50 flex flex-col">
+        <Navigation />
+        <div className="flex-1 flex items-center justify-center px-4">
+          <div className="text-center max-w-md">
+            <Heart className="w-20 h-20 text-rose-300 mx-auto mb-6" />
+            <h1 className="text-3xl font-playfair font-bold text-slate-900 mb-4">
+              Sign In to Browse
+            </h1>
+            <p className="text-slate-600 mb-8">
+              Log in to start discovering amazing profiles and find your soulmate.
+            </p>
+            <div className="flex flex-col gap-3">
+              <Link
+                href="/login"
+                className="px-8 py-3 bg-rose-700 text-white rounded-full font-semibold hover:bg-rose-800 transition-colors"
+              >
+                Log In
+              </Link>
+              <Link
+                href="/signup"
+                className="px-8 py-3 bg-white text-rose-700 border-2 border-rose-700 rounded-full font-semibold hover:bg-rose-50 transition-colors"
+              >
+                Sign Up
+              </Link>
+            </div>
+          </div>
+        </div>
+        <Footer />
       </main>
     )
   }
@@ -121,23 +158,23 @@ export default function BrowsePage() {
 
   if (!currentProfile) {
     return (
-      <main className="min-h-screen bg-gradient-to-br from-rose-50 to-pink-50">
+      <main className="h-screen bg-gradient-to-br from-rose-50 to-pink-50 flex flex-col">
         <Navigation />
-        <div className="pt-24 pb-12 px-4 flex items-center justify-center min-h-[80vh]">
-          <div className="text-center">
+        <div className="flex-1 flex items-center justify-center px-4">
+          <div className="text-center max-w-md">
             <Heart className="w-20 h-20 text-rose-300 mx-auto mb-6" />
-            <h1 className="text-3xl font-playfair font-bold text-slate-900 mb-2">
-              No More Profiles
+            <h1 className="text-3xl font-playfair font-bold text-slate-900 mb-4">
+              No New Profiles Yet
             </h1>
-            <p className="text-slate-600 mb-6">
-              Check back later for new members
+            <p className="text-slate-600 mb-8">
+              You've reviewed all available profiles that match your preferences. We'll notify you when someone suitable appears!
             </p>
-            <button
-              onClick={() => setCurrentIndex(0)}
-              className="px-8 py-3 bg-rose-700 text-white rounded-full hover:bg-rose-800 transition-colors"
+            <Link
+              href="/messages"
+              className="inline-block px-8 py-3 bg-rose-700 text-white rounded-full font-semibold hover:bg-rose-800 transition-colors"
             >
-              Start Over
-            </button>
+              View Messages
+            </Link>
           </div>
         </div>
         <Footer />

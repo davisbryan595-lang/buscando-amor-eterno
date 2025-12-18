@@ -137,7 +137,7 @@ export default function Navigation() {
         </div>
 
         {/* Mobile Menu Button */}
-        <div className="md:hidden flex items-center gap-4">
+        <div className="md:hidden flex items-center gap-2">
           <div className="relative">
             <button
               onClick={() => setNotificationsOpen(!notificationsOpen)}
@@ -157,32 +157,16 @@ export default function Navigation() {
               />
             )}
           </div>
-          <div className="relative">
-            <button
-              onClick={() => setLangDropdown(!langDropdown)}
-              className="p-2 hover:bg-rose-50 rounded-full transition"
-            >
-              <Globe size={20} className="text-primary" />
-            </button>
-            {langDropdown && (
-              <div className="absolute right-0 mt-2 bg-white border border-rose-100 rounded-lg shadow-lg z-50">
-                <button
-                  onClick={() => handleLanguageChange('en')}
-                  className={`block w-full text-left px-4 py-2 hover:bg-rose-50 ${language === 'en' ? 'bg-rose-50 text-primary font-semibold' : 'text-foreground'}`}
-                >
-                  English
-                </button>
-                <button
-                  onClick={() => handleLanguageChange('es')}
-                  className={`block w-full text-left px-4 py-2 hover:bg-rose-50 ${language === 'es' ? 'bg-rose-50 text-primary font-semibold' : 'text-foreground'}`}
-                >
-                  Español
-                </button>
-              </div>
-            )}
-          </div>
           {isMounted && user ? (
-            <AccountMenu />
+            <>
+              <button
+                onClick={() => setMenuOpen(!menuOpen)}
+                className="p-2 hover:bg-rose-50 rounded-lg transition"
+              >
+                {menuOpen ? <X size={24} /> : <Menu size={24} />}
+              </button>
+              <AccountMenu />
+            </>
           ) : isMounted ? (
             <button
               onClick={() => setMenuOpen(!menuOpen)}
@@ -195,32 +179,56 @@ export default function Navigation() {
       </div>
 
       {/* Mobile Menu */}
-      {menuOpen && isMounted && !user && (
+      {menuOpen && isMounted && (
         <div className="md:hidden bg-white border-t border-rose-100 py-4 px-4 space-y-3">
-          <Link href="/" className="block text-foreground hover:text-primary transition py-2">
+          <Link href="/" className="block text-foreground hover:text-primary transition py-2" onClick={() => setMenuOpen(false)}>
             {t('common.home')}
           </Link>
-          <Link href="/browse" className="block text-foreground hover:text-primary transition py-2">
+          <Link href="/browse" className="block text-foreground hover:text-primary transition py-2" onClick={() => setMenuOpen(false)}>
             {t('common.browse')}
           </Link>
-          <Link href="/pricing" className="block text-foreground hover:text-primary transition py-2">
+          <Link href="/pricing" className="block text-foreground hover:text-primary transition py-2" onClick={() => setMenuOpen(false)}>
             {t('common.pricing')}
           </Link>
-          <Link href="/messages" className="block text-foreground hover:text-primary transition py-2">
+          <Link href="/messages" className="block text-foreground hover:text-primary transition py-2" onClick={() => setMenuOpen(false)}>
             {t('common.messages')}
           </Link>
-          <Link href="/chat-room" className="block text-foreground hover:text-primary transition py-2">
+          <Link href="/chat-room" className="block text-foreground hover:text-primary transition py-2" onClick={() => setMenuOpen(false)}>
             {t('common.lounge')}
           </Link>
-          <Link href="/login" className="block text-foreground hover:text-primary transition py-2">
-            {t('common.logIn')}
-          </Link>
-          <Link
-            href="/signup"
-            className="block px-6 py-2 bg-primary text-white rounded-full hover:bg-rose-700 transition font-semibold text-center"
-          >
-            {t('common.joinForPrice')}
-          </Link>
+
+          <div className="border-t border-rose-100 pt-3 mt-3">
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Language</p>
+            <button
+              onClick={() => handleLanguageChange('en')}
+              className={`block w-full text-left px-4 py-2 rounded-lg transition ${language === 'en' ? 'bg-rose-50 text-primary font-semibold' : 'text-foreground hover:bg-rose-50'}`}
+            >
+              English
+            </button>
+            <button
+              onClick={() => handleLanguageChange('es')}
+              className={`block w-full text-left px-4 py-2 rounded-lg transition ${language === 'es' ? 'bg-rose-50 text-primary font-semibold' : 'text-foreground hover:bg-rose-50'}`}
+            >
+              Español
+            </button>
+          </div>
+
+          {!user && (
+            <>
+              <div className="border-t border-rose-100 pt-3 mt-3 space-y-3">
+                <Link href="/login" className="block text-foreground hover:text-primary transition py-2" onClick={() => setMenuOpen(false)}>
+                  {t('common.logIn')}
+                </Link>
+                <Link
+                  href="/signup"
+                  className="block px-6 py-2 bg-primary text-white rounded-full hover:bg-rose-700 transition font-semibold text-center"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  {t('common.joinForPrice')}
+                </Link>
+              </div>
+            </>
+          )}
         </div>
       )}
     </nav>

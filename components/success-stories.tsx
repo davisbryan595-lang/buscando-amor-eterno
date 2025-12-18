@@ -52,26 +52,44 @@ export default function SuccessStories() {
   }
 
   useEffect(() => {
-    const ctx = gsap.context(() => {
-      gsap.to(imageRef.current, {
+    if (!imageRef.current || !contentRef.current) return
+
+    const tl = gsap.timeline()
+
+    if (currentIndex === 0) {
+      // Initial load: animate in from opacity 0
+      tl.from(imageRef.current, {
+        opacity: 0,
+        duration: 0.6,
+      }, 0)
+
+      tl.from(contentRef.current, {
+        opacity: 0,
+        y: 10,
+        duration: 0.6,
+      }, 0.2)
+    } else {
+      // Story change: fade out and back in
+      tl.to(imageRef.current, {
         opacity: 0,
         duration: 0.3,
-        onComplete: () => {
-          gsap.from(imageRef.current, {
-            opacity: 0,
-            duration: 0.5,
-          })
-        },
+      }, 0)
+
+      tl.from(imageRef.current, {
+        opacity: 0,
+        duration: 0.5,
       })
 
-      gsap.from(contentRef.current, {
+      tl.from(contentRef.current, {
         opacity: 0,
         y: 10,
         duration: 0.5,
       }, 0.2)
-    })
+    }
 
-    return () => ctx.revert()
+    return () => {
+      tl.kill()
+    }
   }, [currentIndex])
 
   const story = stories[currentIndex]

@@ -7,6 +7,8 @@ interface AuthContextType {
   user: any | null
   session: any | null
   loading: boolean
+  isLoading: boolean
+  getSession: () => Promise<any>
   signUp: (email: string, password: string) => Promise<void>
   signIn: (email: string, password: string) => Promise<void>
   signOut: () => Promise<void>
@@ -173,8 +175,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // This will be handled in the useEffect when auth state changes
   }
 
+  const getSession = async () => {
+    const { data: { session: currentSession } } = await supabase.auth.getSession()
+    return currentSession
+  }
+
   return (
-    <AuthContext.Provider value={{ user, session, loading, signUp, signIn, signOut, signInWithOAuth }}>
+    <AuthContext.Provider value={{ user, session, loading, isLoading: loading, getSession, signUp, signIn, signOut, signInWithOAuth }}>
       {children}
     </AuthContext.Provider>
   )

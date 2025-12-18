@@ -2,7 +2,7 @@
 
 import React, { useState, useCallback } from 'react'
 import IncomingCallModal from '@/components/incoming-call-modal'
-import VideoCallModal from '@/components/video-call-modal'
+import AgoraVideoCall from '@/components/agora-video-call'
 import { useIncomingCalls } from '@/hooks/useIncomingCalls'
 
 interface CallManagerProps {
@@ -10,10 +10,9 @@ interface CallManagerProps {
 }
 
 export default function CallManager({ children }: CallManagerProps) {
-  const { incomingCall, acceptCall, rejectCall } = useIncomingCalls()
-  const [showOutgoingCallModal, setShowOutgoingCallModal] = useState(false)
+  const { incomingCall, acceptCall, rejectCall, clearCall } = useIncomingCalls()
   const [acceptedCallData, setAcceptedCallData] = useState<{
-    callId: string
+    invitationId: string
     callerId: string
     callerName: string
     callType: 'audio' | 'video'
@@ -25,34 +24,39 @@ export default function CallManager({ children }: CallManagerProps) {
         await acceptCall(callId)
         if (incomingCall) {
           setAcceptedCallData({
-            callId,
+            invitationId: callId,
             callerId: incomingCall.caller_id,
             callerName: incomingCall.caller_name || 'Unknown',
             callType: incomingCall.call_type,
           })
+          // Clear the incoming call notification
+          clearCall()
         }
       } catch (err) {
-        console.error('Error accepting call:', err)
+        // Silently handle errors
       }
     },
-    [acceptCall, incomingCall]
+    [acceptCall, incomingCall, clearCall]
   )
 
   const handleRejectCall = useCallback(
     async (callId: string) => {
       try {
         await rejectCall(callId)
+        // Clear the incoming call notification
+        clearCall()
       } catch (err) {
-        console.error('Error rejecting call:', err)
+        // Silently handle errors
       }
     },
-    [rejectCall]
+    [rejectCall, clearCall]
   )
 
-  const handleCloseOutgoingCall = useCallback(() => {
-    setShowOutgoingCallModal(false)
+  const handleCloseCall = useCallback(() => {
     setAcceptedCallData(null)
-  }, [])
+    // Clear any remaining call state
+    clearCall()
+  }, [clearCall])
 
   return (
     <>
@@ -65,16 +69,17 @@ export default function CallManager({ children }: CallManagerProps) {
         onReject={handleRejectCall}
       />
 
-      {/* Outgoing call modal when incoming call is accepted */}
+      {/* Agora video/audio call when incoming call is accepted */}
       {acceptedCallData && (
-        <VideoCallModal
-          isOpen={true}
-          onClose={handleCloseOutgoingCall}
-          otherUserName={acceptedCallData.callerName}
-          otherUserId={acceptedCallData.callerId}
-          callType={acceptedCallData.callType}
-          callInvitationId={acceptedCallData.callId}
-        />
+        <div className="fixed inset-0 z-[9999] bg-black">
+          <AgoraVideoCall
+            partnerId={acceptedCallData.callerId}
+            partnerName={acceptedCallData.callerName}
+            callType={acceptedCallData.callType}
+            mode="incoming"
+            callId={acceptedCallData.invitationId}
+          />
+        </div>
       )}
     </>
   )

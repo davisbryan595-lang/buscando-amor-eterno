@@ -5,10 +5,10 @@ import { Send, Phone, Video, ArrowLeft } from 'lucide-react'
 import Image from 'next/image'
 import { useMessages } from '@/hooks/useMessages'
 import { useAuth } from '@/context/auth-context'
+import { useStartCall } from '@/hooks/useStartCall'
 import { toast } from 'sonner'
 import MessageContextMenu from '@/components/message-context-menu'
 import TypingIndicator from '@/components/typing-indicator'
-import VideoCallModal from '@/components/video-call-modal'
 
 const getLastSeenText = (timestamp?: string): string => {
   if (!timestamp) return 'Offline'
@@ -47,11 +47,11 @@ interface ChatWindowProps {
 export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
   const { user } = useAuth()
   const { messages, sendMessage, markAsRead, fetchMessages, fetchConversations } = useMessages()
+  const { startCall } = useStartCall()
   const [newMessage, setNewMessage] = useState('')
   const [loading, setLoading] = useState(false)
+  const [callingState, setCallingState] = useState<'idle' | 'calling'>('idle')
   const [otherUserDetails, setOtherUserDetails] = useState<{ name: string; image: string | null } | null>(null)
-  const [callModalOpen, setCallModalOpen] = useState(false)
-  const [callType, setCallType] = useState<'audio' | 'video'>('video')
   const [contextMenu, setContextMenu] = useState<{
     x: number
     y: number
@@ -167,68 +167,91 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
     }
   }
 
+  const handleStartAudioCall = async () => {
+    setCallingState('calling')
+    try {
+      await startCall(
+        conversation.other_user_id,
+        otherUserDetails?.name || conversation.other_user_name || 'User',
+        'audio'
+      )
+    } finally {
+      setCallingState('calling')
+    }
+  }
+
+  const handleStartVideoCall = async () => {
+    setCallingState('calling')
+    try {
+      await startCall(
+        conversation.other_user_id,
+        otherUserDetails?.name || conversation.other_user_name || 'User',
+        'video'
+      )
+    } finally {
+      setCallingState('calling')
+    }
+  }
+
   return (
-    <div className="bg-gradient-to-b from-white to-rose-50 rounded-xl border border-rose-100 flex flex-col h-full w-full soft-glow">
+    <div className="bg-gradient-to-b from-white to-rose-50 rounded-none md:rounded-xl border-0 md:border border-rose-100 flex flex-col h-full w-full soft-glow overflow-hidden">
       {/* Header */}
-      <div className="p-4 lg:p-6 border-b border-rose-100 flex items-center justify-between flex-shrink-0">
-        <div className="flex items-center gap-3 lg:gap-4 min-w-0">
+      <div className="sticky top-0 md:top-24 z-20 px-3 py-3 sm:p-4 lg:p-6 border-b border-rose-100 flex items-center justify-between flex-shrink-0 gap-2 bg-gradient-to-b from-white to-rose-50">
+        <div className="flex items-center gap-2 sm:gap-3 lg:gap-4 min-w-0 flex-1">
           {onBack && (
             <button
               onClick={onBack}
-              className="md:hidden p-2 hover:bg-rose-100 rounded-full transition flex-shrink-0"
+              className="md:hidden p-1.5 sm:p-2 hover:bg-rose-100 rounded-full transition flex-shrink-0"
               aria-label="Back to conversations"
             >
-              <ArrowLeft size={20} className="text-slate-700" />
+              <ArrowLeft size={18} className="text-slate-700" />
             </button>
           )}
-          <div className="relative w-12 h-12 lg:w-14 lg:h-14 flex-shrink-0">
+          <div className="relative w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 flex-shrink-0">
             <Image
               src={otherUserDetails?.image || conversation.other_user_image || "/placeholder.svg"}
               alt={otherUserDetails?.name || conversation.other_user_name || 'User'}
               fill
               className="rounded-full object-cover border-2 border-rose-100"
+              priority
             />
             {conversation.is_online && (
-              <div className="absolute bottom-0 right-0 w-3 h-3 md:w-4 md:h-4 bg-green-500 rounded-full border-3 border-white z-10" />
+              <div className="absolute bottom-0 right-0 w-2.5 h-2.5 sm:w-3 sm:h-3 md:w-4 md:h-4 bg-green-500 rounded-full border-2 sm:border-3 border-white z-10" />
             )}
           </div>
-          <div className="min-w-0">
-            <p className="font-semibold text-slate-900 text-base lg:text-lg truncate">{otherUserDetails?.name || conversation.other_user_name || 'User'}</p>
-            <p className="text-sm lg:text-base text-slate-600">
+          <div className="min-w-0 flex-1">
+            <p className="font-semibold text-slate-900 text-sm sm:text-base lg:text-lg truncate">{otherUserDetails?.name || conversation.other_user_name || 'User'}</p>
+            <p className="text-xs sm:text-sm lg:text-base text-slate-600 truncate">
               {conversation.is_online ? 'Online' : getLastSeenText(conversation.last_message_time)}
             </p>
           </div>
         </div>
 
-        <div className="flex gap-2 lg:gap-3 flex-shrink-0">
+        <div className="flex gap-1 sm:gap-2 lg:gap-3 flex-shrink-0">
           <button
-            onClick={() => {
-              setCallType('audio')
-              setCallModalOpen(true)
-            }}
-            className="p-2 lg:p-3 hover:bg-rose-100 rounded-full transition"
+            onClick={handleStartAudioCall}
+            disabled={callingState === 'calling'}
+            className="p-1.5 sm:p-2 lg:p-3 hover:bg-rose-100 disabled:opacity-50 disabled:cursor-not-allowed rounded-full transition"
             title="Start audio call"
           >
-            <Phone size={20} className="text-primary lg:w-6 lg:h-6" />
+            <Phone size={16} className="sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-primary" />
           </button>
           <button
-            onClick={() => {
-              setCallType('video')
-              setCallModalOpen(true)
-            }}
-            className="p-2 lg:p-3 hover:bg-rose-100 rounded-full transition"
+            onClick={handleStartVideoCall}
+            disabled={callingState === 'calling'}
+            className="p-1.5 sm:p-2 lg:p-3 hover:bg-rose-100 disabled:opacity-50 disabled:cursor-not-allowed rounded-full transition"
             title="Start video call"
           >
-            <Video size={20} className="text-primary lg:w-6 lg:h-6" />
+            <Video size={16} className="sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-primary" />
           </button>
         </div>
       </div>
 
       {/* Messages */}
-      <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 lg:p-6 space-y-3 lg:space-y-4 min-h-0">
+      <div ref={messagesContainerRef} className="flex-1 overflow-y-auto overflow-x-hidden px-3 py-3 sm:p-4 lg:p-6 space-y-2 sm:space-y-3 lg:space-y-4 min-h-0">
         {messages.length === 0 ? (
           <div className="flex items-center justify-center h-full text-slate-500">
-            <p className="text-base lg:text-lg">No messages yet. Start the conversation!</p>
+            <p className="text-sm sm:text-base lg:text-lg">No messages yet. Start the conversation!</p>
           </div>
         ) : (
           <>
@@ -240,19 +263,19 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
                 <div
                   id={`message-${msg.id}`}
                   onContextMenu={(e) => handleContextMenu(e, msg.id, msg.content, msg.sender_id === user?.id)}
-                  className={`max-w-xs lg:max-w-md xl:max-w-lg px-4 py-2 lg:py-3 rounded-2xl ${
+                  className={`max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg px-3 sm:px-4 py-1.5 sm:py-2 lg:py-3 rounded-2xl ${
                     msg.sender_id === user?.id
                       ? 'bg-primary text-white rounded-br-none'
                       : 'bg-slate-200 text-slate-900 rounded-bl-none'
                   }`}
                 >
-                  <p className="text-sm lg:text-base break-words">{msg.content}</p>
+                  <p className="text-xs sm:text-sm lg:text-base break-words">{msg.content}</p>
                 </div>
               </div>
             ))}
             {showTypingIndicator && (
               <div className="flex justify-start">
-                <div className="px-5 md:px-6 py-3 md:py-4 rounded-3xl rounded-bl-none bg-gradient-to-r from-slate-100 to-slate-50">
+                <div className="px-4 sm:px-5 md:px-6 py-2 sm:py-3 md:py-4 rounded-3xl rounded-bl-none bg-gradient-to-r from-slate-100 to-slate-50">
                   <TypingIndicator />
                 </div>
               </div>
@@ -264,24 +287,24 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
       </div>
 
       {/* Input */}
-      <div className="p-4 lg:p-6 border-t border-rose-100 flex gap-2 lg:gap-3 flex-shrink-0">
+      <div className="sticky bottom-0 z-20 px-3 py-3 sm:p-4 lg:p-6 border-t border-rose-100 flex gap-2 flex-shrink-0 bg-gradient-to-t from-white to-rose-50">
         <input
           ref={inputRef}
           type="text"
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
           onKeyPress={(e) => e.key === 'Enter' && handleSend()}
-          placeholder="Type your message..."
+          placeholder="Type a message..."
           disabled={loading}
-          className="flex-1 px-4 lg:px-6 py-2 lg:py-3 text-sm lg:text-base bg-white border border-rose-200 rounded-full focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
+          className="flex-1 px-3 sm:px-4 lg:px-6 py-1.5 sm:py-2 lg:py-3 text-xs sm:text-sm lg:text-base bg-white border border-rose-200 rounded-full focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
         />
         <button
           onClick={handleSend}
           disabled={loading}
-          className="p-2 lg:p-3 bg-primary text-white rounded-full hover:bg-rose-700 transition disabled:opacity-50 flex-shrink-0"
+          className="p-1.5 sm:p-2 lg:p-3 bg-primary text-white rounded-full hover:bg-rose-700 transition disabled:opacity-50 flex-shrink-0"
           aria-label="Send message"
         >
-          <Send size={20} className="lg:w-6 lg:h-6" />
+          <Send size={16} className="sm:w-5 sm:h-5 lg:w-6 lg:h-6" />
         </button>
       </div>
 
@@ -298,14 +321,6 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
         />
       )}
 
-      {/* Video Call Modal */}
-      <VideoCallModal
-        isOpen={callModalOpen}
-        onClose={() => setCallModalOpen(false)}
-        otherUserName={otherUserDetails?.name || conversation.other_user_name || 'User'}
-        otherUserId={conversation.other_user_id}
-        callType={callType}
-      />
     </div>
   )
 }
