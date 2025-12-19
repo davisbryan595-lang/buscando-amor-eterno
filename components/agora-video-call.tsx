@@ -8,6 +8,7 @@ import { useMessages } from '@/hooks/useMessages'
 import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
 import Image from 'next/image'
+import { generateChannelName, userIdToAgoraUid } from '@/lib/agora'
 
 // Lazy load Agora SDK only on client side
 let AgoraRTC: any = null
@@ -115,16 +116,15 @@ export default function AgoraVideoCall({
           }
         }
 
+        // Generate channel name and uid
+        const channelName = generateChannelName(user.id, partnerId)
+        const uid = userIdToAgoraUid(user.id)
+
         // Fetch Agora token from server
-        console.log('Fetching Agora token for partner:', partnerId)
-        const tokenResponse = await fetch('/api/agora/token', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${session.access_token}`,
-          },
-          body: JSON.stringify({ partnerId }),
-        })
+        console.log('Fetching Agora token:', { channelName, uid })
+        const tokenResponse = await fetch(
+          `/api/agora/token?channel=${encodeURIComponent(channelName)}&uid=${uid}`
+        )
 
         if (!tokenResponse.ok) {
           let errorMsg = `Token request failed with status ${tokenResponse.status}`
@@ -140,22 +140,11 @@ export default function AgoraVideoCall({
             error: errorMsg,
           })
 
-          // Provide more specific error messages
-          if (errorMsg.includes('Cannot call yourself')) {
-            setError('You cannot call yourself')
-          } else if (errorMsg.includes('Not a valid match')) {
-            setError('You can only call users you have matched with')
-          } else if (errorMsg.includes('Unauthorized')) {
-            setError('Authentication failed. Please log in again.')
-          } else if (errorMsg.includes('Invalid')) {
-            setError('Invalid call request. Please try again.')
-          } else {
-            setError(errorMsg || 'Failed to connect call. Please try again.')
-          }
+          setError(errorMsg || 'Failed to connect call. Please try again.')
           return
         }
 
-        const { token, uid, channelName } = await tokenResponse.json()
+        const { token } = await tokenResponse.json()
 
         // Initialize Agora client
         const agoraClient = agoraSDK.createClient({ mode: 'rtc', codec: 'vp8' })
