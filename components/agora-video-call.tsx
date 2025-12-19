@@ -329,16 +329,18 @@ export default function AgoraVideoCall({
         clearInterval(callTimerRef.current)
       }
 
-      // Update call status in database
+      // Delete call invitation from database when call ends
+      // This prevents duplicate key constraint violations on future calls
       if (user) {
         const roomName = [user.id, partnerId].sort().join('-')
         try {
           await supabase
             .from('call_invitations')
-            .update({ status: 'ended' })
+            .delete()
             .eq('room_name', roomName)
         } catch (err) {
-          // Silently handle
+          // Silently handle - deletion is cleanup, not critical to call flow
+          console.warn('Failed to cleanup call invitation:', err)
         }
       }
 
