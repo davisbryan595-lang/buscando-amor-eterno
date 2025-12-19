@@ -116,9 +116,13 @@ export function useMessages() {
 
       document.addEventListener('visibilitychange', handleVisibilityChange)
 
-      // Handle page unload
+      // Handle page unload - avoid sending messages during unload as network may fail
       const handleBeforeUnload = () => {
-        broadcastOnlineStatus(false)
+        // Don't attempt to send messages during unload as the network connection
+        // is already being torn down. The server will detect the disconnect automatically.
+        if (heartbeatIntervalRef.current) {
+          clearInterval(heartbeatIntervalRef.current)
+        }
       }
 
       window.addEventListener('beforeunload', handleBeforeUnload)
