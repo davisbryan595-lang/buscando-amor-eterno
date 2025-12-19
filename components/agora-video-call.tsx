@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import { Mic, MicOff, Video as VideoIcon, VideoOff, Phone, X } from 'lucide-react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/context/auth-context'
+import { useMessages } from '@/hooks/useMessages'
 import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
 import Image from 'next/image'
@@ -35,6 +36,7 @@ export default function AgoraVideoCall({
 }: AgoraCallProps) {
   const router = useRouter()
   const { user, getSession } = useAuth()
+  const { logCallMessage } = useMessages()
   const isAudioOnly = callType === 'audio'
   const [client, setClient] = useState<any>(null)
   const [localAudioTrack, setLocalAudioTrack] = useState<any>(null)
@@ -51,6 +53,7 @@ export default function AgoraVideoCall({
   const remoteVideoContainerRef = useRef<HTMLDivElement>(null)
   const callStartTimeRef = useRef<number>(0)
   const callTimerRef = useRef<NodeJS.Timeout | null>(null)
+  const ongoingLoggedRef = useRef(false)
 
   const appId = process.env.NEXT_PUBLIC_AGORA_APP_ID
 
@@ -168,7 +171,7 @@ export default function AgoraVideoCall({
                 ...prevUsers.filter((u) => u.uid !== user.uid),
                 user,
               ]
-              // Start timer when first remote user connects
+              // Start timer and log when first remote user connects
               if (isFirstRemoteUser) {
                 setIsConnected(true)
                 callStartTimeRef.current = Date.now()
@@ -178,6 +181,14 @@ export default function AgoraVideoCall({
                 callTimerRef.current = setInterval(() => {
                   setCallDuration(Math.floor((Date.now() - callStartTimeRef.current) / 1000))
                 }, 1000)
+
+                // Log ongoing call message when connection is established
+                if (!ongoingLoggedRef.current) {
+                  ongoingLoggedRef.current = true
+                  logCallMessage(partnerId, callType, 'ongoing').catch((err) => {
+                    console.warn('Failed to log ongoing call:', err)
+                  })
+                }
               }
               return updated
             })
@@ -194,6 +205,14 @@ export default function AgoraVideoCall({
               callTimerRef.current = setInterval(() => {
                 setCallDuration(Math.floor((Date.now() - callStartTimeRef.current) / 1000))
               }, 1000)
+
+              // Log ongoing call message when connection is established
+              if (!ongoingLoggedRef.current) {
+                ongoingLoggedRef.current = true
+                logCallMessage(partnerId, callType, 'ongoing').catch((err) => {
+                  console.warn('Failed to log ongoing call:', err)
+                })
+              }
             }
           }
         })
@@ -329,16 +348,28 @@ export default function AgoraVideoCall({
         clearInterval(callTimerRef.current)
       }
 
-      // Update call status in database
+      // Log ended call with duration
+      try {
+        const finalDuration = Math.floor((Date.now() - callStartTimeRef.current) / 1000)
+        if (ongoingLoggedRef.current) {
+          await logCallMessage(partnerId, callType, 'ended', finalDuration)
+        }
+      } catch (err) {
+        console.warn('Failed to log ended call:', err)
+      }
+
+      // Delete call invitation from database when call ends
+      // This prevents duplicate key constraint violations on future calls
       if (user) {
         const roomName = [user.id, partnerId].sort().join('-')
         try {
           await supabase
             .from('call_invitations')
-            .update({ status: 'ended' })
+            .delete()
             .eq('room_name', roomName)
         } catch (err) {
-          // Silently handle
+          // Silently handle - deletion is cleanup, not critical to call flow
+          console.warn('Failed to cleanup call invitation:', err)
         }
       }
 

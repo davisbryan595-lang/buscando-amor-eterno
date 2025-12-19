@@ -195,7 +195,7 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
         'audio'
       )
     } finally {
-      setCallingState('calling')
+      setCallingState('idle')
     }
   }
 
@@ -208,7 +208,7 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
         'video'
       )
     } finally {
-      setCallingState('calling')
+      setCallingState('idle')
     }
   }
 
@@ -280,15 +280,46 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
           </div>
         ) : (
           <>
-            {messages.map((msg) => (
-              <AnimatedMessage
-                key={msg.id}
-                id={msg.id}
-                content={msg.content}
-                isOwn={msg.sender_id === user?.id}
-                onContextMenu={handleContextMenu}
-              />
-            ))}
+            {messages.map((msg) => {
+              // Render call log messages differently
+              if (msg.type === 'call_log') {
+                const formatDuration = (seconds: number) => {
+                  const mins = Math.floor(seconds / 60)
+                  const secs = seconds % 60
+                  return `${mins}:${String(secs).padStart(2, '0')}`
+                }
+
+                const getCallEmoji = (status: string, callType?: string) => {
+                  if (status === 'missed') return '📵'
+                  if (status === 'ongoing') return '☎️'
+                  return callType === 'video' ? '📹' : '☎️'
+                }
+
+                const callText =
+                  msg.call_status === 'missed' ? `Missed ${msg.call_type} call` :
+                  msg.call_status === 'ended' && msg.call_duration ? `${msg.call_type} call · ${formatDuration(msg.call_duration)}` :
+                  msg.call_status === 'ongoing' ? `Ongoing ${msg.call_type} call` :
+                  `${msg.call_type} call`
+
+                return (
+                  <div key={msg.id} className="flex justify-center my-3">
+                    <div className="text-center text-slate-500 text-xs sm:text-sm">
+                      <span>{getCallEmoji(msg.call_status, msg.call_type)} {callText}</span>
+                    </div>
+                  </div>
+                )
+              }
+
+              return (
+                <AnimatedMessage
+                  key={msg.id}
+                  id={msg.id}
+                  content={msg.content}
+                  isOwn={msg.sender_id === user?.id}
+                  onContextMenu={handleContextMenu}
+                />
+              )
+            })}
             {showTypingIndicator && (
               <div className="flex justify-start">
                 <div className="px-4 sm:px-5 md:px-6 py-2 sm:py-3 md:py-4 rounded-3xl rounded-bl-none bg-gradient-to-r from-slate-100 to-slate-50">

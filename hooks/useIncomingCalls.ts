@@ -1,6 +1,7 @@
 import { useCallback, useState, useEffect, useRef } from 'react'
 import { useAuth } from '@/context/auth-context'
 import { supabase } from '@/lib/supabase'
+import { useMessages } from './useMessages'
 
 export interface IncomingCall {
   id: string
@@ -17,6 +18,7 @@ export interface IncomingCall {
 
 export function useIncomingCalls() {
   const { user } = useAuth()
+  const { logCallMessage } = useMessages()
   const [incomingCall, setIncomingCall] = useState<IncomingCall | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -33,12 +35,30 @@ export function useIncomingCalls() {
   const rejectCall = useCallback(
     async (callId: string) => {
       try {
+        // Get the call invitation details before deleting
+        const { data: callInvitation } = await supabase
+          .from('call_invitations')
+          .select('caller_id, call_type')
+          .eq('id', callId)
+          .single()
+
+        // Delete the invitation when declining to prevent duplicate key violations
         const { error: err } = await supabase
           .from('call_invitations')
-          .update({ status: 'declined' })
+          .delete()
           .eq('id', callId)
 
         if (err) throw err
+
+        // Log missed call message (from caller's perspective)
+        if (callInvitation) {
+          try {
+            await logCallMessage(callInvitation.caller_id, callInvitation.call_type, 'missed')
+          } catch (logErr) {
+            console.warn('Failed to log missed call:', logErr)
+          }
+        }
+
         setIncomingCall(null)
         clearCallTimeout()
       } catch (err: any) {
@@ -46,7 +66,7 @@ export function useIncomingCalls() {
         setError(errorMessage)
       }
     },
-    [clearCallTimeout]
+    [clearCallTimeout, logCallMessage]
   )
 
   const acceptCall = useCallback(
@@ -100,6 +120,15 @@ export function useIncomingCalls() {
                 // Check if call has expired
                 const expiresAt = new Date(callInvitation.expires_at).getTime()
                 if (Date.now() > expiresAt) {
+                  // Auto-cleanup expired invitations
+                  try {
+                    await supabase
+                      .from('call_invitations')
+                      .delete()
+                      .eq('id', callInvitation.id)
+                  } catch (cleanupErr) {
+                    console.warn('Failed to cleanup expired call invitation:', cleanupErr)
+                  }
                   return
                 }
 
@@ -162,6 +191,22 @@ export function useIncomingCalls() {
                 filter: `recipient_id=eq.${user.id}`,
               },
               handleCallInvitation
+            )
+            .on(
+              'postgres_changes',
+              {
+                event: 'DELETE',
+                schema: 'public',
+                table: 'call_invitations',
+                filter: `recipient_id=eq.${user.id}`,
+              },
+              (payload: any) => {
+                if (isMounted && subscriptionActive && incomingCall?.id === payload.old.id) {
+                  // Call was deleted (likely missed or ended), clear the incoming call
+                  setIncomingCall(null)
+                  clearCallTimeout()
+                }
+              }
             )
             .subscribe((status) => {
               if (status === 'SUBSCRIBED') {

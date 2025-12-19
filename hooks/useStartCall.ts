@@ -28,6 +28,20 @@ export function useStartCall() {
       const expiresAt = new Date()
       expiresAt.setMinutes(expiresAt.getMinutes() + 5)
 
+      // Clean up any existing pending/active invitations for this caller-recipient pair
+      // This prevents duplicate key constraint violations
+      try {
+        await supabase
+          .from('call_invitations')
+          .delete()
+          .eq('caller_id', user.id)
+          .eq('recipient_id', recipientId)
+          .neq('status', 'ended')
+      } catch (cleanupError) {
+        console.warn('Failed to cleanup old invitations:', cleanupError)
+        // Don't fail the call if cleanup fails
+      }
+
       // Create call invitation in database
       const { data: invitation, error: invitationError } = await supabase
         .from('call_invitations')
@@ -44,7 +58,13 @@ export function useStartCall() {
 
       if (invitationError) {
         console.error('Failed to create call invitation:', invitationError)
-        toast.error('Failed to initiate call. Please try again.')
+
+        // Handle duplicate key constraint error specifically
+        if (invitationError.code === '23505') {
+          toast.error('A call is already in progress. Please try again in a moment.')
+        } else {
+          toast.error('Failed to initiate call. Please try again.')
+        }
         return
       }
 
