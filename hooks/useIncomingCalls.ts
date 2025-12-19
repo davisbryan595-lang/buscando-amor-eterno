@@ -101,6 +101,15 @@ export function useIncomingCalls() {
                 // Check if call has expired
                 const expiresAt = new Date(callInvitation.expires_at).getTime()
                 if (Date.now() > expiresAt) {
+                  // Auto-cleanup expired invitations
+                  try {
+                    await supabase
+                      .from('call_invitations')
+                      .delete()
+                      .eq('id', callInvitation.id)
+                  } catch (cleanupErr) {
+                    console.warn('Failed to cleanup expired call invitation:', cleanupErr)
+                  }
                   return
                 }
 
