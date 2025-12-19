@@ -16,6 +16,12 @@ export interface Message {
   call_duration?: number
 }
 
+export interface TypingStatus {
+  user_id: string
+  is_typing: boolean
+  timestamp: number
+}
+
 export interface Conversation {
   id: string
   user_id: string
