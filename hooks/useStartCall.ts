@@ -28,42 +28,30 @@ export function useStartCall() {
       const expiresAt = new Date()
       expiresAt.setMinutes(expiresAt.getMinutes() + 5)
 
-      // Clean up any existing invitations for this caller-recipient pair
-      // This prevents duplicate key constraint violations from the unique index on (caller_id, recipient_id, room_name)
-      try {
-        await supabase
-          .from('call_invitations')
-          .delete()
-          .eq('caller_id', user.id)
-          .eq('recipient_id', recipientId)
-      } catch (cleanupError) {
-        console.warn('Failed to cleanup old invitations:', cleanupError)
-        // Don't fail the call if cleanup fails
-      }
-
-      // Create call invitation in database
+      // Use upsert to handle existing call invitations gracefully
+      // If a call invitation with the same (caller_id, recipient_id, room_name) exists,
+      // update it instead of failing with a unique constraint violation (409)
       const { data: invitation, error: invitationError } = await supabase
         .from('call_invitations')
-        .insert({
-          caller_id: user.id,
-          recipient_id: recipientId,
-          call_type: callType,
-          room_name: roomName,
-          status: 'pending',
-          expires_at: expiresAt.toISOString(),
-        })
+        .upsert(
+          {
+            caller_id: user.id,
+            recipient_id: recipientId,
+            call_type: callType,
+            room_name: roomName,
+            status: 'pending',
+            expires_at: expiresAt.toISOString(),
+          },
+          {
+            onConflict: 'caller_id,recipient_id,room_name',
+          }
+        )
         .select()
         .single()
 
       if (invitationError) {
         console.error('Failed to create call invitation:', invitationError)
-
-        // Handle duplicate key constraint error specifically
-        if (invitationError.code === '23505') {
-          toast.error('A call is already in progress. Please try again in a moment.')
-        } else {
-          toast.error('Failed to initiate call. Please try again.')
-        }
+        toast.error('Failed to initiate call. Please try again.')
         return
       }
 
