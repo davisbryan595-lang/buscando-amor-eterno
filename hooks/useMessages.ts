@@ -581,5 +581,8 @@ export function useMessages() {
     initiateConversation,
     subscribeToConversation,
     logCallMessage,
+    handleTyping,
+    stopTyping,
+    broadcastTyping,
   }
 }
