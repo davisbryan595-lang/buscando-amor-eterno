@@ -3,10 +3,11 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { useAuth } from '@/context/auth-context'
 import { useLounge } from '@/hooks/useLounge'
+import { ErrorBoundary } from './error-boundary'
 import { Send, Flag, Users } from 'lucide-react'
 import { toast } from 'sonner'
 
-export default function LoungeChat() {
+function LoungeChatContent() {
   const { user } = useAuth()
   const { messages, onlineUsers, loading, sendMessage, reportMessage } = useLounge()
   const [inputValue, setInputValue] = useState('')
