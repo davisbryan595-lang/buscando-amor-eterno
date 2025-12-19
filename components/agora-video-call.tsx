@@ -100,15 +100,15 @@ export default function AgoraVideoCall({
 
         // For incoming calls, the invitation is already created by the caller
         // For outgoing calls, the invitation was created when they clicked the call button
-        // Only need to mark it as active when the call starts
+        // Only need to mark it as accepted when the call starts
         if (mode === 'outgoing' && callId) {
           try {
             await supabase
               .from('call_invitations')
-              .update({ status: 'active' })
+              .update({ status: 'accepted' })
               .eq('id', callId)
           } catch (err) {
-            console.warn('Failed to update call status to active:', err)
+            console.warn('Failed to update call status to accepted:', err)
           }
         }
 
