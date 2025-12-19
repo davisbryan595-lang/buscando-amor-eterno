@@ -440,6 +440,63 @@ export function useMessages() {
     [user, conversations]
   )
 
+  const logCallMessage = useCallback(
+    async (
+      recipientId: string,
+      callType: 'audio' | 'video',
+      callStatus: 'ongoing' | 'incoming' | 'missed' | 'ended',
+      callDuration?: number
+    ) => {
+      if (!user) throw new Error('No user logged in')
+
+      try {
+        const content =
+          callStatus === 'missed' ? `Missed ${callType} call` :
+          callStatus === 'ended' && callDuration ? `${callType} call · ${Math.floor(callDuration / 60)}:${String(callDuration % 60).padStart(2, '0')}` :
+          `${callStatus} ${callType} call`
+
+        const { data, error: err } = await supabase
+          .from('messages')
+          .insert({
+            sender_id: user.id,
+            recipient_id: recipientId,
+            content,
+            read: true,
+            type: 'call_log',
+            call_type: callType,
+            call_status: callStatus,
+            call_duration: callDuration || null,
+          })
+          .select()
+          .single()
+
+        if (err) throw err
+
+        const callMessage = data as Message
+        setMessages((prev) => [...prev, callMessage])
+
+        // Broadcast the call message
+        const conversationChannel = supabase.channel(`messages:${user.id}:${recipientId}`)
+        await conversationChannel.send({
+          type: 'broadcast',
+          event: 'new_message',
+          payload: callMessage,
+        })
+
+        const userChannel = supabase.channel(`messages:${user.id}`)
+        await userChannel.send({
+          type: 'broadcast',
+          event: 'new_message',
+          payload: callMessage,
+        })
+      } catch (err: any) {
+        console.error('Error logging call message:', err)
+        throw err
+      }
+    },
+    [user]
+  )
+
   return {
     conversations,
     messages,
@@ -451,5 +508,6 @@ export function useMessages() {
     markAsRead,
     initiateConversation,
     subscribeToConversation,
+    logCallMessage,
   }
 }
