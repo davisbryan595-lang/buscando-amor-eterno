@@ -33,9 +33,10 @@ export function useIncomingCalls() {
   const rejectCall = useCallback(
     async (callId: string) => {
       try {
+        // Delete the invitation when declining to prevent duplicate key violations
         const { error: err } = await supabase
           .from('call_invitations')
-          .update({ status: 'declined' })
+          .delete()
           .eq('id', callId)
 
         if (err) throw err
