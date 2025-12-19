@@ -66,11 +66,15 @@ export function useMessages() {
 
     initialize()
     const unsubscribe = subscribeToMessages()
+    const cleanupHeartbeat = setupHeartbeat()
 
     return () => {
       isMounted = false
       if (unsubscribe) {
         unsubscribe()
+      }
+      if (cleanupHeartbeat) {
+        cleanupHeartbeat()
       }
       if (debounceTimerRef.current) {
         clearTimeout(debounceTimerRef.current)
@@ -78,8 +82,11 @@ export function useMessages() {
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current)
       }
+      if (onlineTimeoutRef.current) {
+        clearTimeout(onlineTimeoutRef.current)
+      }
     }
-  }, [user?.id])
+  }, [user?.id, setupHeartbeat])
 
   const fetchConversations = async () => {
     if (!user) return
