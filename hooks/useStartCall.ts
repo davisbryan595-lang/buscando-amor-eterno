@@ -31,20 +31,14 @@ export function useStartCall() {
       // Create call invitation in database
       const { data: invitation, error: invitationError } = await supabase
         .from('call_invitations')
-        .upsert(
-          {
-            caller_id: user.id,
-            recipient_id: recipientId,
-            call_type: callType,
-            room_name: roomName,
-            status: 'pending',
-            expires_at: expiresAt.toISOString(),
-            updated_at: new Date().toISOString(),
-          },
-          {
-            onConflict: 'caller_id,recipient_id,room_name',
-          }
-        )
+        .insert({
+          caller_id: user.id,
+          recipient_id: recipientId,
+          call_type: callType,
+          room_name: roomName,
+          status: 'pending',
+          expires_at: expiresAt.toISOString(),
+        })
         .select()
         .single()
 
