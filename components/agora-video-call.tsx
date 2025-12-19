@@ -171,7 +171,7 @@ export default function AgoraVideoCall({
                 ...prevUsers.filter((u) => u.uid !== user.uid),
                 user,
               ]
-              // Start timer when first remote user connects
+              // Start timer and log when first remote user connects
               if (isFirstRemoteUser) {
                 setIsConnected(true)
                 callStartTimeRef.current = Date.now()
@@ -181,6 +181,14 @@ export default function AgoraVideoCall({
                 callTimerRef.current = setInterval(() => {
                   setCallDuration(Math.floor((Date.now() - callStartTimeRef.current) / 1000))
                 }, 1000)
+
+                // Log ongoing call message when connection is established
+                if (!ongoingLoggedRef.current) {
+                  ongoingLoggedRef.current = true
+                  logCallMessage(partnerId, callType, 'ongoing').catch((err) => {
+                    console.warn('Failed to log ongoing call:', err)
+                  })
+                }
               }
               return updated
             })
@@ -197,6 +205,14 @@ export default function AgoraVideoCall({
               callTimerRef.current = setInterval(() => {
                 setCallDuration(Math.floor((Date.now() - callStartTimeRef.current) / 1000))
               }, 1000)
+
+              // Log ongoing call message when connection is established
+              if (!ongoingLoggedRef.current) {
+                ongoingLoggedRef.current = true
+                logCallMessage(partnerId, callType, 'ongoing').catch((err) => {
+                  console.warn('Failed to log ongoing call:', err)
+                })
+              }
             }
           }
         })
