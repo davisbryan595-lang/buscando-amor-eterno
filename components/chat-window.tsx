@@ -168,7 +168,7 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
       const unreadMessages = messages.filter((msg) => msg.recipient_id === user.id && !msg.read)
       if (unreadMessages.length > 0) {
         unreadMessages.forEach((msg) => {
-          markAsRead(msg.id)
+          markAsRead(msg.id, msg.sender_id)
         })
       }
     }
