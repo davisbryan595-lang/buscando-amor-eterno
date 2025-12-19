@@ -76,50 +76,6 @@ export function useMessages() {
     [user]
   )
 
-  const setupHeartbeat = useCallback(() => {
-    if (!user) return
-
-    // Broadcast online status immediately
-    broadcastOnlineStatus(true)
-
-    // Set up heartbeat to send online status every 30 seconds
-    if (heartbeatIntervalRef.current) {
-      clearInterval(heartbeatIntervalRef.current)
-    }
-
-    heartbeatIntervalRef.current = setInterval(() => {
-      broadcastOnlineStatus(true)
-    }, 30000)
-
-    // Handle page visibility changes
-    const handleVisibilityChange = () => {
-      if (document.hidden) {
-        console.log('[Heartbeat] Page hidden')
-        broadcastOnlineStatus(false)
-      } else {
-        console.log('[Heartbeat] Page visible')
-        broadcastOnlineStatus(true)
-      }
-    }
-
-    document.addEventListener('visibilitychange', handleVisibilityChange)
-
-    // Handle page unload
-    const handleBeforeUnload = () => {
-      broadcastOnlineStatus(false)
-    }
-
-    window.addEventListener('beforeunload', handleBeforeUnload)
-
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange)
-      window.removeEventListener('beforeunload', handleBeforeUnload)
-      if (heartbeatIntervalRef.current) {
-        clearInterval(heartbeatIntervalRef.current)
-      }
-    }
-  }, [user, broadcastOnlineStatus])
-
   useEffect(() => {
     if (!user) {
       setLoading(false)
@@ -131,6 +87,48 @@ export function useMessages() {
     const initialize = async () => {
       if (isMounted) {
         await fetchConversations()
+      }
+    }
+
+    const setupHeartbeat = () => {
+      // Broadcast online status immediately
+      broadcastOnlineStatus(true)
+
+      // Set up heartbeat to send online status every 30 seconds
+      if (heartbeatIntervalRef.current) {
+        clearInterval(heartbeatIntervalRef.current)
+      }
+
+      heartbeatIntervalRef.current = setInterval(() => {
+        broadcastOnlineStatus(true)
+      }, 30000)
+
+      // Handle page visibility changes
+      const handleVisibilityChange = () => {
+        if (document.hidden) {
+          console.log('[Heartbeat] Page hidden')
+          broadcastOnlineStatus(false)
+        } else {
+          console.log('[Heartbeat] Page visible')
+          broadcastOnlineStatus(true)
+        }
+      }
+
+      document.addEventListener('visibilitychange', handleVisibilityChange)
+
+      // Handle page unload
+      const handleBeforeUnload = () => {
+        broadcastOnlineStatus(false)
+      }
+
+      window.addEventListener('beforeunload', handleBeforeUnload)
+
+      return () => {
+        document.removeEventListener('visibilitychange', handleVisibilityChange)
+        window.removeEventListener('beforeunload', handleBeforeUnload)
+        if (heartbeatIntervalRef.current) {
+          clearInterval(heartbeatIntervalRef.current)
+        }
       }
     }
 
@@ -156,7 +154,7 @@ export function useMessages() {
         clearTimeout(onlineTimeoutRef.current)
       }
     }
-  }, [user?.id, setupHeartbeat])
+  }, [user?.id])
 
   const fetchConversations = async () => {
     if (!user) return
