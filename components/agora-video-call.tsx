@@ -348,6 +348,16 @@ export default function AgoraVideoCall({
         clearInterval(callTimerRef.current)
       }
 
+      // Log ended call with duration
+      try {
+        const finalDuration = Math.floor((Date.now() - callStartTimeRef.current) / 1000)
+        if (ongoingLoggedRef.current) {
+          await logCallMessage(partnerId, callType, 'ended', finalDuration)
+        }
+      } catch (err) {
+        console.warn('Failed to log ended call:', err)
+      }
+
       // Delete call invitation from database when call ends
       // This prevents duplicate key constraint violations on future calls
       if (user) {
