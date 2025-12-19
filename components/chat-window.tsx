@@ -195,7 +195,7 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
         'audio'
       )
     } finally {
-      setCallingState('calling')
+      setCallingState('idle')
     }
   }
 
@@ -208,7 +208,7 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
         'video'
       )
     } finally {
-      setCallingState('calling')
+      setCallingState('idle')
     }
   }
 
