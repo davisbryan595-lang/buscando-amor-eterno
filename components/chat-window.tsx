@@ -49,7 +49,7 @@ interface ChatWindowProps {
 export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
   const router = useRouter()
   const { user } = useAuth()
-  const { messages, sendMessage, markAsRead, fetchMessages, fetchConversations, subscribeToConversation } = useMessages()
+  const { messages, sendMessage, markAsRead, fetchMessages, fetchConversations, subscribeToConversation, handleTyping, stopTyping } = useMessages()
   const { startCall } = useStartCall()
   const [newMessage, setNewMessage] = useState('')
   const [loading, setLoading] = useState(false)
@@ -62,8 +62,9 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
     content: string
     isOwn: boolean
   } | null>(null)
-  const [showTypingIndicator] = useState(false)
+  const [showTypingIndicator, setShowTypingIndicator] = useState(false)
   const [previousMessageCount, setPreviousMessageCount] = useState(0)
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const messagesContainerRef = useRef<HTMLDivElement>(null)
