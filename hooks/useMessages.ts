@@ -16,6 +16,12 @@ export interface Message {
   call_duration?: number
 }
 
+export interface TypingStatus {
+  user_id: string
+  is_typing: boolean
+  timestamp: number
+}
+
 export interface Conversation {
   id: string
   user_id: string
@@ -39,6 +45,36 @@ export function useMessages() {
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const pollAttemptsRef = useRef(0)
   const lastFetchRef = useRef(0)
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const isTypingRef = useRef(false)
+  const heartbeatIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const onlineTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // Define broadcastOnlineStatus early so it can be used in setupHeartbeat
+  const broadcastOnlineStatus = useCallback(
+    async (isOnline: boolean) => {
+      if (!user) return
+
+      try {
+        const onlineStatus = {
+          user_id: user.id,
+          is_online: isOnline,
+          timestamp: new Date().toISOString(),
+        }
+
+        // Broadcast to all conversations
+        const userChannel = supabase.channel(`user:${user.id}:online`)
+        await userChannel.send({
+          type: 'broadcast',
+          event: 'user_status',
+          payload: onlineStatus,
+        })
+      } catch (err: any) {
+        console.warn('Failed to broadcast online status:', err)
+      }
+    },
+    [user]
+  )
 
   useEffect(() => {
     if (!user) {
@@ -54,16 +90,68 @@ export function useMessages() {
       }
     }
 
+    const setupHeartbeat = () => {
+      // Broadcast online status immediately
+      broadcastOnlineStatus(true)
+
+      // Set up heartbeat to send online status every 30 seconds
+      if (heartbeatIntervalRef.current) {
+        clearInterval(heartbeatIntervalRef.current)
+      }
+
+      heartbeatIntervalRef.current = setInterval(() => {
+        broadcastOnlineStatus(true)
+      }, 30000)
+
+      // Handle page visibility changes
+      const handleVisibilityChange = () => {
+        if (document.hidden) {
+          console.log('[Heartbeat] Page hidden')
+          broadcastOnlineStatus(false)
+        } else {
+          console.log('[Heartbeat] Page visible')
+          broadcastOnlineStatus(true)
+        }
+      }
+
+      document.addEventListener('visibilitychange', handleVisibilityChange)
+
+      // Handle page unload
+      const handleBeforeUnload = () => {
+        broadcastOnlineStatus(false)
+      }
+
+      window.addEventListener('beforeunload', handleBeforeUnload)
+
+      return () => {
+        document.removeEventListener('visibilitychange', handleVisibilityChange)
+        window.removeEventListener('beforeunload', handleBeforeUnload)
+        if (heartbeatIntervalRef.current) {
+          clearInterval(heartbeatIntervalRef.current)
+        }
+      }
+    }
+
     initialize()
     const unsubscribe = subscribeToMessages()
+    const cleanupHeartbeat = setupHeartbeat()
 
     return () => {
       isMounted = false
       if (unsubscribe) {
         unsubscribe()
       }
+      if (cleanupHeartbeat) {
+        cleanupHeartbeat()
+      }
       if (debounceTimerRef.current) {
         clearTimeout(debounceTimerRef.current)
+      }
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current)
+      }
+      if (onlineTimeoutRef.current) {
+        clearTimeout(onlineTimeoutRef.current)
       }
     }
   }, [user?.id])
@@ -209,6 +297,21 @@ export function useMessages() {
             })
           }
         })
+        .on('broadcast', { event: 'user_status' }, (payload) => {
+          if (isMounted) {
+            console.log('[Messages] User status update:', payload.payload)
+            const userStatus = payload.payload
+
+            // Update conversation online status
+            setConversations((prev) =>
+              prev.map((conv) =>
+                conv.other_user_id === userStatus.user_id
+                  ? { ...conv, is_online: userStatus.is_online }
+                  : conv
+              )
+            )
+          }
+        })
         .subscribe((status) => {
           console.log('[Messages] Broadcast subscription status:', status)
           if (status === 'SUBSCRIBED') {
@@ -247,6 +350,21 @@ export function useMessages() {
                 console.log('[Conversation] Adding new message to state:', newMessage.id)
                 return [...prevMessages, newMessage]
               })
+            }
+          })
+          .on('broadcast', { event: 'user_status' }, (payload) => {
+            if (isMounted) {
+              console.log('[Conversation] User status update for conversation:', payload.payload)
+              const userStatus = payload.payload
+
+              // Update conversation online status
+              setConversations((prev) =>
+                prev.map((conv) =>
+                  conv.other_user_id === userStatus.user_id
+                    ? { ...conv, is_online: userStatus.is_online }
+                    : conv
+                )
+              )
             }
           })
           .subscribe((status) => {
@@ -367,8 +485,12 @@ export function useMessages() {
   )
 
   const markAsRead = useCallback(
-    async (messageId: string) => {
+    async (messageId: string, recipientId?: string) => {
       try {
+        // Find the message to get recipient info for broadcasting
+        const message = messages.find((msg) => msg.id === messageId)
+        const targetRecipientId = recipientId || message?.sender_id
+
         // Optimistic update: mark as read in state immediately
         setMessages((prev) =>
           prev.map((msg) => msg.id === messageId ? { ...msg, read: true } : msg)
@@ -387,13 +509,40 @@ export function useMessages() {
           .eq('id', messageId)
 
         if (err) throw err
+
+        // Broadcast read receipt to sender
+        if (user && targetRecipientId) {
+          const readReceipt = {
+            message_id: messageId,
+            reader_id: user.id,
+            timestamp: new Date().toISOString(),
+          }
+
+          try {
+            const conversationChannel = supabase.channel(`messages:${user.id}:${targetRecipientId}`)
+            await conversationChannel.send({
+              type: 'broadcast',
+              event: 'message_read',
+              payload: readReceipt,
+            })
+
+            const userChannel = supabase.channel(`messages:${user.id}`)
+            await userChannel.send({
+              type: 'broadcast',
+              event: 'message_read',
+              payload: readReceipt,
+            })
+          } catch (broadcastErr) {
+            console.warn('Failed to broadcast read receipt:', broadcastErr)
+          }
+        }
       } catch (err: any) {
         const errorMessage = err?.message || (typeof err === 'string' ? err : 'Failed to mark message as read')
         setError(errorMessage)
         console.error('Error marking message as read:', errorMessage, err)
       }
     },
-    []
+    [user, messages]
   )
 
   const initiateConversation = useCallback(
@@ -438,6 +587,67 @@ export function useMessages() {
       }
     },
     [user, conversations]
+  )
+
+  const broadcastTyping = useCallback(
+    async (recipientId: string, isTyping: boolean) => {
+      if (!user) return
+
+      try {
+        const typingStatus: TypingStatus = {
+          user_id: user.id,
+          is_typing: isTyping,
+          timestamp: Date.now(),
+        }
+
+        const conversationChannel = supabase.channel(`messages:${user.id}:${recipientId}`)
+        await conversationChannel.send({
+          type: 'broadcast',
+          event: 'typing_indicator',
+          payload: typingStatus,
+        })
+      } catch (err: any) {
+        console.warn('Failed to broadcast typing status:', err)
+      }
+    },
+    [user]
+  )
+
+  const handleTyping = useCallback(
+    (recipientId: string) => {
+      if (!user) return
+
+      // Clear existing timeout
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current)
+      }
+
+      // If not already typing, broadcast typing started
+      if (!isTypingRef.current) {
+        isTypingRef.current = true
+        broadcastTyping(recipientId, true)
+      }
+
+      // Set timeout to stop typing after 3 seconds of inactivity
+      typingTimeoutRef.current = setTimeout(() => {
+        isTypingRef.current = false
+        broadcastTyping(recipientId, false)
+      }, 3000)
+    },
+    [user, broadcastTyping]
+  )
+
+  const stopTyping = useCallback(
+    (recipientId: string) => {
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current)
+      }
+      if (isTypingRef.current) {
+        isTypingRef.current = false
+        broadcastTyping(recipientId, false)
+      }
+    },
+    [broadcastTyping]
   )
 
   const logCallMessage = useCallback(
@@ -509,5 +719,9 @@ export function useMessages() {
     initiateConversation,
     subscribeToConversation,
     logCallMessage,
+    handleTyping,
+    stopTyping,
+    broadcastTyping,
+    broadcastOnlineStatus,
   }
 }

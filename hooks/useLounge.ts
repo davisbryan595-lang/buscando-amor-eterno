@@ -100,19 +100,23 @@ export function useLounge() {
     if (!user) return
 
     let isMounted = true
+    let retryCount = 0
+    const maxRetries = 3
 
-    try {
-      subscriptionRef.current = supabase
-        .channel('lounge_messages')
-        .on(
-          'postgres_changes',
-          {
-            event: 'INSERT',
-            schema: 'public',
-            table: 'lounge_messages',
-          },
-          async (payload: any) => {
-            if (isMounted) {
+    const setupSubscription = () => {
+      try {
+        subscriptionRef.current = supabase
+          .channel('lounge_messages')
+          .on(
+            'postgres_changes',
+            {
+              event: 'INSERT',
+              schema: 'public',
+              table: 'lounge_messages',
+            },
+            async (payload: any) => {
+              if (!isMounted) return
+
               const newMessage = payload.new
               // Fetch user profile for new message
               const { data: profile } = await supabase
@@ -128,12 +132,39 @@ export function useLounge() {
               }
               setMessages((prev) => [...prev, enrichedMessage])
             }
-          }
-        )
-        .subscribe()
-    } catch (err) {
-      console.error('Error subscribing to lounge messages:', err)
+          )
+          .subscribe((status) => {
+            console.log('[Lounge] Subscription status:', status)
+
+            if (status === 'CLOSED') {
+              console.log('[Lounge] Subscription closed - attempting retry...')
+              if (isMounted && retryCount < maxRetries) {
+                retryCount += 1
+                setTimeout(() => {
+                  if (isMounted) {
+                    setupSubscription()
+                  }
+                }, 1000 * retryCount)
+              }
+            } else if (status === 'SUBSCRIBED') {
+              retryCount = 0
+              console.log('[Lounge] Messages subscription active')
+            }
+          })
+      } catch (err) {
+        console.error('Error subscribing to lounge messages:', err)
+        if (isMounted && retryCount < maxRetries) {
+          retryCount += 1
+          setTimeout(() => {
+            if (isMounted) {
+              setupSubscription()
+            }
+          }, 1000 * retryCount)
+        }
+      }
     }
+
+    setupSubscription()
 
     return () => {
       isMounted = false
@@ -147,6 +178,8 @@ export function useLounge() {
   const updatePresence = useCallback(async () => {
     if (!user) return
 
+    let isMounted = true
+
     try {
       const { data: profile } = await supabase
         .from('profiles')
@@ -157,6 +190,8 @@ export function useLounge() {
       presenceRef.current = supabase
         .channel('lounge_presence')
         .on('presence', { event: 'sync' }, () => {
+          if (!isMounted) return
+
           const presenceState = presenceRef.current?.presenceState()
           const users: LoungeUser[] = []
 
@@ -170,24 +205,30 @@ export function useLounge() {
             })
           })
 
-          if (isMounted) {
-            setOnlineUsers(users)
-          }
+          setOnlineUsers(users)
         })
         .subscribe(async (status) => {
+          if (!isMounted) return
+
           if (status === 'SUBSCRIBED') {
             presenceRef.current.track({
               user_id: user.id,
               full_name: profile?.full_name || 'User',
               main_photo: profile?.photos?.[profile?.main_photo_index || 0] || null,
             })
+          } else if (status === 'CLOSED') {
+            console.log('[Lounge] Presence subscription closed - retrying...')
+            setTimeout(() => {
+              if (isMounted) {
+                updatePresence()
+              }
+            }, 1000)
           }
         })
     } catch (err) {
       console.error('Error updating presence:', err)
     }
 
-    let isMounted = true
     return () => {
       isMounted = false
       if (presenceRef.current) {

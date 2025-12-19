@@ -49,7 +49,7 @@ interface ChatWindowProps {
 export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
   const router = useRouter()
   const { user } = useAuth()
-  const { messages, sendMessage, markAsRead, fetchMessages, fetchConversations, subscribeToConversation } = useMessages()
+  const { messages, sendMessage, markAsRead, fetchMessages, fetchConversations, subscribeToConversation, handleTyping, stopTyping } = useMessages()
   const { startCall } = useStartCall()
   const [newMessage, setNewMessage] = useState('')
   const [loading, setLoading] = useState(false)
@@ -62,8 +62,9 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
     content: string
     isOwn: boolean
   } | null>(null)
-  const [showTypingIndicator] = useState(false)
+  const [showTypingIndicator, setShowTypingIndicator] = useState(false)
   const [previousMessageCount, setPreviousMessageCount] = useState(0)
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const messagesContainerRef = useRef<HTMLDivElement>(null)
@@ -84,9 +85,50 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
       // Subscribe to real-time updates for this conversation
       unsubscribeRef.current = subscribeToConversation(conversation.other_user_id) || null
 
+      // Subscribe to typing indicators and read receipts for this conversation
+      const { supabase } = require('@/lib/supabase')
+      const typingChannel = supabase
+        .channel(`messages:${user?.id}:${conversation.other_user_id}`)
+        .on('broadcast', { event: 'typing_indicator' }, (payload) => {
+          console.log('[ChatWindow] Typing indicator received:', payload.payload)
+          const typingStatus = payload.payload
+
+          // Show typing indicator if other user is typing
+          if (typingStatus.user_id === conversation.other_user_id && typingStatus.is_typing) {
+            setShowTypingIndicator(true)
+
+            // Clear existing timeout
+            if (typingTimeoutRef.current) {
+              clearTimeout(typingTimeoutRef.current)
+            }
+
+            // Hide typing indicator after 4 seconds of no new typing events
+            typingTimeoutRef.current = setTimeout(() => {
+              setShowTypingIndicator(false)
+            }, 4000)
+          } else if (typingStatus.user_id === conversation.other_user_id && !typingStatus.is_typing) {
+            setShowTypingIndicator(false)
+            if (typingTimeoutRef.current) {
+              clearTimeout(typingTimeoutRef.current)
+            }
+          }
+        })
+        .on('broadcast', { event: 'message_read' }, (payload) => {
+          console.log('[ChatWindow] Read receipt received:', payload.payload)
+          const readReceipt = payload.payload
+
+          // Update message to show it was read by marking it as read
+          if (readReceipt.reader_id === conversation.other_user_id) {
+            // Note: This updates the visual state, actual database update happens when other user marks it as read
+            console.log(`[ChatWindow] Message ${readReceipt.message_id} marked as read by other user`)
+          }
+        })
+        .subscribe((status) => {
+          console.log(`[ChatWindow] Broadcast subscription status:`, status)
+        })
+
       // Fetch full user details if not available in conversation
       if (!conversation.other_user_name || !conversation.other_user_image) {
-        const { supabase } = require('@/lib/supabase')
         const fetchUserDetails = async () => {
           try {
             const { data } = await supabase
@@ -112,6 +154,10 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
         if (unsubscribeRef.current) {
           unsubscribeRef.current()
         }
+        supabase.removeChannel(typingChannel)
+        if (typingTimeoutRef.current) {
+          clearTimeout(typingTimeoutRef.current)
+        }
       }
     }
   }, [conversation?.other_user_id, user?.id, fetchMessages, subscribeToConversation])
@@ -122,7 +168,7 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
       const unreadMessages = messages.filter((msg) => msg.recipient_id === user.id && !msg.read)
       if (unreadMessages.length > 0) {
         unreadMessages.forEach((msg) => {
-          markAsRead(msg.id)
+          markAsRead(msg.id, msg.sender_id)
         })
       }
     }
@@ -144,12 +190,20 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
       setLoading(true)
       await sendMessage(conversation.other_user_id, newMessage)
       setNewMessage('')
+      stopTyping(conversation.other_user_id)
       inputRef.current?.focus()
     } catch (err: any) {
       console.error('Error sending message:', err)
       toast.error(err.message || 'Error sending message')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setNewMessage(e.target.value)
+    if (e.target.value.trim()) {
+      handleTyping(conversation.other_user_id)
     }
   }
 
@@ -339,7 +393,7 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
           ref={inputRef}
           type="text"
           value={newMessage}
-          onChange={(e) => setNewMessage(e.target.value)}
+          onChange={handleInputChange}
           onKeyPress={(e) => e.key === 'Enter' && handleSend()}
           placeholder="Type a message..."
           disabled={loading}
