@@ -112,9 +112,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           email: email,
         })
 
-        if (userError) {
+        if (userError && userError.code !== 'PGRST103') {
           console.error('Error creating user profile:', userError.message || JSON.stringify(userError))
-          throw userError
+          // Don't throw - account is already created in auth
         }
 
         // Create free subscription with upsert to avoid conflicts
@@ -124,13 +124,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           status: 'active',
         })
 
-        if (subError) {
+        if (subError && subError.code !== 'PGRST103') {
           console.error('Error creating subscription:', subError)
-          throw subError
+          // Don't throw - account is already created in auth
         }
       } catch (err) {
         console.error('Error in user setup:', err)
-        throw err
+        // Don't throw - account is already created in auth
       }
     }
   }
