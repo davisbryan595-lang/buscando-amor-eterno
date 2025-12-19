@@ -18,6 +18,7 @@ export interface IncomingCall {
 
 export function useIncomingCalls() {
   const { user } = useAuth()
+  const { logCallMessage } = useMessages()
   const [incomingCall, setIncomingCall] = useState<IncomingCall | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
