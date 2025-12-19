@@ -116,23 +116,26 @@ export function useBrowseProfiles() {
         }
 
         // If mutual like found, update both records to 'matched'
-        if (mutualLike && mutualLike.status === 'liked') {
-          // Update the incoming like (from the other user)
-          const { error: updateErr1 } = await supabase
-            .from('likes')
-            .update({ status: 'matched' })
-            .eq('user_id', likedUserId)
-            .eq('liked_user_id', user.id)
+        if (mutualLike && (mutualLike.status === 'liked' || mutualLike.status === 'matched')) {
+          // Update both records in parallel for better atomicity
+          const [updateRes1, updateRes2] = await Promise.all([
+            supabase
+              .from('likes')
+              .update({ status: 'matched' })
+              .eq('user_id', likedUserId)
+              .eq('liked_user_id', user.id),
+            supabase
+              .from('likes')
+              .update({ status: 'matched' })
+              .eq('user_id', user.id)
+              .eq('liked_user_id', likedUserId),
+          ])
 
-          // Update the outgoing like (from current user)
-          const { error: updateErr2 } = await supabase
-            .from('likes')
-            .update({ status: 'matched' })
-            .eq('user_id', user.id)
-            .eq('liked_user_id', likedUserId)
+          const updateErr1 = updateRes1.error
+          const updateErr2 = updateRes2.error
 
           if (updateErr1 || updateErr2) {
-            console.warn('Warning: could not update mutual match status:', {
+            console.warn('Warning: could not fully update mutual match status:', {
               updateErr1: updateErr1?.message,
               updateErr2: updateErr2?.message,
             })
@@ -214,23 +217,26 @@ export function useBrowseProfiles() {
         }
 
         // If mutual like found, update both records to 'matched'
-        if (mutualLike && mutualLike.status === 'liked') {
-          // Update the incoming like (from the other user)
-          const { error: updateErr1 } = await supabase
-            .from('likes')
-            .update({ status: 'matched' })
-            .eq('user_id', likedUserId)
-            .eq('liked_user_id', user.id)
+        if (mutualLike && (mutualLike.status === 'liked' || mutualLike.status === 'matched')) {
+          // Update both records in parallel for better atomicity
+          const [updateRes1, updateRes2] = await Promise.all([
+            supabase
+              .from('likes')
+              .update({ status: 'matched' })
+              .eq('user_id', likedUserId)
+              .eq('liked_user_id', user.id),
+            supabase
+              .from('likes')
+              .update({ status: 'matched' })
+              .eq('user_id', user.id)
+              .eq('liked_user_id', likedUserId),
+          ])
 
-          // Update the outgoing like (from current user)
-          const { error: updateErr2 } = await supabase
-            .from('likes')
-            .update({ status: 'matched' })
-            .eq('user_id', user.id)
-            .eq('liked_user_id', likedUserId)
+          const updateErr1 = updateRes1.error
+          const updateErr2 = updateRes2.error
 
           if (updateErr1 || updateErr2) {
-            console.warn('Warning: could not update mutual match status:', {
+            console.warn('Warning: could not fully update mutual match status:', {
               updateErr1: updateErr1?.message,
               updateErr2: updateErr2?.message,
             })
