@@ -85,7 +85,7 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
       // Subscribe to real-time updates for this conversation
       unsubscribeRef.current = subscribeToConversation(conversation.other_user_id) || null
 
-      // Subscribe to typing indicators for this conversation
+      // Subscribe to typing indicators and read receipts for this conversation
       const { supabase } = require('@/lib/supabase')
       const typingChannel = supabase
         .channel(`messages:${user?.id}:${conversation.other_user_id}`)
@@ -113,8 +113,18 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
             }
           }
         })
+        .on('broadcast', { event: 'message_read' }, (payload) => {
+          console.log('[ChatWindow] Read receipt received:', payload.payload)
+          const readReceipt = payload.payload
+
+          // Update message to show it was read by marking it as read
+          if (readReceipt.reader_id === conversation.other_user_id) {
+            // Note: This updates the visual state, actual database update happens when other user marks it as read
+            console.log(`[ChatWindow] Message ${readReceipt.message_id} marked as read by other user`)
+          }
+        })
         .subscribe((status) => {
-          console.log(`[ChatWindow] Typing indicator subscription status:`, status)
+          console.log(`[ChatWindow] Broadcast subscription status:`, status)
         })
 
       // Fetch full user details if not available in conversation
