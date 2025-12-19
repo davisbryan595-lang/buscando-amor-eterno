@@ -73,6 +73,9 @@ export function useMessages() {
       if (debounceTimerRef.current) {
         clearTimeout(debounceTimerRef.current)
       }
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current)
+      }
     }
   }, [user?.id])
 
