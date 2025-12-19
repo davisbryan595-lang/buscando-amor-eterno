@@ -1,6 +1,7 @@
 import { useCallback, useState, useEffect, useRef } from 'react'
 import { useAuth } from '@/context/auth-context'
 import { supabase } from '@/lib/supabase'
+import { useMessages } from './useMessages'
 
 export interface IncomingCall {
   id: string
