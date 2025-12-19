@@ -192,6 +192,22 @@ export function useIncomingCalls() {
               },
               handleCallInvitation
             )
+            .on(
+              'postgres_changes',
+              {
+                event: 'DELETE',
+                schema: 'public',
+                table: 'call_invitations',
+                filter: `recipient_id=eq.${user.id}`,
+              },
+              (payload: any) => {
+                if (isMounted && subscriptionActive && incomingCall?.id === payload.old.id) {
+                  // Call was deleted (likely missed or ended), clear the incoming call
+                  setIncomingCall(null)
+                  clearCallTimeout()
+                }
+              }
+            )
             .subscribe((status) => {
               if (status === 'SUBSCRIBED') {
                 subscriptionActive = true
