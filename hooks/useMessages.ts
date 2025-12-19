@@ -378,8 +378,12 @@ export function useMessages() {
   )
 
   const markAsRead = useCallback(
-    async (messageId: string) => {
+    async (messageId: string, recipientId?: string) => {
       try {
+        // Find the message to get recipient info for broadcasting
+        const message = messages.find((msg) => msg.id === messageId)
+        const targetRecipientId = recipientId || message?.sender_id
+
         // Optimistic update: mark as read in state immediately
         setMessages((prev) =>
           prev.map((msg) => msg.id === messageId ? { ...msg, read: true } : msg)
@@ -398,13 +402,40 @@ export function useMessages() {
           .eq('id', messageId)
 
         if (err) throw err
+
+        // Broadcast read receipt to sender
+        if (user && targetRecipientId) {
+          const readReceipt = {
+            message_id: messageId,
+            reader_id: user.id,
+            timestamp: new Date().toISOString(),
+          }
+
+          try {
+            const conversationChannel = supabase.channel(`messages:${user.id}:${targetRecipientId}`)
+            await conversationChannel.send({
+              type: 'broadcast',
+              event: 'message_read',
+              payload: readReceipt,
+            })
+
+            const userChannel = supabase.channel(`messages:${user.id}`)
+            await userChannel.send({
+              type: 'broadcast',
+              event: 'message_read',
+              payload: readReceipt,
+            })
+          } catch (broadcastErr) {
+            console.warn('Failed to broadcast read receipt:', broadcastErr)
+          }
+        }
       } catch (err: any) {
         const errorMessage = err?.message || (typeof err === 'string' ? err : 'Failed to mark message as read')
         setError(errorMessage)
         console.error('Error marking message as read:', errorMessage, err)
       }
     },
-    []
+    [user, messages]
   )
 
   const initiateConversation = useCallback(
