@@ -143,12 +143,22 @@ export async function POST(request: NextRequest) {
     // Check if there's at least one match record between the two users
     const hasMatch = (likes1 && likes1.length > 0) || (likes2 && likes2.length > 0)
     if (!hasMatch) {
-      console.warn('No match found between users:', { userId, partnerId })
+      console.warn('No match found between users:', {
+        userId,
+        partnerId,
+        query1: { userId, partnerId, status: 'matched' },
+        query2: { userId: partnerId, partnerId: userId, status: 'matched' },
+        likes1Count: likes1?.length || 0,
+        likes2Count: likes2?.length || 0,
+      })
       return NextResponse.json(
         { error: 'Not a valid match' },
         { status: 403 }
       )
     }
+
+    // Log successful match found
+    console.log('Match verified for video call:', { userId, partnerId })
 
     // Generate channel name and Agora token
     const channelName = generateChannelName(userId, partnerId)
