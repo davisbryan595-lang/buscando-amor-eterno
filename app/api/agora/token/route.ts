@@ -143,7 +143,9 @@ export async function POST(request: NextRequest) {
     // Allow calls if:
     // 1. Either side has explicitly marked as 'matched'
     // 2. Both sides have 'liked' (mutual like, even if not yet updated to 'matched')
-    const isMutualLike = like1 && like2 && like1.status !== 'disliked' && like2.status !== 'disliked'
+    const isMutualLike = like1 && like2 &&
+      (like1.status === 'liked' || like1.status === 'matched') &&
+      (like2.status === 'liked' || like2.status === 'matched')
     const hasExplicitMatch = (like1?.status === 'matched') || (like2?.status === 'matched')
     const isValidMatch = isMutualLike || hasExplicitMatch
 
