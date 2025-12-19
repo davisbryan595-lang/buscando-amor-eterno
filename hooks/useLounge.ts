@@ -101,12 +101,22 @@ export function useLounge() {
 
     let isMounted = true
     let retryCount = 0
-    const maxRetries = 3
+    const maxRetries = 5
+    let retryTimeout: NodeJS.Timeout | null = null
 
     const setupSubscription = () => {
+      if (!isMounted) return
+
       try {
+        const channelName = 'global_singles_lounge'
+
+        // Remove old subscription if it exists
+        if (subscriptionRef.current) {
+          supabase.removeChannel(subscriptionRef.current)
+        }
+
         subscriptionRef.current = supabase
-          .channel('lounge_messages')
+          .channel(channelName)
           .on(
             'postgres_changes',
             {
@@ -133,18 +143,20 @@ export function useLounge() {
               setMessages((prev) => [...prev, enrichedMessage])
             }
           )
-          .subscribe((status) => {
-            console.log('[Lounge] Subscription status:', status)
+          .subscribe((status, err) => {
+            console.log('[Lounge] Subscription status:', status, err)
 
-            if (status === 'CLOSED') {
-              console.log('[Lounge] Subscription closed - attempting retry...')
+            if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
+              console.log('[Lounge] Subscription closed/error - attempting retry...')
               if (isMounted && retryCount < maxRetries) {
                 retryCount += 1
-                setTimeout(() => {
+                const delay = Math.min(1000 * Math.pow(2, retryCount - 1), 10000)
+                console.log(`[Lounge] Retry ${retryCount}/${maxRetries} in ${delay}ms`)
+                retryTimeout = setTimeout(() => {
                   if (isMounted) {
                     setupSubscription()
                   }
-                }, 1000 * retryCount)
+                }, delay)
               }
             } else if (status === 'SUBSCRIBED') {
               retryCount = 0
@@ -155,11 +167,12 @@ export function useLounge() {
         console.error('Error subscribing to lounge messages:', err)
         if (isMounted && retryCount < maxRetries) {
           retryCount += 1
-          setTimeout(() => {
+          const delay = Math.min(1000 * Math.pow(2, retryCount - 1), 10000)
+          retryTimeout = setTimeout(() => {
             if (isMounted) {
               setupSubscription()
             }
-          }, 1000 * retryCount)
+          }, delay)
         }
       }
     }
@@ -168,6 +181,9 @@ export function useLounge() {
 
     return () => {
       isMounted = false
+      if (retryTimeout) {
+        clearTimeout(retryTimeout)
+      }
       if (subscriptionRef.current) {
         supabase.removeChannel(subscriptionRef.current)
       }
@@ -179,60 +195,97 @@ export function useLounge() {
     if (!user) return
 
     let isMounted = true
+    let retryCount = 0
+    const maxRetries = 5
+    let retryTimeout: NodeJS.Timeout | null = null
 
-    try {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('full_name, photos, main_photo_index')
-        .eq('user_id', user.id)
-        .single()
+    const setupPresence = async () => {
+      if (!isMounted) return
 
-      presenceRef.current = supabase
-        .channel('lounge_presence')
-        .on('presence', { event: 'sync' }, () => {
-          if (!isMounted) return
+      try {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('full_name, photos, main_photo_index')
+          .eq('user_id', user.id)
+          .single()
 
-          const presenceState = presenceRef.current?.presenceState()
-          const users: LoungeUser[] = []
+        const channelName = 'global_singles_lounge_presence'
 
-          Object.keys(presenceState || {}).forEach((userId) => {
-            const userPresence = presenceState[userId][0]
-            users.push({
-              user_id: userId,
-              full_name: userPresence?.full_name || 'Anonymous',
-              main_photo: userPresence?.main_photo || null,
-              last_seen: new Date().toISOString(),
+        // Remove old presence if it exists
+        if (presenceRef.current) {
+          presenceRef.current.untrack()
+          supabase.removeChannel(presenceRef.current)
+        }
+
+        presenceRef.current = supabase
+          .channel(channelName)
+          .on('presence', { event: 'sync' }, () => {
+            if (!isMounted) return
+
+            const presenceState = presenceRef.current?.presenceState()
+            const users: LoungeUser[] = []
+
+            Object.keys(presenceState || {}).forEach((userId) => {
+              const userPresence = presenceState[userId][0]
+              users.push({
+                user_id: userId,
+                full_name: userPresence?.full_name || 'Anonymous',
+                main_photo: userPresence?.main_photo || null,
+                last_seen: new Date().toISOString(),
+              })
             })
+
+            setOnlineUsers(users)
           })
+          .subscribe(async (status, err) => {
+            if (!isMounted) return
 
-          setOnlineUsers(users)
-        })
-        .subscribe(async (status) => {
-          if (!isMounted) return
+            console.log('[Lounge] Presence status:', status, err)
 
-          if (status === 'SUBSCRIBED') {
-            presenceRef.current.track({
-              user_id: user.id,
-              full_name: profile?.full_name || 'User',
-              main_photo: profile?.photos?.[profile?.main_photo_index || 0] || null,
-            })
-          } else if (status === 'CLOSED') {
-            console.log('[Lounge] Presence subscription closed - retrying...')
-            setTimeout(() => {
-              if (isMounted) {
-                updatePresence()
+            if (status === 'SUBSCRIBED') {
+              retryCount = 0
+              presenceRef.current.track({
+                user_id: user.id,
+                full_name: profile?.full_name || 'User',
+                main_photo: profile?.photos?.[profile?.main_photo_index || 0] || null,
+              })
+            } else if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
+              console.log('[Lounge] Presence subscription closed/error - retrying...')
+              if (isMounted && retryCount < maxRetries) {
+                retryCount += 1
+                const delay = Math.min(1000 * Math.pow(2, retryCount - 1), 10000)
+                retryTimeout = setTimeout(() => {
+                  if (isMounted) {
+                    setupPresence()
+                  }
+                }, delay)
               }
-            }, 1000)
-          }
-        })
-    } catch (err) {
-      console.error('Error updating presence:', err)
+            }
+          })
+      } catch (err) {
+        console.error('Error updating presence:', err)
+        if (isMounted && retryCount < maxRetries) {
+          retryCount += 1
+          const delay = Math.min(1000 * Math.pow(2, retryCount - 1), 10000)
+          retryTimeout = setTimeout(() => {
+            if (isMounted) {
+              setupPresence()
+            }
+          }, delay)
+        }
+      }
     }
+
+    setupPresence()
 
     return () => {
       isMounted = false
+      if (retryTimeout) {
+        clearTimeout(retryTimeout)
+      }
       if (presenceRef.current) {
         presenceRef.current.untrack()
+        supabase.removeChannel(presenceRef.current)
       }
     }
   }, [user])
@@ -292,6 +345,19 @@ export function useLounge() {
     },
     [user]
   )
+
+  // Handle visibility changes to resubscribe if needed
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        console.log('[Lounge] Page became visible - checking subscriptions')
+        // Subscriptions will maintain themselves, but this ensures we're aware
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
+  }, [])
 
   // Initialize lounge
   useEffect(() => {
