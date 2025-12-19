@@ -100,19 +100,23 @@ export function useLounge() {
     if (!user) return
 
     let isMounted = true
+    let retryCount = 0
+    const maxRetries = 3
 
-    try {
-      subscriptionRef.current = supabase
-        .channel('lounge_messages')
-        .on(
-          'postgres_changes',
-          {
-            event: 'INSERT',
-            schema: 'public',
-            table: 'lounge_messages',
-          },
-          async (payload: any) => {
-            if (isMounted) {
+    const setupSubscription = () => {
+      try {
+        subscriptionRef.current = supabase
+          .channel('lounge_messages')
+          .on(
+            'postgres_changes',
+            {
+              event: 'INSERT',
+              schema: 'public',
+              table: 'lounge_messages',
+            },
+            async (payload: any) => {
+              if (!isMounted) return
+
               const newMessage = payload.new
               // Fetch user profile for new message
               const { data: profile } = await supabase
@@ -128,12 +132,39 @@ export function useLounge() {
               }
               setMessages((prev) => [...prev, enrichedMessage])
             }
-          }
-        )
-        .subscribe()
-    } catch (err) {
-      console.error('Error subscribing to lounge messages:', err)
+          )
+          .subscribe((status) => {
+            console.log('[Lounge] Subscription status:', status)
+
+            if (status === 'CLOSED') {
+              console.log('[Lounge] Subscription closed - attempting retry...')
+              if (isMounted && retryCount < maxRetries) {
+                retryCount += 1
+                setTimeout(() => {
+                  if (isMounted) {
+                    setupSubscription()
+                  }
+                }, 1000 * retryCount)
+              }
+            } else if (status === 'SUBSCRIBED') {
+              retryCount = 0
+              console.log('[Lounge] Messages subscription active')
+            }
+          })
+      } catch (err) {
+        console.error('Error subscribing to lounge messages:', err)
+        if (isMounted && retryCount < maxRetries) {
+          retryCount += 1
+          setTimeout(() => {
+            if (isMounted) {
+              setupSubscription()
+            }
+          }, 1000 * retryCount)
+        }
+      }
     }
+
+    setupSubscription()
 
     return () => {
       isMounted = false
