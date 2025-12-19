@@ -10,6 +10,10 @@ export interface Message {
   content: string
   read: boolean
   created_at: string
+  type?: 'text' | 'call_log'
+  call_type?: 'audio' | 'video'
+  call_status?: 'ongoing' | 'incoming' | 'missed' | 'ended'
+  call_duration?: number
 }
 
 export interface Conversation {
