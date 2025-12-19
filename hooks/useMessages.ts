@@ -284,6 +284,21 @@ export function useMessages() {
               })
             }
           })
+          .on('broadcast', { event: 'user_status' }, (payload) => {
+            if (isMounted) {
+              console.log('[Conversation] User status update for conversation:', payload.payload)
+              const userStatus = payload.payload
+
+              // Update conversation online status
+              setConversations((prev) =>
+                prev.map((conv) =>
+                  conv.other_user_id === userStatus.user_id
+                    ? { ...conv, is_online: userStatus.is_online }
+                    : conv
+                )
+              )
+            }
+          })
           .subscribe((status) => {
             console.log(`[Conversation] Broadcast subscription status for ${otherUserId}:`, status)
             if (status === 'SUBSCRIBED') {
