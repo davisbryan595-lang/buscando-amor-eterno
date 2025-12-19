@@ -147,6 +147,8 @@ export function useLounge() {
   const updatePresence = useCallback(async () => {
     if (!user) return
 
+    let isMounted = true
+
     try {
       const { data: profile } = await supabase
         .from('profiles')
@@ -157,6 +159,8 @@ export function useLounge() {
       presenceRef.current = supabase
         .channel('lounge_presence')
         .on('presence', { event: 'sync' }, () => {
+          if (!isMounted) return
+
           const presenceState = presenceRef.current?.presenceState()
           const users: LoungeUser[] = []
 
@@ -170,24 +174,30 @@ export function useLounge() {
             })
           })
 
-          if (isMounted) {
-            setOnlineUsers(users)
-          }
+          setOnlineUsers(users)
         })
         .subscribe(async (status) => {
+          if (!isMounted) return
+
           if (status === 'SUBSCRIBED') {
             presenceRef.current.track({
               user_id: user.id,
               full_name: profile?.full_name || 'User',
               main_photo: profile?.photos?.[profile?.main_photo_index || 0] || null,
             })
+          } else if (status === 'CLOSED') {
+            console.log('[Lounge] Presence subscription closed - retrying...')
+            setTimeout(() => {
+              if (isMounted) {
+                updatePresence()
+              }
+            }, 1000)
           }
         })
     } catch (err) {
       console.error('Error updating presence:', err)
     }
 
-    let isMounted = true
     return () => {
       isMounted = false
       if (presenceRef.current) {
