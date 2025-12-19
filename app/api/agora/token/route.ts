@@ -108,25 +108,22 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify that the partner is a matched contact
-    // Check if either user liked the other with 'matched' status
+    // Check if users have mutual likes (either 'matched' or both 'liked')
     console.log('Verifying match between:', { userId, partnerId })
 
-    // Query 1: user_id = userId, liked_user_id = partnerId, status = matched
+    // Query for both users' like records
     const { data: likes1, error: error1 } = await supabase
       .from('likes')
       .select('id, status')
       .eq('user_id', userId)
       .eq('liked_user_id', partnerId)
-      .eq('status', 'matched')
       .limit(1)
 
-    // Query 2: user_id = partnerId, liked_user_id = userId, status = matched
     const { data: likes2, error: error2 } = await supabase
       .from('likes')
       .select('id, status')
       .eq('user_id', partnerId)
       .eq('liked_user_id', userId)
-      .eq('status', 'matched')
       .limit(1)
 
     if (error1 || error2) {
@@ -140,21 +137,48 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Check if there's at least one match record between the two users
-    const hasMatch = (likes1 && likes1.length > 0) || (likes2 && likes2.length > 0)
-    if (!hasMatch) {
-      console.warn('No match found between users:', {
+    const like1 = likes1?.[0]
+    const like2 = likes2?.[0]
+
+    // Allow calls if:
+    // 1. Either side has explicitly marked as 'matched'
+    // 2. Both sides have 'liked' (mutual like, even if not yet updated to 'matched')
+    const isMutualLike = like1 && like2 && like1.status !== 'disliked' && like2.status !== 'disliked'
+    const hasExplicitMatch = (like1?.status === 'matched') || (like2?.status === 'matched')
+    const isValidMatch = isMutualLike || hasExplicitMatch
+
+    if (!isValidMatch) {
+      console.warn('No valid match found between users:', {
         userId,
         partnerId,
-        query1: { userId, partnerId, status: 'matched' },
-        query2: { userId: partnerId, partnerId: userId, status: 'matched' },
-        likes1Count: likes1?.length || 0,
-        likes2Count: likes2?.length || 0,
+        like1: like1 ? { status: like1.status } : null,
+        like2: like2 ? { status: like2.status } : null,
       })
       return NextResponse.json(
         { error: 'Not a valid match' },
         { status: 403 }
       )
+    }
+
+    // Ensure both records are marked as 'matched' for consistency
+    // This handles the case where users might be calling between 'liked' and 'matched' states
+    if (isMutualLike && !hasExplicitMatch) {
+      // Both users have liked each other but neither is marked as 'matched' yet
+      // Update both to 'matched' atomically (in background, don't block the call)
+      Promise.all([
+        supabase
+          .from('likes')
+          .update({ status: 'matched' })
+          .eq('user_id', userId)
+          .eq('liked_user_id', partnerId),
+        supabase
+          .from('likes')
+          .update({ status: 'matched' })
+          .eq('user_id', partnerId)
+          .eq('liked_user_id', userId),
+      ]).catch((err) => {
+        console.warn('Failed to update match status to matched:', err)
+      })
     }
 
     // Log successful match found
