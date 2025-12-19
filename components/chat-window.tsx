@@ -85,9 +85,40 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
       // Subscribe to real-time updates for this conversation
       unsubscribeRef.current = subscribeToConversation(conversation.other_user_id) || null
 
+      // Subscribe to typing indicators for this conversation
+      const { supabase } = require('@/lib/supabase')
+      const typingChannel = supabase
+        .channel(`messages:${user?.id}:${conversation.other_user_id}`)
+        .on('broadcast', { event: 'typing_indicator' }, (payload) => {
+          console.log('[ChatWindow] Typing indicator received:', payload.payload)
+          const typingStatus = payload.payload
+
+          // Show typing indicator if other user is typing
+          if (typingStatus.user_id === conversation.other_user_id && typingStatus.is_typing) {
+            setShowTypingIndicator(true)
+
+            // Clear existing timeout
+            if (typingTimeoutRef.current) {
+              clearTimeout(typingTimeoutRef.current)
+            }
+
+            // Hide typing indicator after 4 seconds of no new typing events
+            typingTimeoutRef.current = setTimeout(() => {
+              setShowTypingIndicator(false)
+            }, 4000)
+          } else if (typingStatus.user_id === conversation.other_user_id && !typingStatus.is_typing) {
+            setShowTypingIndicator(false)
+            if (typingTimeoutRef.current) {
+              clearTimeout(typingTimeoutRef.current)
+            }
+          }
+        })
+        .subscribe((status) => {
+          console.log(`[ChatWindow] Typing indicator subscription status:`, status)
+        })
+
       // Fetch full user details if not available in conversation
       if (!conversation.other_user_name || !conversation.other_user_image) {
-        const { supabase } = require('@/lib/supabase')
         const fetchUserDetails = async () => {
           try {
             const { data } = await supabase
@@ -112,6 +143,10 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
       return () => {
         if (unsubscribeRef.current) {
           unsubscribeRef.current()
+        }
+        supabase.removeChannel(typingChannel)
+        if (typingTimeoutRef.current) {
+          clearTimeout(typingTimeoutRef.current)
         }
       }
     }
