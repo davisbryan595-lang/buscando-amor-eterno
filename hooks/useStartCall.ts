@@ -28,15 +28,14 @@ export function useStartCall() {
       const expiresAt = new Date()
       expiresAt.setMinutes(expiresAt.getMinutes() + 5)
 
-      // Clean up any existing pending/active invitations for this caller-recipient pair
-      // This prevents duplicate key constraint violations
+      // Clean up any existing invitations for this caller-recipient pair
+      // This prevents duplicate key constraint violations from the unique index on (caller_id, recipient_id, room_name)
       try {
         await supabase
           .from('call_invitations')
           .delete()
           .eq('caller_id', user.id)
           .eq('recipient_id', recipientId)
-          .neq('status', 'ended')
       } catch (cleanupError) {
         console.warn('Failed to cleanup old invitations:', cleanupError)
         // Don't fail the call if cleanup fails
