@@ -448,6 +448,67 @@ export function useMessages() {
     [user, conversations]
   )
 
+  const broadcastTyping = useCallback(
+    async (recipientId: string, isTyping: boolean) => {
+      if (!user) return
+
+      try {
+        const typingStatus: TypingStatus = {
+          user_id: user.id,
+          is_typing: isTyping,
+          timestamp: Date.now(),
+        }
+
+        const conversationChannel = supabase.channel(`messages:${user.id}:${recipientId}`)
+        await conversationChannel.send({
+          type: 'broadcast',
+          event: 'typing_indicator',
+          payload: typingStatus,
+        })
+      } catch (err: any) {
+        console.warn('Failed to broadcast typing status:', err)
+      }
+    },
+    [user]
+  )
+
+  const handleTyping = useCallback(
+    (recipientId: string) => {
+      if (!user) return
+
+      // Clear existing timeout
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current)
+      }
+
+      // If not already typing, broadcast typing started
+      if (!isTypingRef.current) {
+        isTypingRef.current = true
+        broadcastTyping(recipientId, true)
+      }
+
+      // Set timeout to stop typing after 3 seconds of inactivity
+      typingTimeoutRef.current = setTimeout(() => {
+        isTypingRef.current = false
+        broadcastTyping(recipientId, false)
+      }, 3000)
+    },
+    [user, broadcastTyping]
+  )
+
+  const stopTyping = useCallback(
+    (recipientId: string) => {
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current)
+      }
+      if (isTypingRef.current) {
+        isTypingRef.current = false
+        broadcastTyping(recipientId, false)
+      }
+    },
+    [broadcastTyping]
+  )
+
   const logCallMessage = useCallback(
     async (
       recipientId: string,
