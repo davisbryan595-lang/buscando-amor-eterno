@@ -234,3 +234,11 @@ function LoungeChatContent() {
     </div>
   )
 }
+
+export default function LoungeChat() {
+  return (
+    <ErrorBoundary>
+      <LoungeChatContent />
+    </ErrorBoundary>
+  )
+}
