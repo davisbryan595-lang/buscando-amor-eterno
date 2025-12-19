@@ -180,12 +180,20 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
       setLoading(true)
       await sendMessage(conversation.other_user_id, newMessage)
       setNewMessage('')
+      stopTyping(conversation.other_user_id)
       inputRef.current?.focus()
     } catch (err: any) {
       console.error('Error sending message:', err)
       toast.error(err.message || 'Error sending message')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setNewMessage(e.target.value)
+    if (e.target.value.trim()) {
+      handleTyping(conversation.other_user_id)
     }
   }
 
