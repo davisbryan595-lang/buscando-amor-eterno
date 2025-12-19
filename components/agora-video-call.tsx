@@ -36,6 +36,7 @@ export default function AgoraVideoCall({
 }: AgoraCallProps) {
   const router = useRouter()
   const { user, getSession } = useAuth()
+  const { logCallMessage } = useMessages()
   const isAudioOnly = callType === 'audio'
   const [client, setClient] = useState<any>(null)
   const [localAudioTrack, setLocalAudioTrack] = useState<any>(null)
