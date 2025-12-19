@@ -69,7 +69,7 @@ export default function Navigation() {
           <Link href="/browse" className="text-foreground hover:text-primary transition">{t('common.browse')}</Link>
           <Link href="/pricing" className="text-foreground hover:text-primary transition">{t('common.pricing')}</Link>
           <Link href="/messages" className="text-foreground hover:text-primary transition">{t('common.messages')}</Link>
-          <Link href="/chat-room" className="text-foreground hover:text-primary transition">{t('common.lounge')}</Link>
+          <Link href="/lounge" className="text-foreground hover:text-primary transition">{t('common.lounge')}</Link>
 
           <div className="relative">
             <button
@@ -193,7 +193,7 @@ export default function Navigation() {
           <Link href="/messages" className="block text-foreground hover:text-primary transition py-2" onClick={() => setMenuOpen(false)}>
             {t('common.messages')}
           </Link>
-          <Link href="/chat-room" className="block text-foreground hover:text-primary transition py-2" onClick={() => setMenuOpen(false)}>
+          <Link href="/lounge" className="block text-foreground hover:text-primary transition py-2" onClick={() => setMenuOpen(false)}>
             {t('common.lounge')}
           </Link>
 
