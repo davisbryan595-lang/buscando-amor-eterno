@@ -383,7 +383,7 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
           ref={inputRef}
           type="text"
           value={newMessage}
-          onChange={(e) => setNewMessage(e.target.value)}
+          onChange={handleInputChange}
           onKeyPress={(e) => e.key === 'Enter' && handleSend()}
           placeholder="Type a message..."
           disabled={loading}
