@@ -113,8 +113,7 @@ export async function POST(request: NextRequest) {
     const { data: likes, error: likesError } = await supabase
       .from('likes')
       .select('id, status')
-      .or(`and(user_id.eq.${userId},liked_user_id.eq.${partnerId}),and(user_id.eq.${partnerId},liked_user_id.eq.${userId})`)
-      .eq('status', 'matched')
+      .or(`and(user_id.eq.${userId},liked_user_id.eq.${partnerId},status.eq.matched),and(user_id.eq.${partnerId},liked_user_id.eq.${userId},status.eq.matched)`)
 
     if (likesError) {
       console.error('Match query error:', {
