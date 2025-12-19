@@ -723,5 +723,7 @@ export function useMessages() {
     handleTyping,
     stopTyping,
     broadcastTyping,
+    broadcastOnlineStatus,
+    setupHeartbeat,
   }
 }
