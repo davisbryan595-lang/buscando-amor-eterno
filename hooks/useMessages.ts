@@ -45,6 +45,8 @@ export function useMessages() {
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const pollAttemptsRef = useRef(0)
   const lastFetchRef = useRef(0)
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const isTypingRef = useRef(false)
 
   useEffect(() => {
     if (!user) {
