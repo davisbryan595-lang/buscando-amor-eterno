@@ -117,13 +117,25 @@ export function useBrowseProfiles() {
 
         // If mutual like found, update both records to 'matched'
         if (mutualLike && mutualLike.status === 'liked') {
-          const { error: updateErr } = await supabase
+          // Update the incoming like (from the other user)
+          const { error: updateErr1 } = await supabase
             .from('likes')
             .update({ status: 'matched' })
-            .or(`and(user_id.eq.${user.id},liked_user_id.eq.${likedUserId}),and(user_id.eq.${likedUserId},liked_user_id.eq.${user.id})`)
+            .eq('user_id', likedUserId)
+            .eq('liked_user_id', user.id)
 
-          if (updateErr) {
-            console.warn('Warning: could not update mutual match status:', updateErr.message)
+          // Update the outgoing like (from current user)
+          const { error: updateErr2 } = await supabase
+            .from('likes')
+            .update({ status: 'matched' })
+            .eq('user_id', user.id)
+            .eq('liked_user_id', likedUserId)
+
+          if (updateErr1 || updateErr2) {
+            console.warn('Warning: could not update mutual match status:', {
+              updateErr1: updateErr1?.message,
+              updateErr2: updateErr2?.message,
+            })
           }
         }
 
