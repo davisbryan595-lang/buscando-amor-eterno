@@ -508,6 +508,75 @@ export function useMessages() {
     [user]
   )
 
+  const broadcastOnlineStatus = useCallback(
+    async (isOnline: boolean) => {
+      if (!user) return
+
+      try {
+        const onlineStatus = {
+          user_id: user.id,
+          is_online: isOnline,
+          timestamp: new Date().toISOString(),
+        }
+
+        // Broadcast to all conversations
+        const userChannel = supabase.channel(`user:${user.id}:online`)
+        await userChannel.send({
+          type: 'broadcast',
+          event: 'user_status',
+          payload: onlineStatus,
+        })
+      } catch (err: any) {
+        console.warn('Failed to broadcast online status:', err)
+      }
+    },
+    [user]
+  )
+
+  const setupHeartbeat = useCallback(() => {
+    if (!user) return
+
+    // Broadcast online status immediately
+    broadcastOnlineStatus(true)
+
+    // Set up heartbeat to send online status every 30 seconds
+    if (heartbeatIntervalRef.current) {
+      clearInterval(heartbeatIntervalRef.current)
+    }
+
+    heartbeatIntervalRef.current = setInterval(() => {
+      broadcastOnlineStatus(true)
+    }, 30000)
+
+    // Handle page visibility changes
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        console.log('[Heartbeat] Page hidden')
+        broadcastOnlineStatus(false)
+      } else {
+        console.log('[Heartbeat] Page visible')
+        broadcastOnlineStatus(true)
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    // Handle page unload
+    const handleBeforeUnload = () => {
+      broadcastOnlineStatus(false)
+    }
+
+    window.addEventListener('beforeunload', handleBeforeUnload)
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      window.removeEventListener('beforeunload', handleBeforeUnload)
+      if (heartbeatIntervalRef.current) {
+        clearInterval(heartbeatIntervalRef.current)
+      }
+    }
+  }, [user, broadcastOnlineStatus])
+
   const handleTyping = useCallback(
     (recipientId: string) => {
       if (!user) return
