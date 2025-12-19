@@ -8,6 +8,7 @@ import { useMessages } from '@/hooks/useMessages'
 import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
 import Image from 'next/image'
+import { generateChannelName, userIdToAgoraUid } from '@/lib/agora'
 
 // Lazy load Agora SDK only on client side
 let AgoraRTC: any = null
