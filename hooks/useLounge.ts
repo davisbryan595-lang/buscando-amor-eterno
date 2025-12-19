@@ -191,7 +191,7 @@ export function useLounge() {
   }, [user])
 
   // Track user presence
-  const updatePresence = useCallback(async () => {
+  const updatePresence = useCallback(() => {
     if (!user) return
 
     let isMounted = true
