@@ -262,8 +262,9 @@ export default function AgoraVideoCall({
         await agoraClient.publish(tracksToPublish)
 
         // Play local video (for video calls only)
-        if (!isAudioOnly && videoTrack && localVideoContainerRef.current) {
-          videoTrack.play(localVideoContainerRef.current)
+        // Using string ID is the Agora-recommended pattern for reliable playback
+        if (!isAudioOnly && videoTrack) {
+          videoTrack.play('local-player')
         }
 
         // UI is ready immediately after publishing local tracks
