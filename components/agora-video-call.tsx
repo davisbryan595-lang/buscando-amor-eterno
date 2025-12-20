@@ -457,6 +457,30 @@ export default function AgoraVideoCall({
     return `${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`
   }
 
+  const getStatusMessage = () => {
+    // Show connection state if there's a real network issue
+    if (connectionState === 'reconnecting') {
+      return 'Reconnecting...'
+    }
+    if (connectionState === 'disconnected') {
+      return 'Connection lost'
+    }
+
+    // Show media status when intentionally disabled/muted
+    if (!remoteCameraEnabled && !remoteAudioEnabled) {
+      return 'Camera and microphone off'
+    }
+    if (!remoteCameraEnabled && remoteAudioEnabled) {
+      return 'Camera off'
+    }
+    if (!remoteAudioEnabled && remoteCameraEnabled) {
+      return 'Microphone muted'
+    }
+
+    // All good - return empty string
+    return ''
+  }
+
   if (isAudioOnly) {
     return (
       <div className="relative w-full h-full bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-center">
