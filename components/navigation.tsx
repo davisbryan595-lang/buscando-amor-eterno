@@ -164,9 +164,21 @@ export default function Navigation() {
         </div>
       </div>
 
-      {/* Mobile Menu */}
-      {menuOpen && isMounted && (
-        <div className="md:hidden bg-white border-t border-rose-100 py-4 px-4 space-y-3">
+      {/* Mobile Menu with slide animation */}
+      <AnimatePresence>
+        {menuOpen && isMounted && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{
+              type: 'spring',
+              damping: 25,
+              stiffness: 300,
+              opacity: { duration: 0.2 },
+            }}
+            className="md:hidden bg-white border-t border-rose-100 py-4 px-4 space-y-3 overflow-hidden"
+          >
           <Link href="/" className="block text-foreground hover:text-primary transition py-2" onClick={() => setMenuOpen(false)}>
             {t('common.home')}
           </Link>
@@ -215,8 +227,9 @@ export default function Navigation() {
               </div>
             </>
           )}
-        </div>
-      )}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <ResponsiveNotificationsPanel
         open={notificationsOpen}
