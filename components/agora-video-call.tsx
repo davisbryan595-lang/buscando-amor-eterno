@@ -511,6 +511,9 @@ export default function AgoraVideoCall({
                       {formatDuration(callDuration)}
                     </p>
                   )}
+                  {getStatusMessage() && (
+                    <p className="text-gray-400 text-sm mt-3">{getStatusMessage()}</p>
+                  )}
                 </div>
               </div>
             </>
