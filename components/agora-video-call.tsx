@@ -234,6 +234,17 @@ export default function AgoraVideoCall({
           })
         })
 
+        // Handle connection state changes (network issues)
+        agoraClient.on('connection-state-change', (curState, prevState, reason) => {
+          if (curState === 'CONNECTED') {
+            setConnectionState('connected')
+          } else if (curState === 'RECONNECTING') {
+            setConnectionState('reconnecting')
+          } else if (curState === 'DISCONNECTED') {
+            setConnectionState('disconnected')
+          }
+        })
+
         // Create local audio and video tracks
         const audioTrack = await agoraSDK.createMicrophoneAudioTrack()
         const videoTrack = isAudioOnly ? null : await agoraSDK.createCameraVideoTrack()
