@@ -25,6 +25,7 @@ export function useStartCall() {
     try {
       // Generate room name (sorted IDs ensure consistency)
       const roomName = [user.id, recipientId].sort().join('-')
+      const callId = crypto.randomUUID()
       const expiresAt = new Date()
       expiresAt.setMinutes(expiresAt.getMinutes() + 5)
 
@@ -39,6 +40,7 @@ export function useStartCall() {
             recipient_id: recipientId,
             call_type: callType,
             room_name: roomName,
+            call_id: callId,
             status: 'pending',
             expires_at: expiresAt.toISOString(),
           },

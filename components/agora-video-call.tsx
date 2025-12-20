@@ -50,11 +50,16 @@ export default function AgoraVideoCall({
   const [error, setError] = useState<string | null>(null)
   const [otherUserImage, setOtherUserImage] = useState<string | null>(null)
   const [callDuration, setCallDuration] = useState(0)
+  const [remoteCameraEnabled, setRemoteCameraEnabled] = useState(true)
+  const [remoteAudioEnabled, setRemoteAudioEnabled] = useState(true)
+  const [connectionState, setConnectionState] = useState<'connected' | 'reconnecting' | 'disconnected'>('connected')
+  const [callId, setCallId] = useState<string | null>(null)
   const localVideoContainerRef = useRef<HTMLDivElement>(null)
   const remoteVideoContainerRef = useRef<HTMLDivElement>(null)
   const callStartTimeRef = useRef<number>(0)
   const callTimerRef = useRef<NodeJS.Timeout | null>(null)
   const ongoingLoggedRef = useRef(false)
+  const callIdRef = useRef<string | null>(null)
 
   const appId = process.env.NEXT_PUBLIC_AGORA_APP_ID
 
@@ -154,6 +159,7 @@ export default function AgoraVideoCall({
         agoraClient.on('user-published', async (user, mediaType) => {
           await agoraClient.subscribe(user, mediaType)
           if (mediaType === 'video') {
+            setRemoteCameraEnabled(true)
             setRemoteUsers((prevUsers) => {
               const isFirstRemoteUser = prevUsers.length === 0
               const updated = [
@@ -174,7 +180,12 @@ export default function AgoraVideoCall({
                 // Log ongoing call message when connection is established
                 if (!ongoingLoggedRef.current) {
                   ongoingLoggedRef.current = true
-                  logCallMessage(partnerId, callType, 'ongoing').catch((err) => {
+                  logCallMessage(partnerId, callType, 'ongoing').then((newCallId) => {
+                    if (newCallId) {
+                      callIdRef.current = newCallId
+                      setCallId(newCallId)
+                    }
+                  }).catch((err) => {
                     console.warn('Failed to log ongoing call:', err)
                   })
                 }
@@ -183,6 +194,7 @@ export default function AgoraVideoCall({
             })
           }
           if (mediaType === 'audio') {
+            setRemoteAudioEnabled(true)
             user.audioTrack?.play()
             // Also mark as connected if audio arrives (for audio-only calls)
             setIsConnected(true)
@@ -198,7 +210,12 @@ export default function AgoraVideoCall({
               // Log ongoing call message when connection is established
               if (!ongoingLoggedRef.current) {
                 ongoingLoggedRef.current = true
-                logCallMessage(partnerId, callType, 'ongoing').catch((err) => {
+                logCallMessage(partnerId, callType, 'ongoing').then((newCallId) => {
+                  if (newCallId) {
+                    callIdRef.current = newCallId
+                    setCallId(newCallId)
+                  }
+                }).catch((err) => {
                   console.warn('Failed to log ongoing call:', err)
                 })
               }
@@ -207,7 +224,13 @@ export default function AgoraVideoCall({
         })
 
         // Handle remote user unpublished event
-        agoraClient.on('user-unpublished', (user) => {
+        agoraClient.on('user-unpublished', (user, mediaType) => {
+          if (mediaType === 'video') {
+            setRemoteCameraEnabled(false)
+          }
+          if (mediaType === 'audio') {
+            setRemoteAudioEnabled(false)
+          }
           setRemoteUsers((prevUsers) => {
             const updated = prevUsers.filter((u) => u.uid !== user.uid)
             // If no more remote users, stop the timer
@@ -221,6 +244,17 @@ export default function AgoraVideoCall({
             }
             return updated
           })
+        })
+
+        // Handle connection state changes (network issues)
+        agoraClient.on('connection-state-change', (curState, prevState, reason) => {
+          if (curState === 'CONNECTED') {
+            setConnectionState('connected')
+          } else if (curState === 'RECONNECTING') {
+            setConnectionState('reconnecting')
+          } else if (curState === 'DISCONNECTED') {
+            setConnectionState('disconnected')
+          }
         })
 
         // Create local audio and video tracks
@@ -240,8 +274,9 @@ export default function AgoraVideoCall({
         await agoraClient.publish(tracksToPublish)
 
         // Play local video (for video calls only)
-        if (!isAudioOnly && videoTrack && localVideoContainerRef.current) {
-          videoTrack.play(localVideoContainerRef.current)
+        // Using string ID is the Agora-recommended pattern for reliable playback
+        if (!isAudioOnly && videoTrack) {
+          videoTrack.play('local-player')
         }
 
         // UI is ready immediately after publishing local tracks
@@ -340,8 +375,8 @@ export default function AgoraVideoCall({
       // Log ended call with duration
       try {
         const finalDuration = Math.floor((Date.now() - callStartTimeRef.current) / 1000)
-        if (ongoingLoggedRef.current) {
-          await logCallMessage(partnerId, callType, 'ended', finalDuration)
+        if (ongoingLoggedRef.current && callIdRef.current) {
+          await logCallMessage(partnerId, callType, 'ended', finalDuration, callIdRef.current)
         }
       } catch (err) {
         console.warn('Failed to log ended call:', err)
@@ -435,6 +470,30 @@ export default function AgoraVideoCall({
     return `${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`
   }
 
+  const getStatusMessage = () => {
+    // Show connection state if there's a real network issue
+    if (connectionState === 'reconnecting') {
+      return 'Reconnecting...'
+    }
+    if (connectionState === 'disconnected') {
+      return 'Connection lost'
+    }
+
+    // Show media status when intentionally disabled/muted
+    if (!remoteCameraEnabled && !remoteAudioEnabled) {
+      return 'Camera and microphone off'
+    }
+    if (!remoteCameraEnabled && remoteAudioEnabled) {
+      return 'Camera off'
+    }
+    if (!remoteAudioEnabled && remoteCameraEnabled) {
+      return 'Microphone muted'
+    }
+
+    // All good - return empty string
+    return ''
+  }
+
   if (isAudioOnly) {
     return (
       <div className="relative w-full h-full bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-center">
@@ -465,6 +524,9 @@ export default function AgoraVideoCall({
                       {formatDuration(callDuration)}
                     </p>
                   )}
+                  {getStatusMessage() && (
+                    <p className="text-gray-400 text-sm mt-3">{getStatusMessage()}</p>
+                  )}
                 </div>
               </div>
             </>
@@ -485,6 +547,9 @@ export default function AgoraVideoCall({
                   <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
                   <span>Waiting for {partnerName}...</span>
                 </div>
+              )}
+              {getStatusMessage() && (
+                <p className="text-gray-400 text-sm mt-3">{getStatusMessage()}</p>
               )}
             </div>
           )}
@@ -533,6 +598,9 @@ export default function AgoraVideoCall({
           <div className="text-center">
             <div className="w-16 h-16 rounded-full border-4 border-primary border-t-transparent animate-spin mx-auto mb-4" />
             <p className="text-white font-medium">Waiting for {partnerName}...</p>
+            {getStatusMessage() && (
+              <p className="text-gray-400 text-sm mt-3">{getStatusMessage()}</p>
+            )}
           </div>
         ) : null}
       </div>
@@ -542,6 +610,9 @@ export default function AgoraVideoCall({
         <div className="flex-1">
           <h3 className="text-white font-semibold text-lg">Video Call</h3>
           <p className="text-gray-300 text-sm">{partnerName}</p>
+          {getStatusMessage() && (
+            <p className="text-gray-400 text-xs mt-1">{getStatusMessage()}</p>
+          )}
         </div>
         <div className="flex items-center gap-4">
           {isConnected && (
@@ -562,6 +633,7 @@ export default function AgoraVideoCall({
       {/* Local video - floating bubble */}
       <div className="absolute bottom-24 right-6 w-28 h-40 rounded-2xl overflow-hidden border-4 border-primary soft-glow-lg z-20 bg-slate-900">
         <div
+          id="local-player"
           ref={localVideoContainerRef}
           className="w-full h-full bg-slate-800"
         />
