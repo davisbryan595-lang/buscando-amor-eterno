@@ -620,6 +620,7 @@ export default function AgoraVideoCall({
       {/* Local video - floating bubble */}
       <div className="absolute bottom-24 right-6 w-28 h-40 rounded-2xl overflow-hidden border-4 border-primary soft-glow-lg z-20 bg-slate-900">
         <div
+          id="local-player"
           ref={localVideoContainerRef}
           className="w-full h-full bg-slate-800"
         />
