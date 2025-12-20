@@ -180,7 +180,12 @@ export default function AgoraVideoCall({
                 // Log ongoing call message when connection is established
                 if (!ongoingLoggedRef.current) {
                   ongoingLoggedRef.current = true
-                  logCallMessage(partnerId, callType, 'ongoing').catch((err) => {
+                  logCallMessage(partnerId, callType, 'ongoing').then((newCallId) => {
+                    if (newCallId) {
+                      callIdRef.current = newCallId
+                      setCallId(newCallId)
+                    }
+                  }).catch((err) => {
                     console.warn('Failed to log ongoing call:', err)
                   })
                 }
@@ -205,7 +210,12 @@ export default function AgoraVideoCall({
               // Log ongoing call message when connection is established
               if (!ongoingLoggedRef.current) {
                 ongoingLoggedRef.current = true
-                logCallMessage(partnerId, callType, 'ongoing').catch((err) => {
+                logCallMessage(partnerId, callType, 'ongoing').then((newCallId) => {
+                  if (newCallId) {
+                    callIdRef.current = newCallId
+                    setCallId(newCallId)
+                  }
+                }).catch((err) => {
                   console.warn('Failed to log ongoing call:', err)
                 })
               }
