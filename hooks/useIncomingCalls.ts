@@ -145,6 +145,7 @@ export function useIncomingCalls() {
                   caller_id: callInvitation.caller_id,
                   recipient_id: callInvitation.recipient_id,
                   call_type: callInvitation.call_type,
+                  call_id: callInvitation.call_id,
                   status: callInvitation.status,
                   room_name: callInvitation.room_name,
                   created_at: callInvitation.created_at,
