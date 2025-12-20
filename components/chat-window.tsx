@@ -270,41 +270,40 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
     <div className="bg-gradient-to-b from-white to-rose-50 rounded-none md:rounded-xl border-0 md:border border-rose-100 flex flex-col h-full w-full soft-glow overflow-hidden">
       {/* Header */}
       <div className="sticky top-16 md:top-24 z-20 px-3 py-3 sm:p-4 lg:p-6 border-b border-rose-100 flex items-center justify-between flex-shrink-0 gap-2 bg-gradient-to-b from-white to-rose-50">
-        <button
-          onClick={() => router.push(`/profile/${conversation.other_user_id}`)}
-          className="flex items-center gap-2 sm:gap-3 lg:gap-4 min-w-0 flex-1 hover:opacity-80 transition rounded-lg p-1 -m-1"
-        >
+        <div className="flex items-center gap-2 sm:gap-3 lg:gap-4 min-w-0 flex-1">
           {onBack && (
             <button
-              onClick={(e) => {
-                e.stopPropagation()
-                onBack()
-              }}
+              onClick={onBack}
               className="md:hidden p-1.5 sm:p-2 hover:bg-rose-100 rounded-full transition flex-shrink-0"
               aria-label="Back to conversations"
             >
               <ArrowLeft size={18} className="text-slate-700" />
             </button>
           )}
-          <div className="relative w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 flex-shrink-0">
-            <Image
-              src={otherUserDetails?.image || conversation.other_user_image || "/placeholder.svg"}
-              alt={otherUserDetails?.name || conversation.other_user_name || 'User'}
-              fill
-              className="rounded-full object-cover border-2 border-rose-100"
-              priority
-            />
-            {conversation.is_online && (
-              <div className="absolute bottom-0 right-0 w-2.5 h-2.5 sm:w-3 sm:h-3 md:w-4 md:h-4 bg-green-500 rounded-full border-2 sm:border-3 border-white z-10" />
-            )}
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="font-semibold text-slate-900 text-sm sm:text-base lg:text-lg truncate">{otherUserDetails?.name || conversation.other_user_name || 'User'}</p>
-            <p className="text-xs sm:text-sm lg:text-base text-slate-600 truncate">
-              {conversation.is_online ? 'Online' : getLastSeenText(conversation.last_message_time)}
-            </p>
-          </div>
-        </button>
+          <button
+            onClick={() => router.push(`/profile/${conversation.other_user_id}`)}
+            className="flex items-center gap-2 sm:gap-3 lg:gap-4 min-w-0 flex-1 hover:opacity-80 transition rounded-lg p-1 -m-1"
+          >
+            <div className="relative w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 flex-shrink-0">
+              <Image
+                src={otherUserDetails?.image || conversation.other_user_image || "/placeholder.svg"}
+                alt={otherUserDetails?.name || conversation.other_user_name || 'User'}
+                fill
+                className="rounded-full object-cover border-2 border-rose-100"
+                priority
+              />
+              {conversation.is_online && (
+                <div className="absolute bottom-0 right-0 w-2.5 h-2.5 sm:w-3 sm:h-3 md:w-4 md:h-4 bg-green-500 rounded-full border-2 sm:border-3 border-white z-10" />
+              )}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="font-semibold text-slate-900 text-sm sm:text-base lg:text-lg truncate">{otherUserDetails?.name || conversation.other_user_name || 'User'}</p>
+              <p className="text-xs sm:text-sm lg:text-base text-slate-600 truncate">
+                {conversation.is_online ? 'Online' : getLastSeenText(conversation.last_message_time)}
+              </p>
+            </div>
+          </button>
+        </div>
 
         <div className="flex gap-1 sm:gap-2 lg:gap-3 flex-shrink-0">
           <button
