@@ -175,7 +175,7 @@ export function useMessages() {
       // Fetch messages more efficiently with smaller limit
       const queryPromise = supabase
         .from('messages')
-        .select('sender_id, recipient_id, content, created_at, read, type, call_type, call_status, call_duration')
+        .select('sender_id, recipient_id, content, created_at, read, type, call_type, call_status, call_duration, call_id')
         .or(`sender_id.eq.${user.id},recipient_id.eq.${user.id}`)
         .order('created_at', { ascending: false })
         .limit(150)
