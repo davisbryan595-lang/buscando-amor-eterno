@@ -27,6 +27,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const initializeAuth = async () => {
       try {
+        // Clear any stored auth tokens to ensure fresh session on page load
+        if (typeof window !== 'undefined') {
+          Object.keys(localStorage).forEach(key => {
+            if (key.includes('supabase') || key.includes('auth')) {
+              localStorage.removeItem(key)
+            }
+          })
+          Object.keys(sessionStorage).forEach(key => {
+            if (key.includes('supabase') || key.includes('auth')) {
+              sessionStorage.removeItem(key)
+            }
+          })
+        }
+
         const { data: { session: sessionData }, error } = await supabase.auth.getSession()
 
         if (error) throw error
