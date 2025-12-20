@@ -63,81 +63,138 @@ export function ResponsiveNotificationsPanel({
     onDismiss(id)
   }
 
-  const NotificationsContent = () => (
-    <div className="flex flex-col h-full">
-      <div className="p-4 border-b border-rose-100 bg-gradient-to-r from-white to-rose-50 flex-shrink-0">
-        <h3 className="font-semibold text-slate-900 flex items-center gap-2">
-          <Heart size={18} className="text-rose-500 fill-rose-500" />
-          New Likes ({notifications.length})
-        </h3>
+  const NotificationItem = ({ notif }: { notif: any }) => (
+    <div className="p-4 hover:bg-rose-50 transition">
+      <div className="flex gap-3 items-start mb-3">
+        <div className="relative w-12 h-12 flex-shrink-0">
+          <Image
+            src={notif.liker_image || '/placeholder.svg'}
+            alt={notif.liker_name || 'User'}
+            fill
+            className="rounded-full object-cover"
+          />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="font-semibold text-slate-900 truncate">
+            {notif.liker_name || 'Someone'}
+          </p>
+          <p className="text-sm text-slate-600">likes your profile</p>
+        </div>
       </div>
 
-      {notifications.length === 0 ? (
-        <div className="flex-1 flex items-center justify-center p-8">
-          <p className="text-center text-slate-600">No new notifications</p>
-        </div>
-      ) : (
-        <div className="flex-1 overflow-y-auto divide-y max-h-[60vh] md:max-h-96">
-          {notifications.map((notif) => (
-            <div key={notif.id} className="p-4 hover:bg-rose-50 transition">
-              <div className="flex gap-3 items-start mb-3">
-                <div className="relative w-12 h-12 flex-shrink-0">
-                  <Image
-                    src={notif.liker_image || '/placeholder.svg'}
-                    alt={notif.liker_name || 'User'}
-                    fill
-                    className="rounded-full object-cover"
-                  />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-slate-900 truncate">
-                    {notif.liker_name || 'Someone'}
-                  </p>
-                  <p className="text-sm text-slate-600">likes your profile</p>
-                </div>
-              </div>
-
-              <div className="flex gap-2">
-                <button
-                  onClick={() => handleStartConversation(notif)}
-                  disabled={loadingId === notif.liker_id}
-                  className="flex-1 py-2 bg-primary text-white rounded-full text-sm font-semibold hover:bg-rose-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {loadingId === notif.liker_id ? 'Starting...' : 'Chat'}
-                </button>
-                <button
-                  onClick={() => handleReject(notif.id)}
-                  disabled={loadingId === notif.liker_id}
-                  className="px-3 py-2 border border-slate-300 text-slate-700 rounded-full text-sm hover:bg-slate-50 transition disabled:opacity-50"
-                  aria-label="Dismiss"
-                >
-                  <X size={16} />
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+      <div className="flex gap-2">
+        <button
+          onClick={() => handleStartConversation(notif)}
+          disabled={loadingId === notif.liker_id}
+          className="flex-1 py-2 bg-primary text-white rounded-full text-sm font-semibold hover:bg-rose-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {loadingId === notif.liker_id ? 'Starting...' : 'Chat'}
+        </button>
+        <button
+          onClick={() => handleReject(notif.id)}
+          disabled={loadingId === notif.liker_id}
+          className="px-3 py-2 border border-slate-300 text-slate-700 rounded-full text-sm hover:bg-slate-50 transition disabled:opacity-50"
+          aria-label="Dismiss"
+        >
+          <X size={16} />
+        </button>
+      </div>
     </div>
   )
 
-  // Desktop: Show as Dialog with fade/slide animation
-  if (!isMobile) {
+  // Mobile: Show as Drawer with bottom slide animation
+  if (isMobile) {
     return (
       <AnimatePresence>
         {open && (
+          <>
+            {/* Animated backdrop */}
+            <motion.div
+              key="backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 bg-black/50 z-40"
+              onClick={() => onOpenChange(false)}
+            />
+
+            {/* Animated drawer content - slide up from bottom */}
+            <motion.div
+              key="drawer"
+              initial={{ y: '100%', opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: '100%', opacity: 0 }}
+              transition={{
+                type: 'spring',
+                damping: 30,
+                stiffness: 300,
+                opacity: { duration: 0.2 },
+              }}
+              className="fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl z-50 max-h-[80vh] overflow-hidden flex flex-col shadow-2xl"
+            >
+              {/* Handle bar for swipe hint */}
+              <div className="flex justify-center pt-2 pb-1">
+                <div className="w-12 h-1 bg-slate-300 rounded-full" />
+              </div>
+
+              {/* Header */}
+              <div className="px-4 py-3 border-b border-rose-100 bg-gradient-to-r from-white to-rose-50 flex-shrink-0">
+                <h3 className="font-semibold text-slate-900 flex items-center gap-2">
+                  <Heart size={18} className="text-rose-500 fill-rose-500" />
+                  New Likes ({notifications.length})
+                </h3>
+              </div>
+
+              {/* Content */}
+              <div className="flex-1 overflow-y-auto">
+                {notifications.length === 0 ? (
+                  <div className="p-8 text-center text-slate-600">
+                    <p>No new notifications</p>
+                  </div>
+                ) : (
+                  <div className="divide-y">
+                    {notifications.map((notif) => (
+                      <NotificationItem key={notif.id} notif={notif} />
+                    ))}
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+    )
+  }
+
+  // Desktop: Show as Dialog with fade and slide from right
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <AnimatePresence>
+        {open && (
           <motion.div
+            key="dialog-backdrop"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 bg-black/50 z-40"
             onClick={() => onOpenChange(false)}
+            className="fixed inset-0 bg-black/50 z-40"
           />
         )}
       </AnimatePresence>
-    ) || (
-      <Dialog open={open} onOpenChange={onOpenChange}>
+
+      <motion.div
+        initial={{ opacity: 0, x: 20 }}
+        animate={{ opacity: 1, x: 0 }}
+        exit={{ opacity: 0, x: 20 }}
+        transition={{
+          type: 'spring',
+          damping: 30,
+          stiffness: 300,
+          opacity: { duration: 0.2 },
+        }}
+      >
         <DialogContent className="max-w-md p-0 gap-0 border-rose-100">
           <DialogHeader className="border-b border-rose-100 bg-gradient-to-r from-white to-rose-50">
             <DialogTitle className="flex items-center gap-2">
@@ -153,110 +210,13 @@ export function ResponsiveNotificationsPanel({
             ) : (
               <div className="divide-y max-h-96 overflow-y-auto">
                 {notifications.map((notif) => (
-                  <div key={notif.id} className="p-4 hover:bg-rose-50 transition">
-                    <div className="flex gap-3 items-start mb-3">
-                      <div className="relative w-12 h-12 flex-shrink-0">
-                        <Image
-                          src={notif.liker_image || '/placeholder.svg'}
-                          alt={notif.liker_name || 'User'}
-                          fill
-                          className="rounded-full object-cover"
-                        />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-slate-900 truncate">
-                          {notif.liker_name || 'Someone'}
-                        </p>
-                        <p className="text-sm text-slate-600">likes your profile</p>
-                      </div>
-                    </div>
-
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => handleStartConversation(notif)}
-                        disabled={loadingId === notif.liker_id}
-                        className="flex-1 py-2 bg-primary text-white rounded-full text-sm font-semibold hover:bg-rose-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        {loadingId === notif.liker_id ? 'Starting...' : 'Chat'}
-                      </button>
-                      <button
-                        onClick={() => handleReject(notif.id)}
-                        disabled={loadingId === notif.liker_id}
-                        className="px-3 py-2 border border-slate-300 text-slate-700 rounded-full text-sm hover:bg-slate-50 transition disabled:opacity-50"
-                        aria-label="Dismiss"
-                      >
-                        <X size={16} />
-                      </button>
-                    </div>
-                  </div>
+                  <NotificationItem key={notif.id} notif={notif} />
                 ))}
               </div>
             )}
           </div>
         </DialogContent>
-      </Dialog>
-    )
-  }
-
-  // Mobile: Show as Drawer (bottom sheet)
-  return (
-    <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="border-rose-100">
-        <DrawerHeader className="border-b border-rose-100 bg-gradient-to-r from-white to-rose-50">
-          <DrawerTitle className="flex items-center gap-2">
-            <Heart size={18} className="text-rose-500 fill-rose-500" />
-            New Likes ({notifications.length})
-          </DrawerTitle>
-        </DrawerHeader>
-        <div className="flex-1">
-          {notifications.length === 0 ? (
-            <div className="p-8 text-center text-slate-600">
-              <p>No new notifications</p>
-            </div>
-          ) : (
-            <div className="divide-y max-h-[60vh] overflow-y-auto">
-              {notifications.map((notif) => (
-                <div key={notif.id} className="p-4 hover:bg-rose-50 transition">
-                  <div className="flex gap-3 items-start mb-3">
-                    <div className="relative w-12 h-12 flex-shrink-0">
-                      <Image
-                        src={notif.liker_image || '/placeholder.svg'}
-                        alt={notif.liker_name || 'User'}
-                        fill
-                        className="rounded-full object-cover"
-                      />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-slate-900 truncate">
-                        {notif.liker_name || 'Someone'}
-                      </p>
-                      <p className="text-sm text-slate-600">likes your profile</p>
-                    </div>
-                  </div>
-
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => handleStartConversation(notif)}
-                      disabled={loadingId === notif.liker_id}
-                      className="flex-1 py-2 bg-primary text-white rounded-full text-sm font-semibold hover:bg-rose-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {loadingId === notif.liker_id ? 'Starting...' : 'Chat'}
-                    </button>
-                    <button
-                      onClick={() => handleReject(notif.id)}
-                      disabled={loadingId === notif.liker_id}
-                      className="px-3 py-2 border border-slate-300 text-slate-700 rounded-full text-sm hover:bg-slate-50 transition disabled:opacity-50"
-                      aria-label="Dismiss"
-                    >
-                      <X size={16} />
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </DrawerContent>
-    </Drawer>
+      </motion.div>
+    </Dialog>
   )
 }
