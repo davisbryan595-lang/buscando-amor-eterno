@@ -34,27 +34,27 @@ export function useIncomingCalls() {
   }, [])
 
   const rejectCall = useCallback(
-    async (callId: string) => {
+    async (invitationId: string) => {
       try {
         // Get the call invitation details before deleting
         const { data: callInvitation } = await supabase
           .from('call_invitations')
-          .select('caller_id, call_type')
-          .eq('id', callId)
+          .select('caller_id, call_type, call_id')
+          .eq('id', invitationId)
           .single()
 
         // Delete the invitation when declining to prevent duplicate key violations
         const { error: err } = await supabase
           .from('call_invitations')
           .delete()
-          .eq('id', callId)
+          .eq('id', invitationId)
 
         if (err) throw err
 
         // Log missed call message (from caller's perspective)
         if (callInvitation) {
           try {
-            await logCallMessage(callInvitation.caller_id, callInvitation.call_type, 'missed')
+            await logCallMessage(callInvitation.caller_id, callInvitation.call_type, 'missed', undefined, callInvitation.call_id)
           } catch (logErr) {
             console.warn('Failed to log missed call:', logErr)
           }
