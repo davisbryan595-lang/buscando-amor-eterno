@@ -53,7 +53,7 @@ export default function AgoraVideoCall({
   const [remoteCameraEnabled, setRemoteCameraEnabled] = useState(true)
   const [remoteAudioEnabled, setRemoteAudioEnabled] = useState(true)
   const [connectionState, setConnectionState] = useState<'connected' | 'reconnecting' | 'disconnected'>('connected')
-  const [callId, setCallId] = useState<string | null>(null)
+  const [loggedCallId, setLoggedCallId] = useState<string | null>(null)
   const localVideoContainerRef = useRef<HTMLDivElement>(null)
   const remoteVideoContainerRef = useRef<HTMLDivElement>(null)
   const callStartTimeRef = useRef<number>(0)
@@ -183,7 +183,7 @@ export default function AgoraVideoCall({
                   logCallMessage(partnerId, callType, 'ongoing').then((newCallId) => {
                     if (newCallId) {
                       callIdRef.current = newCallId
-                      setCallId(newCallId)
+                      setLoggedCallId(newCallId)
                     }
                   }).catch((err) => {
                     console.warn('Failed to log ongoing call:', err)
@@ -213,7 +213,7 @@ export default function AgoraVideoCall({
                 logCallMessage(partnerId, callType, 'ongoing').then((newCallId) => {
                   if (newCallId) {
                     callIdRef.current = newCallId
-                    setCallId(newCallId)
+                    setLoggedCallId(newCallId)
                   }
                 }).catch((err) => {
                   console.warn('Failed to log ongoing call:', err)
