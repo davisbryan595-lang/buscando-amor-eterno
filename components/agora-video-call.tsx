@@ -594,6 +594,9 @@ export default function AgoraVideoCall({
         <div className="flex-1">
           <h3 className="text-white font-semibold text-lg">Video Call</h3>
           <p className="text-gray-300 text-sm">{partnerName}</p>
+          {getStatusMessage() && (
+            <p className="text-gray-400 text-xs mt-1">{getStatusMessage()}</p>
+          )}
         </div>
         <div className="flex items-center gap-4">
           {isConnected && (
