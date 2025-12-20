@@ -157,6 +157,7 @@ export default function AgoraVideoCall({
         agoraClient.on('user-published', async (user, mediaType) => {
           await agoraClient.subscribe(user, mediaType)
           if (mediaType === 'video') {
+            setRemoteCameraEnabled(true)
             setRemoteUsers((prevUsers) => {
               const isFirstRemoteUser = prevUsers.length === 0
               const updated = [
@@ -186,6 +187,7 @@ export default function AgoraVideoCall({
             })
           }
           if (mediaType === 'audio') {
+            setRemoteAudioEnabled(true)
             user.audioTrack?.play()
             // Also mark as connected if audio arrives (for audio-only calls)
             setIsConnected(true)
