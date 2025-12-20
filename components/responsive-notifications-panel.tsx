@@ -167,56 +167,30 @@ export function ResponsiveNotificationsPanel({
     )
   }
 
-  // Desktop: Show as Dialog with fade and slide from right
+  // Desktop: Show as Dialog with simple fade
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            key="dialog-backdrop"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            onClick={() => onOpenChange(false)}
-            className="fixed inset-0 bg-black/50 z-40"
-          />
-        )}
-      </AnimatePresence>
-
-      <motion.div
-        initial={{ opacity: 0, x: 20 }}
-        animate={{ opacity: 1, x: 0 }}
-        exit={{ opacity: 0, x: 20 }}
-        transition={{
-          type: 'spring',
-          damping: 30,
-          stiffness: 300,
-          opacity: { duration: 0.2 },
-        }}
-      >
-        <DialogContent className="max-w-md p-0 gap-0 border-rose-100">
-          <DialogHeader className="border-b border-rose-100 bg-gradient-to-r from-white to-rose-50">
-            <DialogTitle className="flex items-center gap-2">
-              <Heart size={18} className="text-rose-500 fill-rose-500" />
-              New Likes ({notifications.length})
-            </DialogTitle>
-          </DialogHeader>
-          <div className="px-0 py-0">
-            {notifications.length === 0 ? (
-              <div className="p-8 text-center text-slate-600">
-                <p>No new notifications</p>
-              </div>
-            ) : (
-              <div className="divide-y max-h-96 overflow-y-auto">
-                {notifications.map((notif) => (
-                  <NotificationItem key={notif.id} notif={notif} />
-                ))}
-              </div>
-            )}
-          </div>
-        </DialogContent>
-      </motion.div>
+      <DialogContent className="max-w-md p-0 gap-0 border-rose-100 animate-in fade-in-50 zoom-in-95 duration-200">
+        <DialogHeader className="border-b border-rose-100 bg-gradient-to-r from-white to-rose-50">
+          <DialogTitle className="flex items-center gap-2">
+            <Heart size={18} className="text-rose-500 fill-rose-500" />
+            New Likes ({notifications.length})
+          </DialogTitle>
+        </DialogHeader>
+        <div className="px-0 py-0">
+          {notifications.length === 0 ? (
+            <div className="p-8 text-center text-slate-600">
+              <p>No new notifications</p>
+            </div>
+          ) : (
+            <div className="divide-y max-h-96 overflow-y-auto">
+              {notifications.map((notif) => (
+                <NotificationItem key={notif.id} notif={notif} />
+              ))}
+            </div>
+          )}
+        </div>
+      </DialogContent>
     </Dialog>
   )
 }
