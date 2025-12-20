@@ -8,7 +8,7 @@ import { useLanguage } from '@/lib/i18n-context'
 import { useAuth } from '@/context/auth-context'
 import { useNotifications } from '@/hooks/useNotifications'
 import { AccountMenu } from '@/components/account-menu'
-import { NotificationsDropdown } from '@/components/notifications-dropdown'
+import { ResponsiveNotificationsPanel } from '@/components/responsive-notifications-panel'
 
 export default function Navigation() {
   const [menuOpen, setMenuOpen] = useState(false)
