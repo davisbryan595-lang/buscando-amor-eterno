@@ -213,7 +213,7 @@ export default function AgoraVideoCall({
                 logCallMessage(partnerId, callType, 'ongoing').then((newCallId) => {
                   if (newCallId) {
                     callIdRef.current = newCallId
-                    setCallId(newCallId)
+                    setLoggedCallId(newCallId)
                   }
                 }).catch((err) => {
                   console.warn('Failed to log ongoing call:', err)
