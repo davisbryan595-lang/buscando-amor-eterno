@@ -375,8 +375,8 @@ export default function AgoraVideoCall({
       // Log ended call with duration
       try {
         const finalDuration = Math.floor((Date.now() - callStartTimeRef.current) / 1000)
-        if (ongoingLoggedRef.current) {
-          await logCallMessage(partnerId, callType, 'ended', finalDuration)
+        if (ongoingLoggedRef.current && callIdRef.current) {
+          await logCallMessage(partnerId, callType, 'ended', finalDuration, callIdRef.current)
         }
       } catch (err) {
         console.warn('Failed to log ended call:', err)
