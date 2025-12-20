@@ -14,6 +14,7 @@ export interface Message {
   call_type?: 'audio' | 'video'
   call_status?: 'ongoing' | 'incoming' | 'missed' | 'ended'
   call_duration?: number
+  call_id?: string
 }
 
 export interface TypingStatus {
