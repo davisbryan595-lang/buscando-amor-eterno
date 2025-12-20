@@ -230,7 +230,13 @@ export default function Navigation() {
             </Link>
           </motion.div>
 
-          <div className="border-t border-rose-100 pt-3 mt-3">
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ delay: 0.35, duration: 0.3 }}
+            className="border-t border-rose-100 pt-3 mt-3"
+          >
             <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Language</p>
             <button
               onClick={() => handleLanguageChange('en')}
@@ -244,10 +250,15 @@ export default function Navigation() {
             >
               Español
             </button>
-          </div>
+          </motion.div>
 
           {!user && (
-            <>
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ delay: 0.4, duration: 0.3 }}
+            >
               <div className="border-t border-rose-100 pt-3 mt-3 space-y-3">
                 <Link href="/login" className="block text-foreground hover:text-primary transition py-2" onClick={() => setMenuOpen(false)}>
                   {t('common.logIn')}
@@ -260,7 +271,7 @@ export default function Navigation() {
                   {t('common.joinForPrice')}
                 </Link>
               </div>
-            </>
+            </motion.div>
           )}
           </motion.div>
         )}
