@@ -432,6 +432,21 @@ export default function AgoraVideoCall({
 
   const endCall = async () => {
     try {
+      // Broadcast "call ended" to the other user via Supabase Realtime
+      if (user && partnerId) {
+        const roomName = [user.id, partnerId].sort().join('-')
+        const channel = supabase.channel(`call:${roomName}`)
+        try {
+          await channel.send({
+            type: 'broadcast',
+            event: 'call_ended',
+            payload: { ended_by: user.id },
+          })
+        } catch (err) {
+          console.warn('Failed to broadcast call_ended event:', err)
+        }
+      }
+
       // Clear call timer
       if (callTimerRef.current) {
         clearInterval(callTimerRef.current)
