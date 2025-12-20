@@ -128,6 +128,62 @@ export default function AgoraVideoCall({
     }
   }, [user, partnerId, client, localAudioTrack, localVideoTrack, router])
 
+  // Handle page unload (refresh/close tab) - broadcast clean call end
+  useEffect(() => {
+    const handleUnload = async () => {
+      // Broadcast end signal to other user via Supabase Realtime
+      if (user && partnerId) {
+        const roomName = [user.id, partnerId].sort().join('-')
+        const channel = supabase.channel(`call:${roomName}`)
+        try {
+          await channel.send({
+            type: 'broadcast',
+            event: 'call_ended',
+            payload: { ended_by: user.id },
+          })
+        } catch (err) {
+          console.warn('Failed to broadcast call_ended on unload:', err)
+        }
+      }
+
+      // Close Agora tracks and leave channel
+      if (localAudioTrack) {
+        try {
+          localAudioTrack.stop()
+          localAudioTrack.close()
+        } catch (err) {
+          console.warn('Error closing audio track on unload:', err)
+        }
+      }
+
+      if (localVideoTrack) {
+        try {
+          localVideoTrack.stop()
+          localVideoTrack.close()
+        } catch (err) {
+          console.warn('Error closing video track on unload:', err)
+        }
+      }
+
+      if (client) {
+        try {
+          await client.leave()
+        } catch (err) {
+          console.warn('Error leaving Agora channel on unload:', err)
+        }
+      }
+    }
+
+    // Listen for both beforeunload (desktop) and pagehide (mobile/tabs)
+    window.addEventListener('beforeunload', handleUnload)
+    window.addEventListener('pagehide', handleUnload)
+
+    return () => {
+      window.removeEventListener('beforeunload', handleUnload)
+      window.removeEventListener('pagehide', handleUnload)
+    }
+  }, [user, partnerId, client, localAudioTrack, localVideoTrack])
+
   // Fetch other user's profile picture
   useEffect(() => {
     const fetchOtherUserProfile = async () => {
