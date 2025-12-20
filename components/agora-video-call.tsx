@@ -63,6 +63,71 @@ export default function AgoraVideoCall({
 
   const appId = process.env.NEXT_PUBLIC_AGORA_APP_ID
 
+  // Listen for remote call end via Supabase Realtime
+  useEffect(() => {
+    if (!user || !partnerId) return
+
+    const roomName = [user.id, partnerId].sort().join('-')
+    const channel = supabase.channel(`call:${roomName}`)
+
+    channel
+      .on('broadcast', { event: 'call_ended' }, async (payload) => {
+        console.log('Call ended by remote user')
+
+        // Clear call timer
+        if (callTimerRef.current) {
+          clearInterval(callTimerRef.current)
+        }
+
+        // Safely stop and close tracks
+        if (localAudioTrack) {
+          localAudioTrack.stop()
+          localAudioTrack.close()
+          setLocalAudioTrack(null)
+        }
+
+        if (localVideoTrack) {
+          localVideoTrack.stop()
+          localVideoTrack.close()
+          setLocalVideoTrack(null)
+        }
+
+        // Unpublish if still published
+        if (client) {
+          try {
+            await client.unpublish()
+          } catch (err) {
+            console.warn('Error unpublishing:', err)
+          }
+        }
+
+        // Leave the channel
+        if (client) {
+          try {
+            await client.leave()
+          } catch (err) {
+            console.warn('Error leaving channel:', err)
+          }
+        }
+
+        // Clear video containers
+        if (localVideoContainerRef.current) {
+          localVideoContainerRef.current.srcObject = null
+        }
+        if (remoteVideoContainerRef.current) {
+          remoteVideoContainerRef.current.srcObject = null
+        }
+
+        // Navigate back to messages
+        router.push('/messages')
+      })
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [user, partnerId, client, localAudioTrack, localVideoTrack, router])
+
   // Fetch other user's profile picture
   useEffect(() => {
     const fetchOtherUserProfile = async () => {
