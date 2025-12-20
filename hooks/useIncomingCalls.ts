@@ -8,6 +8,7 @@ export interface IncomingCall {
   caller_id: string
   recipient_id: string
   call_type: 'audio' | 'video'
+  call_id?: string
   status: string
   room_name: string
   created_at: string
