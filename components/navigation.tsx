@@ -216,6 +216,13 @@ export default function Navigation() {
           )}
         </div>
       )}
+
+      <ResponsiveNotificationsPanel
+        open={notificationsOpen}
+        onOpenChange={setNotificationsOpen}
+        notifications={notifications}
+        onDismiss={handleNotificationDismiss}
+      />
     </nav>
   )
 }
