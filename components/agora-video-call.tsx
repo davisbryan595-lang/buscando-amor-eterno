@@ -212,7 +212,13 @@ export default function AgoraVideoCall({
         })
 
         // Handle remote user unpublished event
-        agoraClient.on('user-unpublished', (user) => {
+        agoraClient.on('user-unpublished', (user, mediaType) => {
+          if (mediaType === 'video') {
+            setRemoteCameraEnabled(false)
+          }
+          if (mediaType === 'audio') {
+            setRemoteAudioEnabled(false)
+          }
           setRemoteUsers((prevUsers) => {
             const updated = prevUsers.filter((u) => u.uid !== user.uid)
             // If no more remote users, stop the timer
