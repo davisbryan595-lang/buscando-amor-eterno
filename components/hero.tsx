@@ -86,7 +86,7 @@ export default function Hero() {
         backgroundImage: `linear-gradient(to bottom, rgba(245, 165, 180, 0.65), rgba(255, 255, 255, 0.5), rgba(245, 165, 180, 0.75)), url(/romantic-couple-sunset-beach-luxury.jpg)`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
-        backgroundAttachment: 'fixed',
+        backgroundAttachment: typeof window !== 'undefined' && !/iPhone|iPad|iPod/.test(navigator.userAgent) ? 'fixed' : 'scroll',
       }}
     >
       <div className="absolute inset-0 -z-10">
