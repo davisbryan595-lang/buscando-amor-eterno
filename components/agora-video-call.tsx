@@ -397,19 +397,21 @@ export default function AgoraVideoCall({
         }
       }
 
-      // Stop and close audio track
+      // Safely stop and close tracks (check if they exist and are not already closed)
+      // Workaround for Agora SDK bug with mutex property on MicrophoneAudioTrack
       if (localAudioTrack) {
-        await localAudioTrack.setEnabled(false)
+        localAudioTrack.stop()
         localAudioTrack.close()
+        setLocalAudioTrack(null)
       }
 
-      // Stop and close video track
       if (localVideoTrack) {
-        await localVideoTrack.setEnabled(false)
+        localVideoTrack.stop()
         localVideoTrack.close()
+        setLocalVideoTrack(null)
       }
 
-      // Unpublish all tracks before leaving
+      // Unpublish if still published (safe even if already unpublished)
       if (client) {
         await client.unpublish()
       }
@@ -421,15 +423,16 @@ export default function AgoraVideoCall({
 
       // Clear video containers
       if (localVideoContainerRef.current) {
-        localVideoContainerRef.current.innerHTML = ""
+        localVideoContainerRef.current.srcObject = null
       }
       if (remoteVideoContainerRef.current) {
-        remoteVideoContainerRef.current.innerHTML = ""
+        remoteVideoContainerRef.current.srcObject = null
       }
 
       router.push('/messages')
     } catch (err) {
-      console.error('Error ending call:', err)
+      console.warn('Error during endCall (safe to ignore if call already closed):', err)
+      // Don't throw or show error to user — the call is ending anyway
       router.push('/messages')
     }
   }
