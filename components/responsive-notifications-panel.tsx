@@ -121,9 +121,22 @@ export function ResponsiveNotificationsPanel({
     </div>
   )
 
-  // Desktop: Show as Dialog
+  // Desktop: Show as Dialog with fade/slide animation
   if (!isMobile) {
     return (
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 bg-black/50 z-40"
+            onClick={() => onOpenChange(false)}
+          />
+        )}
+      </AnimatePresence>
+    ) || (
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-md p-0 gap-0 border-rose-100">
           <DialogHeader className="border-b border-rose-100 bg-gradient-to-r from-white to-rose-50">
