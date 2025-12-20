@@ -660,50 +660,144 @@ export function useMessages() {
       recipientId: string,
       callType: 'audio' | 'video',
       callStatus: 'ongoing' | 'incoming' | 'missed' | 'ended',
-      callDuration?: number
+      callDuration?: number,
+      callId?: string
     ) => {
       if (!user) throw new Error('No user logged in')
 
       try {
-        const content =
-          callStatus === 'missed' ? `Missed ${callType} call` :
-          callStatus === 'ended' && callDuration ? `${callType} call · ${Math.floor(callDuration / 60)}:${String(callDuration % 60).padStart(2, '0')}` :
-          `${callStatus} ${callType} call`
+        if (callStatus === 'ongoing') {
+          // For ongoing calls, generate a new call_id and insert a new record
+          const newCallId = callId || crypto.randomUUID()
 
-        const { data, error: err } = await supabase
-          .from('messages')
-          .insert({
-            sender_id: user.id,
-            recipient_id: recipientId,
-            content,
-            read: true,
-            type: 'call_log',
-            call_type: callType,
-            call_status: callStatus,
-            call_duration: callDuration || null,
+          const { data, error: err } = await supabase
+            .from('messages')
+            .insert({
+              sender_id: user.id,
+              recipient_id: recipientId,
+              content: `Ongoing ${callType} call`,
+              read: true,
+              type: 'call_log',
+              call_type: callType,
+              call_status: 'ongoing',
+              call_duration: null,
+              call_id: newCallId,
+            })
+            .select()
+            .single()
+
+          if (err) throw err
+
+          const callMessage = data as Message
+          setMessages((prev) => [...prev, callMessage])
+
+          // Store call timing info for later
+          if (typeof window !== 'undefined') {
+            localStorage.setItem(`call_${newCallId}_start`, Date.now().toString())
+          }
+
+          // Broadcast the call message
+          const conversationChannel = supabase.channel(`messages:${user.id}:${recipientId}`)
+          await conversationChannel.send({
+            type: 'broadcast',
+            event: 'new_message',
+            payload: callMessage,
           })
-          .select()
-          .single()
 
-        if (err) throw err
+          const userChannel = supabase.channel(`messages:${user.id}`)
+          await userChannel.send({
+            type: 'broadcast',
+            event: 'new_message',
+            payload: callMessage,
+          })
 
-        const callMessage = data as Message
-        setMessages((prev) => [...prev, callMessage])
+          // Return the new call_id
+          return newCallId
+        } else if (callStatus === 'ended' && callId) {
+          // For ended calls, update the existing record with duration
+          const durationSeconds = callDuration || 0
 
-        // Broadcast the call message
-        const conversationChannel = supabase.channel(`messages:${user.id}:${recipientId}`)
-        await conversationChannel.send({
-          type: 'broadcast',
-          event: 'new_message',
-          payload: callMessage,
-        })
+          // Update the call log with final status and duration
+          const { data, error: err } = await supabase
+            .from('messages')
+            .update({
+              call_status: 'ended',
+              call_duration: durationSeconds,
+              content: `${callType} call · ${Math.floor(durationSeconds / 60)}:${String(durationSeconds % 60).padStart(2, '0')}`,
+            })
+            .eq('call_id', callId)
+            .select()
+            .single()
 
-        const userChannel = supabase.channel(`messages:${user.id}`)
-        await userChannel.send({
-          type: 'broadcast',
-          event: 'new_message',
-          payload: callMessage,
-        })
+          if (err) throw err
+
+          const callMessage = data as Message
+
+          // Update in messages state
+          setMessages((prev) =>
+            prev.map((msg) => msg.call_id === callId ? callMessage : msg)
+          )
+
+          // Cleanup localStorage
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem(`call_${callId}_start`)
+          }
+
+          // Broadcast the updated call message
+          const conversationChannel = supabase.channel(`messages:${user.id}:${recipientId}`)
+          await conversationChannel.send({
+            type: 'broadcast',
+            event: 'new_message',
+            payload: callMessage,
+          })
+
+          const userChannel = supabase.channel(`messages:${user.id}`)
+          await userChannel.send({
+            type: 'broadcast',
+            event: 'new_message',
+            payload: callMessage,
+          })
+        } else if (callStatus === 'missed' && callId) {
+          // For missed calls, update the existing record
+          const { data, error: err } = await supabase
+            .from('messages')
+            .update({
+              call_status: 'missed',
+              content: `Missed ${callType} call`,
+            })
+            .eq('call_id', callId)
+            .select()
+            .single()
+
+          if (err) throw err
+
+          const callMessage = data as Message
+
+          // Update in messages state
+          setMessages((prev) =>
+            prev.map((msg) => msg.call_id === callId ? callMessage : msg)
+          )
+
+          // Cleanup localStorage
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem(`call_${callId}_start`)
+          }
+
+          // Broadcast the updated call message
+          const conversationChannel = supabase.channel(`messages:${user.id}:${recipientId}`)
+          await conversationChannel.send({
+            type: 'broadcast',
+            event: 'new_message',
+            payload: callMessage,
+          })
+
+          const userChannel = supabase.channel(`messages:${user.id}`)
+          await userChannel.send({
+            type: 'broadcast',
+            event: 'new_message',
+            payload: callMessage,
+          })
+        }
       } catch (err: any) {
         console.error('Error logging call message:', err)
         throw err
