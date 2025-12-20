@@ -403,7 +403,7 @@ export function useMessages() {
 
         const queryPromise = supabase
           .from('messages')
-          .select('id,sender_id,recipient_id,content,read,created_at,type,call_type,call_status,call_duration')
+          .select('id,sender_id,recipient_id,content,read,created_at,type,call_type,call_status,call_duration,call_id')
           .or(
             `and(sender_id.eq.${user.id},recipient_id.eq.${otherUserId}),and(sender_id.eq.${otherUserId},recipient_id.eq.${user.id})`
           )
