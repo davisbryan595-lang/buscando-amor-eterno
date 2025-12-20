@@ -585,6 +585,9 @@ export default function AgoraVideoCall({
           <div className="text-center">
             <div className="w-16 h-16 rounded-full border-4 border-primary border-t-transparent animate-spin mx-auto mb-4" />
             <p className="text-white font-medium">Waiting for {partnerName}...</p>
+            {getStatusMessage() && (
+              <p className="text-gray-400 text-sm mt-3">{getStatusMessage()}</p>
+            )}
           </div>
         ) : null}
       </div>
