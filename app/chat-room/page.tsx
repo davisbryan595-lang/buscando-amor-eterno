@@ -114,7 +114,7 @@ export default function ChatRoomPage() {
       </div>
 
       {/* Header with back button - responsive */}
-      <div ref={headerRef} className="relative z-20 flex items-center gap-2 sm:gap-3 md:gap-4 px-2 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-4 md:py-5 bg-gradient-to-r from-white/80 to-white/60 backdrop-blur-sm border-b border-rose-100/30 flex-shrink-0">
+      <div ref={headerRef} className="relative z-20 flex items-center gap-2 sm:gap-3 md:gap-4 px-2 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-4 md:py-5 bg-white border-b border-rose-100/30 flex-shrink-0">
         <button
           onClick={() => router.push('/')}
           className="p-1.5 sm:p-2 hover:bg-rose-100/50 rounded-full transition-colors flex-shrink-0 active:scale-95"
