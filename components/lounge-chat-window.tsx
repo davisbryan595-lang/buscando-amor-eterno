@@ -72,7 +72,7 @@ export default function LoungeChatWindow({ autoScroll = true }: LoungeChatWindow
           </div>
         ) : (
           messages.map((message, index) => {
-            const isOwnMessage = message.sender_id === user?.id
+            const isOwnMessage = message.user_id === user?.id
 
             return (
               <div
