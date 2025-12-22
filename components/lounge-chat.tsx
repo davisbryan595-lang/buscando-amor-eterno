@@ -55,6 +55,63 @@ function LoungeChatContent() {
 
   return (
     <div className="h-screen flex flex-col bg-white relative overflow-hidden">
+      {/* Animated background elements - subtle romantic theme */}
+      <div className="fixed inset-0 pointer-events-none">
+        {/* Subtle floating gradient orbs - very minimal */}
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-rose-100/10 to-rose-200/5 rounded-full blur-3xl opacity-30 animate-float" />
+        <div className="absolute top-1/4 -left-32 w-64 h-64 bg-gradient-to-br from-rose-100/5 to-rose-200/5 rounded-full blur-3xl opacity-20 animate-pulse" />
+        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-gradient-to-tr from-rose-100/8 to-rose-200/5 rounded-full blur-3xl opacity-25 animate-float-delayed" />
+        <div className="absolute bottom-1/3 left-0 w-72 h-72 bg-gradient-to-tr from-rose-100/5 to-rose-200/5 rounded-full blur-3xl opacity-15 animate-pulse-slow" />
+
+        {/* Subtle Floating hearts - refined and elegant */}
+        <div className="heart-float" style={{ left: '8%', animationDelay: '0s' }}>
+          <Heart className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 text-rose-300 drop-shadow-sm opacity-40" fill="currentColor" />
+        </div>
+        <div className="heart-float" style={{ left: '18%', animationDelay: '0.8s' }}>
+          <Heart className="w-2.5 h-2.5 sm:w-3 sm:h-3 md:w-4 md:h-4 text-rose-400 drop-shadow-sm opacity-45" fill="currentColor" />
+        </div>
+        <div className="heart-float" style={{ left: '32%', animationDelay: '1.6s' }}>
+          <Heart className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 text-rose-300 drop-shadow-sm opacity-35" fill="currentColor" />
+        </div>
+        <div className="heart-float" style={{ left: '48%', animationDelay: '0.4s' }}>
+          <Heart className="w-2.5 h-2.5 sm:w-3 sm:h-3 md:w-4 md:h-4 text-rose-400 drop-shadow-sm opacity-40" fill="currentColor" />
+        </div>
+        <div className="heart-float" style={{ left: '62%', animationDelay: '1.2s' }}>
+          <Heart className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 text-rose-300 drop-shadow-sm opacity-45" fill="currentColor" />
+        </div>
+        <div className="heart-float" style={{ left: '76%', animationDelay: '0s' }}>
+          <Heart className="w-2.5 h-2.5 sm:w-3 sm:h-3 md:w-4 md:h-4 text-rose-400 drop-shadow-sm opacity-35" fill="currentColor" />
+        </div>
+
+        {/* Subtle Floating sparkles - refined timing */}
+        <div className="sparkle-float opacity-40" style={{ left: '12%', animationDelay: '0.2s', fontSize: 'clamp(0.75rem, 1.5vw, 1rem)' }}>
+          ✨
+        </div>
+        <div className="sparkle-float opacity-35" style={{ left: '35%', animationDelay: '1s', fontSize: 'clamp(0.625rem, 1.25vw, 0.875rem)' }}>
+          ✨
+        </div>
+        <div className="sparkle-float opacity-40 hidden sm:block" style={{ left: '58%', animationDelay: '1.8s', fontSize: 'clamp(0.75rem, 1.5vw, 1rem)' }}>
+          ✨
+        </div>
+        <div className="sparkle-float opacity-35" style={{ left: '72%', animationDelay: '0.6s', fontSize: 'clamp(0.625rem, 1.25vw, 0.875rem)' }}>
+          ✨
+        </div>
+
+        {/* Subtle Rose petals - refined appearance */}
+        <div className="petal-float opacity-35" style={{ left: '15%', animationDelay: '0.5s', fontSize: 'clamp(0.75rem, 2vw, 1rem)' }}>
+          🌹
+        </div>
+        <div className="petal-float opacity-30 hidden sm:block" style={{ left: '40%', animationDelay: '1.5s', fontSize: 'clamp(0.875rem, 2.25vw, 1.125rem)' }}>
+          🌹
+        </div>
+        <div className="petal-float opacity-35" style={{ left: '65%', animationDelay: '0.1s', fontSize: 'clamp(0.75rem, 2vw, 1rem)' }}>
+          🌹
+        </div>
+        <div className="petal-float opacity-30" style={{ left: '80%', animationDelay: '1.1s', fontSize: 'clamp(0.875rem, 2.25vw, 1.125rem)' }}>
+          🌹
+        </div>
+      </div>
+
       {/* Header */}
       <div className="bg-white border-b border-rose-100/40 px-6 py-4 relative z-20">
         <div className="max-w-6xl mx-auto">
