@@ -88,8 +88,9 @@ export function useLounge() {
 
       setError(null)
     } catch (err: any) {
-      console.error('Error fetching lounge messages:', err)
-      setError(err.message || 'Failed to load lounge messages')
+      const errorMessage = err?.message || err?.error_description || JSON.stringify(err) || 'Failed to load lounge messages'
+      console.error('Error fetching lounge messages:', errorMessage, err)
+      setError(errorMessage)
     } finally {
       setLoading(false)
     }
