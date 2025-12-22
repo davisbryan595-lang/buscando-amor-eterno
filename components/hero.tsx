@@ -14,7 +14,7 @@ export default function Hero() {
   const descriptionRef = useRef<HTMLParagraphElement>(null)
   const buttonsRef = useRef<HTMLDivElement>(null)
   const statsRef = useRef<HTMLDivElement>(null)
-  const [backgroundAttachment, setBackgroundAttachment] = React.useState<'fixed' | 'scroll'>('scroll')
+  const [backgroundAttachment, setBackgroundAttachment] = useState<'fixed' | 'scroll'>('scroll')
 
   useEffect(() => {
     // Set parallax effect only on non-mobile clients
