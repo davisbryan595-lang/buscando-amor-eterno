@@ -307,6 +307,142 @@ export default function LoungeChat() {
   return (
     <ErrorBoundary>
       <LoungeChatContent />
+      <style jsx global>{`
+        @keyframes float {
+          0%, 100% {
+            transform: translateY(0px);
+          }
+          50% {
+            transform: translateY(-30px);
+          }
+        }
+
+        @keyframes float-delayed {
+          0%, 100% {
+            transform: translateY(0px);
+          }
+          50% {
+            transform: translateY(-40px);
+          }
+        }
+
+        @keyframes pulse-slow {
+          0%, 100% {
+            opacity: 0.25;
+          }
+          50% {
+            opacity: 0.4;
+          }
+        }
+
+        @keyframes heart-rise {
+          0% {
+            transform: translateY(100vh) translateX(0) scale(1);
+            opacity: 0;
+          }
+          5% {
+            opacity: 1;
+          }
+          25% {
+            transform: translateY(75vh) translateX(25px);
+          }
+          50% {
+            transform: translateY(50vh) translateX(-15px);
+          }
+          75% {
+            transform: translateY(25vh) translateX(20px);
+          }
+          95% {
+            opacity: 1;
+          }
+          100% {
+            transform: translateY(-100vh) translateX(0) scale(1);
+            opacity: 0;
+          }
+        }
+
+        @keyframes sparkle-drift {
+          0% {
+            transform: translateY(100vh) translateX(0) scale(1);
+            opacity: 0;
+          }
+          5% {
+            opacity: 1;
+          }
+          30% {
+            transform: translateY(70vh) translateX(40px);
+          }
+          60% {
+            transform: translateY(40vh) translateX(-20px);
+          }
+          90% {
+            opacity: 0.9;
+          }
+          100% {
+            transform: translateY(-100vh) translateX(50px) scale(1);
+            opacity: 0;
+          }
+        }
+
+        @keyframes petal-drift {
+          0% {
+            transform: translateY(100vh) translateX(0) rotate(0deg) scale(1);
+            opacity: 0;
+          }
+          5% {
+            opacity: 1;
+          }
+          30% {
+            transform: translateY(70vh) translateX(50px) rotate(90deg);
+          }
+          60% {
+            transform: translateY(40vh) translateX(-25px) rotate(180deg);
+          }
+          90% {
+            opacity: 0.8;
+          }
+          100% {
+            transform: translateY(-100vh) translateX(60px) rotate(360deg) scale(1);
+            opacity: 0;
+          }
+        }
+
+        .animate-float {
+          animation: float 6s ease-in-out infinite;
+        }
+
+        .animate-float-delayed {
+          animation: float-delayed 8s ease-in-out infinite;
+          animation-delay: 1s;
+        }
+
+        .animate-pulse-slow {
+          animation: pulse-slow 4s ease-in-out infinite;
+        }
+
+        .heart-float {
+          position: fixed;
+          bottom: 0;
+          animation: heart-rise 7s ease-in linear infinite;
+          pointer-events: none;
+        }
+
+        .sparkle-float {
+          position: fixed;
+          bottom: 0;
+          font-size: 1.5rem;
+          animation: sparkle-drift 8s ease-in linear infinite;
+          pointer-events: none;
+        }
+
+        .petal-float {
+          position: fixed;
+          bottom: 0;
+          font-size: 1.25rem;
+          animation: petal-drift 9s ease-in linear infinite;
+          pointer-events: none;
+        }
+      `}</style>
     </ErrorBoundary>
   )
 }
