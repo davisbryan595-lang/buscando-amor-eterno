@@ -1,26 +1,25 @@
 'use client'
 
 import React, { useEffect, useRef } from 'react'
-import Navigation from '@/components/navigation'
-import Footer from '@/components/footer'
+import { useRouter } from 'next/navigation'
 import LoungeChatWindow from '@/components/lounge-chat-window'
-import { Heart } from 'lucide-react'
+import { ArrowLeft, Heart } from 'lucide-react'
 import gsap from 'gsap'
 
 export default function ChatRoomPage() {
-  const containerRef = useRef<HTMLDivElement>(null)
+  const router = useRouter()
   const headerRef = useRef<HTMLDivElement>(null)
   const chatRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (!headerRef.current) return
 
-    // Animate header elements on mount
+    // Animate header on mount
     gsap.fromTo(
       headerRef.current,
       {
         opacity: 0,
-        y: 20,
+        y: -20,
       },
       {
         opacity: 1,
@@ -36,99 +35,93 @@ export default function ChatRoomPage() {
         chatRef.current,
         {
           opacity: 0,
-          y: 30,
           scale: 0.98,
         },
         {
           opacity: 1,
-          y: 0,
           scale: 1,
           duration: 0.8,
           ease: 'power3.out',
-          delay: 0.3,
+          delay: 0.2,
         }
       )
     }
   }, [])
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-rose-50 via-pink-50 to-orange-50 relative overflow-hidden">
-      {/* Animated background elements */}
+    <main className="h-screen w-screen bg-gradient-to-br from-rose-50 via-pink-50 to-orange-50 relative overflow-hidden flex flex-col">
+      {/* Animated background elements - romantic theme */}
       <div className="fixed inset-0 pointer-events-none">
-        {/* Floating gradient orbs for 3D effect */}
+        {/* Floating gradient orbs */}
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-primary/20 to-rose-300/20 rounded-full blur-3xl opacity-40 animate-float" />
         <div className="absolute top-1/4 -left-32 w-64 h-64 bg-gradient-to-br from-pink-300/20 to-primary/10 rounded-full blur-3xl opacity-30 animate-pulse" />
         <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-gradient-to-tr from-orange-200/15 to-primary/15 rounded-full blur-3xl opacity-35 animate-float-delayed" />
         <div className="absolute bottom-1/3 left-0 w-72 h-72 bg-gradient-to-tr from-rose-200/15 to-pink-200/15 rounded-full blur-3xl opacity-25 animate-pulse-slow" />
-      </div>
 
-      {/* Content */}
-      <div className="relative z-10">
-        <Navigation />
+        {/* Floating hearts */}
+        <div className="heart-float" style={{ left: '10%', animationDelay: '0s' }}>
+          <Heart className="w-6 h-6 text-rose-400 drop-shadow-lg" fill="currentColor" />
+        </div>
+        <div className="heart-float" style={{ left: '25%', animationDelay: '1s' }}>
+          <Heart className="w-5 h-5 text-rose-300 drop-shadow-lg" fill="currentColor" />
+        </div>
+        <div className="heart-float" style={{ left: '45%', animationDelay: '2s' }}>
+          <Heart className="w-4 h-4 text-primary drop-shadow-lg" fill="currentColor" />
+        </div>
+        <div className="heart-float" style={{ left: '70%', animationDelay: '0.5s' }}>
+          <Heart className="w-5 h-5 text-rose-400 drop-shadow-lg" fill="currentColor" />
+        </div>
+        <div className="heart-float" style={{ left: '85%', animationDelay: '1.5s' }}>
+          <Heart className="w-6 h-6 text-rose-300 drop-shadow-lg" fill="currentColor" />
+        </div>
 
-        <div className="pt-24 pb-12 px-4 sm:px-6 lg:px-8">
-          <div className="max-w-4xl mx-auto">
-            {/* Header Section */}
-            <div ref={headerRef} className="text-center mb-8 sm:mb-12">
-              <div className="flex justify-center mb-4">
-                <Heart className="w-12 h-12 sm:w-16 sm:h-16 text-rose-400 drop-shadow-lg" />
-              </div>
-              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-playfair font-bold mb-2 sm:mb-4 text-slate-900">
-                Singles Lounge
-              </h1>
-              <p className="text-sm sm:text-base text-slate-600 max-w-2xl mx-auto px-2">
-                Connect with our vibrant community, share stories, and find your tribe 💕
-              </p>
-            </div>
+        {/* Floating sparkles */}
+        <div className="sparkle-float" style={{ left: '15%', animationDelay: '0.3s' }}>
+          ✨
+        </div>
+        <div className="sparkle-float" style={{ left: '35%', animationDelay: '0.8s' }}>
+          ✨
+        </div>
+        <div className="sparkle-float" style={{ left: '60%', animationDelay: '1.2s' }}>
+          ✨
+        </div>
+        <div className="sparkle-float" style={{ left: '80%', animationDelay: '0.6s' }}>
+          ✨
+        </div>
 
-            {/* Chat Window */}
-            <div ref={chatRef} className="h-96 sm:h-[32rem] md:h-[36rem] mb-8">
-              <LoungeChatWindow />
-            </div>
-
-            {/* Info Section */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-              <div className="bg-white/80 backdrop-blur-sm rounded-xl p-4 sm:p-6 border border-rose-100/50 shadow-md hover:shadow-lg transition-shadow">
-                <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary to-rose-500 flex items-center justify-center text-white flex-shrink-0 text-lg">
-                    💬
-                  </div>
-                  <div className="min-w-0">
-                    <h3 className="font-semibold text-slate-900 mb-1 text-sm sm:text-base">Real-Time Chat</h3>
-                    <p className="text-xs sm:text-sm text-slate-600">Instant messaging with the entire community. No refresh needed!</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white/80 backdrop-blur-sm rounded-xl p-4 sm:p-6 border border-rose-100/50 shadow-md hover:shadow-lg transition-shadow">
-                <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary to-rose-500 flex items-center justify-center text-white flex-shrink-0 text-lg">
-                    👥
-                  </div>
-                  <div className="min-w-0">
-                    <h3 className="font-semibold text-slate-900 mb-1 text-sm sm:text-base">Community Hub</h3>
-                    <p className="text-xs sm:text-sm text-slate-600">Meet singles from around the world and build meaningful connections.</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white/80 backdrop-blur-sm rounded-xl p-4 sm:p-6 border border-rose-100/50 shadow-md hover:shadow-lg transition-shadow md:col-span-2">
-                <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary to-rose-500 flex items-center justify-center text-white flex-shrink-0 text-lg">
-                    ⭐
-                  </div>
-                  <div className="min-w-0">
-                    <h3 className="font-semibold text-slate-900 mb-1 text-sm sm:text-base">Safe & Welcoming</h3>
-                    <p className="text-xs sm:text-sm text-slate-600">A respectful space where everyone can be themselves and find genuine connections.</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+        {/* Rose petals */}
+        <div className="petal-float" style={{ left: '20%', animationDelay: '0s' }}>
+          🌹
+        </div>
+        <div className="petal-float" style={{ left: '50%', animationDelay: '1s' }}>
+          🌹
+        </div>
+        <div className="petal-float" style={{ left: '75%', animationDelay: '0.5s' }}>
+          🌹
         </div>
       </div>
 
-      <Footer />
+      {/* Header with back button */}
+      <div ref={headerRef} className="relative z-20 flex items-center gap-4 px-4 sm:px-6 lg:px-8 py-4 sm:py-5 bg-gradient-to-r from-white/80 to-white/60 backdrop-blur-sm border-b border-rose-100/30">
+        <button
+          onClick={() => router.push('/')}
+          className="p-2 hover:bg-rose-100/50 rounded-full transition-colors"
+          aria-label="Go back to home"
+        >
+          <ArrowLeft className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
+        </button>
+        <div className="flex-1">
+          <h1 className="text-xl sm:text-2xl font-playfair font-bold text-slate-900 flex items-center gap-2">
+            <Heart className="w-5 h-5 sm:w-6 sm:h-6 text-rose-400" fill="currentColor" />
+            Singles Lounge
+          </h1>
+        </div>
+      </div>
+
+      {/* Full-screen chat area */}
+      <div ref={chatRef} className="relative z-10 flex-1 overflow-hidden px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+        <LoungeChatWindow />
+      </div>
 
       <style jsx>{`
         @keyframes float {
@@ -158,6 +151,57 @@ export default function ChatRoomPage() {
           }
         }
 
+        @keyframes heart-rise {
+          0% {
+            transform: translateY(100vh) scale(0);
+            opacity: 0;
+          }
+          10% {
+            opacity: 1;
+          }
+          90% {
+            opacity: 1;
+          }
+          100% {
+            transform: translateY(-100vh) scale(0);
+            opacity: 0;
+          }
+        }
+
+        @keyframes sparkle-drift {
+          0% {
+            transform: translateY(100vh) translateX(0) scale(0);
+            opacity: 0;
+          }
+          10% {
+            opacity: 1;
+          }
+          90% {
+            opacity: 0.8;
+          }
+          100% {
+            transform: translateY(-100vh) translateX(30px) scale(1);
+            opacity: 0;
+          }
+        }
+
+        @keyframes petal-drift {
+          0% {
+            transform: translateY(100vh) translateX(0) rotate(0deg) scale(0);
+            opacity: 0;
+          }
+          10% {
+            opacity: 1;
+          }
+          90% {
+            opacity: 0.7;
+          }
+          100% {
+            transform: translateY(-100vh) translateX(50px) rotate(360deg) scale(1);
+            opacity: 0;
+          }
+        }
+
         .animate-float {
           animation: float 6s ease-in-out infinite;
         }
@@ -169,6 +213,29 @@ export default function ChatRoomPage() {
 
         .animate-pulse-slow {
           animation: pulse-slow 4s ease-in-out infinite;
+        }
+
+        .heart-float {
+          position: fixed;
+          bottom: 0;
+          animation: heart-rise 6s ease-in-out infinite;
+          pointer-events: none;
+        }
+
+        .sparkle-float {
+          position: fixed;
+          bottom: 0;
+          font-size: 1.5rem;
+          animation: sparkle-drift 7s ease-in-out infinite;
+          pointer-events: none;
+        }
+
+        .petal-float {
+          position: fixed;
+          bottom: 0;
+          font-size: 1.25rem;
+          animation: petal-drift 8s ease-in-out infinite;
+          pointer-events: none;
         }
       `}</style>
     </main>
