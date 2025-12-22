@@ -317,8 +317,9 @@ export function useLounge() {
 
         if (err) throw err
       } catch (err: any) {
-        console.error('Error sending message:', err)
-        setError(err.message || 'Failed to send message')
+        const errorMessage = err?.message || err?.error_description || 'Failed to send message'
+        console.error('Error sending message:', errorMessage, err)
+        setError(errorMessage)
       }
     },
     [user]
