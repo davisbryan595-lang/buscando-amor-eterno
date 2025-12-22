@@ -18,6 +18,7 @@ export default function LoungeChatWindow({ autoScroll = true }: LoungeChatWindow
   const [sendingMessage, setSendingMessage] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const messagesContainerRef = useRef<HTMLDivElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
 
   const scrollToBottom = () => {
     if (messagesEndRef.current && autoScroll) {
