@@ -145,7 +145,12 @@ export function useLounge() {
             }
           )
           .subscribe((status, err) => {
-            console.log('[Lounge] Subscription status:', status, err)
+            if (err) {
+              const errorMsg = err?.message || JSON.stringify(err)
+              console.log('[Lounge] Subscription error:', errorMsg, err)
+            } else {
+              console.log('[Lounge] Subscription status:', status)
+            }
 
             if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
               console.log('[Lounge] Subscription closed/error - attempting retry...')
