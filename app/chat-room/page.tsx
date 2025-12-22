@@ -180,11 +180,20 @@ export default function ChatRoomPage() {
           5% {
             opacity: 1;
           }
+          25% {
+            transform: translateY(75vh) translateX(25px);
+          }
+          50% {
+            transform: translateY(50vh) translateX(-15px);
+          }
+          75% {
+            transform: translateY(25vh) translateX(20px);
+          }
           95% {
             opacity: 1;
           }
           100% {
-            transform: translateY(-100vh) translateX(var(--sway, 0)) scale(1);
+            transform: translateY(-100vh) translateX(0) scale(1);
             opacity: 0;
           }
         }
@@ -197,11 +206,17 @@ export default function ChatRoomPage() {
           5% {
             opacity: 1;
           }
+          30% {
+            transform: translateY(70vh) translateX(40px);
+          }
+          60% {
+            transform: translateY(40vh) translateX(-20px);
+          }
           90% {
             opacity: 0.9;
           }
           100% {
-            transform: translateY(-100vh) translateX(var(--sway, 40px)) scale(1);
+            transform: translateY(-100vh) translateX(50px) scale(1);
             opacity: 0;
           }
         }
@@ -214,11 +229,17 @@ export default function ChatRoomPage() {
           5% {
             opacity: 1;
           }
+          30% {
+            transform: translateY(70vh) translateX(50px) rotate(90deg);
+          }
+          60% {
+            transform: translateY(40vh) translateX(-25px) rotate(180deg);
+          }
           90% {
             opacity: 0.8;
           }
           100% {
-            transform: translateY(-100vh) translateX(var(--sway, 60px)) rotate(360deg) scale(1);
+            transform: translateY(-100vh) translateX(60px) rotate(360deg) scale(1);
             opacity: 0;
           }
         }
