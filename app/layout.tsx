@@ -59,6 +59,7 @@ export default function RootLayout({
         <Preloader />
         <I18nProvider>
           <AuthProvider>
+            <SessionManager />
             <CallManager>
               {children}
             </CallManager>
