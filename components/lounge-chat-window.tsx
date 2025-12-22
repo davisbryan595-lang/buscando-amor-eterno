@@ -47,11 +47,11 @@ export default function LoungeChatWindow({ autoScroll = true }: LoungeChatWindow
   }
 
   return (
-    <div ref={containerRef} className="flex flex-col h-full w-full bg-white/70 backdrop-blur-sm rounded-xl sm:rounded-2xl border border-rose-100/50 shadow-lg sm:shadow-xl overflow-hidden">
-      {/* Messages Container */}
+    <div ref={containerRef} className="flex flex-col h-full w-full bg-white rounded-xl sm:rounded-2xl border border-rose-100/40 shadow-lg overflow-hidden">
+      {/* Messages Container - Clean background */}
       <div
         ref={messagesContainerRef}
-        className="flex-1 overflow-y-auto px-2 py-3 sm:px-4 sm:py-4 md:px-6 md:py-6 space-y-2 sm:space-y-3 lg:space-y-4 bg-gradient-to-b from-white/50 via-rose-50/20 to-white/50"
+        className="flex-1 overflow-y-auto px-2 py-3 sm:px-4 sm:py-4 md:px-6 md:py-6 space-y-2 sm:space-y-3 lg:space-y-4 bg-white"
       >
         {loading ? (
           <div className="flex items-center justify-center h-full w-full">
@@ -127,10 +127,10 @@ export default function LoungeChatWindow({ autoScroll = true }: LoungeChatWindow
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input Form - Responsive and touch-friendly */}
+      {/* Input Form - Clean styling */}
       <form
         onSubmit={handleSendMessage}
-        className="px-2 py-2 sm:px-3 sm:py-3 md:px-4 md:py-4 border-t border-rose-100/50 bg-white/50 backdrop-blur-sm flex gap-1.5 sm:gap-2 flex-shrink-0"
+        className="px-2 py-3 sm:px-3 sm:py-4 md:px-4 md:py-5 border-t border-rose-100/30 bg-white flex gap-2 sm:gap-2.5 flex-shrink-0"
       >
         <input
           type="text"
@@ -138,12 +138,12 @@ export default function LoungeChatWindow({ autoScroll = true }: LoungeChatWindow
           onChange={(e) => setNewMessage(e.target.value)}
           placeholder="Say hello to community..."
           disabled={sendingMessage}
-          className="flex-1 px-2.5 sm:px-3 md:px-4 py-2 sm:py-2.5 md:py-3 bg-slate-50 border border-rose-100 rounded-full focus:outline-none focus:ring-2 focus:ring-primary/50 focus:bg-white transition disabled:opacity-50 text-xs sm:text-sm md:text-base placeholder-slate-400 placeholder:text-xs sm:placeholder:text-sm truncate"
+          className="flex-1 px-3 sm:px-4 md:px-5 py-2.5 sm:py-3 md:py-3.5 bg-slate-50 border border-rose-100 rounded-full focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/30 focus:bg-white hover:border-rose-200 transition disabled:opacity-50 text-xs sm:text-sm md:text-base placeholder-slate-400 placeholder:text-xs sm:placeholder:text-sm shadow-sm"
         />
         <button
           type="submit"
           disabled={sendingMessage || !newMessage.trim()}
-          className="min-w-10 h-10 sm:min-w-11 sm:h-11 md:min-w-12 md:h-12 bg-gradient-to-r from-primary to-rose-600 text-white rounded-full hover:shadow-lg hover:from-rose-700 hover:to-rose-800 active:scale-95 transition disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0 drop-shadow-md flex items-center justify-center"
+          className="min-w-11 h-11 sm:min-w-12 sm:h-12 md:min-w-13 md:h-13 bg-gradient-to-r from-primary via-rose-500 to-rose-600 text-white rounded-full hover:shadow-lg hover:from-rose-600 hover:via-rose-600 hover:to-rose-700 active:scale-95 transition disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0 drop-shadow-md flex items-center justify-center font-semibold"
           aria-label="Send message"
         >
           <Send size={16} className="sm:hidden" />

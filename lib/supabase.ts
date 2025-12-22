@@ -18,6 +18,8 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     reconnectDelay: 1000,
   },
   auth: {
+    // Explicit localStorage for session persistence across refresh and tab reopen
+    storage: typeof window !== 'undefined' ? localStorage : undefined,
     persistSession: true,
     autoRefreshToken: true,
     flowType: 'pkce',

@@ -49,60 +49,72 @@ export default function ChatRoomPage() {
   }, [])
 
   return (
-    <main className="h-screen w-screen bg-gradient-to-br from-rose-50 via-pink-50 to-orange-50 relative overflow-hidden flex flex-col">
-      {/* Animated background elements - romantic theme */}
+    <main className="h-screen w-screen bg-white relative overflow-hidden flex flex-col">
+      {/* Animated background elements - subtle romantic theme */}
       <div className="fixed inset-0 pointer-events-none">
-        {/* Floating gradient orbs - responsive sizes */}
-        <div className="absolute -top-32 sm:-top-40 -right-32 sm:-right-40 w-48 sm:w-64 md:w-80 h-48 sm:h-64 md:h-80 bg-gradient-to-br from-primary/20 to-rose-300/20 rounded-full blur-2xl sm:blur-3xl opacity-40 animate-float" />
-        <div className="absolute top-1/4 -left-24 sm:-left-32 w-48 sm:w-64 h-48 sm:h-64 bg-gradient-to-br from-pink-300/20 to-primary/10 rounded-full blur-2xl sm:blur-3xl opacity-30 animate-pulse" />
-        <div className="absolute bottom-0 right-1/4 w-56 sm:w-96 h-56 sm:h-96 bg-gradient-to-tr from-orange-200/15 to-primary/15 rounded-full blur-2xl sm:blur-3xl opacity-35 animate-float-delayed" />
-        <div className="absolute bottom-1/3 left-0 w-52 sm:w-72 h-52 sm:h-72 bg-gradient-to-tr from-rose-200/15 to-pink-200/15 rounded-full blur-2xl sm:blur-3xl opacity-25 animate-pulse-slow" />
+        {/* Subtle floating gradient orbs - very minimal */}
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-rose-100/10 to-rose-200/5 rounded-full blur-3xl opacity-30 animate-float" />
+        <div className="absolute top-1/4 -left-32 w-64 h-64 bg-gradient-to-br from-rose-100/5 to-rose-200/5 rounded-full blur-3xl opacity-20 animate-pulse" />
+        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-gradient-to-tr from-rose-100/8 to-rose-200/5 rounded-full blur-3xl opacity-25 animate-float-delayed" />
+        <div className="absolute bottom-1/3 left-0 w-72 h-72 bg-gradient-to-tr from-rose-100/5 to-rose-200/5 rounded-full blur-3xl opacity-15 animate-pulse-slow" />
 
-        {/* Floating hearts - responsive and hidden on very small screens */}
-        <div className="heart-float" style={{ left: '10%', animationDelay: '0s' }}>
-          <Heart className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 lg:w-6 lg:h-6 text-rose-400 drop-shadow-lg" fill="currentColor" />
+        {/* Subtle Floating hearts - refined and elegant */}
+        <div className="heart-float" style={{ left: '8%', animationDelay: '0s' }}>
+          <Heart className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 text-rose-300 drop-shadow-sm opacity-40" fill="currentColor" />
         </div>
-        <div className="heart-float" style={{ left: '25%', animationDelay: '1s' }}>
-          <Heart className="w-2.5 h-2.5 sm:w-3 sm:h-3 md:w-4 md:h-4 lg:w-5 lg:h-5 text-rose-300 drop-shadow-lg" fill="currentColor" />
+        <div className="heart-float" style={{ left: '18%', animationDelay: '0.8s' }}>
+          <Heart className="w-2.5 h-2.5 sm:w-3 sm:h-3 md:w-4 md:h-4 text-rose-400 drop-shadow-sm opacity-45" fill="currentColor" />
         </div>
-        <div className="heart-float hidden sm:block" style={{ left: '45%', animationDelay: '2s' }}>
-          <Heart className="w-2.5 h-2.5 md:w-3 md:h-3 lg:w-4 lg:h-4 text-primary drop-shadow-lg" fill="currentColor" />
+        <div className="heart-float" style={{ left: '32%', animationDelay: '1.6s' }}>
+          <Heart className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 text-rose-300 drop-shadow-sm opacity-35" fill="currentColor" />
         </div>
-        <div className="heart-float" style={{ left: '70%', animationDelay: '0.5s' }}>
-          <Heart className="w-2.5 h-2.5 sm:w-3 sm:h-3 md:w-4 md:h-4 lg:w-5 lg:h-5 text-rose-400 drop-shadow-lg" fill="currentColor" />
+        <div className="heart-float" style={{ left: '48%', animationDelay: '0.4s' }}>
+          <Heart className="w-2.5 h-2.5 sm:w-3 sm:h-3 md:w-4 md:h-4 text-rose-400 drop-shadow-sm opacity-40" fill="currentColor" />
         </div>
-        <div className="heart-float hidden sm:block" style={{ left: '85%', animationDelay: '1.5s' }}>
-          <Heart className="w-3 h-3 md:w-4 md:h-4 lg:w-5 lg:h-5 text-rose-300 drop-shadow-lg" fill="currentColor" />
+        <div className="heart-float" style={{ left: '62%', animationDelay: '1.2s' }}>
+          <Heart className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 text-rose-300 drop-shadow-sm opacity-45" fill="currentColor" />
         </div>
-
-        {/* Floating sparkles - responsive sizing */}
-        <div className="sparkle-float" style={{ left: '15%', animationDelay: '0.3s', fontSize: 'clamp(0.75rem, 2vw, 1.5rem)' }}>
-          ✨
+        <div className="heart-float" style={{ left: '76%', animationDelay: '0s' }}>
+          <Heart className="w-2.5 h-2.5 sm:w-3 sm:h-3 md:w-4 md:h-4 text-rose-400 drop-shadow-sm opacity-35" fill="currentColor" />
         </div>
-        <div className="sparkle-float" style={{ left: '35%', animationDelay: '0.8s', fontSize: 'clamp(0.75rem, 2vw, 1.5rem)' }}>
-          ✨
-        </div>
-        <div className="sparkle-float hidden sm:block" style={{ left: '60%', animationDelay: '1.2s', fontSize: 'clamp(1rem, 2.5vw, 1.5rem)' }}>
-          ✨
-        </div>
-        <div className="sparkle-float" style={{ left: '80%', animationDelay: '0.6s', fontSize: 'clamp(0.75rem, 2vw, 1.5rem)' }}>
-          ✨
+        <div className="heart-float hidden sm:block" style={{ left: '88%', animationDelay: '2s' }}>
+          <Heart className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 text-rose-300 drop-shadow-sm opacity-40" fill="currentColor" />
         </div>
 
-        {/* Rose petals - responsive sizing */}
-        <div className="petal-float" style={{ left: '20%', animationDelay: '0s', fontSize: 'clamp(0.875rem, 2.5vw, 1.25rem)' }}>
+        {/* Subtle Floating sparkles - refined timing */}
+        <div className="sparkle-float opacity-40" style={{ left: '12%', animationDelay: '0.2s', fontSize: 'clamp(0.75rem, 1.5vw, 1rem)' }}>
+          ✨
+        </div>
+        <div className="sparkle-float opacity-35" style={{ left: '35%', animationDelay: '1s', fontSize: 'clamp(0.625rem, 1.25vw, 0.875rem)' }}>
+          ✨
+        </div>
+        <div className="sparkle-float opacity-40 hidden sm:block" style={{ left: '58%', animationDelay: '1.8s', fontSize: 'clamp(0.75rem, 1.5vw, 1rem)' }}>
+          ✨
+        </div>
+        <div className="sparkle-float opacity-35" style={{ left: '72%', animationDelay: '0.6s', fontSize: 'clamp(0.625rem, 1.25vw, 0.875rem)' }}>
+          ✨
+        </div>
+        <div className="sparkle-float opacity-40" style={{ left: '85%', animationDelay: '1.4s', fontSize: 'clamp(0.75rem, 1.5vw, 1rem)' }}>
+          ✨
+        </div>
+
+        {/* Subtle Rose petals - refined appearance */}
+        <div className="petal-float opacity-35" style={{ left: '15%', animationDelay: '0.5s', fontSize: 'clamp(0.75rem, 2vw, 1rem)' }}>
           🌹
         </div>
-        <div className="petal-float hidden sm:block" style={{ left: '50%', animationDelay: '1s', fontSize: 'clamp(1rem, 2.5vw, 1.25rem)' }}>
+        <div className="petal-float opacity-30 hidden sm:block" style={{ left: '40%', animationDelay: '1.5s', fontSize: 'clamp(0.875rem, 2.25vw, 1.125rem)' }}>
           🌹
         </div>
-        <div className="petal-float" style={{ left: '75%', animationDelay: '0.5s', fontSize: 'clamp(0.875rem, 2.5vw, 1.25rem)' }}>
+        <div className="petal-float opacity-35" style={{ left: '65%', animationDelay: '0.1s', fontSize: 'clamp(0.75rem, 2vw, 1rem)' }}>
+          🌹
+        </div>
+        <div className="petal-float opacity-30" style={{ left: '80%', animationDelay: '1.1s', fontSize: 'clamp(0.875rem, 2.25vw, 1.125rem)' }}>
           🌹
         </div>
       </div>
 
       {/* Header with back button - responsive */}
-      <div ref={headerRef} className="relative z-20 flex items-center gap-2 sm:gap-3 md:gap-4 px-2 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-4 md:py-5 bg-gradient-to-r from-white/80 to-white/60 backdrop-blur-sm border-b border-rose-100/30 flex-shrink-0">
+      <div ref={headerRef} className="relative z-20 flex items-center gap-2 sm:gap-3 md:gap-4 px-2 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-4 md:py-5 bg-white border-b border-rose-100/30 flex-shrink-0">
         <button
           onClick={() => router.push('/')}
           className="p-1.5 sm:p-2 hover:bg-rose-100/50 rounded-full transition-colors flex-shrink-0 active:scale-95"
@@ -119,7 +131,7 @@ export default function ChatRoomPage() {
       </div>
 
       {/* Full-screen chat area - responsive padding */}
-      <div ref={chatRef} className="relative z-10 flex-1 overflow-hidden px-2 py-2 sm:px-3 sm:py-3 md:px-4 md:py-4 lg:px-6 lg:py-6">
+      <div ref={chatRef} className="relative z-10 flex-1 overflow-hidden px-2 py-2 sm:px-3 sm:py-3 md:px-4 md:py-4 lg:px-6 lg:py-6 bg-white">
         <LoungeChatWindow />
       </div>
 
@@ -153,51 +165,72 @@ export default function ChatRoomPage() {
 
         @keyframes heart-rise {
           0% {
-            transform: translateY(100vh) scale(0);
+            transform: translateY(100vh) translateX(0) scale(1);
             opacity: 0;
           }
-          10% {
+          5% {
             opacity: 1;
           }
-          90% {
+          25% {
+            transform: translateY(75vh) translateX(25px);
+          }
+          50% {
+            transform: translateY(50vh) translateX(-15px);
+          }
+          75% {
+            transform: translateY(25vh) translateX(20px);
+          }
+          95% {
             opacity: 1;
           }
           100% {
-            transform: translateY(-100vh) scale(0);
+            transform: translateY(-100vh) translateX(0) scale(1);
             opacity: 0;
           }
         }
 
         @keyframes sparkle-drift {
           0% {
-            transform: translateY(100vh) translateX(0) scale(0);
+            transform: translateY(100vh) translateX(0) scale(1);
             opacity: 0;
           }
-          10% {
+          5% {
             opacity: 1;
           }
+          30% {
+            transform: translateY(70vh) translateX(40px);
+          }
+          60% {
+            transform: translateY(40vh) translateX(-20px);
+          }
           90% {
-            opacity: 0.8;
+            opacity: 0.9;
           }
           100% {
-            transform: translateY(-100vh) translateX(30px) scale(1);
+            transform: translateY(-100vh) translateX(50px) scale(1);
             opacity: 0;
           }
         }
 
         @keyframes petal-drift {
           0% {
-            transform: translateY(100vh) translateX(0) rotate(0deg) scale(0);
+            transform: translateY(100vh) translateX(0) rotate(0deg) scale(1);
             opacity: 0;
           }
-          10% {
+          5% {
             opacity: 1;
           }
+          30% {
+            transform: translateY(70vh) translateX(50px) rotate(90deg);
+          }
+          60% {
+            transform: translateY(40vh) translateX(-25px) rotate(180deg);
+          }
           90% {
-            opacity: 0.7;
+            opacity: 0.8;
           }
           100% {
-            transform: translateY(-100vh) translateX(50px) rotate(360deg) scale(1);
+            transform: translateY(-100vh) translateX(60px) rotate(360deg) scale(1);
             opacity: 0;
           }
         }
@@ -218,7 +251,7 @@ export default function ChatRoomPage() {
         .heart-float {
           position: fixed;
           bottom: 0;
-          animation: heart-rise 6s ease-in-out infinite;
+          animation: heart-rise 7s ease-in linear infinite;
           pointer-events: none;
         }
 
@@ -226,7 +259,7 @@ export default function ChatRoomPage() {
           position: fixed;
           bottom: 0;
           font-size: 1.5rem;
-          animation: sparkle-drift 7s ease-in-out infinite;
+          animation: sparkle-drift 8s ease-in linear infinite;
           pointer-events: none;
         }
 
@@ -234,7 +267,7 @@ export default function ChatRoomPage() {
           position: fixed;
           bottom: 0;
           font-size: 1.25rem;
-          animation: petal-drift 8s ease-in-out infinite;
+          animation: petal-drift 9s ease-in linear infinite;
           pointer-events: none;
         }
       `}</style>

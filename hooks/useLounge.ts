@@ -52,10 +52,8 @@ export function useLounge() {
         .select(
           `
           id,
-          user_id,
-          message,
-          message_type,
-          reported_count,
+          sender_id,
+          content,
           created_at
         `
         )
@@ -66,18 +64,20 @@ export function useLounge() {
 
       // Fetch user profiles for messages
       if (data && data.length > 0) {
-        const userIds = Array.from(new Set(data.map((m: any) => m.user_id)))
+        const senderIds = Array.from(new Set(data.map((m: any) => m.sender_id)))
         const { data: profiles, error: profileErr } = await supabase
           .from('profiles')
           .select('user_id, full_name, photos, main_photo_index')
-          .in('user_id', userIds)
+          .in('user_id', senderIds)
 
         if (!profileErr && profiles) {
           const profileMap = new Map(profiles.map((p: any) => [p.user_id, p]))
           const enrichedMessages = data.map((msg: any) => {
-            const profile = profileMap.get(msg.user_id)
+            const profile = profileMap.get(msg.sender_id)
             return {
               ...msg,
+              user_id: msg.sender_id,
+              message: msg.content,
               sender_name: profile?.full_name || 'Anonymous',
               sender_image: profile?.photos?.[profile?.main_photo_index || 0] || null,
             }
@@ -88,8 +88,9 @@ export function useLounge() {
 
       setError(null)
     } catch (err: any) {
-      console.error('Error fetching lounge messages:', err)
-      setError(err.message || 'Failed to load lounge messages')
+      const errorMessage = err?.message || err?.error_description || JSON.stringify(err) || 'Failed to load lounge messages'
+      console.error('Error fetching lounge messages:', errorMessage, err)
+      setError(errorMessage)
     } finally {
       setLoading(false)
     }
@@ -132,11 +133,13 @@ export function useLounge() {
               const { data: profile } = await supabase
                 .from('profiles')
                 .select('full_name, photos, main_photo_index')
-                .eq('user_id', newMessage.user_id)
+                .eq('user_id', newMessage.sender_id)
                 .single()
 
               const enrichedMessage = {
                 ...newMessage,
+                user_id: newMessage.sender_id,
+                message: newMessage.content,
                 sender_name: profile?.full_name || 'Anonymous',
                 sender_image: profile?.photos?.[profile?.main_photo_index || 0] || null,
               }
@@ -144,7 +147,12 @@ export function useLounge() {
             }
           )
           .subscribe((status, err) => {
-            console.log('[Lounge] Subscription status:', status, err)
+            if (err) {
+              const errorMsg = err?.message || JSON.stringify(err)
+              console.log('[Lounge] Subscription error:', errorMsg, err)
+            } else {
+              console.log('[Lounge] Subscription status:', status)
+            }
 
             if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
               console.log('[Lounge] Subscription closed/error - attempting retry...')
@@ -163,8 +171,9 @@ export function useLounge() {
               console.log('[Lounge] Messages subscription active')
             }
           })
-      } catch (err) {
-        console.error('Error subscribing to lounge messages:', err)
+      } catch (err: any) {
+        const errorMsg = err?.message || JSON.stringify(err) || 'Unknown error'
+        console.error('Error subscribing to lounge messages:', errorMsg, err)
         if (isMounted && retryCount < maxRetries) {
           retryCount += 1
           const delay = Math.min(1000 * Math.pow(2, retryCount - 1), 10000)
@@ -240,7 +249,12 @@ export function useLounge() {
           .subscribe(async (status, err) => {
             if (!isMounted) return
 
-            console.log('[Lounge] Presence status:', status, err)
+            if (err) {
+              const errorMsg = err?.message || JSON.stringify(err)
+              console.log('[Lounge] Presence error:', errorMsg, err)
+            } else {
+              console.log('[Lounge] Presence status:', status)
+            }
 
             if (status === 'SUBSCRIBED') {
               retryCount = 0
@@ -262,8 +276,9 @@ export function useLounge() {
               }
             }
           })
-      } catch (err) {
-        console.error('Error updating presence:', err)
+      } catch (err: any) {
+        const errorMsg = err?.message || JSON.stringify(err) || 'Unknown error'
+        console.error('Error updating presence:', errorMsg, err)
         if (isMounted && retryCount < maxRetries) {
           retryCount += 1
           const delay = Math.min(1000 * Math.pow(2, retryCount - 1), 10000)
@@ -303,15 +318,15 @@ export function useLounge() {
         })
 
         const { error: err } = await supabase.from('lounge_messages').insert({
-          user_id: user.id,
-          message: filteredContent,
-          message_type: 'text',
+          sender_id: user.id,
+          content: filteredContent,
         })
 
         if (err) throw err
       } catch (err: any) {
-        console.error('Error sending message:', err)
-        setError(err.message || 'Failed to send message')
+        const errorMessage = err?.message || err?.error_description || 'Failed to send message'
+        console.error('Error sending message:', errorMessage, err)
+        setError(errorMessage)
       }
     },
     [user]
@@ -330,17 +345,11 @@ export function useLounge() {
         })
 
         if (err) throw err
-
-        // Increment reported count
-        await supabase
-          .from('lounge_messages')
-          .update({ reported_count: supabase.raw('reported_count + 1') })
-          .eq('id', messageId)
-
         setError(null)
       } catch (err: any) {
-        console.error('Error reporting message:', err)
-        setError(err.message || 'Failed to report message')
+        const errorMessage = err?.message || err?.error_description || 'Failed to report message'
+        console.error('Error reporting message:', errorMessage, err)
+        setError(errorMessage)
       }
     },
     [user]
