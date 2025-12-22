@@ -100,6 +100,7 @@ export function AccountMenu() {
   return (
     <div className="relative">
       <button
+        ref={buttonRef}
         onClick={() => setMenuOpen(!menuOpen)}
         className="p-2 hover:bg-rose-50 rounded-full transition flex items-center gap-2"
         aria-label="Account menu"
