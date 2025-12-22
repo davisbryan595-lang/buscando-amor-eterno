@@ -46,25 +46,6 @@ export default function LoungeChatWindow({ autoScroll = true }: LoungeChatWindow
     }
   }
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <p className="text-slate-600">Loading lounge messages...</p>
-      </div>
-    )
-  }
-
-  if (error) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <div className="text-center">
-          <p className="text-slate-900 font-semibold mb-2">Unable to load lounge</p>
-          <p className="text-slate-600 text-sm">{error}</p>
-        </div>
-      </div>
-    )
-  }
-
   return (
     <div ref={containerRef} className="flex flex-col h-full w-full bg-white/70 backdrop-blur-sm rounded-2xl border border-rose-100/50 shadow-xl overflow-hidden">
       {/* Messages Container */}
