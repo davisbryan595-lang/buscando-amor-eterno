@@ -6,7 +6,6 @@ import Image from 'next/image'
 import { useLounge } from '@/hooks/useLounge'
 import { useAuth } from '@/context/auth-context'
 import { toast } from 'sonner'
-import { AnimatedMessage } from '@/components/animated-message'
 
 interface LoungeChatWindowProps {
   autoScroll?: boolean
