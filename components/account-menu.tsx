@@ -123,7 +123,10 @@ export function AccountMenu() {
       </button>
 
       {menuOpen && (
-        <div className="absolute right-0 mt-2 w-64 bg-white border border-rose-100 rounded-xl shadow-lg z-50">
+        <div
+          ref={menuRef}
+          className="absolute right-0 mt-2 w-64 bg-white border border-rose-100 rounded-xl shadow-lg z-50"
+        >
           <div className="p-4 border-b border-rose-100">
             <p className="text-sm font-semibold text-foreground truncate">
               {user.email}
