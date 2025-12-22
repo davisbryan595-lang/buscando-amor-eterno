@@ -32,6 +32,55 @@ export function AccountMenu() {
     setIsMounted(true)
   }, [])
 
+  useEffect(() => {
+    if (!menuRef.current || !buttonRef.current) return
+
+    if (menuOpen) {
+      // Entrance animation
+      gsap.fromTo(
+        menuRef.current,
+        {
+          opacity: 0,
+          scale: 0.95,
+          y: -10,
+        },
+        {
+          opacity: 1,
+          scale: 1,
+          y: 0,
+          duration: 0.25,
+          ease: 'power3.out',
+        }
+      )
+
+      // Animate chevron
+      gsap.to(buttonRef.current.querySelector('svg:last-child'), {
+        rotation: 180,
+        duration: 0.3,
+        ease: 'power2.out',
+      })
+    } else {
+      // Exit animation
+      gsap.to(
+        menuRef.current,
+        {
+          opacity: 0,
+          scale: 0.95,
+          y: -10,
+          duration: 0.2,
+          ease: 'power3.in',
+        }
+      )
+
+      // Animate chevron back
+      gsap.to(buttonRef.current.querySelector('svg:last-child'), {
+        rotation: 0,
+        duration: 0.3,
+        ease: 'power2.out',
+      })
+    }
+  }, [menuOpen])
+
   // Don't render until mounted to avoid hydration issues
   if (!isMounted || !user) return null
 
