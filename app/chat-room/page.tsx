@@ -111,11 +111,9 @@ export default function ChatRoomPage() {
           <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-primary" />
         </button>
         <div className="flex-1 min-w-0">
-          <h1 className="text-base sm:text-lg md:text-xl lg:text-2xl font-playfair font-bold text-slate-900 flex items-center gap-1.5 sm:gap-2 whitespace-nowrap overflow-hidden text-ellipsis">
+          <h1 className="text-sm sm:text-base md:text-lg lg:text-xl font-playfair font-bold text-slate-900 flex items-center gap-1.5 sm:gap-2 whitespace-nowrap overflow-hidden">
             <Heart className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-rose-400 flex-shrink-0" fill="currentColor" />
-            <span className="hidden xs:inline">Singles</span>
-            <span className="hidden xs:inline">Lounge</span>
-            <span className="xs:hidden">Lounge</span>
+            <span>Singles Lounge</span>
           </h1>
         </div>
       </div>
