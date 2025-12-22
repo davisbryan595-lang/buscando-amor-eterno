@@ -47,11 +47,11 @@ export default function LoungeChatWindow({ autoScroll = true }: LoungeChatWindow
   }
 
   return (
-    <div ref={containerRef} className="flex flex-col h-full w-full bg-white/70 backdrop-blur-sm rounded-2xl border border-rose-100/50 shadow-xl overflow-hidden">
+    <div ref={containerRef} className="flex flex-col h-full w-full bg-white/70 backdrop-blur-sm rounded-xl sm:rounded-2xl border border-rose-100/50 shadow-lg sm:shadow-xl overflow-hidden">
       {/* Messages Container */}
       <div
         ref={messagesContainerRef}
-        className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-3 sm:space-y-4 bg-gradient-to-b from-white/50 via-rose-50/20 to-white/50"
+        className="flex-1 overflow-y-auto px-2 py-3 sm:px-4 sm:py-4 md:px-6 md:py-6 space-y-2 sm:space-y-3 lg:space-y-4 bg-gradient-to-b from-white/50 via-rose-50/20 to-white/50"
       >
         {loading ? (
           <div className="flex items-center justify-center h-full">
