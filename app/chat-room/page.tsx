@@ -49,14 +49,14 @@ export default function ChatRoomPage() {
   }, [])
 
   return (
-    <main className="h-screen w-screen bg-gradient-to-br from-rose-50 via-pink-50 to-orange-50 relative overflow-hidden flex flex-col">
-      {/* Animated background elements - romantic theme */}
+    <main className="h-screen w-screen bg-white relative overflow-hidden flex flex-col">
+      {/* Animated background elements - subtle romantic theme */}
       <div className="fixed inset-0 pointer-events-none">
-        {/* Floating gradient orbs - responsive sizes */}
-        <div className="absolute -top-32 sm:-top-40 -right-32 sm:-right-40 w-48 sm:w-64 md:w-80 h-48 sm:h-64 md:h-80 bg-gradient-to-br from-primary/20 to-rose-300/20 rounded-full blur-2xl sm:blur-3xl opacity-40 animate-float" />
-        <div className="absolute top-1/4 -left-24 sm:-left-32 w-48 sm:w-64 h-48 sm:h-64 bg-gradient-to-br from-pink-300/20 to-primary/10 rounded-full blur-2xl sm:blur-3xl opacity-30 animate-pulse" />
-        <div className="absolute bottom-0 right-1/4 w-56 sm:w-96 h-56 sm:h-96 bg-gradient-to-tr from-orange-200/15 to-primary/15 rounded-full blur-2xl sm:blur-3xl opacity-35 animate-float-delayed" />
-        <div className="absolute bottom-1/3 left-0 w-52 sm:w-72 h-52 sm:h-72 bg-gradient-to-tr from-rose-200/15 to-pink-200/15 rounded-full blur-2xl sm:blur-3xl opacity-25 animate-pulse-slow" />
+        {/* Subtle floating gradient orbs - very minimal */}
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-rose-100/10 to-rose-200/5 rounded-full blur-3xl opacity-30 animate-float" />
+        <div className="absolute top-1/4 -left-32 w-64 h-64 bg-gradient-to-br from-rose-100/5 to-rose-200/5 rounded-full blur-3xl opacity-20 animate-pulse" />
+        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-gradient-to-tr from-rose-100/8 to-rose-200/5 rounded-full blur-3xl opacity-25 animate-float-delayed" />
+        <div className="absolute bottom-1/3 left-0 w-72 h-72 bg-gradient-to-tr from-rose-100/5 to-rose-200/5 rounded-full blur-3xl opacity-15 animate-pulse-slow" />
 
         {/* Enhanced Floating hearts - more visible with larger sizes and better opacity */}
         <div className="heart-float" style={{ left: '5%', animationDelay: '0s' }}>
