@@ -52,51 +52,51 @@ export default function ChatRoomPage() {
     <main className="h-screen w-screen bg-gradient-to-br from-rose-50 via-pink-50 to-orange-50 relative overflow-hidden flex flex-col">
       {/* Animated background elements - romantic theme */}
       <div className="fixed inset-0 pointer-events-none">
-        {/* Floating gradient orbs */}
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-primary/20 to-rose-300/20 rounded-full blur-3xl opacity-40 animate-float" />
-        <div className="absolute top-1/4 -left-32 w-64 h-64 bg-gradient-to-br from-pink-300/20 to-primary/10 rounded-full blur-3xl opacity-30 animate-pulse" />
-        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-gradient-to-tr from-orange-200/15 to-primary/15 rounded-full blur-3xl opacity-35 animate-float-delayed" />
-        <div className="absolute bottom-1/3 left-0 w-72 h-72 bg-gradient-to-tr from-rose-200/15 to-pink-200/15 rounded-full blur-3xl opacity-25 animate-pulse-slow" />
+        {/* Floating gradient orbs - responsive sizes */}
+        <div className="absolute -top-32 sm:-top-40 -right-32 sm:-right-40 w-48 sm:w-64 md:w-80 h-48 sm:h-64 md:h-80 bg-gradient-to-br from-primary/20 to-rose-300/20 rounded-full blur-2xl sm:blur-3xl opacity-40 animate-float" />
+        <div className="absolute top-1/4 -left-24 sm:-left-32 w-48 sm:w-64 h-48 sm:h-64 bg-gradient-to-br from-pink-300/20 to-primary/10 rounded-full blur-2xl sm:blur-3xl opacity-30 animate-pulse" />
+        <div className="absolute bottom-0 right-1/4 w-56 sm:w-96 h-56 sm:h-96 bg-gradient-to-tr from-orange-200/15 to-primary/15 rounded-full blur-2xl sm:blur-3xl opacity-35 animate-float-delayed" />
+        <div className="absolute bottom-1/3 left-0 w-52 sm:w-72 h-52 sm:h-72 bg-gradient-to-tr from-rose-200/15 to-pink-200/15 rounded-full blur-2xl sm:blur-3xl opacity-25 animate-pulse-slow" />
 
-        {/* Floating hearts */}
-        <div className="heart-float" style={{ left: '10%', animationDelay: '0s' }}>
-          <Heart className="w-6 h-6 text-rose-400 drop-shadow-lg" fill="currentColor" />
+        {/* Floating hearts - responsive and hidden on very small screens */}
+        <div className="heart-float hidden xs:block" style={{ left: '10%', animationDelay: '0s' }}>
+          <Heart className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-rose-400 drop-shadow-lg" fill="currentColor" />
         </div>
-        <div className="heart-float" style={{ left: '25%', animationDelay: '1s' }}>
-          <Heart className="w-5 h-5 text-rose-300 drop-shadow-lg" fill="currentColor" />
+        <div className="heart-float hidden xs:block" style={{ left: '25%', animationDelay: '1s' }}>
+          <Heart className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 text-rose-300 drop-shadow-lg" fill="currentColor" />
         </div>
-        <div className="heart-float" style={{ left: '45%', animationDelay: '2s' }}>
-          <Heart className="w-4 h-4 text-primary drop-shadow-lg" fill="currentColor" />
+        <div className="heart-float hidden sm:block" style={{ left: '45%', animationDelay: '2s' }}>
+          <Heart className="w-3 h-3 md:w-4 md:h-4 text-primary drop-shadow-lg" fill="currentColor" />
         </div>
-        <div className="heart-float" style={{ left: '70%', animationDelay: '0.5s' }}>
-          <Heart className="w-5 h-5 text-rose-400 drop-shadow-lg" fill="currentColor" />
+        <div className="heart-float hidden xs:block" style={{ left: '70%', animationDelay: '0.5s' }}>
+          <Heart className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 text-rose-400 drop-shadow-lg" fill="currentColor" />
         </div>
-        <div className="heart-float" style={{ left: '85%', animationDelay: '1.5s' }}>
-          <Heart className="w-6 h-6 text-rose-300 drop-shadow-lg" fill="currentColor" />
-        </div>
-
-        {/* Floating sparkles */}
-        <div className="sparkle-float" style={{ left: '15%', animationDelay: '0.3s' }}>
-          ✨
-        </div>
-        <div className="sparkle-float" style={{ left: '35%', animationDelay: '0.8s' }}>
-          ✨
-        </div>
-        <div className="sparkle-float" style={{ left: '60%', animationDelay: '1.2s' }}>
-          ✨
-        </div>
-        <div className="sparkle-float" style={{ left: '80%', animationDelay: '0.6s' }}>
-          ✨
+        <div className="heart-float hidden sm:block" style={{ left: '85%', animationDelay: '1.5s' }}>
+          <Heart className="w-4 h-4 md:w-5 md:h-5 text-rose-300 drop-shadow-lg" fill="currentColor" />
         </div>
 
-        {/* Rose petals */}
-        <div className="petal-float" style={{ left: '20%', animationDelay: '0s' }}>
+        {/* Floating sparkles - responsive sizing */}
+        <div className="sparkle-float hidden xs:block" style={{ left: '15%', animationDelay: '0.3s', fontSize: 'clamp(0.75rem, 2vw, 1.5rem)' }}>
+          ✨
+        </div>
+        <div className="sparkle-float hidden xs:block" style={{ left: '35%', animationDelay: '0.8s', fontSize: 'clamp(0.75rem, 2vw, 1.5rem)' }}>
+          ✨
+        </div>
+        <div className="sparkle-float hidden sm:block" style={{ left: '60%', animationDelay: '1.2s', fontSize: 'clamp(1rem, 2.5vw, 1.5rem)' }}>
+          ✨
+        </div>
+        <div className="sparkle-float hidden xs:block" style={{ left: '80%', animationDelay: '0.6s', fontSize: 'clamp(0.75rem, 2vw, 1.5rem)' }}>
+          ✨
+        </div>
+
+        {/* Rose petals - responsive sizing */}
+        <div className="petal-float hidden xs:block" style={{ left: '20%', animationDelay: '0s', fontSize: 'clamp(0.875rem, 2.5vw, 1.25rem)' }}>
           🌹
         </div>
-        <div className="petal-float" style={{ left: '50%', animationDelay: '1s' }}>
+        <div className="petal-float hidden sm:block" style={{ left: '50%', animationDelay: '1s', fontSize: 'clamp(1rem, 2.5vw, 1.25rem)' }}>
           🌹
         </div>
-        <div className="petal-float" style={{ left: '75%', animationDelay: '0.5s' }}>
+        <div className="petal-float hidden xs:block" style={{ left: '75%', animationDelay: '0.5s', fontSize: 'clamp(0.875rem, 2.5vw, 1.25rem)' }}>
           🌹
         </div>
       </div>
