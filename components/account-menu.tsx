@@ -1,11 +1,12 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/auth-context'
 import { useProfile } from '@/hooks/useProfile'
 import Image from 'next/image'
+import gsap from 'gsap'
 import {
   Menu,
   X,
@@ -21,6 +22,8 @@ import { toast } from 'sonner'
 export function AccountMenu() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [isMounted, setIsMounted] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
+  const buttonRef = useRef<HTMLButtonElement>(null)
   const router = useRouter()
   const { user, signOut } = useAuth()
   const { profile } = useProfile()
