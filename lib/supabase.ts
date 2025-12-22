@@ -12,6 +12,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   realtime: {
     params: {
       eventsPerSecond: 10,
+      heartbeatIntervalMs: 30000,
     },
     heartbeatInterval: 30000,
     reconnectDelay: 1000,
@@ -19,6 +20,8 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: true,
     autoRefreshToken: true,
+    flowType: 'pkce',
+    detectSessionInUrl: true,
   },
 })
 
@@ -84,6 +87,10 @@ export type Database = {
           recipient_id: string
           content: string
           read: boolean
+          type: 'text' | 'call_log'
+          call_type?: 'audio' | 'video'
+          call_status?: 'ongoing' | 'incoming' | 'missed' | 'ended'
+          call_duration?: number
         }
         Insert: Omit<any, 'id' | 'created_at'>
         Update: Partial<any>

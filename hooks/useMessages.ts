@@ -10,6 +10,17 @@ export interface Message {
   content: string
   read: boolean
   created_at: string
+  type?: 'text' | 'call_log'
+  call_type?: 'audio' | 'video'
+  call_status?: 'ongoing' | 'incoming' | 'missed' | 'ended'
+  call_duration?: number
+  call_id?: string
+}
+
+export interface TypingStatus {
+  user_id: string
+  is_typing: boolean
+  timestamp: number
 }
 
 export interface Conversation {
@@ -35,6 +46,36 @@ export function useMessages() {
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const pollAttemptsRef = useRef(0)
   const lastFetchRef = useRef(0)
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const isTypingRef = useRef(false)
+  const heartbeatIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const onlineTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // Define broadcastOnlineStatus early so it can be used in setupHeartbeat
+  const broadcastOnlineStatus = useCallback(
+    async (isOnline: boolean) => {
+      if (!user) return
+
+      try {
+        const onlineStatus = {
+          user_id: user.id,
+          is_online: isOnline,
+          timestamp: new Date().toISOString(),
+        }
+
+        // Broadcast to all conversations
+        const userChannel = supabase.channel(`user:${user.id}:online`)
+        await userChannel.send({
+          type: 'broadcast',
+          event: 'user_status',
+          payload: onlineStatus,
+        })
+      } catch (err: any) {
+        console.warn('Failed to broadcast online status:', err)
+      }
+    },
+    [user]
+  )
 
   useEffect(() => {
     if (!user) {
@@ -50,16 +91,72 @@ export function useMessages() {
       }
     }
 
+    const setupHeartbeat = () => {
+      // Broadcast online status immediately
+      broadcastOnlineStatus(true)
+
+      // Set up heartbeat to send online status every 30 seconds
+      if (heartbeatIntervalRef.current) {
+        clearInterval(heartbeatIntervalRef.current)
+      }
+
+      heartbeatIntervalRef.current = setInterval(() => {
+        broadcastOnlineStatus(true)
+      }, 30000)
+
+      // Handle page visibility changes
+      const handleVisibilityChange = () => {
+        if (document.hidden) {
+          console.log('[Heartbeat] Page hidden')
+          broadcastOnlineStatus(false)
+        } else {
+          console.log('[Heartbeat] Page visible')
+          broadcastOnlineStatus(true)
+        }
+      }
+
+      document.addEventListener('visibilitychange', handleVisibilityChange)
+
+      // Handle page unload - avoid sending messages during unload as network may fail
+      const handleBeforeUnload = () => {
+        // Don't attempt to send messages during unload as the network connection
+        // is already being torn down. The server will detect the disconnect automatically.
+        if (heartbeatIntervalRef.current) {
+          clearInterval(heartbeatIntervalRef.current)
+        }
+      }
+
+      window.addEventListener('beforeunload', handleBeforeUnload)
+
+      return () => {
+        document.removeEventListener('visibilitychange', handleVisibilityChange)
+        window.removeEventListener('beforeunload', handleBeforeUnload)
+        if (heartbeatIntervalRef.current) {
+          clearInterval(heartbeatIntervalRef.current)
+        }
+      }
+    }
+
     initialize()
     const unsubscribe = subscribeToMessages()
+    const cleanupHeartbeat = setupHeartbeat()
 
     return () => {
       isMounted = false
       if (unsubscribe) {
         unsubscribe()
       }
+      if (cleanupHeartbeat) {
+        cleanupHeartbeat()
+      }
       if (debounceTimerRef.current) {
         clearTimeout(debounceTimerRef.current)
+      }
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current)
+      }
+      if (onlineTimeoutRef.current) {
+        clearTimeout(onlineTimeoutRef.current)
       }
     }
   }, [user?.id])
@@ -78,7 +175,7 @@ export function useMessages() {
       // Fetch messages more efficiently with smaller limit
       const queryPromise = supabase
         .from('messages')
-        .select('sender_id, recipient_id, content, created_at, read')
+        .select('sender_id, recipient_id, content, created_at, read, type, call_type, call_status, call_duration, call_id')
         .or(`sender_id.eq.${user.id},recipient_id.eq.${user.id}`)
         .order('created_at', { ascending: false })
         .limit(150)
@@ -164,83 +261,76 @@ export function useMessages() {
   const subscribeToMessages = () => {
     if (!user) return
 
-    let pollInterval: ReturnType<typeof setInterval> | null = null
     let isMounted = true
-    let lastFetch = 0
-    const MIN_FETCH_INTERVAL = 3000
-
-    const throttledFetch = () => {
-      const now = Date.now()
-      if (now - lastFetch >= MIN_FETCH_INTERVAL) {
-        lastFetch = now
-        fetchConversations()
-      }
-    }
-
-    const stopPolling = () => {
-      if (pollInterval) {
-        clearInterval(pollInterval)
-        pollInterval = null
-      }
-    }
 
     try {
       const subscription = supabase
         .channel(`messages:${user.id}`)
-        .on(
-          'postgres_changes',
-          {
-            event: 'INSERT',
-            schema: 'public',
-            table: 'messages',
-            filter: `or(sender_id.eq.${user.id},recipient_id.eq.${user.id})`,
-          },
-          (payload) => {
-            if (isMounted) {
-              const newMessage = payload.new as Message
-              setMessages((prev) => {
-                const isDuplicate = prev.some(m => m.id === newMessage.id)
-                return isDuplicate ? prev : [...prev, newMessage]
-              })
-              throttledFetch()
-            }
-          }
-        )
-        .subscribe((status) => {
-          if (status === 'SUBSCRIBED') {
-            console.log('[Messages] Real-time subscription active')
-            stopPolling()
-          } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
-            console.warn('[Messages] Subscription error:', status, '- Check RLS policies on messages table in Supabase dashboard')
-            if (!pollInterval && isMounted) {
-              pollInterval = setInterval(() => {
-                if (isMounted) {
-                  throttledFetch()
+        .on('broadcast', { event: 'new_message' }, (payload) => {
+          if (isMounted) {
+            console.log('[Messages] New message via broadcast:', payload.payload)
+            const newMessage = payload.payload as Message
+
+            setMessages((prev) => {
+              const isDuplicate = prev.some(m => m.id === newMessage.id)
+              return isDuplicate ? prev : [...prev, newMessage]
+            })
+
+            // Update conversations list with new message
+            setConversations((prev) => {
+              const otherUserId = newMessage.sender_id === user.id ? newMessage.recipient_id : newMessage.sender_id
+              const updated = prev.map((conv) => {
+                if (conv.other_user_id === otherUserId) {
+                  return {
+                    ...conv,
+                    last_message: newMessage.content,
+                    last_message_time: newMessage.created_at,
+                    unread_count: newMessage.recipient_id === user.id && !newMessage.read
+                      ? conv.unread_count + 1
+                      : conv.unread_count,
+                  }
                 }
-              }, 10000)
-            }
+                return conv
+              })
+
+              // If conversation doesn't exist, fetch it once to get full details
+              if (!updated.some((c) => c.other_user_id === otherUserId)) {
+                fetchConversations()
+              }
+
+              return updated
+            })
+          }
+        })
+        .on('broadcast', { event: 'user_status' }, (payload) => {
+          if (isMounted) {
+            console.log('[Messages] User status update:', payload.payload)
+            const userStatus = payload.payload
+
+            // Update conversation online status
+            setConversations((prev) =>
+              prev.map((conv) =>
+                conv.other_user_id === userStatus.user_id
+                  ? { ...conv, is_online: userStatus.is_online }
+                  : conv
+              )
+            )
+          }
+        })
+        .subscribe((status) => {
+          console.log('[Messages] Broadcast subscription status:', status)
+          if (status === 'SUBSCRIBED') {
+            console.log('[Messages] Real-time broadcast subscription active')
           }
         })
 
       return () => {
         isMounted = false
-        subscription.unsubscribe()
-        stopPolling()
+        supabase.removeChannel(subscription)
       }
     } catch (err) {
       console.warn('Failed to setup message subscription:', err)
-      if (!pollInterval) {
-        pollInterval = setInterval(() => {
-          if (isMounted) {
-            throttledFetch()
-          }
-        }, 10000)
-      }
-
-      return () => {
-        isMounted = false
-        stopPolling()
-      }
+      return
     }
   }
 
@@ -251,35 +341,47 @@ export function useMessages() {
       let isMounted = true
 
       try {
-        const subscription = supabase
-          .channel(`conversation:${user.id}:${otherUserId}`)
-          .on(
-            'postgres_changes',
-            {
-              event: 'INSERT',
-              schema: 'public',
-              table: 'messages',
-              filter: `or(and(sender_id.eq.${user.id},recipient_id.eq.${otherUserId}),and(sender_id.eq.${otherUserId},recipient_id.eq.${user.id}))`,
-            },
-            (payload) => {
-              if (isMounted) {
-                const newMessage = payload.new as Message
-                setMessages((prev) => {
-                  const isDuplicate = prev.some(m => m.id === newMessage.id)
-                  return isDuplicate ? prev : [...prev, newMessage]
-                })
-              }
+        const channel = supabase
+          .channel(`messages:${user.id}:${otherUserId}`)
+          .on('broadcast', { event: 'new_message' }, (payload) => {
+            console.log('[Conversation] New message via broadcast:', payload.payload)
+            if (isMounted) {
+              const newMessage = payload.payload as Message
+              setMessages((prevMessages) => {
+                if (prevMessages.some(msg => msg.id === newMessage.id)) {
+                  console.log('[Conversation] Duplicate message prevented:', newMessage.id)
+                  return prevMessages
+                }
+                console.log('[Conversation] Adding new message to state:', newMessage.id)
+                return [...prevMessages, newMessage]
+              })
             }
-          )
+          })
+          .on('broadcast', { event: 'user_status' }, (payload) => {
+            if (isMounted) {
+              console.log('[Conversation] User status update for conversation:', payload.payload)
+              const userStatus = payload.payload
+
+              // Update conversation online status
+              setConversations((prev) =>
+                prev.map((conv) =>
+                  conv.other_user_id === userStatus.user_id
+                    ? { ...conv, is_online: userStatus.is_online }
+                    : conv
+                )
+              )
+            }
+          })
           .subscribe((status) => {
+            console.log(`[Conversation] Broadcast subscription status for ${otherUserId}:`, status)
             if (status === 'SUBSCRIBED') {
-              console.log(`[Conversation] Real-time updates active for ${otherUserId}`)
+              console.log(`[Conversation] Real-time broadcast updates active for ${otherUserId}`)
             }
           })
 
         return () => {
           isMounted = false
-          subscription.unsubscribe()
+          supabase.removeChannel(channel)
         }
       } catch (err) {
         console.warn('Failed to setup conversation subscription:', err)
@@ -301,7 +403,7 @@ export function useMessages() {
 
         const queryPromise = supabase
           .from('messages')
-          .select('id,sender_id,recipient_id,content,read,created_at')
+          .select('id,sender_id,recipient_id,content,read,created_at,type,call_type,call_status,call_duration,call_id')
           .or(
             `and(sender_id.eq.${user.id},recipient_id.eq.${otherUserId}),and(sender_id.eq.${otherUserId},recipient_id.eq.${user.id})`
           )
@@ -327,6 +429,19 @@ export function useMessages() {
       if (!user) throw new Error('No user logged in')
 
       try {
+        // Optimistic update: add message to state immediately
+        const tempMessage: Message = {
+          id: `temp-${Date.now()}`,
+          sender_id: user.id,
+          recipient_id: recipientId,
+          content,
+          read: false,
+          created_at: new Date().toISOString(),
+        }
+
+        setMessages((prev) => [...prev, tempMessage])
+
+        // Insert into database
         const { data, error: err } = await supabase
           .from('messages')
           .insert({
@@ -340,25 +455,32 @@ export function useMessages() {
 
         if (err) throw err
 
-        const message = data as Message
-        setMessages((prev) => [...prev, message])
+        const realMessage = data as Message
 
-        // Broadcast message for instant delivery via Broadcast (low-latency)
-        const broadcastChannel = supabase.channel(`messages:${recipientId}`)
-        await broadcastChannel.subscribe()
-        const broadcastResult = await broadcastChannel.send('broadcast', {
-          event: 'message-sent',
-          payload: message,
+        // Replace temp message with real message from DB
+        setMessages((prev) =>
+          prev.map((msg) => msg.id === tempMessage.id ? realMessage : msg)
+        )
+
+        // Broadcast to all relevant channels so subscribers get instant update
+        const conversationChannel = supabase.channel(`messages:${user.id}:${recipientId}`)
+        await conversationChannel.send({
+          type: 'broadcast',
+          event: 'new_message',
+          payload: realMessage,
         })
-        console.log('[Messages] Broadcast sent:', { broadcastResult })
 
-        // Add small delay to ensure broadcast is delivered before unsubscribing
-        await new Promise(resolve => setTimeout(resolve, 100))
+        const userChannel = supabase.channel(`messages:${user.id}`)
+        await userChannel.send({
+          type: 'broadcast',
+          event: 'new_message',
+          payload: realMessage,
+        })
 
-        await broadcastChannel.unsubscribe()
-
-        return message
+        return realMessage
       } catch (err: any) {
+        // Remove optimistic message on error
+        setMessages((prev) => prev.filter((msg) => !msg.id.startsWith('temp-')))
         const errorMessage = err?.message || (typeof err === 'string' ? err : 'Failed to send message')
         setError(errorMessage)
         throw err
@@ -368,22 +490,64 @@ export function useMessages() {
   )
 
   const markAsRead = useCallback(
-    async (messageId: string) => {
+    async (messageId: string, recipientId?: string) => {
       try {
+        // Find the message to get recipient info for broadcasting
+        const message = messages.find((msg) => msg.id === messageId)
+        const targetRecipientId = recipientId || message?.sender_id
+
+        // Optimistic update: mark as read in state immediately
+        setMessages((prev) =>
+          prev.map((msg) => msg.id === messageId ? { ...msg, read: true } : msg)
+        )
+        setConversations((prev) =>
+          prev.map((conv) => ({
+            ...conv,
+            unread_count: Math.max(0, conv.unread_count - 1),
+          }))
+        )
+
+        // Update in database
         const { error: err } = await supabase
           .from('messages')
           .update({ read: true })
           .eq('id', messageId)
 
         if (err) throw err
+
+        // Broadcast read receipt to sender
+        if (user && targetRecipientId) {
+          const readReceipt = {
+            message_id: messageId,
+            reader_id: user.id,
+            timestamp: new Date().toISOString(),
+          }
+
+          try {
+            const conversationChannel = supabase.channel(`messages:${user.id}:${targetRecipientId}`)
+            await conversationChannel.send({
+              type: 'broadcast',
+              event: 'message_read',
+              payload: readReceipt,
+            })
+
+            const userChannel = supabase.channel(`messages:${user.id}`)
+            await userChannel.send({
+              type: 'broadcast',
+              event: 'message_read',
+              payload: readReceipt,
+            })
+          } catch (broadcastErr) {
+            console.warn('Failed to broadcast read receipt:', broadcastErr)
+          }
+        }
       } catch (err: any) {
         const errorMessage = err?.message || (typeof err === 'string' ? err : 'Failed to mark message as read')
-        const errorDetails = err?.code ? ` (Code: ${err.code})` : err?.status ? ` (Status: ${err.status})` : ''
         setError(errorMessage)
-        console.error('Error marking message as read:', errorMessage + errorDetails, err)
+        console.error('Error marking message as read:', errorMessage, err)
       }
     },
-    []
+    [user, messages]
   )
 
   const initiateConversation = useCallback(
@@ -430,6 +594,218 @@ export function useMessages() {
     [user, conversations]
   )
 
+  const broadcastTyping = useCallback(
+    async (recipientId: string, isTyping: boolean) => {
+      if (!user) return
+
+      try {
+        const typingStatus: TypingStatus = {
+          user_id: user.id,
+          is_typing: isTyping,
+          timestamp: Date.now(),
+        }
+
+        const conversationChannel = supabase.channel(`messages:${user.id}:${recipientId}`)
+        await conversationChannel.send({
+          type: 'broadcast',
+          event: 'typing_indicator',
+          payload: typingStatus,
+        })
+      } catch (err: any) {
+        console.warn('Failed to broadcast typing status:', err)
+      }
+    },
+    [user]
+  )
+
+  const handleTyping = useCallback(
+    (recipientId: string) => {
+      if (!user) return
+
+      // Clear existing timeout
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current)
+      }
+
+      // If not already typing, broadcast typing started
+      if (!isTypingRef.current) {
+        isTypingRef.current = true
+        broadcastTyping(recipientId, true)
+      }
+
+      // Set timeout to stop typing after 3 seconds of inactivity
+      typingTimeoutRef.current = setTimeout(() => {
+        isTypingRef.current = false
+        broadcastTyping(recipientId, false)
+      }, 3000)
+    },
+    [user, broadcastTyping]
+  )
+
+  const stopTyping = useCallback(
+    (recipientId: string) => {
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current)
+      }
+      if (isTypingRef.current) {
+        isTypingRef.current = false
+        broadcastTyping(recipientId, false)
+      }
+    },
+    [broadcastTyping]
+  )
+
+  const logCallMessage = useCallback(
+    async (
+      recipientId: string,
+      callType: 'audio' | 'video',
+      callStatus: 'ongoing' | 'incoming' | 'missed' | 'ended',
+      callDuration?: number,
+      callId?: string
+    ) => {
+      if (!user) throw new Error('No user logged in')
+
+      try {
+        if (callStatus === 'ongoing') {
+          // For ongoing calls, generate a new call_id and insert a new record
+          const newCallId = callId || crypto.randomUUID()
+
+          const { data, error: err } = await supabase
+            .from('messages')
+            .insert({
+              sender_id: user.id,
+              recipient_id: recipientId,
+              content: `Ongoing ${callType} call`,
+              read: true,
+              type: 'call_log',
+              call_type: callType,
+              call_status: 'ongoing',
+              call_duration: null,
+              call_id: newCallId,
+            })
+            .select()
+            .single()
+
+          if (err) throw err
+
+          const callMessage = data as Message
+          setMessages((prev) => [...prev, callMessage])
+
+          // Store call timing info for later
+          if (typeof window !== 'undefined') {
+            localStorage.setItem(`call_${newCallId}_start`, Date.now().toString())
+          }
+
+          // Broadcast the call message
+          const conversationChannel = supabase.channel(`messages:${user.id}:${recipientId}`)
+          await conversationChannel.send({
+            type: 'broadcast',
+            event: 'new_message',
+            payload: callMessage,
+          })
+
+          const userChannel = supabase.channel(`messages:${user.id}`)
+          await userChannel.send({
+            type: 'broadcast',
+            event: 'new_message',
+            payload: callMessage,
+          })
+
+          // Return the new call_id
+          return newCallId
+        } else if (callStatus === 'ended' && callId) {
+          // For ended calls, update the existing record with duration
+          const durationSeconds = callDuration || 0
+
+          // Update the call log with final status and duration
+          const { data, error: err } = await supabase
+            .from('messages')
+            .update({
+              call_status: 'ended',
+              call_duration: durationSeconds,
+              content: `${callType} call · ${Math.floor(durationSeconds / 60)}:${String(durationSeconds % 60).padStart(2, '0')}`,
+            })
+            .eq('call_id', callId)
+            .select()
+            .single()
+
+          if (err) throw err
+
+          const callMessage = data as Message
+
+          // Update in messages state
+          setMessages((prev) =>
+            prev.map((msg) => msg.call_id === callId ? callMessage : msg)
+          )
+
+          // Cleanup localStorage
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem(`call_${callId}_start`)
+          }
+
+          // Broadcast the updated call message
+          const conversationChannel = supabase.channel(`messages:${user.id}:${recipientId}`)
+          await conversationChannel.send({
+            type: 'broadcast',
+            event: 'new_message',
+            payload: callMessage,
+          })
+
+          const userChannel = supabase.channel(`messages:${user.id}`)
+          await userChannel.send({
+            type: 'broadcast',
+            event: 'new_message',
+            payload: callMessage,
+          })
+        } else if (callStatus === 'missed' && callId) {
+          // For missed calls, update the existing record
+          const { data, error: err } = await supabase
+            .from('messages')
+            .update({
+              call_status: 'missed',
+              content: `Missed ${callType} call`,
+            })
+            .eq('call_id', callId)
+            .select()
+            .single()
+
+          if (err) throw err
+
+          const callMessage = data as Message
+
+          // Update in messages state
+          setMessages((prev) =>
+            prev.map((msg) => msg.call_id === callId ? callMessage : msg)
+          )
+
+          // Cleanup localStorage
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem(`call_${callId}_start`)
+          }
+
+          // Broadcast the updated call message
+          const conversationChannel = supabase.channel(`messages:${user.id}:${recipientId}`)
+          await conversationChannel.send({
+            type: 'broadcast',
+            event: 'new_message',
+            payload: callMessage,
+          })
+
+          const userChannel = supabase.channel(`messages:${user.id}`)
+          await userChannel.send({
+            type: 'broadcast',
+            event: 'new_message',
+            payload: callMessage,
+          })
+        }
+      } catch (err: any) {
+        console.error('Error logging call message:', err)
+        throw err
+      }
+    },
+    [user]
+  )
+
   return {
     conversations,
     messages,
@@ -441,5 +817,10 @@ export function useMessages() {
     markAsRead,
     initiateConversation,
     subscribeToConversation,
+    logCallMessage,
+    handleTyping,
+    stopTyping,
+    broadcastTyping,
+    broadcastOnlineStatus,
   }
 }

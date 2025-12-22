@@ -25,10 +25,13 @@ export function useStartCall() {
     try {
       // Generate room name (sorted IDs ensure consistency)
       const roomName = [user.id, recipientId].sort().join('-')
+      const callId = crypto.randomUUID()
       const expiresAt = new Date()
       expiresAt.setMinutes(expiresAt.getMinutes() + 5)
 
-      // Create call invitation in database
+      // Use upsert to handle existing call invitations gracefully
+      // If a call invitation with the same (caller_id, recipient_id, room_name) exists,
+      // update it instead of failing with a unique constraint violation (409)
       const { data: invitation, error: invitationError } = await supabase
         .from('call_invitations')
         .upsert(
@@ -37,9 +40,9 @@ export function useStartCall() {
             recipient_id: recipientId,
             call_type: callType,
             room_name: roomName,
+            call_id: callId,
             status: 'pending',
             expires_at: expiresAt.toISOString(),
-            updated_at: new Date().toISOString(),
           },
           {
             onConflict: 'caller_id,recipient_id,room_name',

@@ -1,12 +1,14 @@
 import { useCallback, useState, useEffect, useRef } from 'react'
 import { useAuth } from '@/context/auth-context'
 import { supabase } from '@/lib/supabase'
+import { useMessages } from './useMessages'
 
 export interface IncomingCall {
   id: string
   caller_id: string
   recipient_id: string
   call_type: 'audio' | 'video'
+  call_id?: string
   status: string
   room_name: string
   created_at: string
@@ -17,6 +19,7 @@ export interface IncomingCall {
 
 export function useIncomingCalls() {
   const { user } = useAuth()
+  const { logCallMessage } = useMessages()
   const [incomingCall, setIncomingCall] = useState<IncomingCall | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -31,14 +34,32 @@ export function useIncomingCalls() {
   }, [])
 
   const rejectCall = useCallback(
-    async (callId: string) => {
+    async (invitationId: string) => {
       try {
+        // Get the call invitation details before deleting
+        const { data: callInvitation } = await supabase
+          .from('call_invitations')
+          .select('caller_id, call_type, call_id')
+          .eq('id', invitationId)
+          .single()
+
+        // Delete the invitation when declining to prevent duplicate key violations
         const { error: err } = await supabase
           .from('call_invitations')
-          .update({ status: 'declined' })
-          .eq('id', callId)
+          .delete()
+          .eq('id', invitationId)
 
         if (err) throw err
+
+        // Log missed call message (from caller's perspective)
+        if (callInvitation) {
+          try {
+            await logCallMessage(callInvitation.caller_id, callInvitation.call_type, 'missed', undefined, callInvitation.call_id)
+          } catch (logErr) {
+            console.warn('Failed to log missed call:', logErr)
+          }
+        }
+
         setIncomingCall(null)
         clearCallTimeout()
       } catch (err: any) {
@@ -46,7 +67,7 @@ export function useIncomingCalls() {
         setError(errorMessage)
       }
     },
-    [clearCallTimeout]
+    [clearCallTimeout, logCallMessage]
   )
 
   const acceptCall = useCallback(
@@ -100,6 +121,15 @@ export function useIncomingCalls() {
                 // Check if call has expired
                 const expiresAt = new Date(callInvitation.expires_at).getTime()
                 if (Date.now() > expiresAt) {
+                  // Auto-cleanup expired invitations
+                  try {
+                    await supabase
+                      .from('call_invitations')
+                      .delete()
+                      .eq('id', callInvitation.id)
+                  } catch (cleanupErr) {
+                    console.warn('Failed to cleanup expired call invitation:', cleanupErr)
+                  }
                   return
                 }
 
@@ -115,6 +145,7 @@ export function useIncomingCalls() {
                   caller_id: callInvitation.caller_id,
                   recipient_id: callInvitation.recipient_id,
                   call_type: callInvitation.call_type,
+                  call_id: callInvitation.call_id,
                   status: callInvitation.status,
                   room_name: callInvitation.room_name,
                   created_at: callInvitation.created_at,
@@ -162,6 +193,22 @@ export function useIncomingCalls() {
                 filter: `recipient_id=eq.${user.id}`,
               },
               handleCallInvitation
+            )
+            .on(
+              'postgres_changes',
+              {
+                event: 'DELETE',
+                schema: 'public',
+                table: 'call_invitations',
+                filter: `recipient_id=eq.${user.id}`,
+              },
+              (payload: any) => {
+                if (isMounted && subscriptionActive && incomingCall?.id === payload.old.id) {
+                  // Call was deleted (likely missed or ended), clear the incoming call
+                  setIncomingCall(null)
+                  clearCallTimeout()
+                }
+              }
             )
             .subscribe((status) => {
               if (status === 'SUBSCRIBED') {
