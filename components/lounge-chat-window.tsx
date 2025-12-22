@@ -66,18 +66,28 @@ export default function LoungeChatWindow({ autoScroll = true }: LoungeChatWindow
   }
 
   return (
-    <div className="flex flex-col h-full bg-white rounded-xl border border-rose-100 shadow-lg overflow-hidden">
+    <div ref={containerRef} className="flex flex-col h-full w-full bg-white/70 backdrop-blur-sm rounded-2xl border border-rose-100/50 shadow-xl overflow-hidden">
       {/* Messages Container */}
       <div
         ref={messagesContainerRef}
-        className="flex-1 overflow-y-auto p-4 space-y-4 bg-gradient-to-b from-white via-rose-50/30 to-white"
+        className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-3 sm:space-y-4 bg-gradient-to-b from-white/50 via-rose-50/20 to-white/50"
       >
-        {messages.length === 0 ? (
-          <div className="flex items-center justify-center h-full text-center">
-            <div className="text-slate-600">
-              <p className="text-lg font-semibold mb-2">Welcome to the Lounge!</p>
-              <p className="text-sm">Be the first to say hello to our community 👋</p>
+        {loading ? (
+          <div className="flex items-center justify-center h-full">
+            <p className="text-slate-500 text-sm sm:text-base">Loading messages...</p>
+          </div>
+        ) : error ? (
+          <div className="flex items-center justify-center h-full">
+            <div className="text-center">
+              <p className="text-slate-700 font-semibold mb-1 text-sm sm:text-base">Something went wrong</p>
+              <p className="text-slate-500 text-xs sm:text-sm">{error}</p>
             </div>
+          </div>
+        ) : messages.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-full text-center px-4">
+            <Heart className="w-16 h-16 sm:w-20 sm:h-20 text-rose-300 mb-4 drop-shadow-lg" fill="currentColor" />
+            <p className="text-lg sm:text-2xl font-playfair font-bold text-slate-900 mb-2">Welcome to the Lounge!</p>
+            <p className="text-sm sm:text-base text-slate-600 max-w-sm">Be the first to say hello to our community 💕</p>
           </div>
         ) : (
           messages.map((message, index) => {
