@@ -79,15 +79,20 @@ export default function LoungeChatWindow({ autoScroll = true }: LoungeChatWindow
             </div>
           </div>
         ) : (
-          messages.map((message) => {
+          messages.map((message, index) => {
             const isOwnMessage = message.sender_id === user?.id
 
             return (
-              <AnimatedMessage key={message.id}>
-                <div
-                  className={`flex gap-3 ${isOwnMessage ? 'flex-row-reverse' : 'flex-row'}`}
-                >
-                  {/* Avatar */}
+              <div
+                key={message.id}
+                className="flex gap-3 animate-in fade-in"
+                style={{
+                  animationDelay: `${index * 50}ms`,
+                  animationFillMode: 'backwards',
+                }}
+              >
+                {/* Avatar Container */}
+                <div className={`flex flex-col ${isOwnMessage ? 'order-2' : 'order-1'}`}>
                   {message.sender_image ? (
                     <div className="relative w-8 h-8 rounded-full overflow-hidden flex-shrink-0">
                       <Image
@@ -102,28 +107,28 @@ export default function LoungeChatWindow({ autoScroll = true }: LoungeChatWindow
                       {message.sender_name?.[0].toUpperCase() || 'U'}
                     </div>
                   )}
-
-                  {/* Message Bubble */}
-                  <div className={`flex flex-col ${isOwnMessage ? 'items-end' : 'items-start'}`}>
-                    <p className="text-xs text-slate-500 mb-1">{message.sender_name}</p>
-                    <div
-                      className={`px-4 py-2.5 rounded-lg max-w-xs ${
-                        isOwnMessage
-                          ? 'bg-primary text-white rounded-br-none'
-                          : 'bg-slate-100 text-slate-900 rounded-bl-none'
-                      }`}
-                    >
-                      <p className="text-sm whitespace-pre-wrap break-words">{message.content}</p>
-                    </div>
-                    <p className="text-xs text-slate-400 mt-1">
-                      {new Date(message.created_at).toLocaleTimeString([], {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
-                    </p>
-                  </div>
                 </div>
-              </AnimatedMessage>
+
+                {/* Message Bubble */}
+                <div className={`flex flex-col ${isOwnMessage ? 'items-end order-1' : 'items-start order-2'}`}>
+                  <p className="text-xs text-slate-500 mb-1">{message.sender_name}</p>
+                  <div
+                    className={`px-4 py-2.5 rounded-lg max-w-xs ${
+                      isOwnMessage
+                        ? 'bg-primary text-white rounded-br-none'
+                        : 'bg-slate-100 text-slate-900 rounded-bl-none'
+                    }`}
+                  >
+                    <p className="text-sm whitespace-pre-wrap break-words">{message.content}</p>
+                  </div>
+                  <p className="text-xs text-slate-400 mt-1">
+                    {new Date(message.created_at).toLocaleTimeString([], {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
+                  </p>
+                </div>
+              </div>
             )
           })
         )}
