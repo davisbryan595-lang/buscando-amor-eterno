@@ -52,10 +52,8 @@ export function useLounge() {
         .select(
           `
           id,
-          user_id,
-          message,
-          message_type,
-          reported_count,
+          sender_id,
+          content,
           created_at
         `
         )
