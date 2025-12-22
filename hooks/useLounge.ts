@@ -64,18 +64,20 @@ export function useLounge() {
 
       // Fetch user profiles for messages
       if (data && data.length > 0) {
-        const userIds = Array.from(new Set(data.map((m: any) => m.user_id)))
+        const senderIds = Array.from(new Set(data.map((m: any) => m.sender_id)))
         const { data: profiles, error: profileErr } = await supabase
           .from('profiles')
           .select('user_id, full_name, photos, main_photo_index')
-          .in('user_id', userIds)
+          .in('user_id', senderIds)
 
         if (!profileErr && profiles) {
           const profileMap = new Map(profiles.map((p: any) => [p.user_id, p]))
           const enrichedMessages = data.map((msg: any) => {
-            const profile = profileMap.get(msg.user_id)
+            const profile = profileMap.get(msg.sender_id)
             return {
               ...msg,
+              user_id: msg.sender_id,
+              message: msg.content,
               sender_name: profile?.full_name || 'Anonymous',
               sender_image: profile?.photos?.[profile?.main_photo_index || 0] || null,
             }
