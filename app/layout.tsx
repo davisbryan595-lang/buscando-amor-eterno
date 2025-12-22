@@ -6,6 +6,7 @@ import { I18nProvider } from '@/lib/i18n-context'
 import { Preloader } from '@/components/preloader'
 import CallManager from '@/components/call-manager'
 import { Toaster } from '@/components/ui/sonner'
+import { SessionManager } from '@/components/session-manager'
 
 const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
