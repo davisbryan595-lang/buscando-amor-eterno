@@ -54,21 +54,21 @@ export default function LoungeChatWindow({ autoScroll = true }: LoungeChatWindow
         className="flex-1 overflow-y-auto px-2 py-3 sm:px-4 sm:py-4 md:px-6 md:py-6 space-y-2 sm:space-y-3 lg:space-y-4 bg-gradient-to-b from-white/50 via-rose-50/20 to-white/50"
       >
         {loading ? (
-          <div className="flex items-center justify-center h-full">
-            <p className="text-slate-500 text-sm sm:text-base">Loading messages...</p>
+          <div className="flex items-center justify-center h-full w-full">
+            <p className="text-slate-500 text-xs sm:text-sm md:text-base">Loading messages...</p>
           </div>
         ) : error ? (
-          <div className="flex items-center justify-center h-full">
+          <div className="flex items-center justify-center h-full w-full px-4">
             <div className="text-center">
-              <p className="text-slate-700 font-semibold mb-1 text-sm sm:text-base">Something went wrong</p>
-              <p className="text-slate-500 text-xs sm:text-sm">{error}</p>
+              <p className="text-slate-700 font-semibold mb-1 text-xs sm:text-sm md:text-base">Something went wrong</p>
+              <p className="text-slate-500 text-xs sm:text-xs md:text-sm break-words">{error}</p>
             </div>
           </div>
         ) : messages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-center px-4">
-            <Heart className="w-16 h-16 sm:w-20 sm:h-20 text-rose-300 mb-4 drop-shadow-lg" fill="currentColor" />
-            <p className="text-lg sm:text-2xl font-playfair font-bold text-slate-900 mb-2">Welcome to the Lounge!</p>
-            <p className="text-sm sm:text-base text-slate-600 max-w-sm">Be the first to say hello to our community 💕</p>
+          <div className="flex flex-col items-center justify-center h-full w-full text-center px-3 sm:px-4">
+            <Heart className="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 text-rose-300 mb-2 sm:mb-3 md:mb-4 drop-shadow-lg" fill="currentColor" />
+            <p className="text-base sm:text-lg md:text-2xl font-playfair font-bold text-slate-900 mb-1 sm:mb-2">Welcome to the Lounge!</p>
+            <p className="text-xs sm:text-sm md:text-base text-slate-600 max-w-xs sm:max-w-sm">Be the first to say hello to our community 💕</p>
           </div>
         ) : (
           messages.map((message, index) => {
