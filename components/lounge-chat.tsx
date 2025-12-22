@@ -92,18 +92,18 @@ function LoungeChatContent() {
                     <img
                       src={onlineUser.main_photo}
                       alt={onlineUser.full_name}
-                      className="w-10 h-10 rounded-full border-2 border-primary object-cover"
+                      className="w-10 h-10 rounded-full border-2 border-primary object-cover hover:scale-110 transition-transform"
                     />
                   ) : (
-                    <div className="w-10 h-10 rounded-full border-2 border-primary bg-slate-700 flex items-center justify-center text-white text-xs font-bold">
+                    <div className="w-10 h-10 rounded-full border-2 border-primary bg-rose-100 flex items-center justify-center text-primary text-xs font-bold">
                       {onlineUser.full_name.charAt(0).toUpperCase()}
                     </div>
                   )}
-                  <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-slate-900" />
+                  <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white" />
                 </div>
               ))}
               {onlineUsers.length > 12 && (
-                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center text-white text-xs font-bold">
+                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-rose-100 flex items-center justify-center text-primary text-xs font-bold">
                   +{onlineUsers.length - 12}
                 </div>
               )}
@@ -113,7 +113,7 @@ function LoungeChatContent() {
       </div>
 
       {/* Messages container */}
-      <div className="flex-1 overflow-y-auto px-6 py-4 max-w-6xl mx-auto w-full">
+      <div className="flex-1 overflow-y-auto px-6 py-4 max-w-6xl mx-auto w-full relative z-10">
         {loading ? (
           <div className="flex items-center justify-center h-full">
             <div className="text-slate-400">Loading messages...</div>
