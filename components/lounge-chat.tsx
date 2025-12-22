@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/auth-context'
 import { useLounge } from '@/hooks/useLounge'
 import { ErrorBoundary } from './error-boundary'
-import { Send, Flag, Users, ArrowLeft } from 'lucide-react'
+import { Send, Flag, Users, ArrowLeft, Heart } from 'lucide-react'
 import { toast } from 'sonner'
 
 function LoungeChatContent() {
