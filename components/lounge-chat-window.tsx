@@ -136,9 +136,9 @@ export default function LoungeChatWindow({ autoScroll = true }: LoungeChatWindow
           type="text"
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
-          placeholder="Say hello..."
+          placeholder="Say hello to community..."
           disabled={sendingMessage}
-          className="flex-1 px-2.5 sm:px-3 md:px-4 py-2 sm:py-2.5 md:py-3 bg-slate-50 border border-rose-100 rounded-full focus:outline-none focus:ring-2 focus:ring-primary/50 focus:bg-white transition disabled:opacity-50 text-xs sm:text-sm md:text-base placeholder-slate-500"
+          className="flex-1 px-2.5 sm:px-3 md:px-4 py-2 sm:py-2.5 md:py-3 bg-slate-50 border border-rose-100 rounded-full focus:outline-none focus:ring-2 focus:ring-primary/50 focus:bg-white transition disabled:opacity-50 text-xs sm:text-sm md:text-base placeholder-slate-400 placeholder:text-xs sm:placeholder:text-sm truncate"
         />
         <button
           type="submit"
