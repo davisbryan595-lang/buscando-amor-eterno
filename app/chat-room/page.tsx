@@ -58,45 +58,66 @@ export default function ChatRoomPage() {
         <div className="absolute bottom-0 right-1/4 w-56 sm:w-96 h-56 sm:h-96 bg-gradient-to-tr from-orange-200/15 to-primary/15 rounded-full blur-2xl sm:blur-3xl opacity-35 animate-float-delayed" />
         <div className="absolute bottom-1/3 left-0 w-52 sm:w-72 h-52 sm:h-72 bg-gradient-to-tr from-rose-200/15 to-pink-200/15 rounded-full blur-2xl sm:blur-3xl opacity-25 animate-pulse-slow" />
 
-        {/* Floating hearts - responsive and hidden on very small screens */}
-        <div className="heart-float" style={{ left: '10%', animationDelay: '0s' }}>
-          <Heart className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 lg:w-6 lg:h-6 text-rose-400 drop-shadow-lg" fill="currentColor" />
+        {/* Enhanced Floating hearts - more visible with larger sizes and better opacity */}
+        <div className="heart-float" style={{ left: '5%', animationDelay: '0s' }}>
+          <Heart className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 lg:w-7 lg:h-7 text-rose-400 drop-shadow-lg opacity-70" fill="currentColor" />
+        </div>
+        <div className="heart-float" style={{ left: '15%', animationDelay: '0.5s' }}>
+          <Heart className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 lg:w-6 lg:h-6 text-rose-500 drop-shadow-lg opacity-80" fill="currentColor" />
         </div>
         <div className="heart-float" style={{ left: '25%', animationDelay: '1s' }}>
-          <Heart className="w-2.5 h-2.5 sm:w-3 sm:h-3 md:w-4 md:h-4 lg:w-5 lg:h-5 text-rose-300 drop-shadow-lg" fill="currentColor" />
+          <Heart className="w-3.5 h-3.5 sm:w-5 sm:h-5 md:w-6 md:h-6 lg:w-7 lg:h-7 text-rose-300 drop-shadow-lg opacity-75" fill="currentColor" />
         </div>
-        <div className="heart-float hidden sm:block" style={{ left: '45%', animationDelay: '2s' }}>
-          <Heart className="w-2.5 h-2.5 md:w-3 md:h-3 lg:w-4 lg:h-4 text-primary drop-shadow-lg" fill="currentColor" />
+        <div className="heart-float" style={{ left: '40%', animationDelay: '1.5s' }}>
+          <Heart className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 lg:w-7 lg:h-7 text-primary drop-shadow-lg opacity-70" fill="currentColor" />
         </div>
-        <div className="heart-float" style={{ left: '70%', animationDelay: '0.5s' }}>
-          <Heart className="w-2.5 h-2.5 sm:w-3 sm:h-3 md:w-4 md:h-4 lg:w-5 lg:h-5 text-rose-400 drop-shadow-lg" fill="currentColor" />
+        <div className="heart-float" style={{ left: '55%', animationDelay: '0.8s' }}>
+          <Heart className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 lg:w-6 lg:h-6 text-rose-400 drop-shadow-lg opacity-80" fill="currentColor" />
         </div>
-        <div className="heart-float hidden sm:block" style={{ left: '85%', animationDelay: '1.5s' }}>
-          <Heart className="w-3 h-3 md:w-4 md:h-4 lg:w-5 lg:h-5 text-rose-300 drop-shadow-lg" fill="currentColor" />
+        <div className="heart-float" style={{ left: '70%', animationDelay: '0.3s' }}>
+          <Heart className="w-3.5 h-3.5 sm:w-5 sm:h-5 md:w-6 md:h-6 lg:w-7 lg:h-7 text-red-400 drop-shadow-lg opacity-75" fill="currentColor" />
         </div>
-
-        {/* Floating sparkles - responsive sizing */}
-        <div className="sparkle-float" style={{ left: '15%', animationDelay: '0.3s', fontSize: 'clamp(0.75rem, 2vw, 1.5rem)' }}>
-          ✨
+        <div className="heart-float" style={{ left: '82%', animationDelay: '1.2s' }}>
+          <Heart className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 lg:w-7 lg:h-7 text-rose-300 drop-shadow-lg opacity-70" fill="currentColor" />
         </div>
-        <div className="sparkle-float" style={{ left: '35%', animationDelay: '0.8s', fontSize: 'clamp(0.75rem, 2vw, 1.5rem)' }}>
-          ✨
-        </div>
-        <div className="sparkle-float hidden sm:block" style={{ left: '60%', animationDelay: '1.2s', fontSize: 'clamp(1rem, 2.5vw, 1.5rem)' }}>
-          ✨
-        </div>
-        <div className="sparkle-float" style={{ left: '80%', animationDelay: '0.6s', fontSize: 'clamp(0.75rem, 2vw, 1.5rem)' }}>
-          ✨
+        <div className="heart-float" style={{ left: '92%', animationDelay: '0.6s' }}>
+          <Heart className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 lg:w-6 lg:h-6 text-rose-500 drop-shadow-lg opacity-80" fill="currentColor" />
         </div>
 
-        {/* Rose petals - responsive sizing */}
-        <div className="petal-float" style={{ left: '20%', animationDelay: '0s', fontSize: 'clamp(0.875rem, 2.5vw, 1.25rem)' }}>
+        {/* Enhanced Floating sparkles - more visible with better sizing and timing */}
+        <div className="sparkle-float" style={{ left: '10%', animationDelay: '0s', fontSize: 'clamp(1rem, 3vw, 2rem)' }}>
+          ✨
+        </div>
+        <div className="sparkle-float" style={{ left: '30%', animationDelay: '0.4s', fontSize: 'clamp(0.875rem, 2.5vw, 1.75rem)' }}>
+          ✨
+        </div>
+        <div className="sparkle-float" style={{ left: '50%', animationDelay: '0.8s', fontSize: 'clamp(1rem, 3vw, 2rem)' }}>
+          ✨
+        </div>
+        <div className="sparkle-float" style={{ left: '65%', animationDelay: '0.2s', fontSize: 'clamp(0.875rem, 2.5vw, 1.75rem)' }}>
+          ✨
+        </div>
+        <div className="sparkle-float" style={{ left: '80%', animationDelay: '0.6s', fontSize: 'clamp(1rem, 3vw, 2rem)' }}>
+          ✨
+        </div>
+        <div className="sparkle-float" style={{ left: '88%', animationDelay: '1s', fontSize: 'clamp(0.875rem, 2.5vw, 1.75rem)' }}>
+          ✨
+        </div>
+
+        {/* Enhanced Rose petals - more visible with better sizing and timing */}
+        <div className="petal-float" style={{ left: '12%', animationDelay: '0s', fontSize: 'clamp(1rem, 3vw, 1.5rem)' }}>
           🌹
         </div>
-        <div className="petal-float hidden sm:block" style={{ left: '50%', animationDelay: '1s', fontSize: 'clamp(1rem, 2.5vw, 1.25rem)' }}>
+        <div className="petal-float" style={{ left: '35%', animationDelay: '0.5s', fontSize: 'clamp(1.125rem, 3.5vw, 1.75rem)' }}>
           🌹
         </div>
-        <div className="petal-float" style={{ left: '75%', animationDelay: '0.5s', fontSize: 'clamp(0.875rem, 2.5vw, 1.25rem)' }}>
+        <div className="petal-float" style={{ left: '58%', animationDelay: '1s', fontSize: 'clamp(1rem, 3vw, 1.5rem)' }}>
+          🌹
+        </div>
+        <div className="petal-float" style={{ left: '75%', animationDelay: '0.3s', fontSize: 'clamp(1.125rem, 3.5vw, 1.75rem)' }}>
+          🌹
+        </div>
+        <div className="petal-float" style={{ left: '88%', animationDelay: '0.7s', fontSize: 'clamp(1rem, 3vw, 1.5rem)' }}>
           🌹
         </div>
       </div>
