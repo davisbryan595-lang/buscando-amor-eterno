@@ -127,26 +127,28 @@ export default function LoungeChatWindow({ autoScroll = true }: LoungeChatWindow
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input Form */}
+      {/* Input Form - Responsive and touch-friendly */}
       <form
         onSubmit={handleSendMessage}
-        className="p-3 sm:p-4 border-t border-rose-100/50 bg-white/50 backdrop-blur-sm flex gap-2 flex-shrink-0"
+        className="px-2 py-2 sm:px-3 sm:py-3 md:px-4 md:py-4 border-t border-rose-100/50 bg-white/50 backdrop-blur-sm flex gap-1.5 sm:gap-2 flex-shrink-0"
       >
         <input
           type="text"
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
-          placeholder="Say hello to the community..."
+          placeholder="Say hello..."
           disabled={sendingMessage}
-          className="flex-1 px-4 py-2.5 bg-slate-50 border border-rose-100 rounded-full focus:outline-none focus:ring-2 focus:ring-primary/50 focus:bg-white transition disabled:opacity-50 text-sm placeholder-slate-500"
+          className="flex-1 px-2.5 sm:px-3 md:px-4 py-2 sm:py-2.5 md:py-3 bg-slate-50 border border-rose-100 rounded-full focus:outline-none focus:ring-2 focus:ring-primary/50 focus:bg-white transition disabled:opacity-50 text-xs sm:text-sm md:text-base placeholder-slate-500"
         />
         <button
           type="submit"
           disabled={sendingMessage || !newMessage.trim()}
-          className="p-2.5 bg-gradient-to-r from-primary to-rose-600 text-white rounded-full hover:shadow-lg hover:from-rose-700 hover:to-rose-800 transition disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0 drop-shadow-md"
+          className="min-w-10 h-10 sm:min-w-11 sm:h-11 md:min-w-12 md:h-12 bg-gradient-to-r from-primary to-rose-600 text-white rounded-full hover:shadow-lg hover:from-rose-700 hover:to-rose-800 active:scale-95 transition disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0 drop-shadow-md flex items-center justify-center"
           aria-label="Send message"
         >
-          <Send size={18} />
+          <Send size={16} className="sm:hidden" />
+          <Send size={18} className="hidden sm:block md:hidden" />
+          <Send size={20} className="hidden md:block" />
         </button>
       </form>
     </div>
