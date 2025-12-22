@@ -171,8 +171,9 @@ export function useLounge() {
               console.log('[Lounge] Messages subscription active')
             }
           })
-      } catch (err) {
-        console.error('Error subscribing to lounge messages:', err)
+      } catch (err: any) {
+        const errorMsg = err?.message || JSON.stringify(err) || 'Unknown error'
+        console.error('Error subscribing to lounge messages:', errorMsg, err)
         if (isMounted && retryCount < maxRetries) {
           retryCount += 1
           const delay = Math.min(1000 * Math.pow(2, retryCount - 1), 10000)
