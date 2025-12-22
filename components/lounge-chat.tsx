@@ -116,13 +116,13 @@ function LoungeChatContent() {
       <div className="flex-1 overflow-y-auto px-6 py-4 max-w-6xl mx-auto w-full relative z-10">
         {loading ? (
           <div className="flex items-center justify-center h-full">
-            <div className="text-slate-400">Loading messages...</div>
+            <div className="text-slate-500">Loading messages...</div>
           </div>
         ) : messages.length === 0 ? (
           <div className="flex items-center justify-center h-full">
             <div className="text-center">
-              <h3 className="text-lg font-semibold text-white mb-2">No messages yet</h3>
-              <p className="text-slate-400">Be the first to start a conversation!</p>
+              <p className="text-xl font-playfair font-bold text-slate-900 mb-2">Welcome to the Lounge!</p>
+              <p className="text-slate-600">Be the first to say hello to our community 💕</p>
             </div>
           </div>
         ) : (
@@ -138,10 +138,10 @@ function LoungeChatContent() {
                       <img
                         src={msg.sender_image}
                         alt={msg.sender_name}
-                        className="w-8 h-8 rounded-full object-cover flex-shrink-0"
+                        className="w-8 h-8 rounded-full object-cover flex-shrink-0 hover:scale-125 transition-transform cursor-pointer"
                       />
                     ) : (
-                      <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                      <div className="w-8 h-8 rounded-full bg-rose-100 flex items-center justify-center text-primary text-xs font-bold flex-shrink-0 hover:scale-125 transition-transform cursor-pointer">
                         {msg.sender_name?.charAt(0).toUpperCase() || '?'}
                       </div>
                     )}
@@ -156,7 +156,7 @@ function LoungeChatContent() {
                   ) : (
                     <>
                       <div className="flex items-baseline gap-2">
-                        <p className="font-semibold text-white">{msg.sender_name}</p>
+                        <p className="font-semibold text-slate-900">{msg.sender_name}</p>
                         <p className="text-xs text-slate-500">
                           {new Date(msg.created_at).toLocaleTimeString([], {
                             hour: '2-digit',
@@ -164,7 +164,7 @@ function LoungeChatContent() {
                           })}
                         </p>
                       </div>
-                      <p className="text-slate-100 mt-1 break-words">{msg.message}</p>
+                      <p className="text-slate-700 mt-1 break-words">{msg.message}</p>
 
                       {/* Report button */}
                       {msg.user_id !== user?.id && (
