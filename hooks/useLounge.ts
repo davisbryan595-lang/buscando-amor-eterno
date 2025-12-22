@@ -337,17 +337,11 @@ export function useLounge() {
         })
 
         if (err) throw err
-
-        // Increment reported count
-        await supabase
-          .from('lounge_messages')
-          .update({ reported_count: supabase.raw('reported_count + 1') })
-          .eq('id', messageId)
-
         setError(null)
       } catch (err: any) {
-        console.error('Error reporting message:', err)
-        setError(err.message || 'Failed to report message')
+        const errorMessage = err?.message || err?.error_description || 'Failed to report message'
+        console.error('Error reporting message:', errorMessage, err)
+        setError(errorMessage)
       }
     },
     [user]
