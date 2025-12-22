@@ -107,6 +107,16 @@ export type Database = {
         Insert: Omit<any, 'id' | 'created_at'>
         Update: Partial<any>
       }
+      lounge_messages: {
+        Row: {
+          id: string
+          sender_id: string
+          content: string
+          created_at: string
+        }
+        Insert: Omit<any, 'id' | 'created_at'>
+        Update: Partial<any>
+      }
     }
   }
 }

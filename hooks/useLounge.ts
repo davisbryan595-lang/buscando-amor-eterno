@@ -351,7 +351,6 @@ export function useLounge() {
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
         console.log('[Lounge] Page became visible - checking subscriptions')
-        // Subscriptions will maintain themselves, but this ensures we're aware
       }
     }
 
