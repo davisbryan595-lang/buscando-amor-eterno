@@ -44,17 +44,17 @@ function LoungeChatContent() {
 
   if (!user) {
     return (
-      <div className="h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800">
+      <div className="h-screen flex items-center justify-center bg-white">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-white mb-4">Join the Lounge</h2>
-          <p className="text-slate-400">Please log in to chat with singles in the lounge</p>
+          <h2 className="text-2xl font-bold text-slate-900 mb-4">Join the Lounge</h2>
+          <p className="text-slate-600">Please log in to chat with singles in the lounge</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="h-screen flex flex-col bg-gradient-to-br from-slate-900 to-slate-800">
+    <div className="h-screen flex flex-col bg-white relative overflow-hidden">
       {/* Header */}
       <div className="bg-slate-800/50 backdrop-blur border-b border-slate-700 px-6 py-4">
         <div className="max-w-6xl mx-auto">
