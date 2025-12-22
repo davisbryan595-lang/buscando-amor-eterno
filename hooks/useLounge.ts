@@ -311,9 +311,8 @@ export function useLounge() {
         })
 
         const { error: err } = await supabase.from('lounge_messages').insert({
-          user_id: user.id,
-          message: filteredContent,
-          message_type: 'text',
+          sender_id: user.id,
+          content: filteredContent,
         })
 
         if (err) throw err
