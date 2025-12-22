@@ -111,7 +111,7 @@ export default function LoungeChatWindow({ autoScroll = true }: LoungeChatWindow
                         : 'bg-white border border-rose-100/50 text-slate-900 rounded-bl-none shadow-xs sm:shadow-sm'
                     }`}
                   >
-                    <p className="text-xs sm:text-sm md:text-sm whitespace-pre-wrap break-words">{message.content}</p>
+                    <p className="text-xs sm:text-sm md:text-sm whitespace-pre-wrap break-words">{message.message || message.content}</p>
                   </div>
                   <p className="text-xs text-slate-400 px-1.5 sm:px-2">
                     {new Date(message.created_at).toLocaleTimeString([], {
