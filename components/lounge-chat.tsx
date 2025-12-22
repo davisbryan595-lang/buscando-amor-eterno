@@ -174,7 +174,7 @@ function LoungeChatContent() {
                               ? setReportingMessageId(null)
                               : setReportingMessageId(msg.id)
                           }
-                          className="text-xs text-slate-500 hover:text-red-400 mt-2 flex items-center gap-1 transition"
+                          className="text-xs text-slate-500 hover:text-rose-600 mt-2 flex items-center gap-1 transition"
                         >
                           <Flag size={12} />
                           Report
@@ -183,18 +183,18 @@ function LoungeChatContent() {
 
                       {/* Report form */}
                       {reportingMessageId === msg.id && (
-                        <div className="bg-slate-700/30 rounded p-3 mt-2 space-y-2">
+                        <div className="bg-rose-50 rounded p-3 mt-2 space-y-2 border border-rose-100">
                           <textarea
                             value={reportReason}
                             onChange={(e) => setReportReason(e.target.value)}
                             placeholder="Why are you reporting this message?"
-                            className="w-full bg-slate-800 text-white text-sm rounded px-2 py-1 border border-slate-600 placeholder-slate-500 resize-none"
+                            className="w-full bg-white text-slate-900 text-sm rounded px-2 py-1 border border-rose-200 placeholder-slate-400 resize-none"
                             rows={2}
                           />
                           <div className="flex gap-2">
                             <button
                               onClick={() => handleReportMessage(msg.id)}
-                              className="text-xs bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded transition"
+                              className="text-xs bg-rose-600 hover:bg-rose-700 text-white px-3 py-1 rounded transition"
                             >
                               Submit Report
                             </button>
@@ -203,7 +203,7 @@ function LoungeChatContent() {
                                 setReportingMessageId(null)
                                 setReportReason('')
                               }}
-                              className="text-xs bg-slate-700 hover:bg-slate-600 text-white px-3 py-1 rounded transition"
+                              className="text-xs bg-rose-100 hover:bg-rose-200 text-slate-900 px-3 py-1 rounded transition"
                             >
                               Cancel
                             </button>
@@ -221,7 +221,7 @@ function LoungeChatContent() {
       </div>
 
       {/* Message input */}
-      <div className="bg-slate-800/50 backdrop-blur border-t border-slate-700 px-6 py-4">
+      <div className="bg-white border-t border-rose-100/40 px-6 py-4 relative z-20">
         <div className="max-w-6xl mx-auto">
           <form onSubmit={handleSendMessage} className="flex gap-3">
             <input
@@ -229,12 +229,12 @@ function LoungeChatContent() {
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               placeholder="Say something to the lounge..."
-              className="flex-1 bg-slate-700 border border-slate-600 rounded-lg px-4 py-3 text-white placeholder-slate-400 focus:outline-none focus:border-primary transition"
+              className="flex-1 bg-slate-50 border border-rose-200 rounded-full px-4 py-3 text-slate-900 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition"
             />
             <button
               type="submit"
               disabled={!inputValue.trim()}
-              className="bg-primary hover:bg-rose-700 disabled:bg-slate-700 disabled:cursor-not-allowed text-white px-6 py-3 rounded-lg transition flex items-center gap-2 font-semibold"
+              className="bg-gradient-to-r from-primary to-rose-600 hover:from-rose-600 hover:to-rose-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white px-6 py-3 rounded-full transition flex items-center gap-2 font-semibold"
             >
               <Send size={18} />
               <span className="hidden sm:inline">Send</span>
