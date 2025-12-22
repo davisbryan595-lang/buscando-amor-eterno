@@ -58,33 +58,46 @@ export function useLounge() {
         setTimeout(() => reject(new Error('Lounge messages fetch timed out')), 60000)
       )
 
-      // Fetch lounge messages with sender profile details
+      // Fetch lounge messages
       const queryPromise = supabase
         .from('lounge_messages')
-        .select(`
-          id,
-          sender_id,
-          content,
-          created_at,
-          profiles!lounge_messages_sender_id_fkey(full_name, photos, main_photo_index)
-        `)
+        .select('id, sender_id, content, created_at')
         .order('created_at', { ascending: true })
         .limit(100)
 
       const result = await Promise.race([queryPromise, timeoutPromise])
-      const { data, error: err } = result as any
+      const { data: messages, error: err } = result as any
 
       if (err) throw err
 
+      // Get unique sender IDs
+      const senderIds = [...new Set((messages || []).map((m: any) => m.sender_id))]
+
+      // Fetch profile details for all senders
+      let profilesMap = new Map()
+      if (senderIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('user_id, full_name, photos, main_photo_index')
+          .in('user_id', senderIds)
+
+        profiles?.forEach((profile) => {
+          profilesMap.set(profile.user_id, profile)
+        })
+      }
+
       // Transform data to include sender info
-      const transformedMessages = (data || []).map((msg: any) => ({
-        id: msg.id,
-        sender_id: msg.sender_id,
-        sender_name: msg.profiles?.full_name || 'Anonymous',
-        sender_image: msg.profiles?.photos?.[msg.profiles?.main_photo_index || 0] || null,
-        content: msg.content,
-        created_at: msg.created_at,
-      }))
+      const transformedMessages = (messages || []).map((msg: any) => {
+        const profile = profilesMap.get(msg.sender_id)
+        return {
+          id: msg.id,
+          sender_id: msg.sender_id,
+          sender_name: profile?.full_name || 'Anonymous',
+          sender_image: profile?.photos?.[profile?.main_photo_index || 0] || null,
+          content: msg.content,
+          created_at: msg.created_at,
+        }
+      })
 
       setMessages(transformedMessages)
       setError(null)
