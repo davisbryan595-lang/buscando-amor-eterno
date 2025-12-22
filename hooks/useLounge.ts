@@ -133,11 +133,13 @@ export function useLounge() {
               const { data: profile } = await supabase
                 .from('profiles')
                 .select('full_name, photos, main_photo_index')
-                .eq('user_id', newMessage.user_id)
+                .eq('user_id', newMessage.sender_id)
                 .single()
 
               const enrichedMessage = {
                 ...newMessage,
+                user_id: newMessage.sender_id,
+                message: newMessage.content,
                 sender_name: profile?.full_name || 'Anonymous',
                 sender_image: profile?.photos?.[profile?.main_photo_index || 0] || null,
               }
