@@ -251,7 +251,7 @@ export default function ChatRoomPage() {
         .heart-float {
           position: fixed;
           bottom: 0;
-          animation: heart-rise 5.5s ease-in linear infinite;
+          animation: heart-rise 7s ease-in linear infinite;
           pointer-events: none;
         }
 
@@ -259,7 +259,7 @@ export default function ChatRoomPage() {
           position: fixed;
           bottom: 0;
           font-size: 1.5rem;
-          animation: sparkle-drift 6.5s ease-in linear infinite;
+          animation: sparkle-drift 8s ease-in linear infinite;
           pointer-events: none;
         }
 
@@ -267,7 +267,7 @@ export default function ChatRoomPage() {
           position: fixed;
           bottom: 0;
           font-size: 1.25rem;
-          animation: petal-drift 7.5s ease-in linear infinite;
+          animation: petal-drift 9s ease-in linear infinite;
           pointer-events: none;
         }
       `}</style>
