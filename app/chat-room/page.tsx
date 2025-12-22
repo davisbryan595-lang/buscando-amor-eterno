@@ -59,44 +59,44 @@ export default function ChatRoomPage() {
         <div className="absolute bottom-1/3 left-0 w-52 sm:w-72 h-52 sm:h-72 bg-gradient-to-tr from-rose-200/15 to-pink-200/15 rounded-full blur-2xl sm:blur-3xl opacity-25 animate-pulse-slow" />
 
         {/* Floating hearts - responsive and hidden on very small screens */}
-        <div className="heart-float hidden xs:block" style={{ left: '10%', animationDelay: '0s' }}>
-          <Heart className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-rose-400 drop-shadow-lg" fill="currentColor" />
+        <div className="heart-float" style={{ left: '10%', animationDelay: '0s' }}>
+          <Heart className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 lg:w-6 lg:h-6 text-rose-400 drop-shadow-lg" fill="currentColor" />
         </div>
-        <div className="heart-float hidden xs:block" style={{ left: '25%', animationDelay: '1s' }}>
-          <Heart className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 text-rose-300 drop-shadow-lg" fill="currentColor" />
+        <div className="heart-float" style={{ left: '25%', animationDelay: '1s' }}>
+          <Heart className="w-2.5 h-2.5 sm:w-3 sm:h-3 md:w-4 md:h-4 lg:w-5 lg:h-5 text-rose-300 drop-shadow-lg" fill="currentColor" />
         </div>
         <div className="heart-float hidden sm:block" style={{ left: '45%', animationDelay: '2s' }}>
-          <Heart className="w-3 h-3 md:w-4 md:h-4 text-primary drop-shadow-lg" fill="currentColor" />
+          <Heart className="w-2.5 h-2.5 md:w-3 md:h-3 lg:w-4 lg:h-4 text-primary drop-shadow-lg" fill="currentColor" />
         </div>
-        <div className="heart-float hidden xs:block" style={{ left: '70%', animationDelay: '0.5s' }}>
-          <Heart className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 text-rose-400 drop-shadow-lg" fill="currentColor" />
+        <div className="heart-float" style={{ left: '70%', animationDelay: '0.5s' }}>
+          <Heart className="w-2.5 h-2.5 sm:w-3 sm:h-3 md:w-4 md:h-4 lg:w-5 lg:h-5 text-rose-400 drop-shadow-lg" fill="currentColor" />
         </div>
         <div className="heart-float hidden sm:block" style={{ left: '85%', animationDelay: '1.5s' }}>
-          <Heart className="w-4 h-4 md:w-5 md:h-5 text-rose-300 drop-shadow-lg" fill="currentColor" />
+          <Heart className="w-3 h-3 md:w-4 md:h-4 lg:w-5 lg:h-5 text-rose-300 drop-shadow-lg" fill="currentColor" />
         </div>
 
         {/* Floating sparkles - responsive sizing */}
-        <div className="sparkle-float hidden xs:block" style={{ left: '15%', animationDelay: '0.3s', fontSize: 'clamp(0.75rem, 2vw, 1.5rem)' }}>
+        <div className="sparkle-float" style={{ left: '15%', animationDelay: '0.3s', fontSize: 'clamp(0.75rem, 2vw, 1.5rem)' }}>
           ✨
         </div>
-        <div className="sparkle-float hidden xs:block" style={{ left: '35%', animationDelay: '0.8s', fontSize: 'clamp(0.75rem, 2vw, 1.5rem)' }}>
+        <div className="sparkle-float" style={{ left: '35%', animationDelay: '0.8s', fontSize: 'clamp(0.75rem, 2vw, 1.5rem)' }}>
           ✨
         </div>
         <div className="sparkle-float hidden sm:block" style={{ left: '60%', animationDelay: '1.2s', fontSize: 'clamp(1rem, 2.5vw, 1.5rem)' }}>
           ✨
         </div>
-        <div className="sparkle-float hidden xs:block" style={{ left: '80%', animationDelay: '0.6s', fontSize: 'clamp(0.75rem, 2vw, 1.5rem)' }}>
+        <div className="sparkle-float" style={{ left: '80%', animationDelay: '0.6s', fontSize: 'clamp(0.75rem, 2vw, 1.5rem)' }}>
           ✨
         </div>
 
         {/* Rose petals - responsive sizing */}
-        <div className="petal-float hidden xs:block" style={{ left: '20%', animationDelay: '0s', fontSize: 'clamp(0.875rem, 2.5vw, 1.25rem)' }}>
+        <div className="petal-float" style={{ left: '20%', animationDelay: '0s', fontSize: 'clamp(0.875rem, 2.5vw, 1.25rem)' }}>
           🌹
         </div>
         <div className="petal-float hidden sm:block" style={{ left: '50%', animationDelay: '1s', fontSize: 'clamp(1rem, 2.5vw, 1.25rem)' }}>
           🌹
         </div>
-        <div className="petal-float hidden xs:block" style={{ left: '75%', animationDelay: '0.5s', fontSize: 'clamp(0.875rem, 2.5vw, 1.25rem)' }}>
+        <div className="petal-float" style={{ left: '75%', animationDelay: '0.5s', fontSize: 'clamp(0.875rem, 2.5vw, 1.25rem)' }}>
           🌹
         </div>
       </div>
