@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useRef } from 'react'
-import { Send } from 'lucide-react'
+import { Send, Heart } from 'lucide-react'
 import Image from 'next/image'
 import { useLounge } from '@/hooks/useLounge'
 import { useAuth } from '@/context/auth-context'
