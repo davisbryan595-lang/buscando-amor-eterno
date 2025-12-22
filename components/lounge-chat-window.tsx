@@ -77,16 +77,16 @@ export default function LoungeChatWindow({ autoScroll = true }: LoungeChatWindow
             return (
               <div
                 key={message.id}
-                className="flex gap-3 animate-in fade-in"
+                className="flex gap-1.5 sm:gap-2 md:gap-3 animate-in fade-in w-full"
                 style={{
                   animationDelay: `${index * 50}ms`,
                   animationFillMode: 'backwards',
                 }}
               >
                 {/* Avatar Container */}
-                <div className={`flex flex-col justify-start ${isOwnMessage ? 'order-2 ml-2' : 'order-1 mr-2'}`}>
+                <div className={`flex flex-col justify-start flex-shrink-0 ${isOwnMessage ? 'order-2 ml-1 sm:ml-2' : 'order-1 mr-1 sm:mr-2'}`}>
                   {message.sender_image ? (
-                    <div className="relative w-7 h-7 sm:w-8 sm:h-8 rounded-full overflow-hidden flex-shrink-0 ring-2 ring-rose-200">
+                    <div className="relative w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 rounded-full overflow-hidden flex-shrink-0 ring-1.5 sm:ring-2 ring-rose-200">
                       <Image
                         src={message.sender_image}
                         alt={message.sender_name}
@@ -95,25 +95,25 @@ export default function LoungeChatWindow({ autoScroll = true }: LoungeChatWindow
                       />
                     </div>
                   ) : (
-                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gradient-to-br from-primary to-rose-500 flex items-center justify-center text-white text-xs font-semibold flex-shrink-0 ring-2 ring-rose-200">
+                    <div className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 rounded-full bg-gradient-to-br from-primary to-rose-500 flex items-center justify-center text-white text-xs font-semibold flex-shrink-0 ring-1.5 sm:ring-2 ring-rose-200">
                       {message.sender_name?.[0].toUpperCase() || 'U'}
                     </div>
                   )}
                 </div>
 
                 {/* Message Bubble */}
-                <div className={`flex flex-col gap-0.5 ${isOwnMessage ? 'items-end order-1' : 'items-start order-2'}`}>
-                  <p className="text-xs text-slate-500 px-2">{message.sender_name}</p>
+                <div className={`flex flex-col gap-0.5 max-w-[calc(100%-2rem)] sm:max-w-[calc(100%-2.5rem)] md:max-w-[calc(100%-3rem)] ${isOwnMessage ? 'items-end order-1' : 'items-start order-2'}`}>
+                  <p className="text-xs text-slate-500 px-1.5 sm:px-2 truncate">{message.sender_name}</p>
                   <div
-                    className={`px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl max-w-xs sm:max-w-sm ${
+                    className={`px-2.5 sm:px-3 md:px-4 py-1.5 sm:py-2 md:py-2.5 rounded-lg sm:rounded-xl max-w-full ${
                       isOwnMessage
-                        ? 'bg-gradient-to-r from-primary to-rose-600 text-white rounded-br-none shadow-md'
-                        : 'bg-white border border-rose-100/50 text-slate-900 rounded-bl-none shadow-sm'
+                        ? 'bg-gradient-to-r from-primary to-rose-600 text-white rounded-br-none shadow-sm sm:shadow-md'
+                        : 'bg-white border border-rose-100/50 text-slate-900 rounded-bl-none shadow-xs sm:shadow-sm'
                     }`}
                   >
-                    <p className="text-xs sm:text-sm whitespace-pre-wrap break-words">{message.content}</p>
+                    <p className="text-xs sm:text-sm md:text-sm whitespace-pre-wrap break-words">{message.content}</p>
                   </div>
-                  <p className="text-xs text-slate-400 px-2">
+                  <p className="text-xs text-slate-400 px-1.5 sm:px-2">
                     {new Date(message.created_at).toLocaleTimeString([], {
                       hour: '2-digit',
                       minute: '2-digit',
