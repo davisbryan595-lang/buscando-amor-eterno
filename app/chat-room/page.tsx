@@ -131,7 +131,7 @@ export default function ChatRoomPage() {
       </div>
 
       {/* Full-screen chat area - responsive padding */}
-      <div ref={chatRef} className="relative z-10 flex-1 overflow-hidden px-2 py-2 sm:px-3 sm:py-3 md:px-4 md:py-4 lg:px-6 lg:py-6">
+      <div ref={chatRef} className="relative z-10 flex-1 overflow-hidden px-2 py-2 sm:px-3 sm:py-3 md:px-4 md:py-4 lg:px-6 lg:py-6 bg-white">
         <LoungeChatWindow />
       </div>
 
