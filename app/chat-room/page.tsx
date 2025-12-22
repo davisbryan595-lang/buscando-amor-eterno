@@ -174,51 +174,51 @@ export default function ChatRoomPage() {
 
         @keyframes heart-rise {
           0% {
-            transform: translateY(100vh) scale(0);
+            transform: translateY(100vh) translateX(0) scale(1);
             opacity: 0;
           }
-          10% {
+          5% {
             opacity: 1;
           }
-          90% {
+          95% {
             opacity: 1;
           }
           100% {
-            transform: translateY(-100vh) scale(0);
+            transform: translateY(-100vh) translateX(var(--sway, 0)) scale(1);
             opacity: 0;
           }
         }
 
         @keyframes sparkle-drift {
           0% {
-            transform: translateY(100vh) translateX(0) scale(0);
+            transform: translateY(100vh) translateX(0) scale(1);
             opacity: 0;
           }
-          10% {
+          5% {
             opacity: 1;
           }
           90% {
-            opacity: 0.8;
+            opacity: 0.9;
           }
           100% {
-            transform: translateY(-100vh) translateX(30px) scale(1);
+            transform: translateY(-100vh) translateX(var(--sway, 40px)) scale(1);
             opacity: 0;
           }
         }
 
         @keyframes petal-drift {
           0% {
-            transform: translateY(100vh) translateX(0) rotate(0deg) scale(0);
+            transform: translateY(100vh) translateX(0) rotate(0deg) scale(1);
             opacity: 0;
           }
-          10% {
+          5% {
             opacity: 1;
           }
           90% {
-            opacity: 0.7;
+            opacity: 0.8;
           }
           100% {
-            transform: translateY(-100vh) translateX(50px) rotate(360deg) scale(1);
+            transform: translateY(-100vh) translateX(var(--sway, 60px)) rotate(360deg) scale(1);
             opacity: 0;
           }
         }
@@ -239,7 +239,7 @@ export default function ChatRoomPage() {
         .heart-float {
           position: fixed;
           bottom: 0;
-          animation: heart-rise 6s ease-in-out infinite;
+          animation: heart-rise 5.5s ease-in linear infinite;
           pointer-events: none;
         }
 
@@ -247,7 +247,7 @@ export default function ChatRoomPage() {
           position: fixed;
           bottom: 0;
           font-size: 1.5rem;
-          animation: sparkle-drift 7s ease-in-out infinite;
+          animation: sparkle-drift 6.5s ease-in linear infinite;
           pointer-events: none;
         }
 
@@ -255,7 +255,7 @@ export default function ChatRoomPage() {
           position: fixed;
           bottom: 0;
           font-size: 1.25rem;
-          animation: petal-drift 8s ease-in-out infinite;
+          animation: petal-drift 7.5s ease-in linear infinite;
           pointer-events: none;
         }
       `}</style>
