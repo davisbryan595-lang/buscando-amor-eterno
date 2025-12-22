@@ -84,9 +84,9 @@ export default function LoungeChatWindow({ autoScroll = true }: LoungeChatWindow
                 }}
               >
                 {/* Avatar Container */}
-                <div className={`flex flex-col ${isOwnMessage ? 'order-2' : 'order-1'}`}>
+                <div className={`flex flex-col justify-start ${isOwnMessage ? 'order-2 ml-2' : 'order-1 mr-2'}`}>
                   {message.sender_image ? (
-                    <div className="relative w-8 h-8 rounded-full overflow-hidden flex-shrink-0">
+                    <div className="relative w-7 h-7 sm:w-8 sm:h-8 rounded-full overflow-hidden flex-shrink-0 ring-2 ring-rose-200">
                       <Image
                         src={message.sender_image}
                         alt={message.sender_name}
@@ -95,25 +95,25 @@ export default function LoungeChatWindow({ autoScroll = true }: LoungeChatWindow
                       />
                     </div>
                   ) : (
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-rose-500 flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
+                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gradient-to-br from-primary to-rose-500 flex items-center justify-center text-white text-xs font-semibold flex-shrink-0 ring-2 ring-rose-200">
                       {message.sender_name?.[0].toUpperCase() || 'U'}
                     </div>
                   )}
                 </div>
 
                 {/* Message Bubble */}
-                <div className={`flex flex-col ${isOwnMessage ? 'items-end order-1' : 'items-start order-2'}`}>
-                  <p className="text-xs text-slate-500 mb-1">{message.sender_name}</p>
+                <div className={`flex flex-col gap-0.5 ${isOwnMessage ? 'items-end order-1' : 'items-start order-2'}`}>
+                  <p className="text-xs text-slate-500 px-2">{message.sender_name}</p>
                   <div
-                    className={`px-4 py-2.5 rounded-lg max-w-xs ${
+                    className={`px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl max-w-xs sm:max-w-sm ${
                       isOwnMessage
-                        ? 'bg-primary text-white rounded-br-none'
-                        : 'bg-slate-100 text-slate-900 rounded-bl-none'
+                        ? 'bg-gradient-to-r from-primary to-rose-600 text-white rounded-br-none shadow-md'
+                        : 'bg-white border border-rose-100/50 text-slate-900 rounded-bl-none shadow-sm'
                     }`}
                   >
-                    <p className="text-sm whitespace-pre-wrap break-words">{message.content}</p>
+                    <p className="text-xs sm:text-sm whitespace-pre-wrap break-words">{message.content}</p>
                   </div>
-                  <p className="text-xs text-slate-400 mt-1">
+                  <p className="text-xs text-slate-400 px-2">
                     {new Date(message.created_at).toLocaleTimeString([], {
                       hour: '2-digit',
                       minute: '2-digit',
