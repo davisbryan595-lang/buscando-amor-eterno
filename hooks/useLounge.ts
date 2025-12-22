@@ -248,7 +248,12 @@ export function useLounge() {
           .subscribe(async (status, err) => {
             if (!isMounted) return
 
-            console.log('[Lounge] Presence status:', status, err)
+            if (err) {
+              const errorMsg = err?.message || JSON.stringify(err)
+              console.log('[Lounge] Presence error:', errorMsg, err)
+            } else {
+              console.log('[Lounge] Presence status:', status)
+            }
 
             if (status === 'SUBSCRIBED') {
               retryCount = 0
