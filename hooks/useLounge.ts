@@ -275,8 +275,9 @@ export function useLounge() {
               }
             }
           })
-      } catch (err) {
-        console.error('Error updating presence:', err)
+      } catch (err: any) {
+        const errorMsg = err?.message || JSON.stringify(err) || 'Unknown error'
+        console.error('Error updating presence:', errorMsg, err)
         if (isMounted && retryCount < maxRetries) {
           retryCount += 1
           const delay = Math.min(1000 * Math.pow(2, retryCount - 1), 10000)
