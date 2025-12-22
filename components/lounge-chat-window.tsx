@@ -127,10 +127,10 @@ export default function LoungeChatWindow({ autoScroll = true }: LoungeChatWindow
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input Form - Enhanced with pink gradient styling and full-width */}
+      {/* Input Form - Clean styling */}
       <form
         onSubmit={handleSendMessage}
-        className="px-2 py-3 sm:px-3 sm:py-4 md:px-4 md:py-5 border-t border-rose-100/30 bg-gradient-to-t from-rose-50/80 via-white/60 to-white/50 backdrop-blur-sm flex gap-2 sm:gap-2.5 flex-shrink-0"
+        className="px-2 py-3 sm:px-3 sm:py-4 md:px-4 md:py-5 border-t border-rose-100/30 bg-white flex gap-2 sm:gap-2.5 flex-shrink-0"
       >
         <input
           type="text"
@@ -138,7 +138,7 @@ export default function LoungeChatWindow({ autoScroll = true }: LoungeChatWindow
           onChange={(e) => setNewMessage(e.target.value)}
           placeholder="Say hello to community..."
           disabled={sendingMessage}
-          className="flex-1 px-3 sm:px-4 md:px-5 py-2.5 sm:py-3 md:py-3.5 bg-gradient-to-br from-rose-50 to-white border-2 border-rose-200/60 rounded-full focus:outline-none focus:ring-2 focus:ring-primary/60 focus:border-primary/40 focus:bg-white hover:border-rose-300/80 transition disabled:opacity-50 text-xs sm:text-sm md:text-base placeholder-slate-400 placeholder:text-xs sm:placeholder:text-sm shadow-sm hover:shadow-md"
+          className="flex-1 px-3 sm:px-4 md:px-5 py-2.5 sm:py-3 md:py-3.5 bg-slate-50 border border-rose-100 rounded-full focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/30 focus:bg-white hover:border-rose-200 transition disabled:opacity-50 text-xs sm:text-sm md:text-base placeholder-slate-400 placeholder:text-xs sm:placeholder:text-sm shadow-sm"
         />
         <button
           type="submit"
