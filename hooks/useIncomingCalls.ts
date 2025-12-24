@@ -158,6 +158,23 @@ export function useIncomingCalls() {
                   setIncomingCall(processedCall)
                   setError(null)
 
+                  // Create incoming call notification for recipient
+                  try {
+                    supabase
+                      .from('notifications')
+                      .insert({
+                        recipient_id: callInvitation.recipient_id,
+                        from_user_id: callInvitation.caller_id,
+                        type: 'call',
+                        call_type: callInvitation.call_type,
+                        call_status: 'incoming',
+                      })
+                      .then()
+                      .catch((err) => console.warn('Failed to create call notification:', err))
+                  } catch (notifErr) {
+                    console.warn('Error creating call notification:', notifErr)
+                  }
+
                   // Auto-decline after 5 minutes
                   clearCallTimeout()
                   callTimeoutRef.current = setTimeout(() => {
