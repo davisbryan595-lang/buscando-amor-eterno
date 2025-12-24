@@ -287,6 +287,14 @@ export default function Navigation() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Mobile Notification Drawer - rendered outside menu constraints */}
+      <ResponsiveNotificationsPanel
+        open={notificationsOpen}
+        onOpenChange={setNotificationsOpen}
+        notifications={notifications}
+        onDismiss={handleNotificationDismiss}
+      />
     </nav>
   )
 }
