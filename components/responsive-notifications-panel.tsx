@@ -72,6 +72,11 @@ export function ResponsiveNotificationsPanel({
     onDismiss(id)
   }
 
+  // Don't render until we know whether it's mobile (hydration complete)
+  if (!isMounted || isMobile === undefined) {
+    return null
+  }
+
   const NotificationItem = ({ notif }: { notif: any }) => (
     <div className="p-4 hover:bg-rose-50 transition">
       <div className="flex gap-3 items-start mb-3">
