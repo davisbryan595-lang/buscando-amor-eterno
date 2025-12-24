@@ -298,13 +298,6 @@ export default function Navigation() {
           </motion.div>
         )}
       </AnimatePresence>
-
-      <ResponsiveNotificationsPanel
-        open={notificationsOpen}
-        onOpenChange={setNotificationsOpen}
-        notifications={notifications}
-        onDismiss={handleNotificationDismiss}
-      />
     </nav>
   )
 }
