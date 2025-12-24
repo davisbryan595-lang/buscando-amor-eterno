@@ -139,44 +139,53 @@ export function ResponsiveNotificationsPanel({
     return null
   }
 
-  const NotificationItem = ({ notif }: { notif: any }) => (
-    <div className="p-4 hover:bg-rose-50 transition">
-      <div className="flex gap-3 items-start mb-3">
-        <div className="relative w-12 h-12 flex-shrink-0">
-          <Image
-            src={notif.liker_image || '/placeholder.svg'}
-            alt={notif.liker_name || 'User'}
-            fill
-            className="rounded-full object-cover"
-          />
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="font-semibold text-slate-900 truncate">
-            {notif.liker_name || 'Someone'}
-          </p>
-          <p className="text-sm text-slate-600">likes your profile</p>
-        </div>
-      </div>
+  const NotificationItem = ({ notif }: { notif: Notification }) => {
+    const userId = notif.from_user_id || notif.liker_id
+    const userName = notif.from_user_name || notif.liker_name
+    const userImage = notif.from_user_image || notif.liker_image
 
-      <div className="flex gap-2">
-        <button
-          onClick={() => handleStartConversation(notif)}
-          disabled={loadingId === notif.liker_id}
-          className="flex-1 py-2 bg-primary text-white rounded-full text-sm font-semibold hover:bg-rose-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {loadingId === notif.liker_id ? 'Starting...' : 'Chat'}
-        </button>
-        <button
-          onClick={() => handleReject(notif.id)}
-          disabled={loadingId === notif.liker_id}
-          className="px-3 py-2 border border-slate-300 text-slate-700 rounded-full text-sm hover:bg-slate-50 transition disabled:opacity-50"
-          aria-label="Dismiss"
-        >
-          <X size={16} />
-        </button>
+    return (
+      <div className="p-4 hover:bg-rose-50 transition">
+        <div className="flex gap-3 items-start mb-3">
+          <div className="relative w-12 h-12 flex-shrink-0">
+            <Image
+              src={userImage || '/placeholder.svg'}
+              alt={userName || 'User'}
+              fill
+              className="rounded-full object-cover"
+            />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="flex items-center gap-2 font-semibold text-slate-900">
+              <span className="truncate">{userName || 'Someone'}</span>
+              {getNotificationIcon(notif.type)}
+            </p>
+            <p className="text-sm text-slate-600 line-clamp-2">
+              {getNotificationText(notif)}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex gap-2">
+          <button
+            onClick={() => handleOpenNotification(notif)}
+            disabled={loadingId === notif.id}
+            className="flex-1 py-2 bg-primary text-white rounded-full text-sm font-semibold hover:bg-rose-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loadingId === notif.id ? 'Opening...' : getButtonText(notif.type)}
+          </button>
+          <button
+            onClick={() => handleDismiss(notif.id)}
+            disabled={loadingId === notif.id}
+            className="px-3 py-2 border border-slate-300 text-slate-700 rounded-full text-sm hover:bg-slate-50 transition disabled:opacity-50"
+            aria-label="Dismiss notification"
+          >
+            <X size={16} />
+          </button>
+        </div>
       </div>
-    </div>
-  )
+    )
+  }
 
   // Mobile: Show as Drawer with bottom slide animation using Portal to escape nav constraints
   if (isMobile) {
