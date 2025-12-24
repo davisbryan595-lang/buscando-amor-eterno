@@ -118,8 +118,8 @@ export default function AgoraVideoCall({
           remoteVideoContainerRef.current.srcObject = null
         }
 
-        // Navigate back to messages
-        router.push('/messages')
+        // Navigate back to conversation with this user
+        router.push(`/messages?user=${partnerId}`)
       })
       .subscribe()
 
