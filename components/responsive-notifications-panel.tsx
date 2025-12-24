@@ -9,16 +9,13 @@ import { useMessages } from '@/hooks/useMessages'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { toast } from 'sonner'
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover'
 import {
   Drawer,
   DrawerContent,
-  DrawerHeader,
-  DrawerTitle,
 } from '@/components/ui/drawer'
 
 interface ResponsiveNotificationsPanelProps {
@@ -31,6 +28,7 @@ interface ResponsiveNotificationsPanelProps {
     liker_image: string | null
   }>
   onDismiss: (id: string) => void
+  triggerRef?: React.RefObject<HTMLButtonElement>
 }
 
 export function ResponsiveNotificationsPanel({
@@ -38,6 +36,7 @@ export function ResponsiveNotificationsPanel({
   onOpenChange,
   notifications,
   onDismiss,
+  triggerRef,
 }: ResponsiveNotificationsPanelProps) {
   const router = useRouter()
   const { initiateConversation } = useMessages()
@@ -139,17 +138,24 @@ export function ResponsiveNotificationsPanel({
               </div>
 
               {/* Header */}
-              <div className="px-4 py-3 border-b border-rose-100 bg-gradient-to-r from-white to-rose-50 flex-shrink-0">
+              <div className="px-4 py-3 border-b border-rose-100 bg-gradient-to-r from-white to-rose-50 flex-shrink-0 flex items-center justify-between">
                 <h3 className="font-semibold text-slate-900 flex items-center gap-2">
                   <Heart size={18} className="text-rose-500 fill-rose-500" />
                   New Likes ({notifications.length})
                 </h3>
+                <button
+                  onClick={() => onOpenChange(false)}
+                  className="p-1 hover:bg-rose-100 rounded-full transition"
+                  aria-label="Close"
+                >
+                  <X size={20} className="text-slate-600" />
+                </button>
               </div>
 
               {/* Content */}
               <div className="flex-1 overflow-y-auto">
                 {notifications.length === 0 ? (
-                  <div className="p-8 text-center text-slate-600">
+                  <div className="flex items-center justify-center h-32 p-8 text-center text-slate-600">
                     <p>No new notifications</p>
                   </div>
                 ) : (
@@ -167,30 +173,36 @@ export function ResponsiveNotificationsPanel({
     )
   }
 
-  // Desktop: Show as Dialog with simple fade
+  // Desktop: Show as Popover dropdown anchored to bell icon (top-right)
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md p-0 gap-0 border-rose-100 animate-in fade-in-50 zoom-in-95 duration-200">
-        <DialogHeader className="border-b border-rose-100 bg-gradient-to-r from-white to-rose-50">
-          <DialogTitle className="flex items-center gap-2">
+    <Popover open={open} onOpenChange={onOpenChange}>
+      <PopoverTrigger asChild>
+        <button className="p-2 hover:bg-rose-50 rounded-full transition relative" aria-label="Notifications" />
+      </PopoverTrigger>
+      <PopoverContent className="w-96 p-0 gap-0 border-rose-100 rounded-2xl shadow-xl" align="end" sideOffset={8}>
+        {/* Header */}
+        <div className="px-4 py-3 border-b border-rose-100 bg-gradient-to-r from-white to-rose-50">
+          <h3 className="font-semibold text-slate-900 flex items-center gap-2">
             <Heart size={18} className="text-rose-500 fill-rose-500" />
             New Likes ({notifications.length})
-          </DialogTitle>
-        </DialogHeader>
-        <div className="px-0 py-0">
+          </h3>
+        </div>
+
+        {/* Content */}
+        <div className="max-h-96 overflow-y-auto">
           {notifications.length === 0 ? (
             <div className="p-8 text-center text-slate-600">
               <p>No new notifications</p>
             </div>
           ) : (
-            <div className="divide-y max-h-96 overflow-y-auto">
+            <div className="divide-y">
               {notifications.map((notif) => (
                 <NotificationItem key={notif.id} notif={notif} />
               ))}
             </div>
           )}
         </div>
-      </DialogContent>
-    </Dialog>
+      </PopoverContent>
+    </Popover>
   )
 }
