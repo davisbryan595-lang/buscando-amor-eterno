@@ -22,8 +22,32 @@ export default function SecuritySettingsPage() {
 
   if (!user) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-muted-foreground">Please log in to access settings</p>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-rose-50 to-pink-50">
+        <div className="text-center max-w-md">
+          <Lock className="w-16 h-16 text-rose-300 mx-auto mb-6" />
+          <h1 className="text-3xl font-playfair font-bold text-slate-900 mb-4">
+            Please Log In
+          </h1>
+          <p className="text-slate-600 mb-8">
+            You need to log in to access settings
+          </p>
+          <div className="flex flex-col gap-3">
+            <Button
+              onClick={() => router.push('/login')}
+              className="w-full bg-primary text-white hover:bg-rose-700"
+            >
+              Log In
+            </Button>
+            <Button
+              onClick={() => router.push('/')}
+              variant="outline"
+              className="w-full border-secondary text-foreground hover:bg-muted flex items-center justify-center gap-2"
+            >
+              <ChevronLeft size={18} />
+              Back to Home
+            </Button>
+          </div>
+        </div>
       </div>
     )
   }

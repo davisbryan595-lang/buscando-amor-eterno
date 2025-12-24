@@ -46,12 +46,31 @@ export default function ProfilePage() {
 
   if (!user || !profile) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Profile not found</h1>
-          <Button onClick={() => router.push('/onboarding')}>
-            Complete your profile
-          </Button>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-rose-50 to-pink-50">
+        <div className="text-center max-w-md">
+          <Camera className="w-16 h-16 text-rose-300 mx-auto mb-6" />
+          <h1 className="text-3xl font-playfair font-bold text-slate-900 mb-4">
+            Profile Not Found
+          </h1>
+          <p className="text-slate-600 mb-8">
+            {!user ? 'Please log in to view your profile' : 'Complete your profile to get started'}
+          </p>
+          <div className="flex flex-col gap-3">
+            <Button
+              onClick={() => router.push(!user ? '/login' : '/onboarding')}
+              className="w-full bg-primary text-white hover:bg-rose-700"
+            >
+              {!user ? 'Log In' : 'Complete Profile'}
+            </Button>
+            <Button
+              onClick={() => router.push('/')}
+              variant="outline"
+              className="w-full border-secondary text-foreground hover:bg-muted flex items-center justify-center gap-2"
+            >
+              <ChevronLeft size={18} />
+              Back to Home
+            </Button>
+          </div>
         </div>
       </div>
     )

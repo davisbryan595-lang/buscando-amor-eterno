@@ -118,8 +118,8 @@ export default function AgoraVideoCall({
           remoteVideoContainerRef.current.srcObject = null
         }
 
-        // Navigate back to messages
-        router.push('/messages')
+        // Navigate back to conversation with this user
+        router.push(`/messages?user=${partnerId}`)
       })
       .subscribe()
 
@@ -566,11 +566,11 @@ export default function AgoraVideoCall({
         remoteVideoContainerRef.current.srcObject = null
       }
 
-      router.push('/messages')
+      router.push(`/messages?user=${partnerId}`)
     } catch (err) {
       console.warn('Error during endCall (safe to ignore if call already closed):', err)
       // Don't throw or show error to user — the call is ending anyway
-      router.push('/messages')
+      router.push(`/messages?user=${partnerId}`)
     }
   }
 
