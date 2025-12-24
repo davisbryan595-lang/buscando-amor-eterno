@@ -117,9 +117,9 @@ export function ResponsiveNotificationsPanel({
     </div>
   )
 
-  // Mobile: Show as Drawer with bottom slide animation
+  // Mobile: Show as Drawer with bottom slide animation using Portal to escape nav constraints
   if (isMobile) {
-    return (
+    return createPortal(
       <AnimatePresence>
         {open && (
           <>
@@ -130,7 +130,7 @@ export function ResponsiveNotificationsPanel({
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
-              className="fixed inset-0 bg-black/50 z-40 md:hidden"
+              className="fixed inset-0 bg-black/50 z-40"
               onClick={() => onOpenChange(false)}
             />
 
@@ -146,7 +146,7 @@ export function ResponsiveNotificationsPanel({
                 stiffness: 300,
                 opacity: { duration: 0.2 },
               }}
-              className="fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl z-50 max-h-[85vh] overflow-hidden flex flex-col shadow-2xl md:hidden"
+              className="fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl z-50 max-h-[85vh] overflow-hidden flex flex-col shadow-2xl"
             >
               {/* Handle bar for swipe hint */}
               <div className="flex justify-center pt-2 pb-1">
@@ -185,7 +185,8 @@ export function ResponsiveNotificationsPanel({
             </motion.div>
           </>
         )}
-      </AnimatePresence>
+      </AnimatePresence>,
+      document.body
     )
   }
 
