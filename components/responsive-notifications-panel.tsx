@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useRef, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { Heart, X } from 'lucide-react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
