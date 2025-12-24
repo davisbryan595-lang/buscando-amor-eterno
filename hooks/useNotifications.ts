@@ -175,10 +175,11 @@ export function useNotifications() {
       setLoading(true)
       const { data, error: err } = await supabase
         .from('notifications')
-        .select('id, recipient_id, liker_id, liked_profile_id, read, created_at')
+        .select('*')
         .eq('recipient_id', user.id)
         .eq('read', false)
         .order('created_at', { ascending: false })
+        .limit(50)
 
       if (err) throw err
 
@@ -188,34 +189,52 @@ export function useNotifications() {
         return
       }
 
-      // Extract unique liker IDs
-      const uniqueLikerIds = Array.from(new Set(data.map((n: any) => n.liker_id)))
+      // Extract all unique user IDs (from liker_id, from_user_id, etc.)
+      const userIds = Array.from(
+        new Set(
+          data
+            .map((n: any) => [n.liker_id, n.from_user_id])
+            .flat()
+            .filter(Boolean)
+        )
+      )
 
-      // Batch fetch all liker profiles with a single query
-      const { data: likerProfiles, error: profileErr } = await supabase
+      // Batch fetch all user profiles with a single query
+      const { data: profiles, error: profileErr } = await supabase
         .from('profiles')
         .select('user_id, full_name, photos, main_photo_index')
-        .in('user_id', uniqueLikerIds)
+        .in('user_id', userIds)
 
       if (profileErr) {
-        console.warn('Error fetching liker profiles:', profileErr)
+        console.warn('Error fetching user profiles:', profileErr)
       }
 
       // Create a map for quick lookup
       const profileMap = new Map(
-        (likerProfiles || []).map((p: any) => [p.user_id, p])
+        (profiles || []).map((p: any) => [p.user_id, p])
       )
 
       // Map notifications with their profiles
       const notificationsWithProfiles = data.map((notif: any) => {
-        const likerProfile = profileMap.get(notif.liker_id)
+        let fromUserId = notif.liker_id || notif.from_user_id
+        const profile = profileMap.get(fromUserId)
+
         return {
           id: notif.id,
           recipient_id: notif.recipient_id,
+          type: notif.type || 'like',
+          from_user_id: fromUserId,
+          from_user_name: profile?.full_name || null,
+          from_user_image: profile?.photos?.[profile?.main_photo_index || 0] || null,
+          // Keep legacy fields for backwards compatibility
           liker_id: notif.liker_id,
-          liker_name: likerProfile?.full_name || null,
-          liker_image: likerProfile?.photos?.[likerProfile?.main_photo_index || 0] || null,
+          liker_name: profile?.full_name || null,
+          liker_image: profile?.photos?.[profile?.main_photo_index || 0] || null,
           liked_profile_id: notif.liked_profile_id,
+          match_id: notif.match_id,
+          message_preview: notif.message_preview,
+          call_type: notif.call_type,
+          call_status: notif.call_status,
           read: notif.read,
           created_at: notif.created_at,
         }
