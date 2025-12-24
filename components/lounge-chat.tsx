@@ -44,10 +44,30 @@ function LoungeChatContent() {
 
   if (!user) {
     return (
-      <div className="h-screen flex items-center justify-center bg-white">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-slate-900 mb-4">Join the Lounge</h2>
-          <p className="text-slate-600">Please log in to chat with singles in the lounge</p>
+      <div className="h-screen flex flex-col items-center justify-center bg-gradient-to-br from-rose-50 to-pink-50">
+        <div className="text-center max-w-md">
+          <Users className="w-16 h-16 text-rose-300 mx-auto mb-6" />
+          <h1 className="text-3xl font-playfair font-bold text-slate-900 mb-4">
+            Join the Lounge
+          </h1>
+          <p className="text-slate-600 mb-8">
+            Please log in to chat with singles in the lounge
+          </p>
+          <div className="flex flex-col gap-3">
+            <button
+              onClick={() => router.push('/login')}
+              className="w-full px-8 py-3 bg-primary text-white rounded-full font-semibold hover:bg-rose-700 transition-colors"
+            >
+              Log In
+            </button>
+            <button
+              onClick={() => router.push('/')}
+              className="w-full px-8 py-3 bg-white text-primary border-2 border-primary rounded-full font-semibold hover:bg-rose-50 transition-colors flex items-center justify-center gap-2"
+            >
+              <ArrowLeft size={18} />
+              Back to Home
+            </button>
+          </div>
         </div>
       </div>
     )
