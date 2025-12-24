@@ -72,18 +72,29 @@ export default function Navigation() {
           <Link href="/messages" className="text-foreground hover:text-primary transition">{t('common.messages')}</Link>
           <Link href="/lounge" className="text-foreground hover:text-primary transition">{t('common.lounge')}</Link>
 
-          <button
-            onClick={() => setNotificationsOpen(!notificationsOpen)}
-            className="p-2 hover:bg-rose-50 rounded-full transition relative"
-            aria-label="Notifications"
-          >
-            <Bell size={20} className="text-primary" />
-            {notifications.length > 0 && (
-              <span className="absolute top-1 right-1 bg-rose-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-semibold">
-                {notifications.length > 9 ? '9+' : notifications.length}
-              </span>
-            )}
-          </button>
+          <div className="relative">
+            <button
+              onClick={() => setNotificationsOpen(!notificationsOpen)}
+              className="p-2 hover:bg-rose-50 rounded-full transition relative"
+              aria-label="Notifications"
+            >
+              <Bell size={20} className="text-primary" />
+              {notifications.length > 0 && (
+                <span className="absolute top-1 right-1 bg-rose-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-semibold">
+                  {notifications.length > 9 ? '9+' : notifications.length}
+                </span>
+              )}
+            </button>
+            {/* Desktop notification dropdown */}
+            <div className="hidden md:block">
+              <ResponsiveNotificationsPanel
+                open={notificationsOpen}
+                onOpenChange={setNotificationsOpen}
+                notifications={notifications}
+                onDismiss={handleNotificationDismiss}
+              />
+            </div>
+          </div>
 
           <div className="relative">
             <button
