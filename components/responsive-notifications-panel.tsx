@@ -277,7 +277,7 @@ export function ResponsiveNotificationsPanel({
           <div className="px-4 py-3 border-b border-rose-100 bg-gradient-to-r from-white to-rose-50">
             <h3 className="font-semibold text-slate-900 flex items-center gap-2">
               <Heart size={18} className="text-rose-500 fill-rose-500" />
-              New Likes ({notifications.length})
+              Activity ({notifications.length})
             </h3>
           </div>
 
