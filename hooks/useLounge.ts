@@ -301,6 +301,7 @@ export function useLounge() {
       }
       if (presenceRef.current) {
         presenceRef.current.untrack()
+        presenceRef.current.unsubscribe()
         supabase.removeChannel(presenceRef.current)
       }
     }
