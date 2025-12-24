@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { Heart, X } from 'lucide-react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
@@ -8,15 +8,6 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useMessages } from '@/hooks/useMessages'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { toast } from 'sonner'
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover'
-import {
-  Drawer,
-  DrawerContent,
-} from '@/components/ui/drawer'
 
 interface ResponsiveNotificationsPanelProps {
   open: boolean
@@ -28,7 +19,6 @@ interface ResponsiveNotificationsPanelProps {
     liker_image: string | null
   }>
   onDismiss: (id: string) => void
-  triggerRef?: React.RefObject<HTMLButtonElement>
 }
 
 export function ResponsiveNotificationsPanel({
@@ -36,12 +26,26 @@ export function ResponsiveNotificationsPanel({
   onOpenChange,
   notifications,
   onDismiss,
-  triggerRef,
 }: ResponsiveNotificationsPanelProps) {
   const router = useRouter()
   const { initiateConversation } = useMessages()
   const isMobile = useIsMobile()
   const [loadingId, setLoadingId] = useState<string | null>(null)
+  const panelRef = useRef<HTMLDivElement>(null)
+
+  // Close on outside click for desktop
+  useEffect(() => {
+    if (!isMobile && open) {
+      const handleClickOutside = (event: MouseEvent) => {
+        if (panelRef.current && !panelRef.current.contains(event.target as Node)) {
+          onOpenChange(false)
+        }
+      }
+
+      document.addEventListener('mousedown', handleClickOutside)
+      return () => document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [open, isMobile, onOpenChange])
 
   const handleStartConversation = async (notification: any) => {
     setLoadingId(notification.liker_id)
@@ -146,7 +150,7 @@ export function ResponsiveNotificationsPanel({
                 <button
                   onClick={() => onOpenChange(false)}
                   className="p-1 hover:bg-rose-100 rounded-full transition"
-                  aria-label="Close"
+                  aria-label="Close notifications"
                 >
                   <X size={20} className="text-slate-600" />
                 </button>
@@ -173,36 +177,43 @@ export function ResponsiveNotificationsPanel({
     )
   }
 
-  // Desktop: Show as Popover dropdown anchored to bell icon (top-right)
+  // Desktop: Show as dropdown anchored to bell icon (top-right)
   return (
-    <Popover open={open} onOpenChange={onOpenChange}>
-      <PopoverTrigger asChild>
-        <button className="p-2 hover:bg-rose-50 rounded-full transition relative" aria-label="Notifications" />
-      </PopoverTrigger>
-      <PopoverContent className="w-96 p-0 gap-0 border-rose-100 rounded-2xl shadow-xl" align="end" sideOffset={8}>
-        {/* Header */}
-        <div className="px-4 py-3 border-b border-rose-100 bg-gradient-to-r from-white to-rose-50">
-          <h3 className="font-semibold text-slate-900 flex items-center gap-2">
-            <Heart size={18} className="text-rose-500 fill-rose-500" />
-            New Likes ({notifications.length})
-          </h3>
-        </div>
+    <AnimatePresence>
+      {open && (
+        <motion.div
+          key="dropdown"
+          ref={panelRef}
+          initial={{ opacity: 0, scale: 0.95, y: -10 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.95, y: -10 }}
+          transition={{ duration: 0.15, type: 'spring', damping: 20 }}
+          className="absolute top-full right-0 mt-2 w-96 bg-white border border-rose-100 rounded-2xl shadow-xl z-50 overflow-hidden"
+        >
+          {/* Header */}
+          <div className="px-4 py-3 border-b border-rose-100 bg-gradient-to-r from-white to-rose-50">
+            <h3 className="font-semibold text-slate-900 flex items-center gap-2">
+              <Heart size={18} className="text-rose-500 fill-rose-500" />
+              New Likes ({notifications.length})
+            </h3>
+          </div>
 
-        {/* Content */}
-        <div className="max-h-96 overflow-y-auto">
-          {notifications.length === 0 ? (
-            <div className="p-8 text-center text-slate-600">
-              <p>No new notifications</p>
-            </div>
-          ) : (
-            <div className="divide-y">
-              {notifications.map((notif) => (
-                <NotificationItem key={notif.id} notif={notif} />
-              ))}
-            </div>
-          )}
-        </div>
-      </PopoverContent>
-    </Popover>
+          {/* Content */}
+          <div className="max-h-96 overflow-y-auto">
+            {notifications.length === 0 ? (
+              <div className="p-8 text-center text-slate-600 min-h-24 flex items-center justify-center">
+                <p>No new notifications</p>
+              </div>
+            ) : (
+              <div className="divide-y">
+                {notifications.map((notif) => (
+                  <NotificationItem key={notif.id} notif={notif} />
+                ))}
+              </div>
+            )}
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   )
 }
