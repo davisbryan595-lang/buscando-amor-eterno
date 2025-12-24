@@ -713,6 +713,22 @@ export function useMessages() {
             payload: callMessage,
           })
 
+          // Set up 30-second timeout for missed call
+          const missedCallTimeout = setTimeout(async () => {
+            if (typeof window !== 'undefined') {
+              const callStillActive = localStorage.getItem(`call_${newCallId}_start`)
+              if (callStillActive) {
+                // Call wasn't explicitly ended, mark as missed
+                await logCallMessage(recipientId, callType, 'missed', undefined, newCallId)
+              }
+            }
+          }, 30000)
+
+          // Store timeout reference for cleanup
+          if (typeof window !== 'undefined') {
+            localStorage.setItem(`call_${newCallId}_timeout`, missedCallTimeout.toString())
+          }
+
           // Return the new call_id
           return newCallId
         } else if (callStatus === 'ended' && callId) {
@@ -743,9 +759,10 @@ export function useMessages() {
           // Cleanup localStorage
           if (typeof window !== 'undefined') {
             localStorage.removeItem(`call_${callId}_start`)
+            localStorage.removeItem(`call_${callId}_timeout`)
           }
 
-          // Broadcast the updated call message
+          // Broadcast the updated call message to both users
           const conversationChannel = supabase.channel(`messages:${user.id}:${recipientId}`)
           await conversationChannel.send({
             type: 'broadcast',
@@ -758,6 +775,19 @@ export function useMessages() {
             type: 'broadcast',
             event: 'new_message',
             payload: callMessage,
+          })
+
+          // Broadcast call end signal so both sides end the call immediately
+          await conversationChannel.send({
+            type: 'broadcast',
+            event: 'call_ended',
+            payload: { callId, callType, duration: durationSeconds },
+          })
+
+          await userChannel.send({
+            type: 'broadcast',
+            event: 'call_ended',
+            payload: { callId, callType, duration: durationSeconds },
           })
         } else if (callStatus === 'missed' && callId) {
           // For missed calls, update the existing record
@@ -783,6 +813,7 @@ export function useMessages() {
           // Cleanup localStorage
           if (typeof window !== 'undefined') {
             localStorage.removeItem(`call_${callId}_start`)
+            localStorage.removeItem(`call_${callId}_timeout`)
           }
 
           // Broadcast the updated call message
@@ -798,6 +829,19 @@ export function useMessages() {
             type: 'broadcast',
             event: 'new_message',
             payload: callMessage,
+          })
+
+          // Broadcast missed call signal
+          await conversationChannel.send({
+            type: 'broadcast',
+            event: 'call_missed',
+            payload: { callId, callType },
+          })
+
+          await userChannel.send({
+            type: 'broadcast',
+            event: 'call_missed',
+            payload: { callId, callType },
           })
         }
       } catch (err: any) {
