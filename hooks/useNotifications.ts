@@ -5,10 +5,18 @@ import { supabase } from '@/lib/supabase'
 export interface Notification {
   id: string
   recipient_id: string
-  liker_id: string
-  liker_name: string | null
-  liker_image: string | null
-  liked_profile_id: string
+  type: 'like' | 'message' | 'call' | 'match'
+  from_user_id?: string
+  from_user_name?: string
+  from_user_image?: string | null
+  liker_id?: string
+  liker_name?: string | null
+  liker_image?: string | null
+  liked_profile_id?: string
+  match_id?: string
+  message_preview?: string
+  call_type?: 'audio' | 'video'
+  call_status?: 'incoming' | 'missed'
   read: boolean
   created_at: string
 }
