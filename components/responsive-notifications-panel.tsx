@@ -63,23 +63,75 @@ export function ResponsiveNotificationsPanel({
     }
   }, [open, isMobile, onOpenChange])
 
-  const handleStartConversation = async (notification: any) => {
-    setLoadingId(notification.liker_id)
+  const handleOpenNotification = async (notification: Notification) => {
+    const userId = notification.from_user_id || notification.liker_id
+    if (!userId) return
+
+    setLoadingId(notification.id)
     try {
-      await initiateConversation(notification.liker_id)
+      await initiateConversation(userId)
       onDismiss(notification.id)
       onOpenChange(false)
-      router.push(`/messages?user=${notification.liker_id}`)
-      toast.success('Conversation started!')
+
+      if (notification.type === 'call') {
+        router.push(`/messages?user=${userId}&call=${notification.call_type}`)
+      } else {
+        router.push(`/messages?user=${userId}`)
+      }
+      toast.success('Opening chat...')
     } catch (error: any) {
-      toast.error(error.message || 'Failed to start conversation')
+      toast.error(error.message || 'Failed to open chat')
     } finally {
       setLoadingId(null)
     }
   }
 
-  const handleReject = (id: string) => {
+  const handleDismiss = (id: string) => {
     onDismiss(id)
+  }
+
+  const getNotificationIcon = (type: string) => {
+    switch (type) {
+      case 'like':
+        return <Heart size={18} className="text-rose-500 fill-rose-500" />
+      case 'message':
+        return <MessageCircle size={18} className="text-blue-500 fill-blue-500" />
+      case 'call':
+        return <Phone size={18} className="text-green-500" />
+      case 'match':
+        return <Heart size={18} className="text-rose-500 fill-rose-500" />
+      default:
+        return <Heart size={18} className="text-rose-500 fill-rose-500" />
+    }
+  }
+
+  const getNotificationText = (notif: Notification) => {
+    const name = notif.from_user_name || notif.liker_name || 'Someone'
+    switch (notif.type) {
+      case 'like':
+        return `${name} likes your profile`
+      case 'message':
+        return notif.message_preview ? `${name}: ${notif.message_preview}` : `${name} sent you a message`
+      case 'call':
+        return notif.call_status === 'missed'
+          ? `Missed ${notif.call_type} call from ${name}`
+          : `Incoming ${notif.call_type} call from ${name}`
+      case 'match':
+        return `You matched with ${name}!`
+      default:
+        return `New notification from ${name}`
+    }
+  }
+
+  const getButtonText = (type: string) => {
+    switch (type) {
+      case 'call':
+        return 'View'
+      case 'message':
+        return 'View'
+      default:
+        return 'Chat'
+    }
   }
 
   // Don't render anything until hydration is complete to avoid mismatch
