@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react'
 import { createPortal } from 'react-dom'
-import { Heart, X } from 'lucide-react'
+import { Heart, X, MessageCircle, Phone } from 'lucide-react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -10,15 +10,24 @@ import { useMessages } from '@/hooks/useMessages'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { toast } from 'sonner'
 
+interface Notification {
+  id: string
+  type: 'like' | 'message' | 'call' | 'match'
+  from_user_id?: string
+  from_user_name?: string | null
+  from_user_image?: string | null
+  liker_id?: string
+  liker_name?: string | null
+  liker_image?: string | null
+  message_preview?: string
+  call_type?: 'audio' | 'video'
+  call_status?: 'incoming' | 'missed'
+}
+
 interface ResponsiveNotificationsPanelProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  notifications: Array<{
-    id: string
-    liker_id: string
-    liker_name: string | null
-    liker_image: string | null
-  }>
+  notifications: Notification[]
   onDismiss: (id: string) => void
 }
 
@@ -54,23 +63,75 @@ export function ResponsiveNotificationsPanel({
     }
   }, [open, isMobile, onOpenChange])
 
-  const handleStartConversation = async (notification: any) => {
-    setLoadingId(notification.liker_id)
+  const handleOpenNotification = async (notification: Notification) => {
+    const userId = notification.from_user_id || notification.liker_id
+    if (!userId) return
+
+    setLoadingId(notification.id)
     try {
-      await initiateConversation(notification.liker_id)
+      await initiateConversation(userId)
       onDismiss(notification.id)
       onOpenChange(false)
-      router.push(`/messages?user=${notification.liker_id}`)
-      toast.success('Conversation started!')
+
+      if (notification.type === 'call') {
+        router.push(`/messages?user=${userId}&call=${notification.call_type}`)
+      } else {
+        router.push(`/messages?user=${userId}`)
+      }
+      toast.success('Opening chat...')
     } catch (error: any) {
-      toast.error(error.message || 'Failed to start conversation')
+      toast.error(error.message || 'Failed to open chat')
     } finally {
       setLoadingId(null)
     }
   }
 
-  const handleReject = (id: string) => {
+  const handleDismiss = (id: string) => {
     onDismiss(id)
+  }
+
+  const getNotificationIcon = (type: string) => {
+    switch (type) {
+      case 'like':
+        return <Heart size={18} className="text-rose-500 fill-rose-500" />
+      case 'message':
+        return <MessageCircle size={18} className="text-blue-500 fill-blue-500" />
+      case 'call':
+        return <Phone size={18} className="text-green-500" />
+      case 'match':
+        return <Heart size={18} className="text-rose-500 fill-rose-500" />
+      default:
+        return <Heart size={18} className="text-rose-500 fill-rose-500" />
+    }
+  }
+
+  const getNotificationText = (notif: Notification) => {
+    const name = notif.from_user_name || notif.liker_name || 'Someone'
+    switch (notif.type) {
+      case 'like':
+        return `${name} likes your profile`
+      case 'message':
+        return notif.message_preview ? `${name}: ${notif.message_preview}` : `${name} sent you a message`
+      case 'call':
+        return notif.call_status === 'missed'
+          ? `Missed ${notif.call_type} call from ${name}`
+          : `Incoming ${notif.call_type} call from ${name}`
+      case 'match':
+        return `You matched with ${name}!`
+      default:
+        return `New notification from ${name}`
+    }
+  }
+
+  const getButtonText = (type: string) => {
+    switch (type) {
+      case 'call':
+        return 'View'
+      case 'message':
+        return 'View'
+      default:
+        return 'Chat'
+    }
   }
 
   // Don't render anything until hydration is complete to avoid mismatch
@@ -78,44 +139,53 @@ export function ResponsiveNotificationsPanel({
     return null
   }
 
-  const NotificationItem = ({ notif }: { notif: any }) => (
-    <div className="p-4 hover:bg-rose-50 transition">
-      <div className="flex gap-3 items-start mb-3">
-        <div className="relative w-12 h-12 flex-shrink-0">
-          <Image
-            src={notif.liker_image || '/placeholder.svg'}
-            alt={notif.liker_name || 'User'}
-            fill
-            className="rounded-full object-cover"
-          />
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="font-semibold text-slate-900 truncate">
-            {notif.liker_name || 'Someone'}
-          </p>
-          <p className="text-sm text-slate-600">likes your profile</p>
-        </div>
-      </div>
+  const NotificationItem = ({ notif }: { notif: Notification }) => {
+    const userId = notif.from_user_id || notif.liker_id
+    const userName = notif.from_user_name || notif.liker_name
+    const userImage = notif.from_user_image || notif.liker_image
 
-      <div className="flex gap-2">
-        <button
-          onClick={() => handleStartConversation(notif)}
-          disabled={loadingId === notif.liker_id}
-          className="flex-1 py-2 bg-primary text-white rounded-full text-sm font-semibold hover:bg-rose-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {loadingId === notif.liker_id ? 'Starting...' : 'Chat'}
-        </button>
-        <button
-          onClick={() => handleReject(notif.id)}
-          disabled={loadingId === notif.liker_id}
-          className="px-3 py-2 border border-slate-300 text-slate-700 rounded-full text-sm hover:bg-slate-50 transition disabled:opacity-50"
-          aria-label="Dismiss"
-        >
-          <X size={16} />
-        </button>
+    return (
+      <div className="p-4 hover:bg-rose-50 transition">
+        <div className="flex gap-3 items-start mb-3">
+          <div className="relative w-12 h-12 flex-shrink-0">
+            <Image
+              src={userImage || '/placeholder.svg'}
+              alt={userName || 'User'}
+              fill
+              className="rounded-full object-cover"
+            />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="flex items-center gap-2 font-semibold text-slate-900">
+              <span className="truncate">{userName || 'Someone'}</span>
+              {getNotificationIcon(notif.type)}
+            </p>
+            <p className="text-sm text-slate-600 line-clamp-2">
+              {getNotificationText(notif)}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex gap-2">
+          <button
+            onClick={() => handleOpenNotification(notif)}
+            disabled={loadingId === notif.id}
+            className="flex-1 py-2 bg-primary text-white rounded-full text-sm font-semibold hover:bg-rose-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loadingId === notif.id ? 'Opening...' : getButtonText(notif.type)}
+          </button>
+          <button
+            onClick={() => handleDismiss(notif.id)}
+            disabled={loadingId === notif.id}
+            className="px-3 py-2 border border-slate-300 text-slate-700 rounded-full text-sm hover:bg-slate-50 transition disabled:opacity-50"
+            aria-label="Dismiss notification"
+          >
+            <X size={16} />
+          </button>
+        </div>
       </div>
-    </div>
-  )
+    )
+  }
 
   // Mobile: Show as Drawer with bottom slide animation using Portal to escape nav constraints
   if (isMobile) {
@@ -157,7 +227,7 @@ export function ResponsiveNotificationsPanel({
               <div className="px-4 py-3 border-b border-rose-100 bg-gradient-to-r from-white to-rose-50 flex-shrink-0 flex items-center justify-between sticky top-0 z-10">
                 <h3 className="font-semibold text-slate-900 flex items-center gap-2">
                   <Heart size={18} className="text-rose-500 fill-rose-500" />
-                  New Likes ({notifications.length})
+                  Activity ({notifications.length})
                 </h3>
                 <button
                   onClick={() => onOpenChange(false)}
@@ -207,7 +277,7 @@ export function ResponsiveNotificationsPanel({
           <div className="px-4 py-3 border-b border-rose-100 bg-gradient-to-r from-white to-rose-50">
             <h3 className="font-semibold text-slate-900 flex items-center gap-2">
               <Heart size={18} className="text-rose-500 fill-rose-500" />
-              New Likes ({notifications.length})
+              Activity ({notifications.length})
             </h3>
           </div>
 

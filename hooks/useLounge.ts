@@ -96,7 +96,7 @@ export function useLounge() {
     }
   }, [user])
 
-  // Subscribe to real-time message updates
+  // Subscribe to real-time message updates using broadcast (faster and more reliable for group chat)
   const subscribeToMessages = useCallback(() => {
     if (!user) return
 
@@ -118,40 +118,22 @@ export function useLounge() {
 
         subscriptionRef.current = supabase
           .channel(channelName)
-          .on(
-            'postgres_changes',
-            {
-              event: 'INSERT',
-              schema: 'public',
-              table: 'lounge_messages',
-            },
-            async (payload: any) => {
-              if (!isMounted) return
+          .on('broadcast', { event: 'new_message' }, (payload) => {
+            if (!isMounted) return
 
-              const newMessage = payload.new
-              // Fetch user profile for new message
-              const { data: profile } = await supabase
-                .from('profiles')
-                .select('full_name, photos, main_photo_index')
-                .eq('user_id', newMessage.sender_id)
-                .single()
-
-              const enrichedMessage = {
-                ...newMessage,
-                user_id: newMessage.sender_id,
-                message: newMessage.content,
-                sender_name: profile?.full_name || 'Anonymous',
-                sender_image: profile?.photos?.[profile?.main_photo_index || 0] || null,
-              }
-              setMessages((prev) => [...prev, enrichedMessage])
-            }
-          )
+            const enrichedMessage = payload.payload
+            setMessages((prev) => {
+              // Prevent duplicates
+              const isDuplicate = prev.some(m => m.id === enrichedMessage.id)
+              return isDuplicate ? prev : [...prev, enrichedMessage]
+            })
+          })
           .subscribe((status, err) => {
             if (err) {
               const errorMsg = err?.message || JSON.stringify(err)
               console.log('[Lounge] Subscription error:', errorMsg, err)
             } else {
-              console.log('[Lounge] Subscription status:', status)
+              console.log('[Lounge] Broadcast subscription status:', status)
             }
 
             if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
@@ -168,7 +150,7 @@ export function useLounge() {
               }
             } else if (status === 'SUBSCRIBED') {
               retryCount = 0
-              console.log('[Lounge] Messages subscription active')
+              console.log('[Lounge] Broadcast subscription active')
             }
           })
       } catch (err: any) {
@@ -307,7 +289,7 @@ export function useLounge() {
     }
   }, [user])
 
-  // Send a message with keyword filtering
+  // Send a message with keyword filtering and instant broadcast
   const sendMessage = useCallback(
     async (content: string) => {
       if (!user || !content.trim()) return
@@ -319,12 +301,45 @@ export function useLounge() {
           filteredContent = filteredContent.replace(pattern, '***')
         })
 
-        const { error: err } = await supabase.from('lounge_messages').insert({
-          sender_id: user.id,
-          content: filteredContent,
-        })
+        // Insert message into database
+        const { data, error: err } = await supabase
+          .from('lounge_messages')
+          .insert({
+            sender_id: user.id,
+            content: filteredContent,
+          })
+          .select()
+          .single()
 
         if (err) throw err
+
+        // Fetch user profile for enriched message
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('full_name, photos, main_photo_index')
+          .eq('user_id', user.id)
+          .single()
+
+        // Create enriched message for broadcast
+        const enrichedMessage = {
+          ...data,
+          user_id: data.sender_id,
+          message: data.content,
+          sender_name: profile?.full_name || 'Anonymous',
+          sender_image: profile?.photos?.[profile?.main_photo_index || 0] || null,
+        }
+
+        // Broadcast message immediately so other users see it instantly
+        const channel = supabase.channel('global_singles_lounge')
+        await channel.send({
+          type: 'broadcast',
+          event: 'new_message',
+          payload: enrichedMessage,
+        })
+
+        // Add to local state
+        setMessages((prev) => [...prev, enrichedMessage])
+        setError(null)
       } catch (err: any) {
         const errorMessage = err?.message || err?.error_description || 'Failed to send message'
         console.error('Error sending message:', errorMessage, err)

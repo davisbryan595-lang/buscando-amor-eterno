@@ -39,7 +39,7 @@ export function useIncomingCalls() {
         // Get the call invitation details before deleting
         const { data: callInvitation } = await supabase
           .from('call_invitations')
-          .select('caller_id, call_type, call_id')
+          .select('caller_id, call_type, call_id, recipient_id')
           .eq('id', invitationId)
           .single()
 
@@ -55,6 +55,19 @@ export function useIncomingCalls() {
         if (callInvitation) {
           try {
             await logCallMessage(callInvitation.caller_id, callInvitation.call_type, 'missed', undefined, callInvitation.call_id)
+
+            // Create missed call notification for caller
+            supabase
+              .from('notifications')
+              .insert({
+                recipient_id: callInvitation.caller_id,
+                from_user_id: callInvitation.recipient_id,
+                type: 'call',
+                call_type: callInvitation.call_type,
+                call_status: 'missed',
+              })
+              .then()
+              .catch((err) => console.warn('Failed to create missed call notification:', err))
           } catch (logErr) {
             console.warn('Failed to log missed call:', logErr)
           }
@@ -157,6 +170,23 @@ export function useIncomingCalls() {
                 if (isMounted) {
                   setIncomingCall(processedCall)
                   setError(null)
+
+                  // Create incoming call notification for recipient
+                  try {
+                    supabase
+                      .from('notifications')
+                      .insert({
+                        recipient_id: callInvitation.recipient_id,
+                        from_user_id: callInvitation.caller_id,
+                        type: 'call',
+                        call_type: callInvitation.call_type,
+                        call_status: 'incoming',
+                      })
+                      .then()
+                      .catch((err) => console.warn('Failed to create call notification:', err))
+                  } catch (notifErr) {
+                    console.warn('Error creating call notification:', notifErr)
+                  }
 
                   // Auto-decline after 5 minutes
                   clearCallTimeout()
