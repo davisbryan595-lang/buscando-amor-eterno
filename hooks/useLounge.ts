@@ -194,6 +194,7 @@ export function useLounge() {
         clearTimeout(retryTimeout)
       }
       if (subscriptionRef.current) {
+        subscriptionRef.current.unsubscribe()
         supabase.removeChannel(subscriptionRef.current)
       }
     }
@@ -300,6 +301,7 @@ export function useLounge() {
       }
       if (presenceRef.current) {
         presenceRef.current.untrack()
+        presenceRef.current.unsubscribe()
         supabase.removeChannel(presenceRef.current)
       }
     }

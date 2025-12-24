@@ -1,6 +1,7 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { Heart, X } from 'lucide-react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
@@ -8,18 +9,6 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useMessages } from '@/hooks/useMessages'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { toast } from 'sonner'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
-import {
-  Drawer,
-  DrawerContent,
-  DrawerHeader,
-  DrawerTitle,
-} from '@/components/ui/drawer'
 
 interface ResponsiveNotificationsPanelProps {
   open: boolean
@@ -43,6 +32,27 @@ export function ResponsiveNotificationsPanel({
   const { initiateConversation } = useMessages()
   const isMobile = useIsMobile()
   const [loadingId, setLoadingId] = useState<string | null>(null)
+  const [isMounted, setIsMounted] = useState(false)
+  const panelRef = useRef<HTMLDivElement>(null)
+
+  // Wait for hydration to complete before rendering
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
+
+  // Close on outside click for desktop
+  useEffect(() => {
+    if (!isMobile && open) {
+      const handleClickOutside = (event: MouseEvent) => {
+        if (panelRef.current && !panelRef.current.contains(event.target as Node)) {
+          onOpenChange(false)
+        }
+      }
+
+      document.addEventListener('mousedown', handleClickOutside)
+      return () => document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [open, isMobile, onOpenChange])
 
   const handleStartConversation = async (notification: any) => {
     setLoadingId(notification.liker_id)
@@ -61,6 +71,11 @@ export function ResponsiveNotificationsPanel({
 
   const handleReject = (id: string) => {
     onDismiss(id)
+  }
+
+  // Don't render anything until hydration is complete to avoid mismatch
+  if (!isMounted) {
+    return null
   }
 
   const NotificationItem = ({ notif }: { notif: any }) => (
@@ -102,13 +117,13 @@ export function ResponsiveNotificationsPanel({
     </div>
   )
 
-  // Mobile: Show as Drawer with bottom slide animation
+  // Mobile: Show as Drawer with bottom slide animation using Portal to escape nav constraints
   if (isMobile) {
-    return (
+    return createPortal(
       <AnimatePresence>
         {open && (
           <>
-            {/* Animated backdrop */}
+            {/* Animated backdrop - covers entire viewport */}
             <motion.div
               key="backdrop"
               initial={{ opacity: 0 }}
@@ -119,7 +134,7 @@ export function ResponsiveNotificationsPanel({
               onClick={() => onOpenChange(false)}
             />
 
-            {/* Animated drawer content - slide up from bottom */}
+            {/* Animated drawer content - slide up from bottom, positioned relative to viewport */}
             <motion.div
               key="drawer"
               initial={{ y: '100%', opacity: 0 }}
@@ -131,25 +146,32 @@ export function ResponsiveNotificationsPanel({
                 stiffness: 300,
                 opacity: { duration: 0.2 },
               }}
-              className="fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl z-50 max-h-[80vh] overflow-hidden flex flex-col shadow-2xl"
+              className="fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl z-50 max-h-[85vh] overflow-hidden flex flex-col shadow-2xl"
             >
               {/* Handle bar for swipe hint */}
               <div className="flex justify-center pt-2 pb-1">
                 <div className="w-12 h-1 bg-slate-300 rounded-full" />
               </div>
 
-              {/* Header */}
-              <div className="px-4 py-3 border-b border-rose-100 bg-gradient-to-r from-white to-rose-50 flex-shrink-0">
+              {/* Header - sticky so it doesn't scroll */}
+              <div className="px-4 py-3 border-b border-rose-100 bg-gradient-to-r from-white to-rose-50 flex-shrink-0 flex items-center justify-between sticky top-0 z-10">
                 <h3 className="font-semibold text-slate-900 flex items-center gap-2">
                   <Heart size={18} className="text-rose-500 fill-rose-500" />
                   New Likes ({notifications.length})
                 </h3>
+                <button
+                  onClick={() => onOpenChange(false)}
+                  className="p-1 hover:bg-rose-100 rounded-full transition flex-shrink-0"
+                  aria-label="Close notifications"
+                >
+                  <X size={20} className="text-slate-600" />
+                </button>
               </div>
 
-              {/* Content */}
+              {/* Content - scrollable */}
               <div className="flex-1 overflow-y-auto">
                 {notifications.length === 0 ? (
-                  <div className="p-8 text-center text-slate-600">
+                  <div className="flex items-center justify-center min-h-32 p-8 text-center text-slate-600">
                     <p>No new notifications</p>
                   </div>
                 ) : (
@@ -163,34 +185,48 @@ export function ResponsiveNotificationsPanel({
             </motion.div>
           </>
         )}
-      </AnimatePresence>
+      </AnimatePresence>,
+      document.body
     )
   }
 
-  // Desktop: Show as Dialog with simple fade
+  // Desktop: Show as dropdown anchored to bell icon (top-right)
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md p-0 gap-0 border-rose-100 animate-in fade-in-50 zoom-in-95 duration-200">
-        <DialogHeader className="border-b border-rose-100 bg-gradient-to-r from-white to-rose-50">
-          <DialogTitle className="flex items-center gap-2">
-            <Heart size={18} className="text-rose-500 fill-rose-500" />
-            New Likes ({notifications.length})
-          </DialogTitle>
-        </DialogHeader>
-        <div className="px-0 py-0">
-          {notifications.length === 0 ? (
-            <div className="p-8 text-center text-slate-600">
-              <p>No new notifications</p>
-            </div>
-          ) : (
-            <div className="divide-y max-h-96 overflow-y-auto">
-              {notifications.map((notif) => (
-                <NotificationItem key={notif.id} notif={notif} />
-              ))}
-            </div>
-          )}
-        </div>
-      </DialogContent>
-    </Dialog>
+    <AnimatePresence>
+      {open && (
+        <motion.div
+          key="dropdown"
+          ref={panelRef}
+          initial={{ opacity: 0, scale: 0.95, y: -10 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.95, y: -10 }}
+          transition={{ duration: 0.15, type: 'spring', damping: 20 }}
+          className="absolute top-full right-0 mt-2 w-96 bg-white border border-rose-100 rounded-2xl shadow-xl z-50 overflow-hidden"
+        >
+          {/* Header */}
+          <div className="px-4 py-3 border-b border-rose-100 bg-gradient-to-r from-white to-rose-50">
+            <h3 className="font-semibold text-slate-900 flex items-center gap-2">
+              <Heart size={18} className="text-rose-500 fill-rose-500" />
+              New Likes ({notifications.length})
+            </h3>
+          </div>
+
+          {/* Content */}
+          <div className="max-h-96 overflow-y-auto">
+            {notifications.length === 0 ? (
+              <div className="p-8 text-center text-slate-600 min-h-24 flex items-center justify-center">
+                <p>No new notifications</p>
+              </div>
+            ) : (
+              <div className="divide-y">
+                {notifications.map((notif) => (
+                  <NotificationItem key={notif.id} notif={notif} />
+                ))}
+              </div>
+            )}
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   )
 }

@@ -124,6 +124,7 @@ export default function AgoraVideoCall({
       .subscribe()
 
     return () => {
+      channel.unsubscribe()
       supabase.removeChannel(channel)
     }
   }, [user, partnerId, client, localAudioTrack, localVideoTrack, router])

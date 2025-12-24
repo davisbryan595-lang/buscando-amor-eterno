@@ -70,6 +70,7 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
   const messagesContainerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const unsubscribeRef = useRef<(() => void) | null>(null)
+  const typingChannelRef = useRef<any>(null)
 
   const scrollToBottom = () => {
     if (messagesEndRef.current) {
@@ -87,7 +88,7 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
 
       // Subscribe to typing indicators and read receipts for this conversation
       const { supabase } = require('@/lib/supabase')
-      const typingChannel = supabase
+      typingChannelRef.current = supabase
         .channel(`messages:${user?.id}:${conversation.other_user_id}`)
         .on('broadcast', { event: 'typing_indicator' }, (payload) => {
           console.log('[ChatWindow] Typing indicator received:', payload.payload)
@@ -154,7 +155,11 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
         if (unsubscribeRef.current) {
           unsubscribeRef.current()
         }
-        supabase.removeChannel(typingChannel)
+        // Properly unsubscribe from typing channel before removing it
+        if (typingChannelRef.current) {
+          typingChannelRef.current.unsubscribe()
+          supabase.removeChannel(typingChannelRef.current)
+        }
         if (typingTimeoutRef.current) {
           clearTimeout(typingTimeoutRef.current)
         }

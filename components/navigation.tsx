@@ -54,14 +54,14 @@ export default function Navigation() {
 
   return (
     <nav ref={navRef} className="fixed top-0 left-0 right-0 z-50 bg-white/90 md:bg-white/95 backdrop-blur-md border-b border-rose-100/50 md:border-rose-100">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 md:py-4 flex justify-between items-center">
         <Link href="/" className="flex items-center gap-2">
           <img
             src="https://cdn.builder.io/api/v1/image/assets%2F5517f718aa7348e88214250292563028%2F09ca0588ac3741678f0d49e142dede0b?format=webp&width=800"
             alt="Buscando Amor Eterno Logo"
-            className="h-16 w-16 object-contain"
+            className="h-10 w-10 md:h-16 md:w-16 object-contain"
           />
-          <span className="text-lg font-playfair font-bold text-rose-600">Buscando Amor Eterno</span>
+          <span className="hidden sm:inline text-lg md:text-lg font-playfair font-bold text-rose-600">Buscando Amor Eterno</span>
         </Link>
 
         {/* Desktop Menu */}
@@ -72,18 +72,29 @@ export default function Navigation() {
           <Link href="/messages" className="text-foreground hover:text-primary transition">{t('common.messages')}</Link>
           <Link href="/lounge" className="text-foreground hover:text-primary transition">{t('common.lounge')}</Link>
 
-          <button
-            onClick={() => setNotificationsOpen(!notificationsOpen)}
-            className="p-2 hover:bg-rose-50 rounded-full transition relative"
-            aria-label="Notifications"
-          >
-            <Bell size={20} className="text-primary" />
-            {notifications.length > 0 && (
-              <span className="absolute top-1 right-1 bg-rose-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-semibold">
-                {notifications.length > 9 ? '9+' : notifications.length}
-              </span>
-            )}
-          </button>
+          <div className="relative">
+            <button
+              onClick={() => setNotificationsOpen(!notificationsOpen)}
+              className="p-2 hover:bg-rose-50 rounded-full transition relative"
+              aria-label="Notifications"
+            >
+              <Bell size={20} className="text-primary" />
+              {notifications.length > 0 && (
+                <span className="absolute top-1 right-1 bg-rose-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-semibold">
+                  {notifications.length > 9 ? '9+' : notifications.length}
+                </span>
+              )}
+            </button>
+            {/* Desktop notification dropdown */}
+            <div className="hidden md:block">
+              <ResponsiveNotificationsPanel
+                open={notificationsOpen}
+                onOpenChange={setNotificationsOpen}
+                notifications={notifications}
+                onDismiss={handleNotificationDismiss}
+              />
+            </div>
+          </div>
 
           <div className="relative">
             <button
@@ -277,6 +288,7 @@ export default function Navigation() {
         )}
       </AnimatePresence>
 
+      {/* Mobile Notification Drawer - uses Portal so only needs one instance */}
       <ResponsiveNotificationsPanel
         open={notificationsOpen}
         onOpenChange={setNotificationsOpen}

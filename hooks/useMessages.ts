@@ -326,6 +326,7 @@ export function useMessages() {
 
       return () => {
         isMounted = false
+        subscription.unsubscribe()
         supabase.removeChannel(subscription)
       }
     } catch (err) {
@@ -381,6 +382,7 @@ export function useMessages() {
 
         return () => {
           isMounted = false
+          channel.unsubscribe()
           supabase.removeChannel(channel)
         }
       } catch (err) {
