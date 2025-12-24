@@ -194,6 +194,7 @@ export function useLounge() {
         clearTimeout(retryTimeout)
       }
       if (subscriptionRef.current) {
+        subscriptionRef.current.unsubscribe()
         supabase.removeChannel(subscriptionRef.current)
       }
     }
