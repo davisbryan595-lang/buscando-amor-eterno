@@ -464,6 +464,22 @@ export function useMessages() {
           prev.map((msg) => msg.id === tempMessage.id ? realMessage : msg)
         )
 
+        // Create notification for recipient (don't await to avoid blocking message send)
+        try {
+          supabase
+            .from('notifications')
+            .insert({
+              recipient_id: recipientId,
+              from_user_id: user.id,
+              type: 'message',
+              message_preview: content.substring(0, 50),
+            })
+            .then()
+            .catch((err) => console.warn('Failed to create message notification:', err))
+        } catch (notifErr) {
+          console.warn('Error creating notification:', notifErr)
+        }
+
         // Broadcast to all relevant channels so subscribers get instant update
         const conversationChannel = supabase.channel(`messages:${user.id}:${recipientId}`)
         await conversationChannel.send({
