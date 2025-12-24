@@ -289,7 +289,7 @@ export function useLounge() {
     }
   }, [user])
 
-  // Send a message with keyword filtering
+  // Send a message with keyword filtering and instant broadcast
   const sendMessage = useCallback(
     async (content: string) => {
       if (!user || !content.trim()) return
@@ -301,12 +301,45 @@ export function useLounge() {
           filteredContent = filteredContent.replace(pattern, '***')
         })
 
-        const { error: err } = await supabase.from('lounge_messages').insert({
-          sender_id: user.id,
-          content: filteredContent,
-        })
+        // Insert message into database
+        const { data, error: err } = await supabase
+          .from('lounge_messages')
+          .insert({
+            sender_id: user.id,
+            content: filteredContent,
+          })
+          .select()
+          .single()
 
         if (err) throw err
+
+        // Fetch user profile for enriched message
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('full_name, photos, main_photo_index')
+          .eq('user_id', user.id)
+          .single()
+
+        // Create enriched message for broadcast
+        const enrichedMessage = {
+          ...data,
+          user_id: data.sender_id,
+          message: data.content,
+          sender_name: profile?.full_name || 'Anonymous',
+          sender_image: profile?.photos?.[profile?.main_photo_index || 0] || null,
+        }
+
+        // Broadcast message immediately so other users see it instantly
+        const channel = supabase.channel('global_singles_lounge')
+        await channel.send({
+          type: 'broadcast',
+          event: 'new_message',
+          payload: enrichedMessage,
+        })
+
+        // Add to local state
+        setMessages((prev) => [...prev, enrichedMessage])
+        setError(null)
       } catch (err: any) {
         const errorMessage = err?.message || err?.error_description || 'Failed to send message'
         console.error('Error sending message:', errorMessage, err)
