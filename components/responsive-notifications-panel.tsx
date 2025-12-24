@@ -31,7 +31,13 @@ export function ResponsiveNotificationsPanel({
   const { initiateConversation } = useMessages()
   const isMobile = useIsMobile()
   const [loadingId, setLoadingId] = useState<string | null>(null)
+  const [isMounted, setIsMounted] = useState(false)
   const panelRef = useRef<HTMLDivElement>(null)
+
+  // Wait for hydration to complete before rendering
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
 
   // Close on outside click for desktop
   useEffect(() => {
