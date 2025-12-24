@@ -288,7 +288,7 @@ export default function Navigation() {
         )}
       </AnimatePresence>
 
-      {/* Mobile Notification Drawer - rendered outside menu constraints */}
+      {/* Mobile Notification Drawer - uses Portal so only needs one instance */}
       <ResponsiveNotificationsPanel
         open={notificationsOpen}
         onOpenChange={setNotificationsOpen}
