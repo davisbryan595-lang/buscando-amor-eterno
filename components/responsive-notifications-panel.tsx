@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react'
 import { createPortal } from 'react-dom'
-import { Heart, X } from 'lucide-react'
+import { Heart, X, MessageCircle, Phone } from 'lucide-react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -10,15 +10,24 @@ import { useMessages } from '@/hooks/useMessages'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { toast } from 'sonner'
 
+interface Notification {
+  id: string
+  type: 'like' | 'message' | 'call' | 'match'
+  from_user_id?: string
+  from_user_name?: string | null
+  from_user_image?: string | null
+  liker_id?: string
+  liker_name?: string | null
+  liker_image?: string | null
+  message_preview?: string
+  call_type?: 'audio' | 'video'
+  call_status?: 'incoming' | 'missed'
+}
+
 interface ResponsiveNotificationsPanelProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  notifications: Array<{
-    id: string
-    liker_id: string
-    liker_name: string | null
-    liker_image: string | null
-  }>
+  notifications: Notification[]
   onDismiss: (id: string) => void
 }
 
