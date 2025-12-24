@@ -566,11 +566,11 @@ export default function AgoraVideoCall({
         remoteVideoContainerRef.current.srcObject = null
       }
 
-      router.push('/messages')
+      router.push(`/messages?user=${partnerId}`)
     } catch (err) {
       console.warn('Error during endCall (safe to ignore if call already closed):', err)
       // Don't throw or show error to user — the call is ending anyway
-      router.push('/messages')
+      router.push(`/messages?user=${partnerId}`)
     }
   }
 
