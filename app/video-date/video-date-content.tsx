@@ -133,6 +133,7 @@ export default function VideoDateContent() {
     return () => {
       isMounted = false
       if (subscription) {
+        subscription.unsubscribe()
         supabase.removeChannel(subscription)
       }
     }
