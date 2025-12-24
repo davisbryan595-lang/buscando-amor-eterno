@@ -72,8 +72,8 @@ export function ResponsiveNotificationsPanel({
     onDismiss(id)
   }
 
-  // Don't render until we know whether it's mobile (hydration complete)
-  if (!isMounted || isMobile === undefined) {
+  // Don't render anything until hydration is complete to avoid mismatch
+  if (!isMounted) {
     return null
   }
 
