@@ -195,9 +195,22 @@ export default function AgoraVideoCall({
   // Force clean disconnect on page hide (mobile background) - suppress reconnection attempts
   useEffect(() => {
     const handleVisibilityChange = async () => {
-      if (document.hidden && isConnected && endCallRef.current) {
+      if (document.hidden && isConnected) {
         console.log('Page hidden — broadcasting end call to prevent hanging')
-        await endCallRef.current()
+        // Broadcast end signal to other user via Supabase Realtime
+        if (user && partnerId) {
+          const roomName = [user.id, partnerId].sort().join('-')
+          const channel = supabase.channel(`call:${roomName}`)
+          try {
+            await channel.send({
+              type: 'broadcast',
+              event: 'call_ended',
+              payload: { ended_by: user.id },
+            })
+          } catch (err) {
+            console.warn('Failed to broadcast call_ended on visibility change:', err)
+          }
+        }
       }
     }
 
@@ -205,7 +218,7 @@ export default function AgoraVideoCall({
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
-  }, [isConnected])
+  }, [user, partnerId, isConnected])
 
   // Fetch other user's profile picture
   useEffect(() => {
