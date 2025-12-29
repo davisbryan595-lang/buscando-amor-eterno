@@ -62,7 +62,6 @@ export default function AgoraVideoCall({
   const ongoingLoggedRef = useRef(false)
   const callIdRef = useRef<string | null>(null)
   const justReceivedEndSignalRef = useRef(false)
-  const endCallRef = useRef<(() => Promise<void>) | null>(null)
 
   const appId = process.env.NEXT_PUBLIC_AGORA_APP_ID
 
