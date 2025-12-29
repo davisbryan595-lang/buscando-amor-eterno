@@ -189,6 +189,21 @@ export default function AgoraVideoCall({
     }
   }, [user, partnerId, client, localAudioTrack, localVideoTrack])
 
+  // Force clean disconnect on page hide (mobile background) - suppress reconnection attempts
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.hidden && isConnected) {
+        console.log('Page hidden — broadcasting end call to prevent hanging')
+        endCall()
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }, [isConnected])
+
   // Fetch other user's profile picture
   useEffect(() => {
     const fetchOtherUserProfile = async () => {
