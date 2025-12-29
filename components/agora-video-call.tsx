@@ -73,7 +73,10 @@ export default function AgoraVideoCall({
 
     channel
       .on('broadcast', { event: 'call_ended' }, async (payload) => {
-        console.log('Call ended by remote user')
+        console.log('Remote end detected — cleaning up')
+
+        // Mark this as an intentional end to suppress "connection lost" UI
+        setJustReceivedEndSignal(true)
 
         // Clear call timer
         if (callTimerRef.current) {
