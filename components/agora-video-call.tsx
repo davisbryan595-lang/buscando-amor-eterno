@@ -194,10 +194,10 @@ export default function AgoraVideoCall({
 
   // Force clean disconnect on page hide (mobile background) - suppress reconnection attempts
   useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.hidden && isConnected) {
+    const handleVisibilityChange = async () => {
+      if (document.hidden && isConnected && endCallRef.current) {
         console.log('Page hidden — broadcasting end call to prevent hanging')
-        endCall()
+        await endCallRef.current()
       }
     }
 
