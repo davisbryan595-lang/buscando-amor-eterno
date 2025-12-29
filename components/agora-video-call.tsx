@@ -61,6 +61,7 @@ export default function AgoraVideoCall({
   const callTimerRef = useRef<NodeJS.Timeout | null>(null)
   const ongoingLoggedRef = useRef(false)
   const callIdRef = useRef<string | null>(null)
+  const justReceivedEndSignalRef = useRef(false)
 
   const appId = process.env.NEXT_PUBLIC_AGORA_APP_ID
 
