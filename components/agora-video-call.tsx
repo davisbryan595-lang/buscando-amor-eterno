@@ -397,7 +397,7 @@ export default function AgoraVideoCall({
             setConnectionState('reconnecting')
           } else if (curState === 'DISCONNECTED') {
             // Ignore DISCONNECTED state if we just received an intentional end signal
-            if (justReceivedEndSignal) {
+            if (justReceivedEndSignalRef.current) {
               console.log('Ignoring DISCONNECTED state — intentional end detected')
               return
             }
