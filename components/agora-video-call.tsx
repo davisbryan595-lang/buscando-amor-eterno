@@ -54,12 +54,14 @@ export default function AgoraVideoCall({
   const [remoteAudioEnabled, setRemoteAudioEnabled] = useState(true)
   const [connectionState, setConnectionState] = useState<'connected' | 'reconnecting' | 'disconnected'>('connected')
   const [loggedCallId, setLoggedCallId] = useState<string | null>(null)
+  const [justReceivedEndSignal, setJustReceivedEndSignal] = useState(false)
   const localVideoContainerRef = useRef<HTMLDivElement>(null)
   const remoteVideoContainerRef = useRef<HTMLDivElement>(null)
   const callStartTimeRef = useRef<number>(0)
   const callTimerRef = useRef<NodeJS.Timeout | null>(null)
   const ongoingLoggedRef = useRef(false)
   const callIdRef = useRef<string | null>(null)
+  const justReceivedEndSignalRef = useRef(false)
 
   const appId = process.env.NEXT_PUBLIC_AGORA_APP_ID
 
@@ -72,7 +74,11 @@ export default function AgoraVideoCall({
 
     channel
       .on('broadcast', { event: 'call_ended' }, async (payload) => {
-        console.log('Call ended by remote user')
+        console.log('Remote end detected — cleaning up')
+
+        // Mark this as an intentional end to suppress "connection lost" UI
+        setJustReceivedEndSignal(true)
+        justReceivedEndSignalRef.current = true
 
         // Clear call timer
         if (callTimerRef.current) {
@@ -184,6 +190,34 @@ export default function AgoraVideoCall({
       window.removeEventListener('pagehide', handleUnload)
     }
   }, [user, partnerId, client, localAudioTrack, localVideoTrack])
+
+  // Force clean disconnect on page hide (mobile background) - suppress reconnection attempts
+  useEffect(() => {
+    const handleVisibilityChange = async () => {
+      if (document.hidden && isConnected) {
+        console.log('Page hidden — broadcasting end call to prevent hanging')
+        // Broadcast end signal to other user via Supabase Realtime
+        if (user && partnerId) {
+          const roomName = [user.id, partnerId].sort().join('-')
+          const channel = supabase.channel(`call:${roomName}`)
+          try {
+            await channel.send({
+              type: 'broadcast',
+              event: 'call_ended',
+              payload: { ended_by: user.id },
+            })
+          } catch (err) {
+            console.warn('Failed to broadcast call_ended on visibility change:', err)
+          }
+        }
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }, [user, partnerId, isConnected])
 
   // Fetch other user's profile picture
   useEffect(() => {
@@ -375,6 +409,11 @@ export default function AgoraVideoCall({
           } else if (curState === 'RECONNECTING') {
             setConnectionState('reconnecting')
           } else if (curState === 'DISCONNECTED') {
+            // Ignore DISCONNECTED state if we just received an intentional end signal
+            if (justReceivedEndSignalRef.current) {
+              console.log('Ignoring DISCONNECTED state — intentional end detected')
+              return
+            }
             setConnectionState('disconnected')
           }
         })
