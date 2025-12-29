@@ -78,6 +78,7 @@ export default function AgoraVideoCall({
 
         // Mark this as an intentional end to suppress "connection lost" UI
         setJustReceivedEndSignal(true)
+        justReceivedEndSignalRef.current = true
 
         // Clear call timer
         if (callTimerRef.current) {
