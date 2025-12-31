@@ -119,6 +119,25 @@ export type Database = {
         Insert: Omit<any, 'id' | 'created_at'>
         Update: Partial<any>
       }
+      notifications: {
+        Row: {
+          id: string
+          recipient_id: string
+          type: 'like' | 'message' | 'call' | 'match' | 'call_missed' | 'call_incoming'
+          from_user_id?: string
+          liker_id?: string
+          liked_profile_id?: string
+          match_id?: string
+          message_preview?: string
+          call_type?: 'audio' | 'video'
+          call_status?: 'incoming' | 'missed'
+          read: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: Omit<any, 'id' | 'created_at' | 'updated_at'>
+        Update: Partial<any>
+      }
     }
   }
 }
