@@ -832,6 +832,23 @@ export function useMessages() {
             localStorage.removeItem(`call_${callId}_timeout`)
           }
 
+          // Create notification for missed call (don't await to avoid blocking)
+          try {
+            supabase
+              .from('notifications')
+              .insert({
+                recipient_id: recipientId,
+                from_user_id: user.id,
+                type: 'call_missed',
+                call_type: callType,
+                call_status: 'missed',
+              })
+              .then()
+              .catch((err) => console.warn('Failed to create missed call notification:', err))
+          } catch (notifErr) {
+            console.warn('Error creating missed call notification:', notifErr)
+          }
+
           // Broadcast the updated call message
           const conversationChannel = supabase.channel(`messages:${user.id}:${recipientId}`)
           await conversationChannel.send({
