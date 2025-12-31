@@ -528,6 +528,10 @@ export default function AgoraVideoCall({
 
   const endCall = async () => {
     try {
+      // Mark as intentional end FIRST — suppress "connection lost" UI
+      setJustReceivedEndSignal(true)
+      justReceivedEndSignalRef.current = true
+
       // Broadcast "call ended" to the other user via Supabase Realtime
       if (user && partnerId) {
         const roomName = [user.id, partnerId].sort().join('-')
