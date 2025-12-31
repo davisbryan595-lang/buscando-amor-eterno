@@ -140,18 +140,37 @@ export function useBrowseProfiles() {
               updateErr2: updateErr2?.message,
             })
           }
+
+          // Create match notifications for both users
+          try {
+            await Promise.all([
+              supabase.from('notifications').insert({
+                recipient_id: likedUserId,
+                from_user_id: user.id,
+                type: 'match',
+              }),
+              supabase.from('notifications').insert({
+                recipient_id: user.id,
+                from_user_id: likedUserId,
+                type: 'match',
+              }),
+            ])
+          } catch (err) {
+            console.warn('Warning: match notifications not created:', err)
+          }
         }
 
-        // Only create notification if we have the liked profile ID
+        // Create like notification
         if (likedProfileId) {
-          const { error: notifErr } = await supabase.from('notifications').insert({
-            recipient_id: likedUserId,
-            liker_id: user.id,
-            liked_profile_id: likedProfileId,
-          })
-
-          if (notifErr) {
-            console.warn('Warning: notification not created:', notifErr.message)
+          try {
+            await supabase.from('notifications').insert({
+              recipient_id: likedUserId,
+              liker_id: user.id,
+              liked_profile_id: likedProfileId,
+              type: 'like',
+            })
+          } catch (notifErr) {
+            console.warn('Warning: like notification not created:', notifErr)
           }
         }
       } catch (err: any) {
