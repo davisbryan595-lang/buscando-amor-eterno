@@ -412,7 +412,7 @@ export default function AgoraVideoCall({
                 callTimerRef.current = null
               }
               // Only update connection state if call didn't end cleanly
-              // (clean end is handled by call_ended broadcast listener)
+              // (clean end is handled by force_end_call broadcast listener)
               if (!isCallEndedCleanly) {
                 setIsConnected(false)
               }
