@@ -572,12 +572,28 @@ export default function AgoraVideoCall({
     if (!localAudioTrack) return
 
     try {
-      if (isMuted) {
-        await localAudioTrack.setEnabled(true)
-      } else {
+      const newMutedState = !isMuted
+      if (newMutedState) {
         await localAudioTrack.setEnabled(false)
+      } else {
+        await localAudioTrack.setEnabled(true)
       }
-      setIsMuted(!isMuted)
+      setIsMuted(newMutedState)
+
+      // Broadcast media state change to remote user
+      if (user && partnerId) {
+        const roomName = [user.id, partnerId].sort().join('-')
+        const channel = supabase.channel(`call:${roomName}`)
+        try {
+          await channel.send({
+            type: 'broadcast',
+            event: 'media_state',
+            payload: { type: 'mic', enabled: !newMutedState },
+          })
+        } catch (err) {
+          console.warn('Failed to broadcast media state change for mic:', err)
+        }
+      }
     } catch (err) {
       console.error('Error toggling audio:', err)
       toast.error('Failed to toggle microphone')
