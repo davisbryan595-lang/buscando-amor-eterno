@@ -12,7 +12,7 @@ export interface Message {
   created_at: string
   type?: 'text' | 'call_log'
   call_type?: 'audio' | 'video'
-  call_status?: 'ongoing' | 'incoming' | 'missed' | 'ended'
+  call_status?: 'ongoing' | 'incoming' | 'missed' | 'ended' | 'rejected'
   call_duration?: number
   call_id?: string
 }
