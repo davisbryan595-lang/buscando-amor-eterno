@@ -725,26 +725,46 @@ export default function AgoraVideoCall({
       // Safely stop and close tracks (check if they exist and are not already closed)
       // Workaround for Agora SDK bug with mutex property on MicrophoneAudioTrack
       if (localAudioTrack) {
-        await localAudioTrack.setEnabled(false)
-        localAudioTrack.close()
+        try {
+          await localAudioTrack.setEnabled(false)
+          localAudioTrack.close()
+        } catch (err) {
+          console.warn('Error cleaning up audio track:', err)
+        }
       }
 
       if (localVideoTrack) {
-        await localVideoTrack.setEnabled(false)
-        localVideoTrack.close()
+        try {
+          await localVideoTrack.setEnabled(false)
+          localVideoTrack.close()
+        } catch (err) {
+          console.warn('Error cleaning up video track:', err)
+        }
       }
 
       // Leave the channel
       if (client) {
-        await client.leave()
+        try {
+          await client.leave()
+        } catch (err) {
+          console.warn('Error leaving Agora channel:', err)
+        }
       }
 
       // Clear video containers
       if (localVideoContainerRef.current) {
-        localVideoContainerRef.current.srcObject = null
+        try {
+          localVideoContainerRef.current.srcObject = null
+        } catch (err) {
+          console.warn('Error clearing local video container:', err)
+        }
       }
       if (remoteVideoContainerRef.current) {
-        remoteVideoContainerRef.current.srcObject = null
+        try {
+          remoteVideoContainerRef.current.srcObject = null
+        } catch (err) {
+          console.warn('Error clearing remote video container:', err)
+        }
       }
 
       // 6. Navigate back to messages with user context
