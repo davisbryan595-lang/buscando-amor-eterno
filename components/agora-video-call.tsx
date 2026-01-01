@@ -604,12 +604,28 @@ export default function AgoraVideoCall({
     if (!localVideoTrack) return
 
     try {
-      if (isCameraOff) {
-        await localVideoTrack.setEnabled(true)
-      } else {
+      const newCameraOffState = !isCameraOff
+      if (newCameraOffState) {
         await localVideoTrack.setEnabled(false)
+      } else {
+        await localVideoTrack.setEnabled(true)
       }
-      setIsCameraOff(!isCameraOff)
+      setIsCameraOff(newCameraOffState)
+
+      // Broadcast media state change to remote user
+      if (user && partnerId) {
+        const roomName = [user.id, partnerId].sort().join('-')
+        const channel = supabase.channel(`call:${roomName}`)
+        try {
+          await channel.send({
+            type: 'broadcast',
+            event: 'media_state',
+            payload: { type: 'camera', enabled: !newCameraOffState },
+          })
+        } catch (err) {
+          console.warn('Failed to broadcast media state change for camera:', err)
+        }
+      }
     } catch (err) {
       console.error('Error toggling video:', err)
       toast.error('Failed to toggle camera')
