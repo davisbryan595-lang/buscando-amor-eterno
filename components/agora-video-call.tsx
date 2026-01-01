@@ -211,19 +211,19 @@ export default function AgoraVideoCall({
   useEffect(() => {
     const handleVisibilityChange = async () => {
       if (document.hidden && isConnected) {
-        console.log('Page hidden — broadcasting end call to prevent hanging')
-        // Broadcast end signal to other user via Supabase Realtime
+        console.log('Page hidden — broadcasting force end call to prevent hanging')
+        // Broadcast force end signal to other user via Supabase Realtime
         if (user && partnerId) {
           const roomName = [user.id, partnerId].sort().join('-')
           const channel = supabase.channel(`call:${roomName}`)
           try {
             await channel.send({
               type: 'broadcast',
-              event: 'call_ended',
+              event: 'force_end_call',
               payload: { ended_by: user.id },
             })
           } catch (err) {
-            console.warn('Failed to broadcast call_ended on visibility change:', err)
+            console.warn('Failed to broadcast force_end_call on visibility change:', err)
           }
         }
       }
