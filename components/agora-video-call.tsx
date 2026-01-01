@@ -151,28 +151,28 @@ export default function AgoraVideoCall({
     }
   }, [user, partnerId])
 
-  // Handle page unload (refresh/close tab) - broadcast clean call end
+  // Handle page unload (refresh/close tab) - broadcast force end
   useEffect(() => {
     const handleUnload = async () => {
-      // Broadcast end signal to other user via Supabase Realtime
+      // Broadcast force end signal to other user via Supabase Realtime
       if (user && partnerId) {
         const roomName = [user.id, partnerId].sort().join('-')
         const channel = supabase.channel(`call:${roomName}`)
         try {
           await channel.send({
             type: 'broadcast',
-            event: 'call_ended',
+            event: 'force_end_call',
             payload: { ended_by: user.id },
           })
         } catch (err) {
-          console.warn('Failed to broadcast call_ended on unload:', err)
+          console.warn('Failed to broadcast force_end_call on unload:', err)
         }
       }
 
       // Close Agora tracks and leave channel
       if (localAudioTrack) {
         try {
-          localAudioTrack.stop()
+          await localAudioTrack.setEnabled(false)
           localAudioTrack.close()
         } catch (err) {
           console.warn('Error closing audio track on unload:', err)
@@ -181,7 +181,7 @@ export default function AgoraVideoCall({
 
       if (localVideoTrack) {
         try {
-          localVideoTrack.stop()
+          await localVideoTrack.setEnabled(false)
           localVideoTrack.close()
         } catch (err) {
           console.warn('Error closing video track on unload:', err)
