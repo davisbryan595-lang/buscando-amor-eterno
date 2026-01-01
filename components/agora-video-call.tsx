@@ -597,69 +597,124 @@ export default function AgoraVideoCall({
       setUseEarpiece(newEarpiece)
 
       const deviceTarget = newEarpiece ? 'earpiece' : 'speaker'
-      console.log(`Toggling audio output to: ${deviceTarget}`)
+      console.log(`[Audio Output] Toggling to: ${deviceTarget}`)
 
-      // Check if browser supports setSinkId (for audio output device selection)
-      const supportsSetSinkId = navigator.mediaDevices && 'setSinkId' in HTMLMediaElement.prototype
+      // Detect iOS vs Android
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
+      const isAndroid = /Android/.test(navigator.userAgent)
 
-      if (!supportsSetSinkId) {
-        console.warn('This browser/device does not support audio output switching')
-        console.log('On iOS: Use the physical button or Control Center to switch audio output')
-        toast.info('Use device controls to switch audio output')
+      console.log(`[Audio Output] Device: iOS=${isIOS}, Android=${isAndroid}`)
+
+      // Check if browser supports setSinkId
+      const supportsSetSinkId = 'setSinkId' in HTMLMediaElement.prototype
+
+      if (isIOS) {
+        console.log('[Audio Output] iOS detected - audio routing must be done via system controls')
+        toast.info('📱 iPhone/iPad: Use device buttons or Control Center to switch audio output')
         return
       }
 
-      // Get available audio output devices
+      if (!supportsSetSinkId) {
+        console.warn('[Audio Output] Browser does not support setSinkId')
+        toast.warning('Your device may not support audio output switching')
+        return
+      }
+
+      // Try to get available audio output devices
       try {
         const devices = await navigator.mediaDevices.enumerateDevices()
         const audioOutputDevices = devices.filter((d) => d.kind === 'audiooutput')
 
-        if (audioOutputDevices.length === 0) {
-          console.warn('No audio output devices found')
+        console.log(`[Audio Output] Found ${audioOutputDevices.length} audio output devices`)
+        audioOutputDevices.forEach((d, i) => {
+          console.log(`  [${i}] ${d.label || 'Unknown'} - ${d.deviceId.slice(0, 8)}...`)
+        })
+
+        if (audioOutputDevices.length < 2) {
+          console.log('[Audio Output] Less than 2 devices - switching may not be available')
+          toast.info('Only one audio output device found')
           return
         }
 
-        console.log(`Found ${audioOutputDevices.length} audio output devices:`, audioOutputDevices.map((d) => d.label))
-
-        // Find target device
+        // Find target device based on label
         let targetDeviceId = audioOutputDevices[0].deviceId
+        let targetLabel = audioOutputDevices[0].label || 'Device'
 
         if (newEarpiece) {
-          const earpieceDevice = audioOutputDevices.find((d) => d.label.toLowerCase().includes('earpiece'))
-          targetDeviceId = earpieceDevice?.deviceId || audioOutputDevices[0].deviceId
+          const match = audioOutputDevices.find(
+            (d) =>
+              d.label.toLowerCase().includes('earpiece') ||
+              d.label.toLowerCase().includes('receiver') ||
+              d.label.toLowerCase().includes('handset')
+          )
+          if (match) {
+            targetDeviceId = match.deviceId
+            targetLabel = match.label || 'Earpiece'
+          } else {
+            // Default to first device for earpiece
+            targetDeviceId = audioOutputDevices[0].deviceId
+            targetLabel = audioOutputDevices[0].label || 'Device'
+          }
         } else {
-          const speakerDevice = audioOutputDevices.find((d) => d.label.toLowerCase().includes('speaker'))
-          targetDeviceId = speakerDevice?.deviceId || audioOutputDevices[audioOutputDevices.length - 1].deviceId
+          const match = audioOutputDevices.find(
+            (d) =>
+              d.label.toLowerCase().includes('speaker') ||
+              d.label.toLowerCase().includes('loudspeaker') ||
+              d.label.toLowerCase().includes('external')
+          )
+          if (match) {
+            targetDeviceId = match.deviceId
+            targetLabel = match.label || 'Speaker'
+          } else {
+            // Default to last device for speaker
+            targetDeviceId = audioOutputDevices[audioOutputDevices.length - 1].deviceId
+            targetLabel = audioOutputDevices[audioOutputDevices.length - 1].label || 'Device'
+          }
         }
 
-        // Apply to all audio elements in the page (Agora SDK creates audio elements for remote users)
+        console.log(`[Audio Output] Target: ${targetLabel} (${targetDeviceId.slice(0, 8)}...)`)
+
+        // Apply to all audio elements
         const audioElements = document.querySelectorAll('audio')
-        console.log(`Found ${audioElements.length} audio elements to update`)
+        console.log(`[Audio Output] Found ${audioElements.length} audio elements`)
 
         let successCount = 0
+        const errors: string[] = []
+
         for (const audioEl of audioElements) {
           try {
             if (typeof (audioEl as any).setSinkId === 'function') {
               await (audioEl as any).setSinkId(targetDeviceId)
-              console.log(`Audio routed to device: ${targetDeviceId}`)
               successCount++
+              console.log(`[Audio Output] ✓ Successfully routed audio element to ${targetLabel}`)
+            } else {
+              console.log('[Audio Output] Audio element does not support setSinkId')
             }
           } catch (err: any) {
-            console.warn(`Failed to set sink for audio element: ${err.message}`)
+            const errMsg = err?.message || String(err)
+            errors.push(errMsg)
+            console.warn(`[Audio Output] ✗ Failed to set sink: ${errMsg}`)
           }
         }
 
         if (successCount > 0) {
-          toast.success(`Switched to ${deviceTarget}`)
+          console.log(`[Audio Output] Success: ${successCount} audio elements switched`)
+          toast.success(`Switched to ${targetLabel}`)
+        } else if (audioElements.length === 0) {
+          console.warn('[Audio Output] No audio elements found (may use WebRTC for audio)')
+          // For WebRTC calls, Agora may not use HTML audio elements
+          // The output routing might be handled at the system level
+          toast.info(`🔊 Toggled output preference (system audio routing may apply)`)
         } else {
-          console.warn('Could not route audio to any devices')
+          console.error('[Audio Output] Failed to route audio:', errors)
+          toast.warning('Unable to switch audio output')
         }
-      } catch (err) {
-        console.error('Error enumerating audio devices:', err)
-        toast.info('Audio output switching not available on this device')
+      } catch (err: any) {
+        console.error('[Audio Output] Error enumerating devices:', err)
+        toast.warning('Audio switching not available on this device')
       }
     } catch (err) {
-      console.error('Error toggling audio output:', err)
+      console.error('[Audio Output] Unexpected error:', err)
     }
   }
 
