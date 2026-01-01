@@ -51,12 +51,36 @@ export function useIncomingCalls() {
 
         if (err) throw err
 
-        // Log missed call message (from caller's perspective)
+        // Log rejected call (from caller's perspective)
         if (callInvitation) {
           try {
-            await logCallMessage(callInvitation.caller_id, callInvitation.call_type, 'missed', undefined, callInvitation.call_id)
+            // Attempt to update existing log with 'rejected' status
+            const { count, error: updateErr } = await supabase
+              .from('messages')
+              .update({
+                call_status: 'rejected',
+                content: `Declined ${callInvitation.call_type} call`,
+              })
+              .eq('call_id', callInvitation.call_id)
 
-            // Create missed call notification for caller
+            // If no rows were updated, create a new rejected log entry
+            if (!updateErr && (!count || count === 0)) {
+              await supabase
+                .from('messages')
+                .insert({
+                  sender_id: callInvitation.caller_id,
+                  recipient_id: user?.id,
+                  content: `Declined ${callInvitation.call_type} call`,
+                  read: true,
+                  type: 'call_log',
+                  call_type: callInvitation.call_type,
+                  call_status: 'rejected',
+                  call_duration: null,
+                  call_id: callInvitation.call_id,
+                })
+            }
+
+            // Create call notification for caller
             supabase
               .from('notifications')
               .insert({
@@ -67,9 +91,9 @@ export function useIncomingCalls() {
                 call_status: 'missed',
               })
               .then()
-              .catch((err) => console.warn('Failed to create missed call notification:', err))
+              .catch((err) => console.warn('Failed to create call notification:', err))
           } catch (logErr) {
-            console.warn('Failed to log missed call:', logErr)
+            console.warn('Failed to log rejected call:', logErr)
           }
         }
 
@@ -80,7 +104,7 @@ export function useIncomingCalls() {
         setError(errorMessage)
       }
     },
-    [clearCallTimeout, logCallMessage]
+    [clearCallTimeout, logCallMessage, user]
   )
 
   const acceptCall = useCallback(
