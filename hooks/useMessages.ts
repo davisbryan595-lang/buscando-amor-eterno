@@ -677,7 +677,7 @@ export function useMessages() {
     async (
       recipientId: string,
       callType: 'audio' | 'video',
-      callStatus: 'ongoing' | 'incoming' | 'missed' | 'ended',
+      callStatus: 'ongoing' | 'incoming' | 'missed' | 'ended' | 'rejected',
       callDuration?: number,
       callId?: string
     ) => {
