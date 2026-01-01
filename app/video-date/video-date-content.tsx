@@ -103,6 +103,12 @@ export default function VideoDateContent() {
                   setError('Call was declined')
                 } else if (status === 'ended') {
                   setError('Call has ended')
+                  // Auto-navigate after brief delay
+                  setTimeout(() => {
+                    if (isMounted) {
+                      router.push('/messages')
+                    }
+                  }, 500)
                 }
               }
             }

@@ -50,6 +50,7 @@ export default function AgoraVideoCall({
   const [error, setError] = useState<string | null>(null)
   const [otherUserImage, setOtherUserImage] = useState<string | null>(null)
   const [callDuration, setCallDuration] = useState(0)
+  const [isCallEndedCleanly, setIsCallEndedCleanly] = useState(false)
   const [remoteCameraEnabled, setRemoteCameraEnabled] = useState(true)
   const [remoteAudioEnabled, setRemoteAudioEnabled] = useState(true)
   const [connectionState, setConnectionState] = useState<'connected' | 'reconnecting' | 'disconnected'>('connected')
@@ -395,7 +396,11 @@ export default function AgoraVideoCall({
                 clearInterval(callTimerRef.current)
                 callTimerRef.current = null
               }
-              setIsConnected(false)
+              // Only update connection state if call didn't end cleanly
+              // (clean end is handled by call_ended broadcast listener)
+              if (!isCallEndedCleanly) {
+                setIsConnected(false)
+              }
               callStartTimeRef.current = 0
             }
             return updated
@@ -485,6 +490,75 @@ export default function AgoraVideoCall({
     }
   }, [user, partnerId, appId, getSession, isAudioOnly])
 
+  // Listen for call_ended broadcast from remote user
+  useEffect(() => {
+    if (!user || !partnerId) return
+
+    let isMounted = true
+    let subscription: any = null
+
+    const setupCallEndedListener = () => {
+      try {
+        const roomName = [user.id, partnerId].sort().join('-')
+        const channel = supabase.channel(`call:${roomName}`)
+
+        subscription = channel
+          .on('broadcast', { event: 'call_ended' }, async (payload: any) => {
+            if (!isMounted) return
+
+            // Mark that we received a clean end signal
+            setIsCallEndedCleanly(true)
+
+            try {
+              // Clear call timer
+              if (callTimerRef.current) {
+                clearInterval(callTimerRef.current)
+              }
+
+              // Stop and close audio track
+              if (localAudioTrack) {
+                await localAudioTrack.setEnabled(false)
+                localAudioTrack.close()
+              }
+
+              // Stop and close video track
+              if (localVideoTrack) {
+                await localVideoTrack.setEnabled(false)
+                localVideoTrack.close()
+              }
+
+              // Leave the channel
+              if (client) {
+                await client.leave()
+              }
+
+              // Navigate back to messages
+              if (isMounted) {
+                router.push('/messages')
+              }
+            } catch (err) {
+              console.error('Error during call_ended cleanup:', err)
+              if (isMounted) {
+                router.push('/messages')
+              }
+            }
+          })
+          .subscribe()
+      } catch (err) {
+        console.error('Error setting up call_ended listener:', err)
+      }
+    }
+
+    setupCallEndedListener()
+
+    return () => {
+      isMounted = false
+      if (subscription) {
+        supabase.removeChannel(subscription)
+      }
+    }
+  }, [user, partnerId, localAudioTrack, localVideoTrack, client, router])
+
   // Play remote video when remote users change
   useEffect(() => {
     remoteUsers.forEach((user) => {
@@ -532,7 +606,7 @@ export default function AgoraVideoCall({
       setJustReceivedEndSignal(true)
       justReceivedEndSignalRef.current = true
 
-      // Broadcast "call ended" to the other user via Supabase Realtime
+      // 1. Broadcast call_ended event FIRST (before any cleanup)
       if (user && partnerId) {
         const roomName = [user.id, partnerId].sort().join('-')
         const channel = supabase.channel(`call:${roomName}`)
@@ -540,19 +614,20 @@ export default function AgoraVideoCall({
           await channel.send({
             type: 'broadcast',
             event: 'call_ended',
-            payload: { ended_by: user.id },
+            payload: { ended_by: user.id, timestamp: Date.now() },
           })
         } catch (err) {
           console.warn('Failed to broadcast call_ended event:', err)
+          // Continue with cleanup even if broadcast fails
         }
       }
 
-      // Clear call timer
+      // 2. Clear call timer
       if (callTimerRef.current) {
         clearInterval(callTimerRef.current)
       }
 
-      // Log ended call with duration
+      // 3. Log ended call with duration
       try {
         const finalDuration = Math.floor((Date.now() - callStartTimeRef.current) / 1000)
         if (ongoingLoggedRef.current && callIdRef.current) {
@@ -562,7 +637,7 @@ export default function AgoraVideoCall({
         console.warn('Failed to log ended call:', err)
       }
 
-      // Delete call invitation from database when call ends
+      // 4. Delete call invitation from database when call ends
       // This prevents duplicate key constraint violations on future calls
       if (user) {
         const roomName = [user.id, partnerId].sort().join('-')
@@ -577,23 +652,17 @@ export default function AgoraVideoCall({
         }
       }
 
+      // 5. Local cleanup - stop and close tracks
       // Safely stop and close tracks (check if they exist and are not already closed)
       // Workaround for Agora SDK bug with mutex property on MicrophoneAudioTrack
       if (localAudioTrack) {
-        localAudioTrack.stop()
+        await localAudioTrack.setEnabled(false)
         localAudioTrack.close()
-        setLocalAudioTrack(null)
       }
 
       if (localVideoTrack) {
-        localVideoTrack.stop()
+        await localVideoTrack.setEnabled(false)
         localVideoTrack.close()
-        setLocalVideoTrack(null)
-      }
-
-      // Unpublish if still published (safe even if already unpublished)
-      if (client) {
-        await client.unpublish()
       }
 
       // Leave the channel
@@ -609,6 +678,7 @@ export default function AgoraVideoCall({
         remoteVideoContainerRef.current.srcObject = null
       }
 
+      // 6. Navigate back to messages with user context
       router.push(`/messages?user=${partnerId}`)
     } catch (err) {
       console.warn('Error during endCall (safe to ignore if call already closed):', err)
