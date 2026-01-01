@@ -813,15 +813,8 @@ export default function AgoraVideoCall({
   }
 
   const getStatusMessage = () => {
-    // Show connection state if there's a real network issue
-    if (connectionState === 'reconnecting') {
-      return 'Reconnecting...'
-    }
-    if (connectionState === 'disconnected') {
-      return 'Connection lost'
-    }
-
-    // Show media status when intentionally disabled/muted
+    // Show media status when intentionally disabled/muted (check this FIRST)
+    // This takes priority over connection state since media_state broadcasts are explicit
     if (!remoteCameraEnabled && !remoteAudioEnabled) {
       return 'Camera and microphone off'
     }
@@ -830,6 +823,14 @@ export default function AgoraVideoCall({
     }
     if (!remoteAudioEnabled && remoteCameraEnabled) {
       return 'Microphone muted'
+    }
+
+    // Only show connection state issues if media is enabled but connection is down
+    if (connectionState === 'reconnecting') {
+      return 'Reconnecting...'
+    }
+    if (connectionState === 'disconnected') {
+      return 'Connection lost'
     }
 
     // All good - return empty string
