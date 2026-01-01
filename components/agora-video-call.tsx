@@ -1072,6 +1072,16 @@ export default function AgoraVideoCall({
           </button>
         )}
 
+        {/* Speaker/Earpiece toggle button */}
+        <button
+          onClick={toggleAudioOutput}
+          className="p-4 rounded-full bg-slate-700 hover:bg-slate-600 transition"
+          aria-label={useEarpiece ? 'Switch to speaker' : 'Switch to earpiece'}
+          title={useEarpiece ? 'Switch to Speaker' : 'Switch to Earpiece'}
+        >
+          <span className="text-white text-xl">{useEarpiece ? '🔇' : '🔊'}</span>
+        </button>
+
         {/* End call button */}
         <button
           onClick={endCall}
