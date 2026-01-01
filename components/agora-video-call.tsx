@@ -136,6 +136,31 @@ export default function AgoraVideoCall({
     }
   }, [user, partnerId, client, localAudioTrack, localVideoTrack, router])
 
+  // Listen for remote media state changes (camera/mic toggle)
+  useEffect(() => {
+    if (!user || !partnerId) return
+
+    const roomName = [user.id, partnerId].sort().join('-')
+    const channel = supabase.channel(`call:${roomName}`)
+
+    channel
+      .on('broadcast', { event: 'media_state' }, (payload) => {
+        console.log('Remote media state changed:', payload.payload)
+
+        if (payload.payload.type === 'camera') {
+          setRemoteCameraEnabled(payload.payload.enabled)
+        } else if (payload.payload.type === 'mic') {
+          setRemoteAudioEnabled(payload.payload.enabled)
+        }
+      })
+      .subscribe()
+
+    return () => {
+      channel.unsubscribe()
+      supabase.removeChannel(channel)
+    }
+  }, [user, partnerId])
+
   // Handle page unload (refresh/close tab) - broadcast clean call end
   useEffect(() => {
     const handleUnload = async () => {
@@ -568,16 +593,44 @@ export default function AgoraVideoCall({
     })
   }, [remoteUsers])
 
+  // Play local video track to container once both are ready
+  useEffect(() => {
+    if (!isAudioOnly && localVideoTrack && localVideoContainerRef.current && !loading) {
+      try {
+        localVideoTrack.play(localVideoContainerRef.current)
+        console.log('Local video track played to container')
+      } catch (err) {
+        console.warn('Error playing local video track:', err)
+      }
+    }
+  }, [localVideoTrack, loading, isAudioOnly])
+
   const toggleAudio = async () => {
     if (!localAudioTrack) return
 
     try {
-      if (isMuted) {
-        await localAudioTrack.setEnabled(true)
-      } else {
+      const newMutedState = !isMuted
+      if (newMutedState) {
         await localAudioTrack.setEnabled(false)
+      } else {
+        await localAudioTrack.setEnabled(true)
       }
-      setIsMuted(!isMuted)
+      setIsMuted(newMutedState)
+
+      // Broadcast media state change to remote user
+      if (user && partnerId) {
+        const roomName = [user.id, partnerId].sort().join('-')
+        const channel = supabase.channel(`call:${roomName}`)
+        try {
+          await channel.send({
+            type: 'broadcast',
+            event: 'media_state',
+            payload: { type: 'mic', enabled: !newMutedState },
+          })
+        } catch (err) {
+          console.warn('Failed to broadcast media state change for mic:', err)
+        }
+      }
     } catch (err) {
       console.error('Error toggling audio:', err)
       toast.error('Failed to toggle microphone')
@@ -588,12 +641,28 @@ export default function AgoraVideoCall({
     if (!localVideoTrack) return
 
     try {
-      if (isCameraOff) {
-        await localVideoTrack.setEnabled(true)
-      } else {
+      const newCameraOffState = !isCameraOff
+      if (newCameraOffState) {
         await localVideoTrack.setEnabled(false)
+      } else {
+        await localVideoTrack.setEnabled(true)
       }
-      setIsCameraOff(!isCameraOff)
+      setIsCameraOff(newCameraOffState)
+
+      // Broadcast media state change to remote user
+      if (user && partnerId) {
+        const roomName = [user.id, partnerId].sort().join('-')
+        const channel = supabase.channel(`call:${roomName}`)
+        try {
+          await channel.send({
+            type: 'broadcast',
+            event: 'media_state',
+            payload: { type: 'camera', enabled: !newCameraOffState },
+          })
+        } catch (err) {
+          console.warn('Failed to broadcast media state change for camera:', err)
+        }
+      }
     } catch (err) {
       console.error('Error toggling video:', err)
       toast.error('Failed to toggle camera')
@@ -656,26 +725,46 @@ export default function AgoraVideoCall({
       // Safely stop and close tracks (check if they exist and are not already closed)
       // Workaround for Agora SDK bug with mutex property on MicrophoneAudioTrack
       if (localAudioTrack) {
-        await localAudioTrack.setEnabled(false)
-        localAudioTrack.close()
+        try {
+          await localAudioTrack.setEnabled(false)
+          localAudioTrack.close()
+        } catch (err) {
+          console.warn('Error cleaning up audio track:', err)
+        }
       }
 
       if (localVideoTrack) {
-        await localVideoTrack.setEnabled(false)
-        localVideoTrack.close()
+        try {
+          await localVideoTrack.setEnabled(false)
+          localVideoTrack.close()
+        } catch (err) {
+          console.warn('Error cleaning up video track:', err)
+        }
       }
 
       // Leave the channel
       if (client) {
-        await client.leave()
+        try {
+          await client.leave()
+        } catch (err) {
+          console.warn('Error leaving Agora channel:', err)
+        }
       }
 
       // Clear video containers
       if (localVideoContainerRef.current) {
-        localVideoContainerRef.current.srcObject = null
+        try {
+          localVideoContainerRef.current.srcObject = null
+        } catch (err) {
+          console.warn('Error clearing local video container:', err)
+        }
       }
       if (remoteVideoContainerRef.current) {
-        remoteVideoContainerRef.current.srcObject = null
+        try {
+          remoteVideoContainerRef.current.srcObject = null
+        } catch (err) {
+          console.warn('Error clearing remote video container:', err)
+        }
       }
 
       // 6. Navigate back to messages with user context
@@ -724,15 +813,8 @@ export default function AgoraVideoCall({
   }
 
   const getStatusMessage = () => {
-    // Show connection state if there's a real network issue
-    if (connectionState === 'reconnecting') {
-      return 'Reconnecting...'
-    }
-    if (connectionState === 'disconnected') {
-      return 'Connection lost'
-    }
-
-    // Show media status when intentionally disabled/muted
+    // Show media status when intentionally disabled/muted (check this FIRST)
+    // This takes priority over connection state since media_state broadcasts are explicit
     if (!remoteCameraEnabled && !remoteAudioEnabled) {
       return 'Camera and microphone off'
     }
@@ -741,6 +823,14 @@ export default function AgoraVideoCall({
     }
     if (!remoteAudioEnabled && remoteCameraEnabled) {
       return 'Microphone muted'
+    }
+
+    // Only show connection state issues if media is enabled but connection is down
+    if (connectionState === 'reconnecting') {
+      return 'Reconnecting...'
+    }
+    if (connectionState === 'disconnected') {
+      return 'Connection lost'
     }
 
     // All good - return empty string
