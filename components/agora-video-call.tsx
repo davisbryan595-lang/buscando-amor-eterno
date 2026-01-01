@@ -593,6 +593,18 @@ export default function AgoraVideoCall({
     })
   }, [remoteUsers])
 
+  // Play local video track to container once both are ready
+  useEffect(() => {
+    if (!isAudioOnly && localVideoTrack && localVideoContainerRef.current && !loading) {
+      try {
+        localVideoTrack.play(localVideoContainerRef.current)
+        console.log('Local video track played to container')
+      } catch (err) {
+        console.warn('Error playing local video track:', err)
+      }
+    }
+  }, [localVideoTrack, loading, isAudioOnly])
+
   const toggleAudio = async () => {
     if (!localAudioTrack) return
 
