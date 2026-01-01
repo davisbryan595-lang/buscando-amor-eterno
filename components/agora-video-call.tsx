@@ -56,6 +56,7 @@ export default function AgoraVideoCall({
   const [connectionState, setConnectionState] = useState<'connected' | 'reconnecting' | 'disconnected'>('connected')
   const [loggedCallId, setLoggedCallId] = useState<string | null>(null)
   const [justReceivedEndSignal, setJustReceivedEndSignal] = useState(false)
+  const [useEarpiece, setUseEarpiece] = useState(false)
   const localVideoContainerRef = useRef<HTMLDivElement>(null)
   const remoteVideoContainerRef = useRef<HTMLDivElement>(null)
   const callStartTimeRef = useRef<number>(0)
@@ -669,6 +670,47 @@ export default function AgoraVideoCall({
     }
   }
 
+  const toggleAudioOutput = async () => {
+    try {
+      const newEarpiece = !useEarpiece
+      setUseEarpiece(newEarpiece)
+
+      const sinkId = newEarpiece ? 'earpiece' : 'speaker'
+
+      // Apply to all remote audio tracks
+      if (remoteUsers.length > 0) {
+        for (const remoteUser of remoteUsers) {
+          if (remoteUser.audioTrack) {
+            try {
+              const audioElement = remoteUser.audioTrack.getMediaStreamTrack()
+              if (audioElement && typeof (audioElement as any).setSinkId === 'function') {
+                await (audioElement as any).setSinkId(sinkId)
+                console.log(`Audio output routed to ${sinkId}`)
+              }
+            } catch (err) {
+              console.warn(`Error setting audio output for remote user:`, err)
+            }
+          }
+        }
+      }
+
+      // Also apply to local audio track for preview if needed
+      if (localAudioTrack) {
+        try {
+          const localAudio = localAudioTrack.getMediaStreamTrack()
+          if (localAudio && typeof (localAudio as any).setSinkId === 'function') {
+            await (localAudio as any).setSinkId(sinkId)
+          }
+        } catch (err) {
+          console.warn('Error setting audio output for local audio:', err)
+        }
+      }
+    } catch (err) {
+      console.error('Error toggling audio output:', err)
+      toast.error('Failed to switch audio output')
+    }
+  }
+
   const endCall = async () => {
     try {
       // Mark as intentional end FIRST — suppress "connection lost" UI
@@ -917,6 +959,16 @@ export default function AgoraVideoCall({
             )}
           </button>
 
+          {/* Speaker/Earpiece toggle button */}
+          <button
+            onClick={toggleAudioOutput}
+            className="p-4 rounded-full bg-slate-700 hover:bg-slate-600 transition"
+            aria-label={useEarpiece ? 'Switch to speaker' : 'Switch to earpiece'}
+            title={useEarpiece ? 'Switch to Speaker' : 'Switch to Earpiece'}
+          >
+            <span className="text-white text-xl">{useEarpiece ? '🔇' : '🔊'}</span>
+          </button>
+
           {/* End call button */}
           <button
             onClick={endCall}
@@ -1019,6 +1071,16 @@ export default function AgoraVideoCall({
             )}
           </button>
         )}
+
+        {/* Speaker/Earpiece toggle button */}
+        <button
+          onClick={toggleAudioOutput}
+          className="p-4 rounded-full bg-slate-700 hover:bg-slate-600 transition"
+          aria-label={useEarpiece ? 'Switch to speaker' : 'Switch to earpiece'}
+          title={useEarpiece ? 'Switch to Speaker' : 'Switch to Earpiece'}
+        >
+          <span className="text-white text-xl">{useEarpiece ? '🔇' : '🔊'}</span>
+        </button>
 
         {/* End call button */}
         <button
