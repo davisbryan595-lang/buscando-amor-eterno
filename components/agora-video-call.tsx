@@ -56,6 +56,7 @@ export default function AgoraVideoCall({
   const [connectionState, setConnectionState] = useState<'connected' | 'reconnecting' | 'disconnected'>('connected')
   const [loggedCallId, setLoggedCallId] = useState<string | null>(null)
   const [justReceivedEndSignal, setJustReceivedEndSignal] = useState(false)
+  const [useEarpiece, setUseEarpiece] = useState(false)
   const localVideoContainerRef = useRef<HTMLDivElement>(null)
   const remoteVideoContainerRef = useRef<HTMLDivElement>(null)
   const callStartTimeRef = useRef<number>(0)
