@@ -706,18 +706,18 @@ export default function AgoraVideoCall({
       setJustReceivedEndSignal(true)
       justReceivedEndSignalRef.current = true
 
-      // 1. Broadcast call_ended event FIRST (before any cleanup)
+      // 1. BROADCAST FORCE END FIRST — critical for symmetry using httpSend
       if (user && partnerId) {
         const roomName = [user.id, partnerId].sort().join('-')
         const channel = supabase.channel(`call:${roomName}`)
         try {
           await channel.send({
             type: 'broadcast',
-            event: 'call_ended',
+            event: 'force_end_call',
             payload: { ended_by: user.id, timestamp: Date.now() },
           })
         } catch (err) {
-          console.warn('Failed to broadcast call_ended event:', err)
+          console.warn('Failed to broadcast force_end_call event:', err)
           // Continue with cleanup even if broadcast fails
         }
       }
@@ -754,7 +754,6 @@ export default function AgoraVideoCall({
 
       // 5. Local cleanup - stop and close tracks
       // Safely stop and close tracks (check if they exist and are not already closed)
-      // Workaround for Agora SDK bug with mutex property on MicrophoneAudioTrack
       if (localAudioTrack) {
         try {
           await localAudioTrack.setEnabled(false)
@@ -782,28 +781,12 @@ export default function AgoraVideoCall({
         }
       }
 
-      // Clear video containers
-      if (localVideoContainerRef.current) {
-        try {
-          localVideoContainerRef.current.srcObject = null
-        } catch (err) {
-          console.warn('Error clearing local video container:', err)
-        }
-      }
-      if (remoteVideoContainerRef.current) {
-        try {
-          remoteVideoContainerRef.current.srcObject = null
-        } catch (err) {
-          console.warn('Error clearing remote video container:', err)
-        }
-      }
-
-      // 6. Navigate back to messages with user context
-      router.push(`/messages?user=${partnerId}`)
+      // 6. Force redirect — hard redirect, no state/navigation bugs
+      window.location.href = `/messages?user=${partnerId}`
     } catch (err) {
-      console.warn('Error during endCall (safe to ignore if call already closed):', err)
-      // Don't throw or show error to user — the call is ending anyway
-      router.push(`/messages?user=${partnerId}`)
+      console.warn('endCall error (safe):', err)
+      // Still force redirect
+      window.location.href = `/messages?user=${partnerId}`
     }
   }
 
