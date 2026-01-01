@@ -324,12 +324,28 @@ export default function AgoraVideoCall({
 
   const endCall = async () => {
     try {
-      // Clear call timer
+      // 1. Broadcast call_ended event FIRST (before any cleanup)
+      if (user) {
+        const roomName = [user.id, partnerId].sort().join('-')
+        const channel = supabase.channel(`call:${roomName}`)
+        try {
+          await channel.send({
+            type: 'broadcast',
+            event: 'call_ended',
+            payload: { ended_by: user.id, timestamp: Date.now() },
+          })
+        } catch (err) {
+          console.warn('Failed to broadcast call_ended:', err)
+          // Continue with cleanup even if broadcast fails
+        }
+      }
+
+      // 2. Clear call timer
       if (callTimerRef.current) {
         clearInterval(callTimerRef.current)
       }
 
-      // Update call status in database
+      // 3. Update call status in database (for persistence/audit)
       if (user) {
         const roomName = [user.id, partnerId].sort().join('-')
         try {
@@ -342,7 +358,7 @@ export default function AgoraVideoCall({
         }
       }
 
-      // Stop and close audio track
+      // 4. Local cleanup - stop and close tracks
       if (localAudioTrack) {
         await localAudioTrack.setEnabled(false)
         localAudioTrack.close()
@@ -359,6 +375,7 @@ export default function AgoraVideoCall({
         await client.leave()
       }
 
+      // 5. Navigate back to messages
       router.push('/messages')
     } catch (err) {
       console.error('Error ending call:', err)
