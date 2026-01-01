@@ -1,0 +1,412 @@
+import { useCallback, useState, useEffect, useRef } from 'react'
+import { useAuth } from '@/context/auth-context'
+import { supabase } from '@/lib/supabase'
+
+export interface LoungeMessage {
+  id: string
+  user_id: string
+  message: string
+  message_type: 'text' | 'system'
+  reported_count: number
+  created_at: string
+  user?: {
+    full_name?: string
+    photos?: string[]
+    main_photo_index?: number
+  }
+  sender_name?: string
+  sender_image?: string
+}
+
+export interface LoungeUser {
+  user_id: string
+  full_name: string
+  main_photo?: string
+  last_seen: string
+}
+
+const KEYWORD_FILTER_PATTERNS = [
+  /badword1/gi,
+  /inappropriate/gi,
+  /offensive/gi,
+]
+
+export function useLounge() {
+  const { user } = useAuth()
+  const [messages, setMessages] = useState<LoungeMessage[]>([])
+  const [onlineUsers, setOnlineUsers] = useState<LoungeUser[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  const subscriptionRef = useRef<any>(null)
+  const presenceRef = useRef<any>(null)
+
+  // Fetch initial messages
+  const fetchMessages = useCallback(async () => {
+    if (!user) return
+
+    try {
+      setLoading(true)
+      const { data, error: err } = await supabase
+        .from('lounge_messages')
+        .select(
+          `
+          id,
+          sender_id,
+          content,
+          created_at
+        `
+        )
+        .order('created_at', { ascending: true })
+        .limit(200)
+
+      if (err) throw err
+
+      // Fetch user profiles for messages
+      if (data && data.length > 0) {
+        const senderIds = Array.from(new Set(data.map((m: any) => m.sender_id)))
+        const { data: profiles, error: profileErr } = await supabase
+          .from('profiles')
+          .select('user_id, full_name, photos, main_photo_index')
+          .in('user_id', senderIds)
+
+        if (!profileErr && profiles) {
+          const profileMap = new Map(profiles.map((p: any) => [p.user_id, p]))
+          const enrichedMessages = data.map((msg: any) => {
+            const profile = profileMap.get(msg.sender_id)
+            return {
+              ...msg,
+              user_id: msg.sender_id,
+              message: msg.content,
+              sender_name: profile?.full_name || 'Anonymous',
+              sender_image: profile?.photos?.[profile?.main_photo_index || 0] || null,
+            }
+          })
+          setMessages(enrichedMessages)
+        }
+      }
+
+      setError(null)
+    } catch (err: any) {
+      const errorMessage = err?.message || err?.error_description || JSON.stringify(err) || 'Failed to load lounge messages'
+      console.error('Error fetching lounge messages:', errorMessage, err)
+      setError(errorMessage)
+    } finally {
+      setLoading(false)
+    }
+  }, [user])
+
+  // Subscribe to real-time message updates using broadcast (faster and more reliable for group chat)
+  const subscribeToMessages = useCallback(() => {
+    if (!user) return
+
+    let isMounted = true
+    let retryCount = 0
+    const maxRetries = 5
+    let retryTimeout: NodeJS.Timeout | null = null
+
+    const setupSubscription = () => {
+      if (!isMounted) return
+
+      try {
+        const channelName = 'global_singles_lounge'
+
+        // Remove old subscription if it exists
+        if (subscriptionRef.current) {
+          supabase.removeChannel(subscriptionRef.current)
+        }
+
+        subscriptionRef.current = supabase
+          .channel(channelName)
+          .on('broadcast', { event: 'new_message' }, (payload) => {
+            if (!isMounted) return
+
+            const enrichedMessage = payload.payload
+            setMessages((prev) => {
+              // Prevent duplicates
+              const isDuplicate = prev.some(m => m.id === enrichedMessage.id)
+              return isDuplicate ? prev : [...prev, enrichedMessage]
+            })
+          })
+          .subscribe((status, err) => {
+            if (err) {
+              const errorMsg = err?.message || JSON.stringify(err)
+              console.log('[Lounge] Subscription error:', errorMsg, err)
+            } else {
+              console.log('[Lounge] Broadcast subscription status:', status)
+            }
+
+            if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
+              console.log('[Lounge] Subscription closed/error - attempting retry...')
+              if (isMounted && retryCount < maxRetries) {
+                retryCount += 1
+                const delay = Math.min(1000 * Math.pow(2, retryCount - 1), 10000)
+                console.log(`[Lounge] Retry ${retryCount}/${maxRetries} in ${delay}ms`)
+                retryTimeout = setTimeout(() => {
+                  if (isMounted) {
+                    setupSubscription()
+                  }
+                }, delay)
+              }
+            } else if (status === 'SUBSCRIBED') {
+              retryCount = 0
+              console.log('[Lounge] Broadcast subscription active')
+            }
+          })
+      } catch (err: any) {
+        const errorMsg = err?.message || JSON.stringify(err) || 'Unknown error'
+        console.error('Error subscribing to lounge messages:', errorMsg, err)
+        if (isMounted && retryCount < maxRetries) {
+          retryCount += 1
+          const delay = Math.min(1000 * Math.pow(2, retryCount - 1), 10000)
+          retryTimeout = setTimeout(() => {
+            if (isMounted) {
+              setupSubscription()
+            }
+          }, delay)
+        }
+      }
+    }
+
+    setupSubscription()
+
+    return () => {
+      isMounted = false
+      if (retryTimeout) {
+        clearTimeout(retryTimeout)
+      }
+      if (subscriptionRef.current) {
+        subscriptionRef.current.unsubscribe()
+        supabase.removeChannel(subscriptionRef.current)
+      }
+    }
+  }, [user])
+
+  // Track user presence
+  const updatePresence = useCallback(() => {
+    if (!user) return
+
+    let isMounted = true
+    let retryCount = 0
+    const maxRetries = 5
+    let retryTimeout: NodeJS.Timeout | null = null
+
+    const setupPresence = async () => {
+      if (!isMounted) return
+
+      try {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('full_name, photos, main_photo_index')
+          .eq('user_id', user.id)
+          .single()
+
+        const channelName = 'global_singles_lounge_presence'
+
+        // Remove old presence if it exists
+        if (presenceRef.current) {
+          presenceRef.current.untrack()
+          supabase.removeChannel(presenceRef.current)
+        }
+
+        presenceRef.current = supabase
+          .channel(channelName)
+          .on('presence', { event: 'sync' }, () => {
+            if (!isMounted) return
+
+            const presenceState = presenceRef.current?.presenceState()
+            const users: LoungeUser[] = []
+
+            Object.keys(presenceState || {}).forEach((userId) => {
+              const userPresence = presenceState[userId][0]
+              users.push({
+                user_id: userId,
+                full_name: userPresence?.full_name || 'Anonymous',
+                main_photo: userPresence?.main_photo || null,
+                last_seen: new Date().toISOString(),
+              })
+            })
+
+            setOnlineUsers(users)
+          })
+          .subscribe(async (status, err) => {
+            if (!isMounted) return
+
+            if (err) {
+              const errorMsg = err?.message || JSON.stringify(err)
+              console.log('[Lounge] Presence error:', errorMsg, err)
+            } else {
+              console.log('[Lounge] Presence status:', status)
+            }
+
+            if (status === 'SUBSCRIBED') {
+              retryCount = 0
+              presenceRef.current.track({
+                user_id: user.id,
+                full_name: profile?.full_name || 'User',
+                main_photo: profile?.photos?.[profile?.main_photo_index || 0] || null,
+              })
+            } else if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
+              console.log('[Lounge] Presence subscription closed/error - retrying...')
+              if (isMounted && retryCount < maxRetries) {
+                retryCount += 1
+                const delay = Math.min(1000 * Math.pow(2, retryCount - 1), 10000)
+                retryTimeout = setTimeout(() => {
+                  if (isMounted) {
+                    setupPresence()
+                  }
+                }, delay)
+              }
+            }
+          })
+      } catch (err: any) {
+        const errorMsg = err?.message || JSON.stringify(err) || 'Unknown error'
+        console.error('Error updating presence:', errorMsg, err)
+        if (isMounted && retryCount < maxRetries) {
+          retryCount += 1
+          const delay = Math.min(1000 * Math.pow(2, retryCount - 1), 10000)
+          retryTimeout = setTimeout(() => {
+            if (isMounted) {
+              setupPresence()
+            }
+          }, delay)
+        }
+      }
+    }
+
+    setupPresence()
+
+    return () => {
+      isMounted = false
+      if (retryTimeout) {
+        clearTimeout(retryTimeout)
+      }
+      if (presenceRef.current) {
+        presenceRef.current.untrack()
+        presenceRef.current.unsubscribe()
+        supabase.removeChannel(presenceRef.current)
+      }
+    }
+  }, [user])
+
+  // Send a message with keyword filtering and instant broadcast
+  const sendMessage = useCallback(
+    async (content: string) => {
+      if (!user || !content.trim()) return
+
+      try {
+        // Apply keyword filtering
+        let filteredContent = content
+        KEYWORD_FILTER_PATTERNS.forEach((pattern) => {
+          filteredContent = filteredContent.replace(pattern, '***')
+        })
+
+        // Insert message into database
+        const { data, error: err } = await supabase
+          .from('lounge_messages')
+          .insert({
+            sender_id: user.id,
+            content: filteredContent,
+          })
+          .select()
+          .single()
+
+        if (err) throw err
+
+        // Fetch user profile for enriched message
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('full_name, photos, main_photo_index')
+          .eq('user_id', user.id)
+          .single()
+
+        // Create enriched message for broadcast
+        const enrichedMessage = {
+          ...data,
+          user_id: data.sender_id,
+          message: data.content,
+          sender_name: profile?.full_name || 'Anonymous',
+          sender_image: profile?.photos?.[profile?.main_photo_index || 0] || null,
+        }
+
+        // Broadcast message immediately so other users see it instantly
+        const channel = supabase.channel('global_singles_lounge')
+        await channel.send({
+          type: 'broadcast',
+          event: 'new_message',
+          payload: enrichedMessage,
+        })
+
+        // Add to local state
+        setMessages((prev) => [...prev, enrichedMessage])
+        setError(null)
+      } catch (err: any) {
+        const errorMessage = err?.message || err?.error_description || 'Failed to send message'
+        console.error('Error sending message:', errorMessage, err)
+        setError(errorMessage)
+      }
+    },
+    [user]
+  )
+
+  // Report a message
+  const reportMessage = useCallback(
+    async (messageId: string, reason: string) => {
+      if (!user) return
+
+      try {
+        const { error: err } = await supabase.from('lounge_reports').insert({
+          message_id: messageId,
+          reported_by: user.id,
+          reason,
+        })
+
+        if (err) throw err
+        setError(null)
+      } catch (err: any) {
+        const errorMessage = err?.message || err?.error_description || 'Failed to report message'
+        console.error('Error reporting message:', errorMessage, err)
+        setError(errorMessage)
+      }
+    },
+    [user]
+  )
+
+  // Handle visibility changes to resubscribe if needed
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        console.log('[Lounge] Page became visible - checking subscriptions')
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
+  }, [])
+
+  // Initialize lounge
+  useEffect(() => {
+    if (!user) {
+      setLoading(false)
+      return
+    }
+
+    fetchMessages()
+    const unsubscribe = subscribeToMessages()
+    const untrackPresence = updatePresence()
+
+    return () => {
+      unsubscribe?.()
+      untrackPresence?.()
+    }
+  }, [user, fetchMessages, subscribeToMessages, updatePresence])
+
+  return {
+    messages,
+    onlineUsers,
+    loading,
+    error,
+    sendMessage,
+    reportMessage,
+  }
+}

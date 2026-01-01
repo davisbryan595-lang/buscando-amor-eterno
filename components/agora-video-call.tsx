@@ -4,9 +4,11 @@ import React, { useEffect, useRef, useState } from 'react'
 import { Mic, MicOff, Video as VideoIcon, VideoOff, Phone, X } from 'lucide-react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/context/auth-context'
+import { useMessages } from '@/hooks/useMessages'
 import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
 import Image from 'next/image'
+import { generateChannelName, userIdToAgoraUid } from '@/lib/agora'
 
 // Lazy load Agora SDK only on client side
 let AgoraRTC: any = null
@@ -35,6 +37,7 @@ export default function AgoraVideoCall({
 }: AgoraCallProps) {
   const router = useRouter()
   const { user, getSession } = useAuth()
+  const { logCallMessage } = useMessages()
   const isAudioOnly = callType === 'audio'
   const [client, setClient] = useState<any>(null)
   const [localAudioTrack, setLocalAudioTrack] = useState<any>(null)
@@ -48,12 +51,174 @@ export default function AgoraVideoCall({
   const [otherUserImage, setOtherUserImage] = useState<string | null>(null)
   const [callDuration, setCallDuration] = useState(0)
   const [isCallEndedCleanly, setIsCallEndedCleanly] = useState(false)
+  const [remoteCameraEnabled, setRemoteCameraEnabled] = useState(true)
+  const [remoteAudioEnabled, setRemoteAudioEnabled] = useState(true)
+  const [connectionState, setConnectionState] = useState<'connected' | 'reconnecting' | 'disconnected'>('connected')
+  const [loggedCallId, setLoggedCallId] = useState<string | null>(null)
+  const [justReceivedEndSignal, setJustReceivedEndSignal] = useState(false)
   const localVideoContainerRef = useRef<HTMLDivElement>(null)
   const remoteVideoContainerRef = useRef<HTMLDivElement>(null)
   const callStartTimeRef = useRef<number>(0)
   const callTimerRef = useRef<NodeJS.Timeout | null>(null)
+  const ongoingLoggedRef = useRef(false)
+  const callIdRef = useRef<string | null>(null)
+  const justReceivedEndSignalRef = useRef(false)
 
   const appId = process.env.NEXT_PUBLIC_AGORA_APP_ID
+
+  // Listen for remote call end via Supabase Realtime
+  useEffect(() => {
+    if (!user || !partnerId) return
+
+    const roomName = [user.id, partnerId].sort().join('-')
+    const channel = supabase.channel(`call:${roomName}`)
+
+    channel
+      .on('broadcast', { event: 'call_ended' }, async (payload) => {
+        console.log('Remote end detected — cleaning up')
+
+        // Mark this as an intentional end to suppress "connection lost" UI
+        setJustReceivedEndSignal(true)
+        justReceivedEndSignalRef.current = true
+
+        // Clear call timer
+        if (callTimerRef.current) {
+          clearInterval(callTimerRef.current)
+        }
+
+        // Safely stop and close tracks
+        if (localAudioTrack) {
+          localAudioTrack.stop()
+          localAudioTrack.close()
+          setLocalAudioTrack(null)
+        }
+
+        if (localVideoTrack) {
+          localVideoTrack.stop()
+          localVideoTrack.close()
+          setLocalVideoTrack(null)
+        }
+
+        // Unpublish if still published
+        if (client) {
+          try {
+            await client.unpublish()
+          } catch (err) {
+            console.warn('Error unpublishing:', err)
+          }
+        }
+
+        // Leave the channel
+        if (client) {
+          try {
+            await client.leave()
+          } catch (err) {
+            console.warn('Error leaving channel:', err)
+          }
+        }
+
+        // Clear video containers
+        if (localVideoContainerRef.current) {
+          localVideoContainerRef.current.srcObject = null
+        }
+        if (remoteVideoContainerRef.current) {
+          remoteVideoContainerRef.current.srcObject = null
+        }
+
+        // Navigate back to conversation with this user
+        router.push(`/messages?user=${partnerId}`)
+      })
+      .subscribe()
+
+    return () => {
+      channel.unsubscribe()
+      supabase.removeChannel(channel)
+    }
+  }, [user, partnerId, client, localAudioTrack, localVideoTrack, router])
+
+  // Handle page unload (refresh/close tab) - broadcast clean call end
+  useEffect(() => {
+    const handleUnload = async () => {
+      // Broadcast end signal to other user via Supabase Realtime
+      if (user && partnerId) {
+        const roomName = [user.id, partnerId].sort().join('-')
+        const channel = supabase.channel(`call:${roomName}`)
+        try {
+          await channel.send({
+            type: 'broadcast',
+            event: 'call_ended',
+            payload: { ended_by: user.id },
+          })
+        } catch (err) {
+          console.warn('Failed to broadcast call_ended on unload:', err)
+        }
+      }
+
+      // Close Agora tracks and leave channel
+      if (localAudioTrack) {
+        try {
+          localAudioTrack.stop()
+          localAudioTrack.close()
+        } catch (err) {
+          console.warn('Error closing audio track on unload:', err)
+        }
+      }
+
+      if (localVideoTrack) {
+        try {
+          localVideoTrack.stop()
+          localVideoTrack.close()
+        } catch (err) {
+          console.warn('Error closing video track on unload:', err)
+        }
+      }
+
+      if (client) {
+        try {
+          await client.leave()
+        } catch (err) {
+          console.warn('Error leaving Agora channel on unload:', err)
+        }
+      }
+    }
+
+    // Listen for both beforeunload (desktop) and pagehide (mobile/tabs)
+    window.addEventListener('beforeunload', handleUnload)
+    window.addEventListener('pagehide', handleUnload)
+
+    return () => {
+      window.removeEventListener('beforeunload', handleUnload)
+      window.removeEventListener('pagehide', handleUnload)
+    }
+  }, [user, partnerId, client, localAudioTrack, localVideoTrack])
+
+  // Force clean disconnect on page hide (mobile background) - suppress reconnection attempts
+  useEffect(() => {
+    const handleVisibilityChange = async () => {
+      if (document.hidden && isConnected) {
+        console.log('Page hidden — broadcasting end call to prevent hanging')
+        // Broadcast end signal to other user via Supabase Realtime
+        if (user && partnerId) {
+          const roomName = [user.id, partnerId].sort().join('-')
+          const channel = supabase.channel(`call:${roomName}`)
+          try {
+            await channel.send({
+              type: 'broadcast',
+              event: 'call_ended',
+              payload: { ended_by: user.id },
+            })
+          } catch (err) {
+            console.warn('Failed to broadcast call_ended on visibility change:', err)
+          }
+        }
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }, [user, partnerId, isConnected])
 
   // Fetch other user's profile picture
   useEffect(() => {
@@ -101,28 +266,27 @@ export default function AgoraVideoCall({
 
         // For incoming calls, the invitation is already created by the caller
         // For outgoing calls, the invitation was created when they clicked the call button
-        // Only need to mark it as active when the call starts
+        // Only need to mark it as accepted when the call starts
         if (mode === 'outgoing' && callId) {
           try {
             await supabase
               .from('call_invitations')
-              .update({ status: 'active' })
+              .update({ status: 'accepted' })
               .eq('id', callId)
           } catch (err) {
-            console.warn('Failed to update call status to active:', err)
+            console.warn('Failed to update call status to accepted:', err)
           }
         }
 
+        // Generate channel name and uid
+        const channelName = generateChannelName(user.id, partnerId)
+        const uid = userIdToAgoraUid(user.id)
+
         // Fetch Agora token from server
-        console.log('Fetching Agora token for partner:', partnerId)
-        const tokenResponse = await fetch('/api/agora/token', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${session.access_token}`,
-          },
-          body: JSON.stringify({ partnerId }),
-        })
+        console.log('Fetching Agora token:', { channelName, uid })
+        const tokenResponse = await fetch(
+          `/api/agora/token?channel=${encodeURIComponent(channelName)}&uid=${uid}`
+        )
 
         if (!tokenResponse.ok) {
           let errorMsg = `Token request failed with status ${tokenResponse.status}`
@@ -138,22 +302,11 @@ export default function AgoraVideoCall({
             error: errorMsg,
           })
 
-          // Provide more specific error messages
-          if (errorMsg.includes('Cannot call yourself')) {
-            setError('You cannot call yourself')
-          } else if (errorMsg.includes('Not a valid match')) {
-            setError('You can only call users you have matched with')
-          } else if (errorMsg.includes('Unauthorized')) {
-            setError('Authentication failed. Please log in again.')
-          } else if (errorMsg.includes('Invalid')) {
-            setError('Invalid call request. Please try again.')
-          } else {
-            setError(errorMsg || 'Failed to connect call. Please try again.')
-          }
+          setError(errorMsg || 'Failed to connect call. Please try again.')
           return
         }
 
-        const { token, uid, channelName } = await tokenResponse.json()
+        const { token } = await tokenResponse.json()
 
         // Initialize Agora client
         const agoraClient = agoraSDK.createClient({ mode: 'rtc', codec: 'vp8' })
@@ -163,13 +316,14 @@ export default function AgoraVideoCall({
         agoraClient.on('user-published', async (user, mediaType) => {
           await agoraClient.subscribe(user, mediaType)
           if (mediaType === 'video') {
+            setRemoteCameraEnabled(true)
             setRemoteUsers((prevUsers) => {
               const isFirstRemoteUser = prevUsers.length === 0
               const updated = [
                 ...prevUsers.filter((u) => u.uid !== user.uid),
                 user,
               ]
-              // Start timer when first remote user connects
+              // Start timer and log when first remote user connects
               if (isFirstRemoteUser) {
                 setIsConnected(true)
                 callStartTimeRef.current = Date.now()
@@ -179,11 +333,25 @@ export default function AgoraVideoCall({
                 callTimerRef.current = setInterval(() => {
                   setCallDuration(Math.floor((Date.now() - callStartTimeRef.current) / 1000))
                 }, 1000)
+
+                // Log ongoing call message when connection is established
+                if (!ongoingLoggedRef.current) {
+                  ongoingLoggedRef.current = true
+                  logCallMessage(partnerId, callType, 'ongoing').then((newCallId) => {
+                    if (newCallId) {
+                      callIdRef.current = newCallId
+                      setLoggedCallId(newCallId)
+                    }
+                  }).catch((err) => {
+                    console.warn('Failed to log ongoing call:', err)
+                  })
+                }
               }
               return updated
             })
           }
           if (mediaType === 'audio') {
+            setRemoteAudioEnabled(true)
             user.audioTrack?.play()
             // Also mark as connected if audio arrives (for audio-only calls)
             setIsConnected(true)
@@ -195,12 +363,31 @@ export default function AgoraVideoCall({
               callTimerRef.current = setInterval(() => {
                 setCallDuration(Math.floor((Date.now() - callStartTimeRef.current) / 1000))
               }, 1000)
+
+              // Log ongoing call message when connection is established
+              if (!ongoingLoggedRef.current) {
+                ongoingLoggedRef.current = true
+                logCallMessage(partnerId, callType, 'ongoing').then((newCallId) => {
+                  if (newCallId) {
+                    callIdRef.current = newCallId
+                    setLoggedCallId(newCallId)
+                  }
+                }).catch((err) => {
+                  console.warn('Failed to log ongoing call:', err)
+                })
+              }
             }
           }
         })
 
         // Handle remote user unpublished event
-        agoraClient.on('user-unpublished', (user) => {
+        agoraClient.on('user-unpublished', (user, mediaType) => {
+          if (mediaType === 'video') {
+            setRemoteCameraEnabled(false)
+          }
+          if (mediaType === 'audio') {
+            setRemoteAudioEnabled(false)
+          }
           setRemoteUsers((prevUsers) => {
             const updated = prevUsers.filter((u) => u.uid !== user.uid)
             // If no more remote users, stop the timer
@@ -220,6 +407,22 @@ export default function AgoraVideoCall({
           })
         })
 
+        // Handle connection state changes (network issues)
+        agoraClient.on('connection-state-change', (curState, prevState, reason) => {
+          if (curState === 'CONNECTED') {
+            setConnectionState('connected')
+          } else if (curState === 'RECONNECTING') {
+            setConnectionState('reconnecting')
+          } else if (curState === 'DISCONNECTED') {
+            // Ignore DISCONNECTED state if we just received an intentional end signal
+            if (justReceivedEndSignalRef.current) {
+              console.log('Ignoring DISCONNECTED state — intentional end detected')
+              return
+            }
+            setConnectionState('disconnected')
+          }
+        })
+
         // Create local audio and video tracks
         const audioTrack = await agoraSDK.createMicrophoneAudioTrack()
         const videoTrack = isAudioOnly ? null : await agoraSDK.createCameraVideoTrack()
@@ -237,8 +440,9 @@ export default function AgoraVideoCall({
         await agoraClient.publish(tracksToPublish)
 
         // Play local video (for video calls only)
-        if (!isAudioOnly && videoTrack && localVideoContainerRef.current) {
-          videoTrack.play(localVideoContainerRef.current)
+        // Using string ID is the Agora-recommended pattern for reliable playback
+        if (!isAudioOnly && videoTrack) {
+          videoTrack.play('local-player')
         }
 
         // UI is ready immediately after publishing local tracks
@@ -398,8 +602,12 @@ export default function AgoraVideoCall({
 
   const endCall = async () => {
     try {
+      // Mark as intentional end FIRST — suppress "connection lost" UI
+      setJustReceivedEndSignal(true)
+      justReceivedEndSignalRef.current = true
+
       // 1. Broadcast call_ended event FIRST (before any cleanup)
-      if (user) {
+      if (user && partnerId) {
         const roomName = [user.id, partnerId].sort().join('-')
         const channel = supabase.channel(`call:${roomName}`)
         try {
@@ -409,7 +617,7 @@ export default function AgoraVideoCall({
             payload: { ended_by: user.id, timestamp: Date.now() },
           })
         } catch (err) {
-          console.warn('Failed to broadcast call_ended:', err)
+          console.warn('Failed to broadcast call_ended event:', err)
           // Continue with cleanup even if broadcast fails
         }
       }
@@ -419,26 +627,39 @@ export default function AgoraVideoCall({
         clearInterval(callTimerRef.current)
       }
 
-      // 3. Update call status in database (for persistence/audit)
+      // 3. Log ended call with duration
+      try {
+        const finalDuration = Math.floor((Date.now() - callStartTimeRef.current) / 1000)
+        if (ongoingLoggedRef.current && callIdRef.current) {
+          await logCallMessage(partnerId, callType, 'ended', finalDuration, callIdRef.current)
+        }
+      } catch (err) {
+        console.warn('Failed to log ended call:', err)
+      }
+
+      // 4. Delete call invitation from database when call ends
+      // This prevents duplicate key constraint violations on future calls
       if (user) {
         const roomName = [user.id, partnerId].sort().join('-')
         try {
           await supabase
             .from('call_invitations')
-            .update({ status: 'ended' })
+            .delete()
             .eq('room_name', roomName)
         } catch (err) {
-          // Silently handle
+          // Silently handle - deletion is cleanup, not critical to call flow
+          console.warn('Failed to cleanup call invitation:', err)
         }
       }
 
-      // 4. Local cleanup - stop and close tracks
+      // 5. Local cleanup - stop and close tracks
+      // Safely stop and close tracks (check if they exist and are not already closed)
+      // Workaround for Agora SDK bug with mutex property on MicrophoneAudioTrack
       if (localAudioTrack) {
         await localAudioTrack.setEnabled(false)
         localAudioTrack.close()
       }
 
-      // Stop and close video track
       if (localVideoTrack) {
         await localVideoTrack.setEnabled(false)
         localVideoTrack.close()
@@ -449,11 +670,20 @@ export default function AgoraVideoCall({
         await client.leave()
       }
 
-      // 5. Navigate back to messages
-      router.push('/messages')
+      // Clear video containers
+      if (localVideoContainerRef.current) {
+        localVideoContainerRef.current.srcObject = null
+      }
+      if (remoteVideoContainerRef.current) {
+        remoteVideoContainerRef.current.srcObject = null
+      }
+
+      // 6. Navigate back to messages with user context
+      router.push(`/messages?user=${partnerId}`)
     } catch (err) {
-      console.error('Error ending call:', err)
-      router.push('/messages')
+      console.warn('Error during endCall (safe to ignore if call already closed):', err)
+      // Don't throw or show error to user — the call is ending anyway
+      router.push(`/messages?user=${partnerId}`)
     }
   }
 
@@ -493,6 +723,30 @@ export default function AgoraVideoCall({
     return `${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`
   }
 
+  const getStatusMessage = () => {
+    // Show connection state if there's a real network issue
+    if (connectionState === 'reconnecting') {
+      return 'Reconnecting...'
+    }
+    if (connectionState === 'disconnected') {
+      return 'Connection lost'
+    }
+
+    // Show media status when intentionally disabled/muted
+    if (!remoteCameraEnabled && !remoteAudioEnabled) {
+      return 'Camera and microphone off'
+    }
+    if (!remoteCameraEnabled && remoteAudioEnabled) {
+      return 'Camera off'
+    }
+    if (!remoteAudioEnabled && remoteCameraEnabled) {
+      return 'Microphone muted'
+    }
+
+    // All good - return empty string
+    return ''
+  }
+
   if (isAudioOnly) {
     return (
       <div className="relative w-full h-full bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-center">
@@ -523,6 +777,9 @@ export default function AgoraVideoCall({
                       {formatDuration(callDuration)}
                     </p>
                   )}
+                  {getStatusMessage() && (
+                    <p className="text-gray-400 text-sm mt-3">{getStatusMessage()}</p>
+                  )}
                 </div>
               </div>
             </>
@@ -543,6 +800,9 @@ export default function AgoraVideoCall({
                   <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
                   <span>Waiting for {partnerName}...</span>
                 </div>
+              )}
+              {getStatusMessage() && (
+                <p className="text-gray-400 text-sm mt-3">{getStatusMessage()}</p>
               )}
             </div>
           )}
@@ -591,6 +851,9 @@ export default function AgoraVideoCall({
           <div className="text-center">
             <div className="w-16 h-16 rounded-full border-4 border-primary border-t-transparent animate-spin mx-auto mb-4" />
             <p className="text-white font-medium">Waiting for {partnerName}...</p>
+            {getStatusMessage() && (
+              <p className="text-gray-400 text-sm mt-3">{getStatusMessage()}</p>
+            )}
           </div>
         ) : null}
       </div>
@@ -600,6 +863,9 @@ export default function AgoraVideoCall({
         <div className="flex-1">
           <h3 className="text-white font-semibold text-lg">Video Call</h3>
           <p className="text-gray-300 text-sm">{partnerName}</p>
+          {getStatusMessage() && (
+            <p className="text-gray-400 text-xs mt-1">{getStatusMessage()}</p>
+          )}
         </div>
         <div className="flex items-center gap-4">
           {isConnected && (
@@ -620,6 +886,7 @@ export default function AgoraVideoCall({
       {/* Local video - floating bubble */}
       <div className="absolute bottom-24 right-6 w-28 h-40 rounded-2xl overflow-hidden border-4 border-primary soft-glow-lg z-20 bg-slate-900">
         <div
+          id="local-player"
           ref={localVideoContainerRef}
           className="w-full h-full bg-slate-800"
         />

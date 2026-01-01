@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import gsap from 'gsap'
@@ -14,6 +14,13 @@ export default function Hero() {
   const descriptionRef = useRef<HTMLParagraphElement>(null)
   const buttonsRef = useRef<HTMLDivElement>(null)
   const statsRef = useRef<HTMLDivElement>(null)
+  const [backgroundAttachment, setBackgroundAttachment] = useState<'fixed' | 'scroll'>('scroll')
+
+  useEffect(() => {
+    // Set parallax effect only on non-mobile clients
+    const isMobile = /iPhone|iPad|iPod|Android/.test(navigator.userAgent)
+    setBackgroundAttachment(isMobile ? 'scroll' : 'fixed')
+  }, [])
 
   useEffect(() => {
     if (!titleRef.current) return
@@ -81,12 +88,12 @@ export default function Hero() {
   return (
     <section
       ref={heroRef}
-      className="pt-20 md:pt-32 pb-12 md:pb-16 px-4 relative overflow-hidden min-h-screen md:min-h-[90vh] flex items-center"
+      className="pt-24 md:pt-36 pb-12 md:pb-16 px-4 relative overflow-hidden min-h-screen md:min-h-[90vh] flex items-center"
       style={{
         backgroundImage: `linear-gradient(to bottom, rgba(245, 165, 180, 0.65), rgba(255, 255, 255, 0.5), rgba(245, 165, 180, 0.75)), url(/romantic-couple-sunset-beach-luxury.jpg)`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
-        backgroundAttachment: 'fixed',
+        backgroundAttachment,
       }}
     >
       <div className="absolute inset-0 -z-10">

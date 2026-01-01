@@ -5,6 +5,8 @@ import { AuthProvider } from '@/context/auth-context'
 import { I18nProvider } from '@/lib/i18n-context'
 import { Preloader } from '@/components/preloader'
 import CallManager from '@/components/call-manager'
+import { Toaster } from '@/components/ui/sonner'
+import { SessionManager } from '@/components/session-manager'
 
 const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
@@ -22,12 +24,7 @@ export const metadata: Metadata = {
   description: 'Nearly 50% of the world is single. You deserve eternal love. Join our premium soulmate dating platform with profiles, messaging, and video chat.',
   generator: 'v0.app',
   icons: {
-    icon: [
-      {
-        url: '/placeholder-logo.svg',
-        type: 'image/svg+xml',
-      },
-    ],
+    icon: 'https://cdn.builder.io/api/v1/image/assets%2F5517f718aa7348e88214250292563028%2F09ca0588ac3741678f0d49e142dede0b?format=webp&width=800',
   },
 }
 
@@ -39,6 +36,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
         <script async src="https://cdn.onesignal.com/sdks/onesignal.js"></script>
         <script dangerouslySetInnerHTML={{
           __html: `
@@ -61,9 +59,11 @@ export default function RootLayout({
         <Preloader />
         <I18nProvider>
           <AuthProvider>
+            <SessionManager />
             <CallManager>
               {children}
             </CallManager>
+            <Toaster />
           </AuthProvider>
         </I18nProvider>
       </body>

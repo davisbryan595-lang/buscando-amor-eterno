@@ -4,11 +4,12 @@ import React, { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import gsap from 'gsap'
 import { Menu, X, Bell, Globe } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useLanguage } from '@/lib/i18n-context'
 import { useAuth } from '@/context/auth-context'
 import { useNotifications } from '@/hooks/useNotifications'
 import { AccountMenu } from '@/components/account-menu'
-import { NotificationsDropdown } from '@/components/notifications-dropdown'
+import { ResponsiveNotificationsPanel } from '@/components/responsive-notifications-panel'
 
 export default function Navigation() {
   const [menuOpen, setMenuOpen] = useState(false)
@@ -53,14 +54,14 @@ export default function Navigation() {
 
   return (
     <nav ref={navRef} className="fixed top-0 left-0 right-0 z-50 bg-white/90 md:bg-white/95 backdrop-blur-md border-b border-rose-100/50 md:border-rose-100">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 md:py-4 flex justify-between items-center">
         <Link href="/" className="flex items-center gap-2">
           <img
             src="https://cdn.builder.io/api/v1/image/assets%2F5517f718aa7348e88214250292563028%2F09ca0588ac3741678f0d49e142dede0b?format=webp&width=800"
             alt="Buscando Amor Eterno Logo"
-            className="h-16 w-16 object-contain"
+            className="h-10 w-10 md:h-16 md:w-16 object-contain"
           />
-          <span className="text-lg font-playfair font-bold text-rose-600">Buscando Amor Eterno</span>
+          <span className="hidden sm:inline text-lg md:text-lg font-playfair font-bold text-rose-600">Buscando Amor Eterno</span>
         </Link>
 
         {/* Desktop Menu */}
@@ -69,7 +70,7 @@ export default function Navigation() {
           <Link href="/browse" className="text-foreground hover:text-primary transition">{t('common.browse')}</Link>
           <Link href="/pricing" className="text-foreground hover:text-primary transition">{t('common.pricing')}</Link>
           <Link href="/messages" className="text-foreground hover:text-primary transition">{t('common.messages')}</Link>
-          <Link href="/chat-room" className="text-foreground hover:text-primary transition">{t('common.lounge')}</Link>
+          <Link href="/lounge" className="text-foreground hover:text-primary transition">{t('common.lounge')}</Link>
 
           <div className="relative">
             <button
@@ -84,12 +85,15 @@ export default function Navigation() {
                 </span>
               )}
             </button>
-            {notificationsOpen && (
-              <NotificationsDropdown
+            {/* Desktop notification dropdown */}
+            <div className="hidden md:block">
+              <ResponsiveNotificationsPanel
+                open={notificationsOpen}
+                onOpenChange={setNotificationsOpen}
                 notifications={notifications}
                 onDismiss={handleNotificationDismiss}
               />
-            )}
+            </div>
           </div>
 
           <div className="relative">
@@ -138,25 +142,18 @@ export default function Navigation() {
 
         {/* Mobile Menu Button */}
         <div className="md:hidden flex items-center gap-2">
-          <div className="relative">
-            <button
-              onClick={() => setNotificationsOpen(!notificationsOpen)}
-              className="p-2 hover:bg-rose-50 rounded-full transition relative"
-            >
-              <Bell size={20} className="text-primary" />
-              {notifications.length > 0 && (
-                <span className="absolute top-1 right-1 bg-rose-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-semibold">
-                  {notifications.length > 9 ? '9+' : notifications.length}
-                </span>
-              )}
-            </button>
-            {notificationsOpen && (
-              <NotificationsDropdown
-                notifications={notifications}
-                onDismiss={handleNotificationDismiss}
-              />
+          <button
+            onClick={() => setNotificationsOpen(!notificationsOpen)}
+            className="p-2 hover:bg-rose-50 rounded-full transition relative"
+            aria-label="Notifications"
+          >
+            <Bell size={20} className="text-primary" />
+            {notifications.length > 0 && (
+              <span className="absolute top-1 right-1 bg-rose-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-semibold">
+                {notifications.length > 9 ? '9+' : notifications.length}
+              </span>
             )}
-          </div>
+          </button>
           {isMounted && user ? (
             <>
               <button
@@ -178,26 +175,79 @@ export default function Navigation() {
         </div>
       </div>
 
-      {/* Mobile Menu */}
-      {menuOpen && isMounted && (
-        <div className="md:hidden bg-white border-t border-rose-100 py-4 px-4 space-y-3">
-          <Link href="/" className="block text-foreground hover:text-primary transition py-2" onClick={() => setMenuOpen(false)}>
-            {t('common.home')}
-          </Link>
-          <Link href="/browse" className="block text-foreground hover:text-primary transition py-2" onClick={() => setMenuOpen(false)}>
-            {t('common.browse')}
-          </Link>
-          <Link href="/pricing" className="block text-foreground hover:text-primary transition py-2" onClick={() => setMenuOpen(false)}>
-            {t('common.pricing')}
-          </Link>
-          <Link href="/messages" className="block text-foreground hover:text-primary transition py-2" onClick={() => setMenuOpen(false)}>
-            {t('common.messages')}
-          </Link>
-          <Link href="/chat-room" className="block text-foreground hover:text-primary transition py-2" onClick={() => setMenuOpen(false)}>
-            {t('common.lounge')}
-          </Link>
+      {/* Mobile Menu with slide animation */}
+      <AnimatePresence>
+        {menuOpen && isMounted && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{
+              type: 'spring',
+              damping: 25,
+              stiffness: 300,
+              opacity: { duration: 0.2 },
+            }}
+            className="md:hidden bg-white border-t border-rose-100 py-4 px-4 space-y-3 overflow-hidden"
+          >
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ delay: 0.1, duration: 0.3 }}
+          >
+            <Link href="/" className="block text-foreground hover:text-primary transition py-2" onClick={() => setMenuOpen(false)}>
+              {t('common.home')}
+            </Link>
+          </motion.div>
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ delay: 0.15, duration: 0.3 }}
+          >
+            <Link href="/browse" className="block text-foreground hover:text-primary transition py-2" onClick={() => setMenuOpen(false)}>
+              {t('common.browse')}
+            </Link>
+          </motion.div>
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ delay: 0.2, duration: 0.3 }}
+          >
+            <Link href="/pricing" className="block text-foreground hover:text-primary transition py-2" onClick={() => setMenuOpen(false)}>
+              {t('common.pricing')}
+            </Link>
+          </motion.div>
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ delay: 0.25, duration: 0.3 }}
+          >
+            <Link href="/messages" className="block text-foreground hover:text-primary transition py-2" onClick={() => setMenuOpen(false)}>
+              {t('common.messages')}
+            </Link>
+          </motion.div>
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ delay: 0.3, duration: 0.3 }}
+          >
+            <Link href="/lounge" className="block text-foreground hover:text-primary transition py-2" onClick={() => setMenuOpen(false)}>
+              {t('common.lounge')}
+            </Link>
+          </motion.div>
 
-          <div className="border-t border-rose-100 pt-3 mt-3">
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ delay: 0.35, duration: 0.3 }}
+            className="border-t border-rose-100 pt-3 mt-3"
+          >
             <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Language</p>
             <button
               onClick={() => handleLanguageChange('en')}
@@ -211,10 +261,15 @@ export default function Navigation() {
             >
               Español
             </button>
-          </div>
+          </motion.div>
 
           {!user && (
-            <>
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ delay: 0.4, duration: 0.3 }}
+            >
               <div className="border-t border-rose-100 pt-3 mt-3 space-y-3">
                 <Link href="/login" className="block text-foreground hover:text-primary transition py-2" onClick={() => setMenuOpen(false)}>
                   {t('common.logIn')}
@@ -227,10 +282,19 @@ export default function Navigation() {
                   {t('common.joinForPrice')}
                 </Link>
               </div>
-            </>
+            </motion.div>
           )}
-        </div>
-      )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Mobile Notification Drawer - uses Portal so only needs one instance */}
+      <ResponsiveNotificationsPanel
+        open={notificationsOpen}
+        onOpenChange={setNotificationsOpen}
+        notifications={notifications}
+        onDismiss={handleNotificationDismiss}
+      />
     </nav>
   )
 }

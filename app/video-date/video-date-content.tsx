@@ -113,6 +113,21 @@ export default function VideoDateContent() {
               }
             }
           )
+          .on(
+            'postgres_changes',
+            {
+              event: 'DELETE',
+              schema: 'public',
+              table: 'call_invitations',
+              filter: `id=eq.${callId}`,
+            },
+            (payload: any) => {
+              if (isMounted) {
+                // When the call invitation is deleted, the other person has ended the call
+                setError('Call has ended')
+              }
+            }
+          )
           .subscribe()
       } catch (err) {
         console.error('Error setting up call status subscription:', err)
@@ -124,6 +139,7 @@ export default function VideoDateContent() {
     return () => {
       isMounted = false
       if (subscription) {
+        subscription.unsubscribe()
         supabase.removeChannel(subscription)
       }
     }

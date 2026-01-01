@@ -1,4 +1,4 @@
-import { RtcTokenBuilder, RtcRole } from 'agora-token'
+import { RtcTokenBuilder, RtcRole } from 'agora-access-token'
 
 const appCertificate = process.env.AGORA_APP_CERTIFICATE || ''
 

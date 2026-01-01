@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, Suspense, useRef } from 'react'
 import Link from 'next/link'
-import { useSearchParams } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import gsap from 'gsap'
 import ChatWindow from '@/components/chat-window'
 import Image from 'next/image'
@@ -17,6 +17,7 @@ interface MessagesContentInnerProps {
 }
 
 function MessagesContentInner({ onChatOpenChange, isChatOpen }: MessagesContentInnerProps) {
+  const router = useRouter()
   const { user } = useAuth()
   const { isPremium, loading: subLoading } = useSubscription()
   const { conversations, loading, error } = useMessages()
@@ -121,8 +122,8 @@ function MessagesContentInner({ onChatOpenChange, isChatOpen }: MessagesContentI
 
 
   return (
-    <div className={`h-full w-full pb-4 px-0 sm:px-4 lg:px-6 flex flex-col overflow-hidden ${selectedConversation ? 'md:mt-24' : 'mt-24'}`}>
-      <div className="max-w-7xl mx-auto w-full flex-1 flex flex-col md:flex-row gap-0 md:gap-4 lg:gap-6 min-h-0 overflow-hidden rounded-none md:rounded-xl">
+    <div className={`h-full w-full px-0 sm:px-4 lg:px-6 flex flex-col overflow-hidden ${selectedConversation ? 'md:mt-24' : 'mt-24'}`}>
+      <div className="max-w-7xl mx-auto w-full flex-1 flex flex-col md:flex-row gap-0 md:gap-4 lg:gap-6 overflow-hidden rounded-none md:rounded-xl">
         <div className={`w-full md:w-80 lg:w-96 bg-gradient-to-b from-white to-rose-50 rounded-none md:rounded-xl border-0 md:border border-rose-100 flex-shrink-0 flex flex-col overflow-hidden ${selectedConversation ? 'hidden md:flex' : 'flex'}`}>
           <div className="px-4 py-3 sm:p-4 lg:p-6 border-b border-rose-100 bg-gradient-to-b from-white to-rose-50 flex items-center justify-between flex-shrink-0">
             <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-slate-900">Messages</h2>
@@ -142,15 +143,23 @@ function MessagesContentInner({ onChatOpenChange, isChatOpen }: MessagesContentI
               <div className="p-4 text-center text-slate-600 text-sm">No conversations yet</div>
             ) : (
               conversations.map((conv) => (
-                <button
+                <div
                   key={conv.id}
-                  onClick={() => handleSelectConversation(conv)}
-                  className={`w-full px-3 py-3 sm:px-4 sm:py-4 lg:p-5 text-left hover:bg-rose-100 transition ${
+                  className={`px-3 py-3 sm:px-4 sm:py-4 lg:p-5 text-left transition border-b ${
                     selectedConversation?.id === conv.id ? 'bg-rose-100' : ''
                   }`}
                 >
-                  <div className="flex gap-2 sm:gap-3 lg:gap-4 items-center">
-                    <div className="relative w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 flex-shrink-0">
+                  <button
+                    onClick={() => handleSelectConversation(conv)}
+                    className="w-full hover:opacity-80 transition flex gap-2 sm:gap-3 lg:gap-4 items-center"
+                  >
+                    <div
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        router.push(`/profile/${conv.other_user_id}`)
+                      }}
+                      className="relative w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 flex-shrink-0 hover:opacity-80 transition rounded-full"
+                    >
                       <Image
                         src={conv.other_user_image || '/placeholder.svg'}
                         alt={conv.other_user_name || 'User'}
@@ -171,15 +180,15 @@ function MessagesContentInner({ onChatOpenChange, isChatOpen }: MessagesContentI
                         {conv.unread_count}
                       </span>
                     )}
-                  </div>
-                </button>
+                  </button>
+                </div>
               ))
             )}
           </div>
         </div>
 
         {selectedConversation && (
-          <div ref={chatWindowRef} className={`w-full md:flex-1 flex min-w-0 ${selectedConversation ? 'flex' : 'hidden md:flex'}`}>
+          <div ref={chatWindowRef} className={`w-full flex-1 md:flex-1 flex min-w-0 overflow-hidden ${selectedConversation ? 'flex' : 'hidden md:flex'}`}>
             <ChatWindow
               conversation={selectedConversation}
               onBack={handleBackToConversations}

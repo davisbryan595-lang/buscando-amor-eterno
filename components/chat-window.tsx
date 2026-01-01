@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import { Send, Phone, Video, ArrowLeft } from 'lucide-react'
 import Image from 'next/image'
 import { useMessages } from '@/hooks/useMessages'
@@ -9,6 +10,7 @@ import { useStartCall } from '@/hooks/useStartCall'
 import { toast } from 'sonner'
 import MessageContextMenu from '@/components/message-context-menu'
 import TypingIndicator from '@/components/typing-indicator'
+import { AnimatedMessage } from '@/components/animated-message'
 
 const getLastSeenText = (timestamp?: string): string => {
   if (!timestamp) return 'Offline'
@@ -45,8 +47,9 @@ interface ChatWindowProps {
 }
 
 export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
+  const router = useRouter()
   const { user } = useAuth()
-  const { messages, sendMessage, markAsRead, fetchMessages, fetchConversations } = useMessages()
+  const { messages, sendMessage, markAsRead, fetchMessages, fetchConversations, subscribeToConversation, handleTyping, stopTyping } = useMessages()
   const { startCall } = useStartCall()
   const [newMessage, setNewMessage] = useState('')
   const [loading, setLoading] = useState(false)
@@ -59,23 +62,74 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
     content: string
     isOwn: boolean
   } | null>(null)
-  const [showTypingIndicator] = useState(false)
+  const [showTypingIndicator, setShowTypingIndicator] = useState(false)
+  const [previousMessageCount, setPreviousMessageCount] = useState(0)
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const messagesContainerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const unsubscribeRef = useRef<(() => void) | null>(null)
+  const typingChannelRef = useRef<any>(null)
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' })
+    }
   }
 
   useEffect(() => {
     if (conversation?.other_user_id) {
+      setPreviousMessageCount(0)
       fetchMessages(conversation.other_user_id)
+
+      // Subscribe to real-time updates for this conversation
+      unsubscribeRef.current = subscribeToConversation(conversation.other_user_id) || null
+
+      // Subscribe to typing indicators and read receipts for this conversation
+      const { supabase } = require('@/lib/supabase')
+      typingChannelRef.current = supabase
+        .channel(`messages:${user?.id}:${conversation.other_user_id}`)
+        .on('broadcast', { event: 'typing_indicator' }, (payload) => {
+          console.log('[ChatWindow] Typing indicator received:', payload.payload)
+          const typingStatus = payload.payload
+
+          // Show typing indicator if other user is typing
+          if (typingStatus.user_id === conversation.other_user_id && typingStatus.is_typing) {
+            setShowTypingIndicator(true)
+
+            // Clear existing timeout
+            if (typingTimeoutRef.current) {
+              clearTimeout(typingTimeoutRef.current)
+            }
+
+            // Hide typing indicator after 4 seconds of no new typing events
+            typingTimeoutRef.current = setTimeout(() => {
+              setShowTypingIndicator(false)
+            }, 4000)
+          } else if (typingStatus.user_id === conversation.other_user_id && !typingStatus.is_typing) {
+            setShowTypingIndicator(false)
+            if (typingTimeoutRef.current) {
+              clearTimeout(typingTimeoutRef.current)
+            }
+          }
+        })
+        .on('broadcast', { event: 'message_read' }, (payload) => {
+          console.log('[ChatWindow] Read receipt received:', payload.payload)
+          const readReceipt = payload.payload
+
+          // Update message to show it was read by marking it as read
+          if (readReceipt.reader_id === conversation.other_user_id) {
+            // Note: This updates the visual state, actual database update happens when other user marks it as read
+            console.log(`[ChatWindow] Message ${readReceipt.message_id} marked as read by other user`)
+          }
+        })
+        .subscribe((status) => {
+          console.log(`[ChatWindow] Broadcast subscription status:`, status)
+        })
 
       // Fetch full user details if not available in conversation
       if (!conversation.other_user_name || !conversation.other_user_image) {
-        const { supabase } = require('@/lib/supabase')
         const fetchUserDetails = async () => {
           try {
             const { data } = await supabase
@@ -96,8 +150,22 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
         }
         fetchUserDetails()
       }
+
+      return () => {
+        if (unsubscribeRef.current) {
+          unsubscribeRef.current()
+        }
+        // Properly unsubscribe from typing channel before removing it
+        if (typingChannelRef.current) {
+          typingChannelRef.current.unsubscribe()
+          supabase.removeChannel(typingChannelRef.current)
+        }
+        if (typingTimeoutRef.current) {
+          clearTimeout(typingTimeoutRef.current)
+        }
+      }
     }
-  }, [conversation?.other_user_id, user?.id, fetchMessages])
+  }, [conversation?.other_user_id, user?.id, fetchMessages, subscribeToConversation])
 
   // Mark all unread messages as read when opening the chat
   useEffect(() => {
@@ -105,18 +173,20 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
       const unreadMessages = messages.filter((msg) => msg.recipient_id === user.id && !msg.read)
       if (unreadMessages.length > 0) {
         unreadMessages.forEach((msg) => {
-          markAsRead(msg.id)
+          markAsRead(msg.id, msg.sender_id)
         })
-        // Refresh conversations to clear unread badge
-        fetchConversations()
       }
     }
-  }, [conversation?.id, messages.length, user?.id, markAsRead, fetchConversations])
+  }, [conversation?.id, user?.id, messages, markAsRead])
 
-  // Scroll to bottom when messages change
+  // Scroll to bottom when new messages arrive
   useEffect(() => {
-    scrollToBottom()
-  }, [messages])
+    // Auto-scroll when new messages arrive
+    if (messages.length > previousMessageCount) {
+      scrollToBottom()
+      setPreviousMessageCount(messages.length)
+    }
+  }, [messages, previousMessageCount])
 
   const handleSend = async () => {
     if (!newMessage.trim() || !user) return
@@ -125,12 +195,20 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
       setLoading(true)
       await sendMessage(conversation.other_user_id, newMessage)
       setNewMessage('')
+      stopTyping(conversation.other_user_id)
       inputRef.current?.focus()
     } catch (err: any) {
       console.error('Error sending message:', err)
       toast.error(err.message || 'Error sending message')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setNewMessage(e.target.value)
+    if (e.target.value.trim()) {
+      handleTyping(conversation.other_user_id)
     }
   }
 
@@ -176,7 +254,7 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
         'audio'
       )
     } finally {
-      setCallingState('calling')
+      setCallingState('idle')
     }
   }
 
@@ -189,14 +267,14 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
         'video'
       )
     } finally {
-      setCallingState('calling')
+      setCallingState('idle')
     }
   }
 
   return (
     <div className="bg-gradient-to-b from-white to-rose-50 rounded-none md:rounded-xl border-0 md:border border-rose-100 flex flex-col h-full w-full soft-glow overflow-hidden">
       {/* Header */}
-      <div className="sticky top-0 md:top-24 z-20 px-3 py-3 sm:p-4 lg:p-6 border-b border-rose-100 flex items-center justify-between flex-shrink-0 gap-2 bg-gradient-to-b from-white to-rose-50">
+      <div className="sticky top-16 md:top-24 z-20 px-3 py-3 sm:p-4 lg:p-6 border-b border-rose-100 flex items-center justify-between flex-shrink-0 gap-2 bg-gradient-to-b from-white to-rose-50">
         <div className="flex items-center gap-2 sm:gap-3 lg:gap-4 min-w-0 flex-1">
           {onBack && (
             <button
@@ -207,24 +285,29 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
               <ArrowLeft size={18} className="text-slate-700" />
             </button>
           )}
-          <div className="relative w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 flex-shrink-0">
-            <Image
-              src={otherUserDetails?.image || conversation.other_user_image || "/placeholder.svg"}
-              alt={otherUserDetails?.name || conversation.other_user_name || 'User'}
-              fill
-              className="rounded-full object-cover border-2 border-rose-100"
-              priority
-            />
-            {conversation.is_online && (
-              <div className="absolute bottom-0 right-0 w-2.5 h-2.5 sm:w-3 sm:h-3 md:w-4 md:h-4 bg-green-500 rounded-full border-2 sm:border-3 border-white z-10" />
-            )}
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="font-semibold text-slate-900 text-sm sm:text-base lg:text-lg truncate">{otherUserDetails?.name || conversation.other_user_name || 'User'}</p>
-            <p className="text-xs sm:text-sm lg:text-base text-slate-600 truncate">
-              {conversation.is_online ? 'Online' : getLastSeenText(conversation.last_message_time)}
-            </p>
-          </div>
+          <button
+            onClick={() => router.push(`/profile/${conversation.other_user_id}`)}
+            className="flex items-center gap-2 sm:gap-3 lg:gap-4 min-w-0 flex-1 hover:opacity-80 transition rounded-lg p-1 -m-1"
+          >
+            <div className="relative w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 flex-shrink-0">
+              <Image
+                src={otherUserDetails?.image || conversation.other_user_image || "/placeholder.svg"}
+                alt={otherUserDetails?.name || conversation.other_user_name || 'User'}
+                fill
+                className="rounded-full object-cover border-2 border-rose-100"
+                priority
+              />
+              {conversation.is_online && (
+                <div className="absolute bottom-0 right-0 w-2.5 h-2.5 sm:w-3 sm:h-3 md:w-4 md:h-4 bg-green-500 rounded-full border-2 sm:border-3 border-white z-10" />
+              )}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="font-semibold text-slate-900 text-sm sm:text-base lg:text-lg truncate">{otherUserDetails?.name || conversation.other_user_name || 'User'}</p>
+              <p className="text-xs sm:text-sm lg:text-base text-slate-600 truncate">
+                {conversation.is_online ? 'Online' : getLastSeenText(conversation.last_message_time)}
+              </p>
+            </div>
+          </button>
         </div>
 
         <div className="flex gap-1 sm:gap-2 lg:gap-3 flex-shrink-0">
@@ -255,24 +338,46 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
           </div>
         ) : (
           <>
-            {messages.map((msg) => (
-              <div
-                key={msg.id}
-                className={`flex w-full ${msg.sender_id === user?.id ? 'justify-end' : 'justify-start'}`}
-              >
-                <div
-                  id={`message-${msg.id}`}
-                  onContextMenu={(e) => handleContextMenu(e, msg.id, msg.content, msg.sender_id === user?.id)}
-                  className={`max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg px-3 sm:px-4 py-1.5 sm:py-2 lg:py-3 rounded-2xl ${
-                    msg.sender_id === user?.id
-                      ? 'bg-primary text-white rounded-br-none'
-                      : 'bg-slate-200 text-slate-900 rounded-bl-none'
-                  }`}
-                >
-                  <p className="text-xs sm:text-sm lg:text-base break-words">{msg.content}</p>
-                </div>
-              </div>
-            ))}
+            {messages.map((msg) => {
+              // Render call log messages differently
+              if (msg.type === 'call_log') {
+                const formatDuration = (seconds: number) => {
+                  const mins = Math.floor(seconds / 60)
+                  const secs = seconds % 60
+                  return `${mins}:${String(secs).padStart(2, '0')}`
+                }
+
+                const getCallEmoji = (status: string, callType?: string) => {
+                  if (status === 'missed') return '📵'
+                  if (status === 'ongoing') return '☎️'
+                  return callType === 'video' ? '📹' : '☎️'
+                }
+
+                const callText =
+                  msg.call_status === 'missed' ? `Missed ${msg.call_type} call` :
+                  msg.call_status === 'ended' && msg.call_duration ? `${msg.call_type} call · ${formatDuration(msg.call_duration)}` :
+                  msg.call_status === 'ongoing' ? `Ongoing ${msg.call_type} call` :
+                  `${msg.call_type} call`
+
+                return (
+                  <div key={msg.id} className="flex justify-center my-3">
+                    <div className="text-center text-slate-500 text-xs sm:text-sm">
+                      <span>{getCallEmoji(msg.call_status, msg.call_type)} {callText}</span>
+                    </div>
+                  </div>
+                )
+              }
+
+              return (
+                <AnimatedMessage
+                  key={msg.id}
+                  id={msg.id}
+                  content={msg.content}
+                  isOwn={msg.sender_id === user?.id}
+                  onContextMenu={handleContextMenu}
+                />
+              )
+            })}
             {showTypingIndicator && (
               <div className="flex justify-start">
                 <div className="px-4 sm:px-5 md:px-6 py-2 sm:py-3 md:py-4 rounded-3xl rounded-bl-none bg-gradient-to-r from-slate-100 to-slate-50">
@@ -292,7 +397,7 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
           ref={inputRef}
           type="text"
           value={newMessage}
-          onChange={(e) => setNewMessage(e.target.value)}
+          onChange={handleInputChange}
           onKeyPress={(e) => e.key === 'Enter' && handleSend()}
           placeholder="Type a message..."
           disabled={loading}
