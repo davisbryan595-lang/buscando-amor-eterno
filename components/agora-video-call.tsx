@@ -596,17 +596,66 @@ export default function AgoraVideoCall({
       const newEarpiece = !useEarpiece
       setUseEarpiece(newEarpiece)
 
-      const sinkId = newEarpiece ? 'earpiece' : 'speaker'
+      // Get available audio devices
+      const devices = await navigator.mediaDevices.enumerateDevices()
+      const audioOutputDevices = devices.filter((d) => d.kind === 'audiooutput')
 
-      // Apply to all remote audio tracks
+      console.log(`Audio devices found: ${audioOutputDevices.length}`)
+      console.log('Available audio outputs:', audioOutputDevices.map((d) => ({ deviceId: d.deviceId, label: d.label })))
+
+      if (audioOutputDevices.length === 0) {
+        console.warn('No audio output devices available')
+        return
+      }
+
+      // Find speaker and earpiece devices
+      let targetDevice: MediaDeviceInfo | undefined
+
+      if (newEarpiece) {
+        // Prefer earpiece (usually the first device or one labeled "Earpiece")
+        targetDevice = audioOutputDevices.find((d) => d.label.toLowerCase().includes('earpiece')) || audioOutputDevices[0]
+      } else {
+        // Prefer speaker (usually labeled "Speaker" or the last device)
+        targetDevice = audioOutputDevices.find((d) => d.label.toLowerCase().includes('speaker')) || audioOutputDevices[audioOutputDevices.length - 1]
+      }
+
+      if (!targetDevice) {
+        console.warn('Could not find target audio device')
+        return
+      }
+
+      console.log(`Switching to ${newEarpiece ? 'earpiece' : 'speaker'}: ${targetDevice.label}`)
+
+      // Apply to all remote audio tracks using setSinkId
       if (remoteUsers.length > 0) {
         for (const remoteUser of remoteUsers) {
           if (remoteUser.audioTrack) {
             try {
               const audioElement = remoteUser.audioTrack.getMediaStreamTrack()
-              if (audioElement && typeof (audioElement as any).setSinkId === 'function') {
-                await (audioElement as any).setSinkId(sinkId)
-                console.log(`Audio output routed to ${sinkId}`)
+              if (audioElement) {
+                // Try setSinkId method (works on Chrome/Android)
+                const audioContext = remoteUser.audioTrack.getAudioContext?.()
+                if (audioContext && typeof audioContext.setSinkId === 'function') {
+                  try {
+                    await audioContext.setSinkId(targetDevice.deviceId)
+                    console.log(`Audio routed to ${targetDevice.label}`)
+                  } catch (err) {
+                    console.warn('setSinkId not supported:', err)
+                  }
+                }
+
+                // Fallback: Try calling setSinkId on the element directly
+                const audioElements = document.querySelectorAll('audio')
+                for (const el of audioElements) {
+                  if (typeof (el as any).setSinkId === 'function') {
+                    try {
+                      await (el as any).setSinkId(targetDevice.deviceId)
+                      console.log(`Audio element routed to ${targetDevice.label}`)
+                    } catch (err) {
+                      console.warn('setSinkId error on audio element:', err)
+                    }
+                  }
+                }
               }
             } catch (err) {
               console.warn(`Error setting audio output for remote user:`, err)
@@ -615,20 +664,10 @@ export default function AgoraVideoCall({
         }
       }
 
-      // Also apply to local audio track for preview if needed
-      if (localAudioTrack) {
-        try {
-          const localAudio = localAudioTrack.getMediaStreamTrack()
-          if (localAudio && typeof (localAudio as any).setSinkId === 'function') {
-            await (localAudio as any).setSinkId(sinkId)
-          }
-        } catch (err) {
-          console.warn('Error setting audio output for local audio:', err)
-        }
-      }
+      toast.success(`Switched to ${newEarpiece ? 'earpiece' : 'speaker'}`)
     } catch (err) {
       console.error('Error toggling audio output:', err)
-      toast.error('Failed to switch audio output')
+      console.warn('Audio output switching may not be available on this device')
     }
   }
 
