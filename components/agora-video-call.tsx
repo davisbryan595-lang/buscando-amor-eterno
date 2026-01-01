@@ -67,7 +67,7 @@ export default function AgoraVideoCall({
 
   const appId = process.env.NEXT_PUBLIC_AGORA_APP_ID
 
-  // Listen for remote call end via Supabase Realtime
+  // Listen for force_end_call broadcast from remote user
   useEffect(() => {
     if (!user || !partnerId) return
 
@@ -75,8 +75,8 @@ export default function AgoraVideoCall({
     const channel = supabase.channel(`call:${roomName}`)
 
     channel
-      .on('broadcast', { event: 'call_ended' }, async (payload) => {
-        console.log('Remote end detected — cleaning up')
+      .on('broadcast', { event: 'force_end_call' }, async (payload) => {
+        console.log('Force end received — cleaning up')
 
         // Mark this as an intentional end to suppress "connection lost" UI
         setJustReceivedEndSignal(true)
@@ -89,23 +89,20 @@ export default function AgoraVideoCall({
 
         // Safely stop and close tracks
         if (localAudioTrack) {
-          localAudioTrack.stop()
-          localAudioTrack.close()
-          setLocalAudioTrack(null)
+          try {
+            await localAudioTrack.setEnabled(false)
+            localAudioTrack.close()
+          } catch (err) {
+            console.warn('Error closing audio track:', err)
+          }
         }
 
         if (localVideoTrack) {
-          localVideoTrack.stop()
-          localVideoTrack.close()
-          setLocalVideoTrack(null)
-        }
-
-        // Unpublish if still published
-        if (client) {
           try {
-            await client.unpublish()
+            await localVideoTrack.setEnabled(false)
+            localVideoTrack.close()
           } catch (err) {
-            console.warn('Error unpublishing:', err)
+            console.warn('Error closing video track:', err)
           }
         }
 
@@ -114,20 +111,12 @@ export default function AgoraVideoCall({
           try {
             await client.leave()
           } catch (err) {
-            console.warn('Error leaving channel:', err)
+            console.warn('Error leaving Agora channel:', err)
           }
         }
 
-        // Clear video containers
-        if (localVideoContainerRef.current) {
-          localVideoContainerRef.current.srcObject = null
-        }
-        if (remoteVideoContainerRef.current) {
-          remoteVideoContainerRef.current.srcObject = null
-        }
-
-        // Navigate back to conversation with this user
-        router.push(`/messages?user=${partnerId}`)
+        // Force redirect — no hanging
+        window.location.href = `/messages?user=${partnerId}`
       })
       .subscribe()
 
@@ -135,7 +124,7 @@ export default function AgoraVideoCall({
       channel.unsubscribe()
       supabase.removeChannel(channel)
     }
-  }, [user, partnerId, client, localAudioTrack, localVideoTrack, router])
+  }, [user, partnerId, client, localAudioTrack, localVideoTrack])
 
   // Listen for remote media state changes (camera/mic toggle)
   useEffect(() => {
