@@ -596,78 +596,70 @@ export default function AgoraVideoCall({
       const newEarpiece = !useEarpiece
       setUseEarpiece(newEarpiece)
 
-      // Get available audio devices
-      const devices = await navigator.mediaDevices.enumerateDevices()
-      const audioOutputDevices = devices.filter((d) => d.kind === 'audiooutput')
+      const deviceTarget = newEarpiece ? 'earpiece' : 'speaker'
+      console.log(`Toggling audio output to: ${deviceTarget}`)
 
-      console.log(`Audio devices found: ${audioOutputDevices.length}`)
-      console.log('Available audio outputs:', audioOutputDevices.map((d) => ({ deviceId: d.deviceId, label: d.label })))
+      // Check if browser supports setSinkId (for audio output device selection)
+      const supportsSetSinkId = navigator.mediaDevices && 'setSinkId' in HTMLMediaElement.prototype
 
-      if (audioOutputDevices.length === 0) {
-        console.warn('No audio output devices available')
+      if (!supportsSetSinkId) {
+        console.warn('This browser/device does not support audio output switching')
+        console.log('On iOS: Use the physical button or Control Center to switch audio output')
+        toast.info('Use device controls to switch audio output')
         return
       }
 
-      // Find speaker and earpiece devices
-      let targetDevice: MediaDeviceInfo | undefined
+      // Get available audio output devices
+      try {
+        const devices = await navigator.mediaDevices.enumerateDevices()
+        const audioOutputDevices = devices.filter((d) => d.kind === 'audiooutput')
 
-      if (newEarpiece) {
-        // Prefer earpiece (usually the first device or one labeled "Earpiece")
-        targetDevice = audioOutputDevices.find((d) => d.label.toLowerCase().includes('earpiece')) || audioOutputDevices[0]
-      } else {
-        // Prefer speaker (usually labeled "Speaker" or the last device)
-        targetDevice = audioOutputDevices.find((d) => d.label.toLowerCase().includes('speaker')) || audioOutputDevices[audioOutputDevices.length - 1]
-      }
+        if (audioOutputDevices.length === 0) {
+          console.warn('No audio output devices found')
+          return
+        }
 
-      if (!targetDevice) {
-        console.warn('Could not find target audio device')
-        return
-      }
+        console.log(`Found ${audioOutputDevices.length} audio output devices:`, audioOutputDevices.map((d) => d.label))
 
-      console.log(`Switching to ${newEarpiece ? 'earpiece' : 'speaker'}: ${targetDevice.label}`)
+        // Find target device
+        let targetDeviceId = audioOutputDevices[0].deviceId
 
-      // Apply to all remote audio tracks using setSinkId
-      if (remoteUsers.length > 0) {
-        for (const remoteUser of remoteUsers) {
-          if (remoteUser.audioTrack) {
-            try {
-              const audioElement = remoteUser.audioTrack.getMediaStreamTrack()
-              if (audioElement) {
-                // Try setSinkId method (works on Chrome/Android)
-                const audioContext = remoteUser.audioTrack.getAudioContext?.()
-                if (audioContext && typeof audioContext.setSinkId === 'function') {
-                  try {
-                    await audioContext.setSinkId(targetDevice.deviceId)
-                    console.log(`Audio routed to ${targetDevice.label}`)
-                  } catch (err) {
-                    console.warn('setSinkId not supported:', err)
-                  }
-                }
+        if (newEarpiece) {
+          const earpieceDevice = audioOutputDevices.find((d) => d.label.toLowerCase().includes('earpiece'))
+          targetDeviceId = earpieceDevice?.deviceId || audioOutputDevices[0].deviceId
+        } else {
+          const speakerDevice = audioOutputDevices.find((d) => d.label.toLowerCase().includes('speaker'))
+          targetDeviceId = speakerDevice?.deviceId || audioOutputDevices[audioOutputDevices.length - 1].deviceId
+        }
 
-                // Fallback: Try calling setSinkId on the element directly
-                const audioElements = document.querySelectorAll('audio')
-                for (const el of audioElements) {
-                  if (typeof (el as any).setSinkId === 'function') {
-                    try {
-                      await (el as any).setSinkId(targetDevice.deviceId)
-                      console.log(`Audio element routed to ${targetDevice.label}`)
-                    } catch (err) {
-                      console.warn('setSinkId error on audio element:', err)
-                    }
-                  }
-                }
-              }
-            } catch (err) {
-              console.warn(`Error setting audio output for remote user:`, err)
+        // Apply to all audio elements in the page (Agora SDK creates audio elements for remote users)
+        const audioElements = document.querySelectorAll('audio')
+        console.log(`Found ${audioElements.length} audio elements to update`)
+
+        let successCount = 0
+        for (const audioEl of audioElements) {
+          try {
+            if (typeof (audioEl as any).setSinkId === 'function') {
+              await (audioEl as any).setSinkId(targetDeviceId)
+              console.log(`Audio routed to device: ${targetDeviceId}`)
+              successCount++
             }
+          } catch (err: any) {
+            console.warn(`Failed to set sink for audio element: ${err.message}`)
           }
         }
-      }
 
-      toast.success(`Switched to ${newEarpiece ? 'earpiece' : 'speaker'}`)
+        if (successCount > 0) {
+          toast.success(`Switched to ${deviceTarget}`)
+        } else {
+          console.warn('Could not route audio to any devices')
+        }
+      } catch (err) {
+        console.error('Error enumerating audio devices:', err)
+        toast.info('Audio output switching not available on this device')
+      }
     } catch (err) {
       console.error('Error toggling audio output:', err)
-      console.warn('Audio output switching may not be available on this device')
     }
   }
 
