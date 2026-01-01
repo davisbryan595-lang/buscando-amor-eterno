@@ -349,12 +349,14 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
 
                 const getCallEmoji = (status: string, callType?: string) => {
                   if (status === 'missed') return '📵'
+                  if (status === 'rejected') return '📵'
                   if (status === 'ongoing') return '☎️'
                   return callType === 'video' ? '📹' : '☎️'
                 }
 
                 const callText =
                   msg.call_status === 'missed' ? `Missed ${msg.call_type} call` :
+                  msg.call_status === 'rejected' ? `Declined ${msg.call_type} call` :
                   msg.call_status === 'ended' && msg.call_duration ? `${msg.call_type} call · ${formatDuration(msg.call_duration)}` :
                   msg.call_status === 'ongoing' ? `Ongoing ${msg.call_type} call` :
                   `${msg.call_type} call`

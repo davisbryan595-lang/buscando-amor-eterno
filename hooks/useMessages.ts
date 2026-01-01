@@ -12,7 +12,7 @@ export interface Message {
   created_at: string
   type?: 'text' | 'call_log'
   call_type?: 'audio' | 'video'
-  call_status?: 'ongoing' | 'incoming' | 'missed' | 'ended'
+  call_status?: 'ongoing' | 'incoming' | 'missed' | 'ended' | 'rejected'
   call_duration?: number
   call_id?: string
 }
@@ -677,7 +677,7 @@ export function useMessages() {
     async (
       recipientId: string,
       callType: 'audio' | 'video',
-      callStatus: 'ongoing' | 'incoming' | 'missed' | 'ended',
+      callStatus: 'ongoing' | 'incoming' | 'missed' | 'ended' | 'rejected',
       callDuration?: number,
       callId?: string
     ) => {
@@ -875,6 +875,47 @@ export function useMessages() {
             type: 'broadcast',
             event: 'call_missed',
             payload: { callId, callType },
+          })
+        } else if (callStatus === 'rejected' && callId) {
+          // For rejected calls, update the existing record
+          const { data, error: err } = await supabase
+            .from('messages')
+            .update({
+              call_status: 'rejected',
+              content: `Declined ${callType} call`,
+            })
+            .eq('call_id', callId)
+            .select()
+            .single()
+
+          if (err) throw err
+
+          const callMessage = data as Message
+
+          // Update in messages state
+          setMessages((prev) =>
+            prev.map((msg) => msg.call_id === callId ? callMessage : msg)
+          )
+
+          // Cleanup localStorage
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem(`call_${callId}_start`)
+            localStorage.removeItem(`call_${callId}_timeout`)
+          }
+
+          // Broadcast the updated call message
+          const conversationChannel = supabase.channel(`messages:${user.id}:${recipientId}`)
+          await conversationChannel.send({
+            type: 'broadcast',
+            event: 'new_message',
+            payload: callMessage,
+          })
+
+          const userChannel = supabase.channel(`messages:${user.id}`)
+          await userChannel.send({
+            type: 'broadcast',
+            event: 'new_message',
+            payload: callMessage,
           })
         }
       } catch (err: any) {
