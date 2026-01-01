@@ -136,6 +136,31 @@ export default function AgoraVideoCall({
     }
   }, [user, partnerId, client, localAudioTrack, localVideoTrack, router])
 
+  // Listen for remote media state changes (camera/mic toggle)
+  useEffect(() => {
+    if (!user || !partnerId) return
+
+    const roomName = [user.id, partnerId].sort().join('-')
+    const channel = supabase.channel(`call:${roomName}`)
+
+    channel
+      .on('broadcast', { event: 'media_state' }, (payload) => {
+        console.log('Remote media state changed:', payload.payload)
+
+        if (payload.payload.type === 'camera') {
+          setRemoteCameraEnabled(payload.payload.enabled)
+        } else if (payload.payload.type === 'mic') {
+          setRemoteAudioEnabled(payload.payload.enabled)
+        }
+      })
+      .subscribe()
+
+    return () => {
+      channel.unsubscribe()
+      supabase.removeChannel(channel)
+    }
+  }, [user, partnerId])
+
   // Handle page unload (refresh/close tab) - broadcast clean call end
   useEffect(() => {
     const handleUnload = async () => {
