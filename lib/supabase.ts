@@ -91,8 +91,9 @@ export type Database = {
           read: boolean
           type: 'text' | 'call_log'
           call_type?: 'audio' | 'video'
-          call_status?: 'ongoing' | 'incoming' | 'missed' | 'ended'
+          call_status?: 'ongoing' | 'incoming' | 'missed' | 'ended' | 'rejected'
           call_duration?: number
+          call_id?: string
         }
         Insert: Omit<any, 'id' | 'created_at'>
         Update: Partial<any>
