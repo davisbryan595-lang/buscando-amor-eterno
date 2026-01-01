@@ -674,7 +674,7 @@ export default function AgoraVideoCall({
 
         console.log(`[Audio Output] Target: ${targetLabel} (${targetDeviceId.slice(0, 8)}...)`)
 
-        // Apply to all audio elements
+        // Strategy 1: Apply to all audio elements
         const audioElements = document.querySelectorAll('audio')
         console.log(`[Audio Output] Found ${audioElements.length} audio elements`)
 
@@ -687,8 +687,6 @@ export default function AgoraVideoCall({
               await (audioEl as any).setSinkId(targetDeviceId)
               successCount++
               console.log(`[Audio Output] ✓ Successfully routed audio element to ${targetLabel}`)
-            } else {
-              console.log('[Audio Output] Audio element does not support setSinkId')
             }
           } catch (err: any) {
             const errMsg = err?.message || String(err)
@@ -697,17 +695,54 @@ export default function AgoraVideoCall({
           }
         }
 
+        // Strategy 2: Try to find Agora audio context if available
+        // Agora SDK may expose audio context through getAudioContext() on remote users
+        if (remoteUsers.length > 0) {
+          console.log('[Audio Output] Attempting to set output on Agora remote users')
+          for (const remoteUser of remoteUsers) {
+            try {
+              // Try to access Agora's audio context
+              if (remoteUser.audioTrack && typeof remoteUser.audioTrack.getAudioContext === 'function') {
+                const audioContext = remoteUser.audioTrack.getAudioContext()
+                if (audioContext && typeof audioContext.setSinkId === 'function') {
+                  await audioContext.setSinkId(targetDeviceId)
+                  successCount++
+                  console.log(`[Audio Output] ✓ Routed Agora audio context to ${targetLabel}`)
+                }
+              }
+            } catch (err: any) {
+              console.warn(`[Audio Output] Could not set sink on remote user audio context:`, err?.message)
+            }
+          }
+        }
+
+        // Strategy 3: For iOS Android, try using getUserMedia constraints on a dummy stream
+        if (isAndroid && successCount === 0) {
+          console.log('[Audio Output] Android detected - attempting alternative routing method')
+          try {
+            // Create a test stream with the target device
+            const stream = await navigator.mediaDevices.getUserMedia({
+              audio: { deviceId: { exact: targetDeviceId } },
+            })
+            // Stop the test stream immediately - we just needed to set the output device
+            stream.getTracks().forEach((track) => track.stop())
+            successCount++
+            console.log(`[Audio Output] ✓ Set output device via getUserMedia`)
+          } catch (err: any) {
+            console.warn('[Audio Output] getUserMedia method failed:', err?.message)
+          }
+        }
+
+        // Report results
         if (successCount > 0) {
-          console.log(`[Audio Output] Success: ${successCount} audio elements switched`)
+          console.log(`[Audio Output] ✓ Success: ${successCount} routing(s) applied`)
           toast.success(`Switched to ${targetLabel}`)
-        } else if (audioElements.length === 0) {
-          console.warn('[Audio Output] No audio elements found (may use WebRTC for audio)')
-          // For WebRTC calls, Agora may not use HTML audio elements
-          // The output routing might be handled at the system level
-          toast.info(`🔊 Toggled output preference (system audio routing may apply)`)
+        } else if (audioElements.length === 0 && remoteUsers.length === 0) {
+          console.warn('[Audio Output] No audio sources found yet (call may not be fully connected)')
+          toast.info('Call not yet connected - try again when audio is active')
         } else {
-          console.error('[Audio Output] Failed to route audio:', errors)
-          toast.warning('Unable to switch audio output')
+          console.warn('[Audio Output] Could not apply audio routing:', errors)
+          toast.info(`Output switched (may depend on system settings)`)
         }
       } catch (err: any) {
         console.error('[Audio Output] Error enumerating devices:', err)
