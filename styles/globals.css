@@ -124,9 +124,3 @@
     @apply bg-background text-foreground;
   }
 }
-
-@layer components {
-  .font-cursive {
-    font-family: 'Brush Script MT', 'Lucida Handwriting', cursive;
-  }
-}
