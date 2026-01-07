@@ -180,9 +180,14 @@ export default function NuestraHistoriaPage() {
       {/* Introduction Section */}
       <section className="py-16 md:py-24 px-4 md:px-6" style={{ backgroundColor: '#FFF5F7' }}>
         <div className="w-full max-w-3xl mx-auto" data-scroll-animate="fade-in">
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-playfair font-bold text-center mb-6 md:mb-8 text-slate-900">
-            {t('ourStory.intro.heading')}
-          </h2>
+          <div className="text-center mb-6 md:mb-8">
+            <h3 className="text-lg sm:text-xl md:text-2xl font-playfair font-bold mb-2 text-rose-600">
+              De Niño a Padre
+            </h3>
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-playfair font-bold text-slate-900">
+              {t('ourStory.intro.heading')}
+            </h2>
+          </div>
 
           <div className="mb-12 md:mb-16">
             <p className="text-base sm:text-lg md:text-lg text-slate-700 leading-relaxed">
