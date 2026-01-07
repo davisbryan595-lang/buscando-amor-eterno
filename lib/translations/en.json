@@ -212,5 +212,38 @@
     "exporting": "Exporting...",
     "exportSuccess": "Data exported successfully",
     "exportFailed": "Failed to export data"
+  },
+  "ourStory": {
+    "heroTitle": "Nuestra Historia",
+    "heroSubtitle": "Our Story",
+    "heroDescription": "The journey of faith, love and service that brought Buscando Amor Eterno to life",
+    "intro": {
+      "heading": "De Niño a Padre: El Comienzo / From Child to Father: The Beginning",
+      "text": "When I was a child I always tried to figure out how I could help people, and follow God. In my 17 years of marriage I was able to follow faith with my son. However; my spouse chose to not participate in the Lord's following, and I guess I just didn't understand what a happy marriage, and being loved meant? Shortly after my wife asked for separation."
+    },
+    "darkValley": {
+      "heading": "Las Pruebas Más Difíciles / The Hardest Trials",
+      "text": "So after being scammed by hackers, and people just wanting to scam you for money. I was down, and depressed... So I currently work with kids in a hospital who need guidance, and assistance with them growing up, and being beneficial to society rather than creating crimes. So in other words I enjoy helping people, and paying it forward. So after being depressed and doing my best to help my child persevere with his special needs. I quickly realized I needed to help others as well."
+    },
+    "turningPoint": {
+      "heading": "Nacimiento de una Misión / Birth of a Mission",
+      "text": "So I decided to go after my goal, and create a singles group on social media to local people trying to make new friends, and new relationships (amor eterno). Many people have thanked me for helping them find their eternal love. I asked God when I would find my eternal love. He told me I have a very special person for you... But, you need to keep helping people out till you meet your Raina eterno (my eternal queen).",
+      "quote": "I have a very special person for you... But, you need to keep helping people out till you meet your Raina eterno (my eternal queen)."
+    },
+    "findingLove": {
+      "heading": "Mi Reina Eterna / My Eternal Queen",
+      "textPart1": "My current wife had a situation as well. Where she was looking for a husband, exposo, and a father to her kids. Just as I needed a wife/mother to my son My latina love showed me what love truly is. Having a family of boys and girls now. How blessed I am.",
+      "textPart2": "She understood that with my singles group my goal is to help people, and help troubled kids with my job. So with her beautiful ideas, and my ideas we were able to create Buscando Amor Eterno with the goal in mind that everyone deserves to have that special someone that is undying eternal love."
+    },
+    "mission": {
+      "heading": "Nuestra Promesa / Our Promise",
+      "text": "This website is designed for any person, race, culture around the world to find their special soulmate"
+    },
+    "closing": {
+      "quote": "Everyone deserves to have that special someone that is undying eternal love.",
+      "subtext1": "Únete a nosotros en la búsqueda del amor eterno.",
+      "subtext2": "Join us in the search for eternal love.",
+      "ctaButton": "Encontrar Mi Alma Gemela"
+    }
   }
 }
