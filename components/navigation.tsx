@@ -290,7 +290,7 @@ export default function Navigation() {
         )}
       </AnimatePresence>
 
-      {/* Mobile Notification Drawer - uses Portal so only needs one instance */}
+      {/* Single Notification Panel - handles both desktop and mobile via isMobile hook */}
       <ResponsiveNotificationsPanel
         open={notificationsOpen}
         onOpenChange={setNotificationsOpen}
