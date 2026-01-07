@@ -15,9 +15,14 @@ const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
 });
-const playfair = Playfair_Display({ 
+const playfair = Playfair_Display({
   subsets: ["latin"],
   variable: "--font-playfair",
+});
+const dancingScript = Dancing_Script({
+  subsets: ["latin"],
+  variable: "--font-cursive",
+  weight: ["400", "500", "600", "700"],
 });
 
 export const metadata: Metadata = {
