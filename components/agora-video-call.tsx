@@ -695,41 +695,54 @@ export default function AgoraVideoCall({
           }
         }
 
-        // Strategy 2: Try to find Agora audio context if available
-        // Agora SDK may expose audio context through getAudioContext() on remote users
-        if (remoteUsers.length > 0) {
-          console.log('[Audio Output] Attempting to set output on Agora remote users')
-          for (const remoteUser of remoteUsers) {
-            try {
-              // Try to access Agora's audio context
-              if (remoteUser.audioTrack && typeof remoteUser.audioTrack.getAudioContext === 'function') {
-                const audioContext = remoteUser.audioTrack.getAudioContext()
-                if (audioContext && typeof audioContext.setSinkId === 'function') {
-                  await audioContext.setSinkId(targetDeviceId)
-                  successCount++
-                  console.log(`[Audio Output] ✓ Routed Agora audio context to ${targetLabel}`)
-                }
-              }
-            } catch (err: any) {
-              console.warn(`[Audio Output] Could not set sink on remote user audio context:`, err?.message)
-            }
-          }
-        }
-
-        // Strategy 3: For iOS Android, try using getUserMedia constraints on a dummy stream
+        // Strategy 2: For Android, try using getUserMedia with device constraints
+        // This hints to the OS which device to prefer for audio output
         if (isAndroid && successCount === 0) {
-          console.log('[Audio Output] Android detected - attempting alternative routing method')
+          console.log('[Audio Output] Android detected - attempting audio routing via device constraints')
           try {
-            // Create a test stream with the target device
-            const stream = await navigator.mediaDevices.getUserMedia({
-              audio: { deviceId: { exact: targetDeviceId } },
-            })
-            // Stop the test stream immediately - we just needed to set the output device
-            stream.getTracks().forEach((track) => track.stop())
-            successCount++
-            console.log(`[Audio Output] ✓ Set output device via getUserMedia`)
+            // On Android, we can influence audio routing by requesting getUserMedia
+            // with the preferred device. Note: This works best when integrated with
+            // the Agora SDK's internal audio routing, but browser limitations apply.
+            const constraints = {
+              audio: {
+                echoCancellation: true,
+                noiseSuppression: true,
+                autoGainControl: true,
+              }
+            }
+
+            // Try the version that works best with Agora
+            const stream = await navigator.mediaDevices.getUserMedia(constraints)
+
+            // Check if we can set sink on any audio elements within this stream
+            const audioTracks = stream.getAudioTracks()
+            if (audioTracks.length > 0) {
+              // Store reference to the stream to keep audio routing active
+              // This is particularly important on Android for persistent routing
+              const audioElement = document.createElement('audio')
+              audioElement.srcObject = stream
+              audioElement.volume = 0 // Silent - just for routing
+              audioElement.style.display = 'none'
+
+              if (typeof (audioElement as any).setSinkId === 'function') {
+                try {
+                  await (audioElement as any).setSinkId(targetDeviceId)
+                  document.body.appendChild(audioElement)
+                  successCount++
+                  console.log(`[Audio Output] ✓ Audio routing established via getUserMedia`)
+                } catch (err) {
+                  console.warn('[Audio Output] setSinkId failed on synthesized element:', err)
+                  stream.getTracks().forEach((track) => track.stop())
+                }
+              } else {
+                stream.getTracks().forEach((track) => track.stop())
+              }
+            } else {
+              stream.getTracks().forEach((track) => track.stop())
+            }
           } catch (err: any) {
-            console.warn('[Audio Output] getUserMedia method failed:', err?.message)
+            const errMsg = err?.message || String(err)
+            console.warn(`[Audio Output] Android audio routing method failed: ${errMsg}`)
           }
         }
 
