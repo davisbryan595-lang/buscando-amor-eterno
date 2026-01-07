@@ -592,6 +592,12 @@ export default function AgoraVideoCall({
   }
 
   const toggleAudioOutput = async () => {
+    // Note: Audio output routing on web is limited by platform constraints:
+    // - iOS: Must use system controls (Control Center or device buttons)
+    // - Android: Attempts hardware routing via getUserMedia constraints
+    // - Desktop: Uses standard Web Audio setSinkId API
+    // Agora SDK's internal audio processing may limit some routing capabilities
+
     try {
       const newEarpiece = !useEarpiece
       setUseEarpiece(newEarpiece)
@@ -609,14 +615,14 @@ export default function AgoraVideoCall({
       const supportsSetSinkId = 'setSinkId' in HTMLMediaElement.prototype
 
       if (isIOS) {
-        console.log('[Audio Output] iOS detected - audio routing must be done via system controls')
-        toast.info('📱 iPhone/iPad: Use device buttons or Control Center to switch audio output')
+        console.log('[Audio Output] iOS detected - audio routing controlled by system')
+        toast.info('📱 iPhone/iPad: Use device buttons or swipe up Control Center to switch audio (Earpiece, Speaker, or Bluetooth)')
         return
       }
 
-      if (!supportsSetSinkId) {
+      if (!supportsSetSinkId && !isAndroid) {
         console.warn('[Audio Output] Browser does not support setSinkId')
-        toast.warning('Your device may not support audio output switching')
+        toast.warning('Your browser/device may not support audio output switching')
         return
       }
 
