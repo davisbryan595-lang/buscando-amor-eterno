@@ -66,12 +66,12 @@ export default function Navigation() {
 
         {/* Desktop Menu */}
         <div className="hidden md:flex gap-8 items-center">
-          <Link href="/" className="text-foreground hover:text-primary transition font-cursive">{t('common.home')}</Link>
-          <Link href="/browse" className="text-foreground hover:text-primary transition font-cursive">{t('common.browse')}</Link>
-          <Link href="/pricing" className="text-foreground hover:text-primary transition font-cursive">{t('common.pricing')}</Link>
-          <Link href="/messages" className="text-foreground hover:text-primary transition font-cursive">{t('common.messages')}</Link>
-          <Link href="/lounge" className="text-foreground hover:text-primary transition font-cursive">{t('common.lounge')}</Link>
-          <Link href="/nuestra-historia" className="text-foreground hover:text-primary transition font-cursive">{t('common.ourStory')}</Link>
+          <Link href="/" className="text-foreground hover:text-primary transition">{t('common.home')}</Link>
+          <Link href="/browse" className="text-foreground hover:text-primary transition">{t('common.browse')}</Link>
+          <Link href="/pricing" className="text-foreground hover:text-primary transition">{t('common.pricing')}</Link>
+          <Link href="/messages" className="text-foreground hover:text-primary transition">{t('common.messages')}</Link>
+          <Link href="/lounge" className="text-foreground hover:text-primary transition">{t('common.lounge')}</Link>
+          <Link href="/nuestra-historia" className="text-foreground hover:text-primary transition">{t('common.ourStory')}</Link>
 
           <div className="relative">
             <button
