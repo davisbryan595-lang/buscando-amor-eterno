@@ -92,6 +92,7 @@ export default function CallManager({ children }: CallManagerProps) {
             callType={acceptedCallData.callType}
             mode="incoming"
             callId={acceptedCallData.invitationId}
+            logId={acceptedCallData.logId}
           />
         </div>
       )}
