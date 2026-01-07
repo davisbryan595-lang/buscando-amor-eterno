@@ -48,6 +48,35 @@ interface ChatWindowProps {
   onBack?: () => void
 }
 
+interface CallLog {
+  id: string
+  caller_id: string
+  receiver_id: string
+  call_type: 'audio' | 'video'
+  status: 'ongoing' | 'completed' | 'missed' | 'declined' | 'cancelled'
+  started_at: string
+  answered_at?: string
+  ended_at?: string
+  duration?: number
+  type: 'call_log'
+}
+
+interface CombinedMessage {
+  id: string
+  type: 'text' | 'call_log'
+  created_at: string
+  sender_id?: string
+  recipient_id?: string
+  content?: string
+  read?: boolean
+  call_type?: 'audio' | 'video'
+  status?: string
+  started_at?: string
+  duration?: number
+  caller_id?: string
+  receiver_id?: string
+}
+
 export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
   const router = useRouter()
   const { user } = useAuth()
@@ -57,6 +86,8 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
   const [loading, setLoading] = useState(false)
   const [callingState, setCallingState] = useState<'idle' | 'calling'>('idle')
   const [otherUserDetails, setOtherUserDetails] = useState<{ name: string; image: string | null } | null>(null)
+  const [callLogs, setCallLogs] = useState<CallLog[]>([])
+  const [combinedMessages, setCombinedMessages] = useState<CombinedMessage[]>([])
   const [contextMenu, setContextMenu] = useState<{
     x: number
     y: number
