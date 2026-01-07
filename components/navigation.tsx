@@ -86,15 +86,6 @@ export default function Navigation() {
                 </span>
               )}
             </button>
-            {/* Desktop notification dropdown */}
-            <div className="hidden md:block">
-              <ResponsiveNotificationsPanel
-                open={notificationsOpen}
-                onOpenChange={setNotificationsOpen}
-                notifications={notifications}
-                onDismiss={handleNotificationDismiss}
-              />
-            </div>
           </div>
 
           <div className="relative">
@@ -299,7 +290,7 @@ export default function Navigation() {
         )}
       </AnimatePresence>
 
-      {/* Mobile Notification Drawer - uses Portal so only needs one instance */}
+      {/* Single Notification Panel - handles both desktop and mobile via isMobile hook */}
       <ResponsiveNotificationsPanel
         open={notificationsOpen}
         onOpenChange={setNotificationsOpen}
