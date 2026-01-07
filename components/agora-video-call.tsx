@@ -826,9 +826,13 @@ export default function AgoraVideoCall({
         }
       }
 
-      // 2. Clear call timer
+      // 2. Clear call timer and missed call timeout
       if (callTimerRef.current) {
         clearInterval(callTimerRef.current)
+      }
+
+      if (missedCallTimeoutRef.current) {
+        clearTimeout(missedCallTimeoutRef.current)
       }
 
       // 3. Update call_logs table with final status and duration
