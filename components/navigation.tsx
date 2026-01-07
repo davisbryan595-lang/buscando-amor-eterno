@@ -197,7 +197,7 @@ export default function Navigation() {
             exit={{ opacity: 0, x: -20 }}
             transition={{ delay: 0.1, duration: 0.3 }}
           >
-            <Link href="/" className="block text-foreground hover:text-primary transition py-2" onClick={() => setMenuOpen(false)}>
+            <Link href="/" className="block text-foreground hover:text-primary transition py-2 font-cursive" onClick={() => setMenuOpen(false)}>
               {t('common.home')}
             </Link>
           </motion.div>
@@ -207,7 +207,7 @@ export default function Navigation() {
             exit={{ opacity: 0, x: -20 }}
             transition={{ delay: 0.15, duration: 0.3 }}
           >
-            <Link href="/browse" className="block text-foreground hover:text-primary transition py-2" onClick={() => setMenuOpen(false)}>
+            <Link href="/browse" className="block text-foreground hover:text-primary transition py-2 font-cursive" onClick={() => setMenuOpen(false)}>
               {t('common.browse')}
             </Link>
           </motion.div>
@@ -217,7 +217,7 @@ export default function Navigation() {
             exit={{ opacity: 0, x: -20 }}
             transition={{ delay: 0.2, duration: 0.3 }}
           >
-            <Link href="/pricing" className="block text-foreground hover:text-primary transition py-2" onClick={() => setMenuOpen(false)}>
+            <Link href="/pricing" className="block text-foreground hover:text-primary transition py-2 font-cursive" onClick={() => setMenuOpen(false)}>
               {t('common.pricing')}
             </Link>
           </motion.div>
@@ -227,7 +227,7 @@ export default function Navigation() {
             exit={{ opacity: 0, x: -20 }}
             transition={{ delay: 0.25, duration: 0.3 }}
           >
-            <Link href="/messages" className="block text-foreground hover:text-primary transition py-2" onClick={() => setMenuOpen(false)}>
+            <Link href="/messages" className="block text-foreground hover:text-primary transition py-2 font-cursive" onClick={() => setMenuOpen(false)}>
               {t('common.messages')}
             </Link>
           </motion.div>
@@ -237,7 +237,7 @@ export default function Navigation() {
             exit={{ opacity: 0, x: -20 }}
             transition={{ delay: 0.3, duration: 0.3 }}
           >
-            <Link href="/lounge" className="block text-foreground hover:text-primary transition py-2" onClick={() => setMenuOpen(false)}>
+            <Link href="/lounge" className="block text-foreground hover:text-primary transition py-2 font-cursive" onClick={() => setMenuOpen(false)}>
               {t('common.lounge')}
             </Link>
           </motion.div>
@@ -247,7 +247,7 @@ export default function Navigation() {
             exit={{ opacity: 0, x: -20 }}
             transition={{ delay: 0.32, duration: 0.3 }}
           >
-            <Link href="/nuestra-historia" className="block text-foreground hover:text-primary transition py-2" onClick={() => setMenuOpen(false)}>
+            <Link href="/nuestra-historia" className="block text-foreground hover:text-primary transition py-2 font-cursive" onClick={() => setMenuOpen(false)}>
               {t('common.ourStory')}
             </Link>
           </motion.div>
