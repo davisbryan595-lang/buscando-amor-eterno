@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { Geist, Geist_Mono, Inter, Playfair_Display } from 'next/font/google'
+import { Geist, Geist_Mono, Inter, Playfair_Display, Dancing_Script } from 'next/font/google'
 import './globals.css'
 import { AuthProvider } from '@/context/auth-context'
 import { I18nProvider } from '@/lib/i18n-context'
