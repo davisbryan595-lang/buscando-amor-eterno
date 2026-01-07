@@ -51,10 +51,19 @@ export function useIncomingCalls() {
 
         if (err) throw err
 
-        // Log rejected call (from caller's perspective)
+        // Log rejected call in both call_logs and messages
         if (callInvitation) {
           try {
-            // Attempt to update existing log with 'rejected' status
+            // Update call_logs with declined status
+            await supabase
+              .from('call_logs')
+              .update({
+                status: 'declined',
+                ended_at: new Date().toISOString(),
+              })
+              .eq('id', callInvitation.call_id)
+
+            // Attempt to update existing log in messages table with 'rejected' status (legacy support)
             const { count, error: updateErr } = await supabase
               .from('messages')
               .update({
