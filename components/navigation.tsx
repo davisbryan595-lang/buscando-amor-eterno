@@ -282,7 +282,7 @@ export default function Navigation() {
               transition={{ delay: 0.4, duration: 0.3 }}
             >
               <div className="border-t border-rose-100 pt-3 mt-3 space-y-3">
-                <Link href="/login" className="block text-foreground hover:text-primary transition py-2" onClick={() => setMenuOpen(false)}>
+                <Link href="/login" className="block text-foreground hover:text-primary transition py-2 font-cursive" onClick={() => setMenuOpen(false)}>
                   {t('common.logIn')}
                 </Link>
                 <Link
