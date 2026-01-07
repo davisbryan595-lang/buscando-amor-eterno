@@ -524,9 +524,13 @@ export default function AgoraVideoCall({
     return () => {
       // Cleanup
       const cleanup = async () => {
-        // Clear call timer
+        // Clear call timer and missed call timeout
         if (callTimerRef.current) {
           clearInterval(callTimerRef.current)
+        }
+
+        if (missedCallTimeoutRef.current) {
+          clearTimeout(missedCallTimeoutRef.current)
         }
 
         // Stop and close audio track
