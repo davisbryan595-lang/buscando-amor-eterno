@@ -241,6 +241,16 @@ export default function Navigation() {
               {t('common.lounge')}
             </Link>
           </motion.div>
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ delay: 0.32, duration: 0.3 }}
+          >
+            <Link href="/nuestra-historia" className="block text-foreground hover:text-primary transition py-2" onClick={() => setMenuOpen(false)}>
+              {t('common.ourStory')}
+            </Link>
+          </motion.div>
 
           <motion.div
             initial={{ opacity: 0, x: -20 }}
