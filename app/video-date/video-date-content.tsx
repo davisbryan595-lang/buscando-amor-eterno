@@ -24,6 +24,7 @@ export default function VideoDateContent() {
   const callType = (searchParams.get('type') as 'audio' | 'video') || 'video'
   const mode = searchParams.get('mode') as 'outgoing' | 'incoming' | null
   const callId = searchParams.get('callId')
+  const logId = searchParams.get('logId')
 
   useEffect(() => {
     // Wait for auth to load before proceeding
@@ -227,6 +228,7 @@ export default function VideoDateContent() {
           callType={callType}
           mode={mode}
           callId={callId}
+          logId={logId}
         />
       </div>
     )

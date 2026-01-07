@@ -4,6 +4,7 @@ import React, { useState, useCallback } from 'react'
 import IncomingCallModal from '@/components/incoming-call-modal'
 import AgoraVideoCall from '@/components/agora-video-call'
 import { useIncomingCalls } from '@/hooks/useIncomingCalls'
+import { supabase } from '@/lib/supabase'
 
 interface CallManagerProps {
   children: React.ReactNode
@@ -16,6 +17,7 @@ export default function CallManager({ children }: CallManagerProps) {
     callerId: string
     callerName: string
     callType: 'audio' | 'video'
+    logId: string
   } | null>(null)
 
   const handleAcceptCall = useCallback(
@@ -23,11 +25,23 @@ export default function CallManager({ children }: CallManagerProps) {
       try {
         await acceptCall(callId)
         if (incomingCall) {
+          // Get the call_logs entry for this incoming call
+          const { data: callLog } = await supabase
+            .from('call_logs')
+            .select('id')
+            .eq('caller_id', incomingCall.caller_id)
+            .eq('receiver_id', incomingCall.recipient_id)
+            .eq('status', 'ongoing')
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .single()
+
           setAcceptedCallData({
             invitationId: callId,
             callerId: incomingCall.caller_id,
             callerName: incomingCall.caller_name || 'Unknown',
             callType: incomingCall.call_type,
+            logId: callLog?.id || '',
           })
           // Clear the incoming call notification
           clearCall()
@@ -78,6 +92,7 @@ export default function CallManager({ children }: CallManagerProps) {
             callType={acceptedCallData.callType}
             mode="incoming"
             callId={acceptedCallData.invitationId}
+            logId={acceptedCallData.logId}
           />
         </div>
       )}

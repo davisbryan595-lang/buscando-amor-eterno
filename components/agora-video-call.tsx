@@ -26,6 +26,7 @@ interface AgoraCallProps {
   callType?: 'audio' | 'video'
   mode?: 'outgoing' | 'incoming' | null
   callId?: string | null
+  logId?: string | null
 }
 
 export default function AgoraVideoCall({
@@ -34,6 +35,7 @@ export default function AgoraVideoCall({
   callType = 'video',
   mode = null,
   callId = null,
+  logId = null,
 }: AgoraCallProps) {
   const router = useRouter()
   const { user, getSession } = useAuth()
@@ -66,6 +68,35 @@ export default function AgoraVideoCall({
   const justReceivedEndSignalRef = useRef(false)
 
   const appId = process.env.NEXT_PUBLIC_AGORA_APP_ID
+  const missedCallTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+
+  // Auto-mark as missed if call is not answered within 30 seconds (for outgoing calls)
+  useEffect(() => {
+    if (logId && !isConnected && mode === 'outgoing') {
+      // Set timeout to mark call as missed after 30 seconds
+      missedCallTimeoutRef.current = setTimeout(async () => {
+        if (!isConnected && logId) {
+          try {
+            await supabase
+              .from('call_logs')
+              .update({
+                status: 'missed',
+                ended_at: new Date().toISOString(),
+              })
+              .eq('id', logId)
+          } catch (err) {
+            console.warn('Failed to mark call as missed:', err)
+          }
+        }
+      }, 30000)
+    }
+
+    return () => {
+      if (missedCallTimeoutRef.current) {
+        clearTimeout(missedCallTimeoutRef.current)
+      }
+    }
+  }, [logId, isConnected, mode])
 
   // Listen for force_end_call broadcast from remote user
   useEffect(() => {
@@ -342,6 +373,13 @@ export default function AgoraVideoCall({
               if (isFirstRemoteUser) {
                 setIsConnected(true)
                 callStartTimeRef.current = Date.now()
+
+                // Clear missed call timeout since the call was answered
+                if (missedCallTimeoutRef.current) {
+                  clearTimeout(missedCallTimeoutRef.current)
+                  missedCallTimeoutRef.current = null
+                }
+
                 if (callTimerRef.current) {
                   clearInterval(callTimerRef.current)
                 }
@@ -372,6 +410,13 @@ export default function AgoraVideoCall({
             setIsConnected(true)
             if (callStartTimeRef.current === 0) {
               callStartTimeRef.current = Date.now()
+
+              // Clear missed call timeout since the call was answered
+              if (missedCallTimeoutRef.current) {
+                clearTimeout(missedCallTimeoutRef.current)
+                missedCallTimeoutRef.current = null
+              }
+
               if (callTimerRef.current) {
                 clearInterval(callTimerRef.current)
               }
@@ -479,9 +524,13 @@ export default function AgoraVideoCall({
     return () => {
       // Cleanup
       const cleanup = async () => {
-        // Clear call timer
+        // Clear call timer and missed call timeout
         if (callTimerRef.current) {
           clearInterval(callTimerRef.current)
+        }
+
+        if (missedCallTimeoutRef.current) {
+          clearTimeout(missedCallTimeoutRef.current)
         }
 
         // Stop and close audio track
@@ -795,12 +844,39 @@ export default function AgoraVideoCall({
         }
       }
 
-      // 2. Clear call timer
+      // 2. Clear call timer and missed call timeout
       if (callTimerRef.current) {
         clearInterval(callTimerRef.current)
       }
 
-      // 3. Log ended call with duration
+      if (missedCallTimeoutRef.current) {
+        clearTimeout(missedCallTimeoutRef.current)
+      }
+
+      // 3. Update call_logs table with final status and duration
+      try {
+        if (logId) {
+          const finalDuration = isConnected
+            ? Math.floor((Date.now() - callStartTimeRef.current) / 1000)
+            : null
+
+          const callStatus = isConnected ? 'completed' : 'cancelled'
+
+          await supabase
+            .from('call_logs')
+            .update({
+              status: callStatus,
+              ended_at: new Date().toISOString(),
+              duration: finalDuration,
+              answered_at: isConnected ? new Date(callStartTimeRef.current).toISOString() : null,
+            })
+            .eq('id', logId)
+        }
+      } catch (err) {
+        console.warn('Failed to update call_logs:', err)
+      }
+
+      // 4. Log ended call with duration (legacy message table support)
       try {
         const finalDuration = Math.floor((Date.now() - callStartTimeRef.current) / 1000)
         if (ongoingLoggedRef.current && callIdRef.current) {
@@ -810,7 +886,7 @@ export default function AgoraVideoCall({
         console.warn('Failed to log ended call:', err)
       }
 
-      // 4. Delete call invitation from database when call ends
+      // 5. Delete call invitation from database when call ends
       // This prevents duplicate key constraint violations on future calls
       if (user) {
         const roomName = [user.id, partnerId].sort().join('-')
@@ -825,7 +901,7 @@ export default function AgoraVideoCall({
         }
       }
 
-      // 5. Local cleanup - stop and close tracks
+      // 6. Local cleanup - stop and close tracks
       // Safely stop and close tracks (check if they exist and are not already closed)
       if (localAudioTrack) {
         try {
@@ -854,7 +930,7 @@ export default function AgoraVideoCall({
         }
       }
 
-      // 6. Force redirect — hard redirect, no state/navigation bugs
+      // 7. Force redirect — hard redirect, no state/navigation bugs
       window.location.href = `/messages?user=${partnerId}`
     } catch (err) {
       console.warn('endCall error (safe):', err)
