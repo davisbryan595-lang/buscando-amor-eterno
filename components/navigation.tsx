@@ -86,15 +86,6 @@ export default function Navigation() {
                 </span>
               )}
             </button>
-            {/* Desktop notification dropdown */}
-            <div className="hidden md:block">
-              <ResponsiveNotificationsPanel
-                open={notificationsOpen}
-                onOpenChange={setNotificationsOpen}
-                notifications={notifications}
-                onDismiss={handleNotificationDismiss}
-              />
-            </div>
           </div>
 
           <div className="relative">
