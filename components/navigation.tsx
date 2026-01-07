@@ -71,6 +71,7 @@ export default function Navigation() {
           <Link href="/pricing" className="text-foreground hover:text-primary transition">{t('common.pricing')}</Link>
           <Link href="/messages" className="text-foreground hover:text-primary transition">{t('common.messages')}</Link>
           <Link href="/lounge" className="text-foreground hover:text-primary transition">{t('common.lounge')}</Link>
+          <Link href="/nuestra-historia" className="text-foreground hover:text-primary transition">{t('common.ourStory')}</Link>
 
           <div className="relative">
             <button
