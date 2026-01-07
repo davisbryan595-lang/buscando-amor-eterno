@@ -128,7 +128,7 @@ export default function Navigation() {
             <AccountMenu />
           ) : isMounted ? (
             <>
-              <Link href="/login" className="px-4 py-2 text-foreground hover:text-primary transition font-cursive">
+              <Link href="/login" className="px-4 py-2 text-foreground hover:text-primary transition">
                 {t('common.logIn')}
               </Link>
               <Link
