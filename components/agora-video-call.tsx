@@ -748,18 +748,19 @@ export default function AgoraVideoCall({
 
         // Report results
         if (successCount > 0) {
-          console.log(`[Audio Output] ✓ Success: ${successCount} routing(s) applied`)
+          console.log(`[Audio Output] ✓ Success: Audio output routing applied`)
           toast.success(`Switched to ${targetLabel}`)
-        } else if (audioElements.length === 0 && remoteUsers.length === 0) {
-          console.warn('[Audio Output] No audio sources found yet (call may not be fully connected)')
-          toast.info('Call not yet connected - try again when audio is active')
+        } else if (audioElements.length === 0) {
+          console.warn('[Audio Output] No audio elements detected - call may not be fully connected yet')
+          toast.info('Tip: Make sure the call is connected and audio is active, then try again')
         } else {
-          console.warn('[Audio Output] Could not apply audio routing:', errors)
-          toast.info(`Output switched (may depend on system settings)`)
+          // Fallback message when routing isn't possible but call is connected
+          console.warn('[Audio Output] Browser/system limitations prevent audio output routing:', errors)
+          toast.info(`🔊 ${targetLabel} selected. Note: Full audio routing may depend on system settings on this device`)
         }
       } catch (err: any) {
-        console.error('[Audio Output] Error enumerating devices:', err)
-        toast.warning('Audio switching not available on this device')
+        console.error('[Audio Output] Error enumerating audio devices:', err)
+        toast.warning('Audio device switching not fully supported on this browser/device')
       }
     } catch (err) {
       console.error('[Audio Output] Unexpected error:', err)
