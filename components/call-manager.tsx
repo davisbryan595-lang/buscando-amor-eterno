@@ -4,6 +4,7 @@ import React, { useState, useCallback } from 'react'
 import IncomingCallModal from '@/components/incoming-call-modal'
 import AgoraVideoCall from '@/components/agora-video-call'
 import { useIncomingCalls } from '@/hooks/useIncomingCalls'
+import { supabase } from '@/lib/supabase'
 
 interface CallManagerProps {
   children: React.ReactNode
