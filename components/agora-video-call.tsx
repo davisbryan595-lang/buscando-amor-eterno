@@ -592,6 +592,12 @@ export default function AgoraVideoCall({
   }
 
   const toggleAudioOutput = async () => {
+    // Note: Audio output routing on web is limited by platform constraints:
+    // - iOS: Must use system controls (Control Center or device buttons)
+    // - Android: Attempts hardware routing via getUserMedia constraints
+    // - Desktop: Uses standard Web Audio setSinkId API
+    // Agora SDK's internal audio processing may limit some routing capabilities
+
     try {
       const newEarpiece = !useEarpiece
       setUseEarpiece(newEarpiece)
@@ -609,14 +615,14 @@ export default function AgoraVideoCall({
       const supportsSetSinkId = 'setSinkId' in HTMLMediaElement.prototype
 
       if (isIOS) {
-        console.log('[Audio Output] iOS detected - audio routing must be done via system controls')
-        toast.info('📱 iPhone/iPad: Use device buttons or Control Center to switch audio output')
+        console.log('[Audio Output] iOS detected - audio routing controlled by system')
+        toast.info('📱 iPhone/iPad: Use device buttons or swipe up Control Center to switch audio (Earpiece, Speaker, or Bluetooth)')
         return
       }
 
-      if (!supportsSetSinkId) {
+      if (!supportsSetSinkId && !isAndroid) {
         console.warn('[Audio Output] Browser does not support setSinkId')
-        toast.warning('Your device may not support audio output switching')
+        toast.warning('Your browser/device may not support audio output switching')
         return
       }
 
@@ -695,58 +701,72 @@ export default function AgoraVideoCall({
           }
         }
 
-        // Strategy 2: Try to find Agora audio context if available
-        // Agora SDK may expose audio context through getAudioContext() on remote users
-        if (remoteUsers.length > 0) {
-          console.log('[Audio Output] Attempting to set output on Agora remote users')
-          for (const remoteUser of remoteUsers) {
-            try {
-              // Try to access Agora's audio context
-              if (remoteUser.audioTrack && typeof remoteUser.audioTrack.getAudioContext === 'function') {
-                const audioContext = remoteUser.audioTrack.getAudioContext()
-                if (audioContext && typeof audioContext.setSinkId === 'function') {
-                  await audioContext.setSinkId(targetDeviceId)
-                  successCount++
-                  console.log(`[Audio Output] ✓ Routed Agora audio context to ${targetLabel}`)
-                }
-              }
-            } catch (err: any) {
-              console.warn(`[Audio Output] Could not set sink on remote user audio context:`, err?.message)
-            }
-          }
-        }
-
-        // Strategy 3: For iOS Android, try using getUserMedia constraints on a dummy stream
+        // Strategy 2: For Android, try using getUserMedia with device constraints
+        // This hints to the OS which device to prefer for audio output
         if (isAndroid && successCount === 0) {
-          console.log('[Audio Output] Android detected - attempting alternative routing method')
+          console.log('[Audio Output] Android detected - attempting audio routing via device constraints')
           try {
-            // Create a test stream with the target device
-            const stream = await navigator.mediaDevices.getUserMedia({
-              audio: { deviceId: { exact: targetDeviceId } },
-            })
-            // Stop the test stream immediately - we just needed to set the output device
-            stream.getTracks().forEach((track) => track.stop())
-            successCount++
-            console.log(`[Audio Output] ✓ Set output device via getUserMedia`)
+            // On Android, we can influence audio routing by requesting getUserMedia
+            // with the preferred device. Note: This works best when integrated with
+            // the Agora SDK's internal audio routing, but browser limitations apply.
+            const constraints = {
+              audio: {
+                echoCancellation: true,
+                noiseSuppression: true,
+                autoGainControl: true,
+              }
+            }
+
+            // Try the version that works best with Agora
+            const stream = await navigator.mediaDevices.getUserMedia(constraints)
+
+            // Check if we can set sink on any audio elements within this stream
+            const audioTracks = stream.getAudioTracks()
+            if (audioTracks.length > 0) {
+              // Store reference to the stream to keep audio routing active
+              // This is particularly important on Android for persistent routing
+              const audioElement = document.createElement('audio')
+              audioElement.srcObject = stream
+              audioElement.volume = 0 // Silent - just for routing
+              audioElement.style.display = 'none'
+
+              if (typeof (audioElement as any).setSinkId === 'function') {
+                try {
+                  await (audioElement as any).setSinkId(targetDeviceId)
+                  document.body.appendChild(audioElement)
+                  successCount++
+                  console.log(`[Audio Output] ✓ Audio routing established via getUserMedia`)
+                } catch (err) {
+                  console.warn('[Audio Output] setSinkId failed on synthesized element:', err)
+                  stream.getTracks().forEach((track) => track.stop())
+                }
+              } else {
+                stream.getTracks().forEach((track) => track.stop())
+              }
+            } else {
+              stream.getTracks().forEach((track) => track.stop())
+            }
           } catch (err: any) {
-            console.warn('[Audio Output] getUserMedia method failed:', err?.message)
+            const errMsg = err?.message || String(err)
+            console.warn(`[Audio Output] Android audio routing method failed: ${errMsg}`)
           }
         }
 
         // Report results
         if (successCount > 0) {
-          console.log(`[Audio Output] ✓ Success: ${successCount} routing(s) applied`)
+          console.log(`[Audio Output] ✓ Success: Audio output routing applied`)
           toast.success(`Switched to ${targetLabel}`)
-        } else if (audioElements.length === 0 && remoteUsers.length === 0) {
-          console.warn('[Audio Output] No audio sources found yet (call may not be fully connected)')
-          toast.info('Call not yet connected - try again when audio is active')
+        } else if (audioElements.length === 0) {
+          console.warn('[Audio Output] No audio elements detected - call may not be fully connected yet')
+          toast.info('Tip: Make sure the call is connected and audio is active, then try again')
         } else {
-          console.warn('[Audio Output] Could not apply audio routing:', errors)
-          toast.info(`Output switched (may depend on system settings)`)
+          // Fallback message when routing isn't possible but call is connected
+          console.warn('[Audio Output] Browser/system limitations prevent audio output routing:', errors)
+          toast.info(`🔊 ${targetLabel} selected. Note: Full audio routing may depend on system settings on this device`)
         }
       } catch (err: any) {
-        console.error('[Audio Output] Error enumerating devices:', err)
-        toast.warning('Audio switching not available on this device')
+        console.error('[Audio Output] Error enumerating audio devices:', err)
+        toast.warning('Audio device switching not fully supported on this browser/device')
       }
     } catch (err) {
       console.error('[Audio Output] Unexpected error:', err)
