@@ -228,6 +228,7 @@ export default function VideoDateContent() {
           callType={callType}
           mode={mode}
           callId={callId}
+          logId={logId}
         />
       </div>
     )
