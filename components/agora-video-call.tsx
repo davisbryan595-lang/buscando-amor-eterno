@@ -26,6 +26,7 @@ interface AgoraCallProps {
   callType?: 'audio' | 'video'
   mode?: 'outgoing' | 'incoming' | null
   callId?: string | null
+  logId?: string | null
 }
 
 export default function AgoraVideoCall({
