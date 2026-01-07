@@ -22,7 +22,7 @@ const playfair = Playfair_Display({
 const dancingScript = Dancing_Script({
   subsets: ["latin"],
   variable: "--font-cursive",
-  weight: ["400", "500", "600", "700"],
+  weight: "400",
 });
 
 export const metadata: Metadata = {
