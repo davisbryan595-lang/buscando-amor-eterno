@@ -24,11 +24,23 @@ export default function CallManager({ children }: CallManagerProps) {
       try {
         await acceptCall(callId)
         if (incomingCall) {
+          // Get the call_logs entry for this incoming call
+          const { data: callLog } = await supabase
+            .from('call_logs')
+            .select('id')
+            .eq('caller_id', incomingCall.caller_id)
+            .eq('receiver_id', incomingCall.recipient_id)
+            .eq('status', 'ongoing')
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .single()
+
           setAcceptedCallData({
             invitationId: callId,
             callerId: incomingCall.caller_id,
             callerName: incomingCall.caller_name || 'Unknown',
             callType: incomingCall.call_type,
+            logId: callLog?.id || '',
           })
           // Clear the incoming call notification
           clearCall()
