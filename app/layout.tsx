@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { Geist, Geist_Mono, Inter, Playfair_Display, Dancing_Script } from 'next/font/google'
+import { Geist, Geist_Mono, Inter, Playfair_Display } from 'next/font/google'
 import './globals.css'
 import { AuthProvider } from '@/context/auth-context'
 import { I18nProvider } from '@/lib/i18n-context'
@@ -11,18 +11,13 @@ import { ReconnectHandler } from '@/components/reconnect-handler'
 
 const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
-const inter = Inter({ 
+const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
 });
 const playfair = Playfair_Display({
   subsets: ["latin"],
   variable: "--font-playfair",
-});
-const dancingScript = Dancing_Script({
-  subsets: ["latin"],
-  variable: "--font-cursive",
-  weight: "400",
 });
 
 export const metadata: Metadata = {
