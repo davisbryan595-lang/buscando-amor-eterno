@@ -7,6 +7,7 @@ import { Preloader } from '@/components/preloader'
 import CallManager from '@/components/call-manager'
 import { Toaster } from '@/components/ui/sonner'
 import { SessionManager } from '@/components/session-manager'
+import { ReconnectHandler } from '@/components/reconnect-handler'
 
 const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
@@ -57,6 +58,7 @@ export default function RootLayout({
       </head>
       <body className={`${inter.variable} ${playfair.variable} font-sans antialiased bg-white text-slate-900`}>
         <Preloader />
+        <ReconnectHandler />
         <I18nProvider>
           <AuthProvider>
             <SessionManager />
