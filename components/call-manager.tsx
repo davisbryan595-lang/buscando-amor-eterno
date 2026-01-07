@@ -16,6 +16,7 @@ export default function CallManager({ children }: CallManagerProps) {
     callerId: string
     callerName: string
     callType: 'audio' | 'video'
+    logId: string
   } | null>(null)
 
   const handleAcceptCall = useCallback(
