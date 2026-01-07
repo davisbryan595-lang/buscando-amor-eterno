@@ -111,10 +111,55 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
     }
   }
 
+  // Fetch call logs and merge with messages
+  const fetchAndMergeMessages = async () => {
+    if (!conversation?.other_user_id || !user) return
+
+    try {
+      // Fetch call logs from call_logs table
+      const { data: callLogsData } = await supabase
+        .from('call_logs')
+        .select('*')
+        .or(`and(caller_id.eq.${user.id},receiver_id.eq.${conversation.other_user_id}),and(caller_id.eq.${conversation.other_user_id},receiver_id.eq.${user.id})`)
+        .order('started_at', { ascending: true })
+
+      if (callLogsData) {
+        setCallLogs(callLogsData)
+      }
+    } catch (err) {
+      console.error('Error fetching call logs:', err)
+    }
+  }
+
+  // Merge messages and call logs chronologically
+  useEffect(() => {
+    const merged: CombinedMessage[] = [
+      ...(messages || []).map(m => ({
+        ...m,
+        type: 'text' as const,
+        created_at: m.created_at,
+      })),
+      ...(callLogs || []).map(c => ({
+        id: c.id,
+        type: 'call_log' as const,
+        created_at: c.started_at,
+        caller_id: c.caller_id,
+        receiver_id: c.receiver_id,
+        call_type: c.call_type,
+        status: c.status,
+        started_at: c.started_at,
+        duration: c.duration,
+      })),
+    ].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+
+    setCombinedMessages(merged)
+  }, [messages, callLogs])
+
   useEffect(() => {
     if (conversation?.other_user_id) {
       setPreviousMessageCount(0)
       fetchMessages(conversation.other_user_id)
+      fetchAndMergeMessages()
 
       // Subscribe to real-time updates for this conversation
       unsubscribeRef.current = subscribeToConversation(conversation.other_user_id) || null
