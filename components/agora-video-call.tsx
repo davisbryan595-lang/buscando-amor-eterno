@@ -68,6 +68,35 @@ export default function AgoraVideoCall({
   const justReceivedEndSignalRef = useRef(false)
 
   const appId = process.env.NEXT_PUBLIC_AGORA_APP_ID
+  const missedCallTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+
+  // Auto-mark as missed if call is not answered within 30 seconds (for outgoing calls)
+  useEffect(() => {
+    if (logId && !isConnected && mode === 'outgoing') {
+      // Set timeout to mark call as missed after 30 seconds
+      missedCallTimeoutRef.current = setTimeout(async () => {
+        if (!isConnected && logId) {
+          try {
+            await supabase
+              .from('call_logs')
+              .update({
+                status: 'missed',
+                ended_at: new Date().toISOString(),
+              })
+              .eq('id', logId)
+          } catch (err) {
+            console.warn('Failed to mark call as missed:', err)
+          }
+        }
+      }, 30000)
+    }
+
+    return () => {
+      if (missedCallTimeoutRef.current) {
+        clearTimeout(missedCallTimeoutRef.current)
+      }
+    }
+  }, [logId, isConnected, mode])
 
   // Listen for force_end_call broadcast from remote user
   useEffect(() => {
