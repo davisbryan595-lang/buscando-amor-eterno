@@ -410,6 +410,13 @@ export default function AgoraVideoCall({
             setIsConnected(true)
             if (callStartTimeRef.current === 0) {
               callStartTimeRef.current = Date.now()
+
+              // Clear missed call timeout since the call was answered
+              if (missedCallTimeoutRef.current) {
+                clearTimeout(missedCallTimeoutRef.current)
+                missedCallTimeoutRef.current = null
+              }
+
               if (callTimerRef.current) {
                 clearInterval(callTimerRef.current)
               }
