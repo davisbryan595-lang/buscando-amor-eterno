@@ -410,50 +410,42 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
 
       {/* Messages */}
       <div ref={messagesContainerRef} className="flex-1 overflow-y-auto overflow-x-hidden px-3 py-3 sm:p-4 lg:p-6 space-y-2 sm:space-y-3 lg:space-y-4 min-h-0">
-        {messages.length === 0 ? (
+        {combinedMessages.length === 0 ? (
           <div className="flex items-center justify-center h-full text-slate-500">
             <p className="text-sm sm:text-base lg:text-lg">No messages yet. Start the conversation!</p>
           </div>
         ) : (
           <>
-            {messages.map((msg) => {
-              // Render call log messages differently
-              if (msg.type === 'call_log') {
-                const formatDuration = (seconds: number) => {
-                  const mins = Math.floor(seconds / 60)
-                  const secs = seconds % 60
-                  return `${mins}:${String(secs).padStart(2, '0')}`
-                }
-
-                const getCallEmoji = (status: string, callType?: string) => {
-                  if (status === 'missed') return '📵'
-                  if (status === 'rejected') return '📵'
-                  if (status === 'ongoing') return '☎️'
-                  return callType === 'video' ? '📹' : '☎️'
-                }
-
-                const callText =
-                  msg.call_status === 'missed' ? `Missed ${msg.call_type} call` :
-                  msg.call_status === 'rejected' ? `Declined ${msg.call_type} call` :
-                  msg.call_status === 'ended' && msg.call_duration ? `${msg.call_type} call · ${formatDuration(msg.call_duration)}` :
-                  msg.call_status === 'ongoing' ? `Ongoing ${msg.call_type} call` :
-                  `${msg.call_type} call`
-
+            {combinedMessages.map((item) => {
+              // Render call log messages with WhatsApp-style formatting
+              if (item.type === 'call_log') {
                 return (
-                  <div key={msg.id} className="flex justify-center my-3">
-                    <div className="text-center text-slate-500 text-xs sm:text-sm">
-                      <span>{getCallEmoji(msg.call_status, msg.call_type)} {callText}</span>
-                    </div>
+                  <div key={item.id} className="flex justify-center my-3">
+                    <CallLogMessage
+                      callLog={{
+                        id: item.id,
+                        caller_id: item.caller_id || '',
+                        receiver_id: item.receiver_id || '',
+                        call_type: (item.call_type as 'audio' | 'video') || 'audio',
+                        status: (item.status as 'ongoing' | 'completed' | 'missed' | 'declined' | 'cancelled') || 'completed',
+                        started_at: item.started_at || item.created_at,
+                        duration: item.duration,
+                      }}
+                      currentUserId={user?.id || ''}
+                      onCallBack={() =>
+                        handleStartAudioCall()
+                      }
+                    />
                   </div>
                 )
               }
 
               return (
                 <AnimatedMessage
-                  key={msg.id}
-                  id={msg.id}
-                  content={msg.content}
-                  isOwn={msg.sender_id === user?.id}
+                  key={item.id}
+                  id={item.id}
+                  content={item.content || ''}
+                  isOwn={item.sender_id === user?.id}
                   onContextMenu={handleContextMenu}
                 />
               )
