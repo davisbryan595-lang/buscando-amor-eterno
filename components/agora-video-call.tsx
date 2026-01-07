@@ -802,7 +802,30 @@ export default function AgoraVideoCall({
         clearInterval(callTimerRef.current)
       }
 
-      // 3. Log ended call with duration
+      // 3. Update call_logs table with final status and duration
+      try {
+        if (logId) {
+          const finalDuration = isConnected
+            ? Math.floor((Date.now() - callStartTimeRef.current) / 1000)
+            : null
+
+          const callStatus = isConnected ? 'completed' : 'cancelled'
+
+          await supabase
+            .from('call_logs')
+            .update({
+              status: callStatus,
+              ended_at: new Date().toISOString(),
+              duration: finalDuration,
+              answered_at: isConnected ? new Date(callStartTimeRef.current).toISOString() : null,
+            })
+            .eq('id', logId)
+        }
+      } catch (err) {
+        console.warn('Failed to update call_logs:', err)
+      }
+
+      // 4. Log ended call with duration (legacy message table support)
       try {
         const finalDuration = Math.floor((Date.now() - callStartTimeRef.current) / 1000)
         if (ongoingLoggedRef.current && callIdRef.current) {
@@ -812,7 +835,7 @@ export default function AgoraVideoCall({
         console.warn('Failed to log ended call:', err)
       }
 
-      // 4. Delete call invitation from database when call ends
+      // 5. Delete call invitation from database when call ends
       // This prevents duplicate key constraint violations on future calls
       if (user) {
         const roomName = [user.id, partnerId].sort().join('-')
@@ -827,7 +850,7 @@ export default function AgoraVideoCall({
         }
       }
 
-      // 5. Local cleanup - stop and close tracks
+      // 6. Local cleanup - stop and close tracks
       // Safely stop and close tracks (check if they exist and are not already closed)
       if (localAudioTrack) {
         try {
@@ -856,7 +879,7 @@ export default function AgoraVideoCall({
         }
       }
 
-      // 6. Force redirect — hard redirect, no state/navigation bugs
+      // 7. Force redirect — hard redirect, no state/navigation bugs
       window.location.href = `/messages?user=${partnerId}`
     } catch (err) {
       console.warn('endCall error (safe):', err)
