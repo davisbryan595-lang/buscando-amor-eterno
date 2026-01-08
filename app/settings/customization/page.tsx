@@ -69,7 +69,37 @@ export default function CustomizationPage() {
   const handleSavePreferences = async () => {
     setLoading(true)
     try {
-      // TODO: Implement preference saving API call
+      // Save to localStorage
+      localStorage.setItem('app-theme', localTheme)
+      localStorage.setItem('compact-mode', compactMode.toString())
+      localStorage.setItem('larger-text', largerText.toString())
+      localStorage.setItem('app-font', selectedFont)
+
+      // Apply theme
+      setThemeContext(localTheme)
+
+      // Apply font
+      const root = document.documentElement
+      if (selectedFont === 'playfair') {
+        root.style.fontFamily = 'var(--font-playfair)'
+      } else {
+        root.style.fontFamily = 'var(--font-inter)'
+      }
+
+      // Apply spacing adjustments
+      if (compactMode) {
+        root.classList.add('compact-mode')
+      } else {
+        root.classList.remove('compact-mode')
+      }
+
+      // Apply text size
+      if (largerText) {
+        root.classList.add('larger-text')
+      } else {
+        root.classList.remove('larger-text')
+      }
+
       toast.success('Preferences saved successfully')
     } catch (error: any) {
       toast.error(error.message || 'Failed to save preferences')
