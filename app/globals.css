@@ -140,6 +140,15 @@
 }
 
 @layer components {
+  /* Display customization classes */
+  html.compact-mode {
+    --spacing-multiplier: 0.75;
+  }
+
+  html.larger-text {
+    font-size: 18px;
+  }
+
   /* Toast Notification Responsiveness */
   .toaster {
     position: fixed;
