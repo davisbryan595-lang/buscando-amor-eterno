@@ -14,15 +14,16 @@ import { toast } from 'sonner'
 export default function CustomizationPage() {
   const router = useRouter()
   const { user } = useAuth()
-  const { theme, setTheme: setThemeContext, effectiveTheme } = useTheme()
   const [localTheme, setLocalTheme] = useState<'light' | 'dark' | 'system'>('light')
   const [compactMode, setCompactMode] = useState(false)
   const [largerText, setLargerText] = useState(false)
   const [selectedFont, setSelectedFont] = useState('inter')
   const [loading, setLoading] = useState(false)
+  const [mounted, setMounted] = useState(false)
 
   // Initialize from localStorage
   useEffect(() => {
+    setMounted(true)
     const savedTheme = (localStorage.getItem('app-theme') as 'light' | 'dark' | 'system') || 'light'
     const savedCompact = localStorage.getItem('compact-mode') === 'true'
     const savedLargerText = localStorage.getItem('larger-text') === 'true'
