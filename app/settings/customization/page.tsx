@@ -173,24 +173,24 @@ export default function CustomizationPage() {
           </div>
 
           {/* Display Options */}
-          <div className="bg-white border border-rose-100 rounded-2xl p-8 space-y-6 mt-8">
+          <div className="bg-white dark:bg-slate-900 border border-rose-100 dark:border-rose-900 rounded-2xl p-8 space-y-6 mt-8">
             <div>
-              <h2 className="text-xl font-semibold text-foreground mb-2">
+              <h2 className="text-xl font-semibold text-foreground dark:text-white mb-2">
                 Display Options
               </h2>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-muted-foreground dark:text-slate-400">
                 Adjust the layout and text size
               </p>
             </div>
 
             <div className="space-y-4">
               {/* Compact Mode */}
-              <div className="flex items-center justify-between p-4 bg-rose-50 rounded-xl">
+              <div className="flex items-center justify-between p-4 bg-rose-50 dark:bg-rose-950 rounded-xl">
                 <div>
-                  <p className="font-semibold text-foreground text-sm">
+                  <p className="font-semibold text-foreground dark:text-white text-sm">
                     Compact Mode
                   </p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-muted-foreground dark:text-slate-400">
                     Reduce spacing between elements
                   </p>
                 </div>
@@ -198,17 +198,17 @@ export default function CustomizationPage() {
                   type="checkbox"
                   checked={compactMode}
                   onChange={(e) => setCompactMode(e.target.checked)}
-                  className="w-5 h-5 rounded cursor-pointer"
+                  className="w-5 h-5 rounded cursor-pointer accent-primary"
                 />
               </div>
 
               {/* Larger Text */}
-              <div className="flex items-center justify-between p-4 bg-rose-50 rounded-xl">
+              <div className="flex items-center justify-between p-4 bg-rose-50 dark:bg-rose-950 rounded-xl">
                 <div>
-                  <p className="font-semibold text-foreground text-sm">
+                  <p className="font-semibold text-foreground dark:text-white text-sm">
                     Larger Text
                   </p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-muted-foreground dark:text-slate-400">
                     Increase text size for better readability
                   </p>
                 </div>
@@ -216,19 +216,19 @@ export default function CustomizationPage() {
                   type="checkbox"
                   checked={largerText}
                   onChange={(e) => setLargerText(e.target.checked)}
-                  className="w-5 h-5 rounded cursor-pointer"
+                  className="w-5 h-5 rounded cursor-pointer accent-primary"
                 />
               </div>
             </div>
           </div>
 
           {/* Font Preferences */}
-          <div className="bg-white border border-rose-100 rounded-2xl p-8 space-y-6 mt-8">
+          <div className="bg-white dark:bg-slate-900 border border-rose-100 dark:border-rose-900 rounded-2xl p-8 space-y-6 mt-8">
             <div>
-              <h2 className="text-xl font-semibold text-foreground mb-2">
+              <h2 className="text-xl font-semibold text-foreground dark:text-white mb-2">
                 Font Preferences
               </h2>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-muted-foreground dark:text-slate-400">
                 Choose your preferred font style
               </p>
             </div>
