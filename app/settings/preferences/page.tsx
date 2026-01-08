@@ -7,26 +7,12 @@ import Navigation from '@/components/navigation'
 import Footer from '@/components/footer'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
-import { ChevronLeft, Settings } from 'lucide-react'
+import { ChevronLeft, Settings, Clock } from 'lucide-react'
 import { toast } from 'sonner'
 
 export default function PreferencesPage() {
   const router = useRouter()
   const { user } = useAuth()
-  const [notifications, setNotifications] = useState({
-    messages: true,
-    likes: true,
-    matches: true,
-    updates: false,
-    marketing: false,
-  })
-  const [privacy, setPrivacy] = useState({
-    profilePublic: true,
-    showOnlineStatus: true,
-    allowMessages: true,
-    searchEngines: false,
-  })
-  const [loading, setLoading] = useState(false)
 
   if (!user) {
     return (
