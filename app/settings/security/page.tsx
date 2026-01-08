@@ -214,27 +214,27 @@ export default function SecuritySettingsPage() {
           </div>
 
           {/* Active Sessions */}
-          <div className="bg-white border border-rose-100 rounded-2xl p-8 space-y-6 mt-8">
+          <div className="bg-white dark:bg-slate-900 border border-rose-100 dark:border-rose-900 rounded-2xl p-8 space-y-6 mt-8">
             <div>
-              <h2 className="text-xl font-semibold text-foreground mb-2">
+              <h2 className="text-xl font-semibold text-foreground dark:text-white mb-2">
                 Active Sessions
               </h2>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-muted-foreground dark:text-slate-400">
                 Manage devices accessing your account
               </p>
             </div>
 
             <div className="space-y-4">
-              <div className="bg-rose-50 rounded-xl p-4 flex items-center justify-between">
+              <div className="bg-rose-50 dark:bg-rose-950 rounded-xl p-4 flex items-center justify-between">
                 <div>
-                  <p className="font-semibold text-foreground text-sm">
+                  <p className="font-semibold text-foreground dark:text-white text-sm">
                     Current Session
                   </p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-muted-foreground dark:text-slate-400">
                     This device
                   </p>
                 </div>
-                <span className="text-xs bg-green-100 text-green-700 px-3 py-1 rounded-full">
+                <span className="text-xs bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-200 px-3 py-1 rounded-full">
                   Active
                 </span>
               </div>
