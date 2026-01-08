@@ -234,25 +234,28 @@ export default function CustomizationPage() {
             </div>
 
             <div className="space-y-3">
-              <div className="flex items-center gap-3 p-3 border border-rose-100 rounded-lg cursor-pointer hover:bg-rose-50">
+              <div className="flex items-center gap-3 p-3 border border-rose-100 dark:border-rose-800 rounded-lg cursor-pointer hover:bg-rose-50 dark:hover:bg-rose-900 transition">
                 <input
                   type="radio"
                   id="font-inter"
                   name="font"
                   value="inter"
-                  defaultChecked
+                  checked={selectedFont === 'inter'}
+                  onChange={() => setSelectedFont('inter')}
                   className="cursor-pointer"
                 />
                 <Label htmlFor="font-inter" className="flex-1 cursor-pointer text-sm font-medium">
                   Modern (Inter)
                 </Label>
               </div>
-              <div className="flex items-center gap-3 p-3 border border-rose-100 rounded-lg cursor-pointer hover:bg-rose-50">
+              <div className="flex items-center gap-3 p-3 border border-rose-100 dark:border-rose-800 rounded-lg cursor-pointer hover:bg-rose-50 dark:hover:bg-rose-900 transition">
                 <input
                   type="radio"
                   id="font-playfair"
                   name="font"
                   value="playfair"
+                  checked={selectedFont === 'playfair'}
+                  onChange={() => setSelectedFont('playfair')}
                   className="cursor-pointer"
                 />
                 <Label htmlFor="font-playfair" className="flex-1 cursor-pointer text-sm font-medium font-playfair">
