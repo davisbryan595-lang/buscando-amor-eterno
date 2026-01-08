@@ -269,7 +269,7 @@ export default function CustomizationPage() {
           <Button
             onClick={handleSavePreferences}
             disabled={loading}
-            className="w-full mt-8 py-3 rounded-full bg-primary text-white hover:bg-rose-700 font-semibold"
+            className="w-full mt-8 py-3 rounded-full bg-primary text-white hover:bg-rose-700 dark:hover:bg-rose-600 font-semibold"
           >
             {loading ? 'Saving...' : 'Save Preferences'}
           </Button>
