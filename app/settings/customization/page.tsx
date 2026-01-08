@@ -77,10 +77,19 @@ export default function CustomizationPage() {
       localStorage.setItem('app-font', selectedFont)
 
       // Apply theme
-      setThemeContext(localTheme)
+      const root = document.documentElement
+      let isDark = localTheme === 'dark'
+      if (localTheme === 'system') {
+        isDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+      }
+
+      if (isDark) {
+        root.classList.add('dark')
+      } else {
+        root.classList.remove('dark')
+      }
 
       // Apply font
-      const root = document.documentElement
       if (selectedFont === 'playfair') {
         root.style.fontFamily = 'var(--font-playfair)'
       } else {
