@@ -54,7 +54,7 @@ export default function SecuritySettingsPage() {
 
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     if (!currentPassword || !newPassword || !confirmPassword) {
       toast.error('All fields are required')
       return
@@ -72,11 +72,42 @@ export default function SecuritySettingsPage() {
 
     setLoading(true)
     try {
-      // TODO: Implement password change API call
-      toast.success('Password changed successfully')
+      // Import Supabase client
+      const { supabase } = await import('@/lib/supabase')
+
+      // Verify current password by attempting to sign in
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: user.email || '',
+        password: currentPassword,
+      })
+
+      if (signInError) {
+        toast.error('Current password is incorrect')
+        setLoading(false)
+        return
+      }
+
+      // Update password
+      const { error: updateError } = await supabase.auth.updateUser({
+        password: newPassword,
+      })
+
+      if (updateError) {
+        toast.error(updateError.message || 'Failed to change password')
+        setLoading(false)
+        return
+      }
+
+      toast.success('Password changed successfully! Please log in again.')
       setCurrentPassword('')
       setNewPassword('')
       setConfirmPassword('')
+
+      // Sign out and redirect to login
+      await supabase.auth.signOut()
+      setTimeout(() => {
+        router.push('/login')
+      }, 1500)
     } catch (error: any) {
       toast.error(error.message || 'Failed to change password')
     } finally {
