@@ -115,7 +115,7 @@ export default function CustomizationPage() {
   ]
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white dark:bg-slate-950">
       <Navigation />
 
       <div className="pt-24 pb-20 px-4">
@@ -132,17 +132,17 @@ export default function CustomizationPage() {
           <div className="mb-8">
             <div className="flex items-center gap-3 mb-2">
               <Palette size={28} className="text-primary" />
-              <h1 className="text-3xl font-playfair font-bold text-foreground">
+              <h1 className="text-3xl font-playfair font-bold text-foreground dark:text-white">
                 Customization
               </h1>
             </div>
-            <p className="text-muted-foreground">
+            <p className="text-muted-foreground dark:text-slate-400">
               Personalize your experience
             </p>
           </div>
 
           {/* Theme Section */}
-          <div className="bg-white border border-rose-100 rounded-2xl p-8 space-y-6">
+          <div className="bg-white dark:bg-slate-900 border border-rose-100 dark:border-rose-900 rounded-2xl p-8 space-y-6">
             <div>
               <h2 className="text-xl font-semibold text-foreground mb-2">
                 Theme
