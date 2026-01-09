@@ -108,7 +108,7 @@ export default function LoungeChatWindow({ autoScroll = true }: LoungeChatWindow
                     className={`px-2.5 sm:px-3 md:px-4 py-1.5 sm:py-2 md:py-2.5 rounded-lg sm:rounded-xl max-w-full ${
                       isOwnMessage
                         ? 'bg-gradient-to-r from-primary to-rose-600 text-white rounded-br-none shadow-sm sm:shadow-md'
-                        : 'bg-white border border-rose-100/50 text-slate-900 rounded-bl-none shadow-xs sm:shadow-sm'
+                        : 'bg-card-subtle dark:bg-card-subtle border border-rose-100/50 dark:border-rose-900/30 text-foreground dark:text-white rounded-bl-none shadow-xs sm:shadow-sm'
                     }`}
                   >
                     <p className="text-xs sm:text-sm md:text-sm whitespace-pre-wrap break-words">{message.message || message.content}</p>
