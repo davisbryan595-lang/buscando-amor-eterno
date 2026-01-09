@@ -17,7 +17,6 @@ interface Step4Props {
 
 export function Step4Photos({
   onNext,
-  onSkip,
   initialPhotos = [],
   onDataChange,
   onUploadComplete,
