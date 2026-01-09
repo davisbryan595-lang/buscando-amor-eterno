@@ -952,32 +952,52 @@ export function useMessages() {
           }
 
           // Broadcast the updated call message
-          const conversationChannel = supabase.channel(`messages:${user.id}:${recipientId}`)
-          await conversationChannel.send({
-            type: 'broadcast',
-            event: 'new_message',
-            payload: callMessage,
-          })
+          try {
+            const conversationChannel = supabase.channel(`messages:${user.id}:${recipientId}`)
+            await new Promise<void>((resolve) => {
+              conversationChannel.subscribe((status) => {
+                if (status === 'SUBSCRIBED') resolve()
+              })
+            })
+            await conversationChannel.send({
+              type: 'broadcast',
+              event: 'new_message',
+              payload: callMessage,
+            })
 
-          const userChannel = supabase.channel(`messages:${user.id}`)
-          await userChannel.send({
-            type: 'broadcast',
-            event: 'new_message',
-            payload: callMessage,
-          })
+            // Broadcast missed call signal
+            await conversationChannel.send({
+              type: 'broadcast',
+              event: 'call_missed',
+              payload: { callId, callType },
+            })
+            conversationChannel.unsubscribe()
+          } catch (broadcastErr) {
+            console.warn('Failed to broadcast on conversation channel:', broadcastErr)
+          }
 
-          // Broadcast missed call signal
-          await conversationChannel.send({
-            type: 'broadcast',
-            event: 'call_missed',
-            payload: { callId, callType },
-          })
+          try {
+            const userChannel = supabase.channel(`messages:${user.id}`)
+            await new Promise<void>((resolve) => {
+              userChannel.subscribe((status) => {
+                if (status === 'SUBSCRIBED') resolve()
+              })
+            })
+            await userChannel.send({
+              type: 'broadcast',
+              event: 'new_message',
+              payload: callMessage,
+            })
 
-          await userChannel.send({
-            type: 'broadcast',
-            event: 'call_missed',
-            payload: { callId, callType },
-          })
+            await userChannel.send({
+              type: 'broadcast',
+              event: 'call_missed',
+              payload: { callId, callType },
+            })
+            userChannel.unsubscribe()
+          } catch (broadcastErr) {
+            console.warn('Failed to broadcast on user channel:', broadcastErr)
+          }
         } else if (callStatus === 'rejected' && callId) {
           // For rejected calls, update the existing record
           const { data, error: err } = await supabase
