@@ -308,7 +308,6 @@ export default function OnboardingPage() {
         {currentStep === 4 && (
           <Step4Photos
             onNext={handleNext}
-            onSkip={handleSkip}
             initialPhotos={data.photos}
             onDataChange={(photos) => setData({ ...data, photos })}
           />
