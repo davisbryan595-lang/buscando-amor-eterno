@@ -217,7 +217,7 @@ export function Step6Preferences({
         >
           <Select value={religion} onValueChange={setReligion}>
             <SelectTrigger className="px-3 py-2 rounded-lg border-secondary bg-background">
-              <SelectValue placeholder="Select religion" />
+              <SelectValue placeholder={t('onboarding.step6.selectReligion')} />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="catholic">{t('onboarding.step6.catholic')}</SelectItem>
@@ -236,7 +236,7 @@ export function Step6Preferences({
         >
           <Select value={wantsKids} onValueChange={setWantsKids}>
             <SelectTrigger className="px-3 py-2 rounded-lg border-secondary bg-background">
-              <SelectValue placeholder="Select preference" />
+              <SelectValue placeholder={t('onboarding.step6.selectPreference')} />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="yes">{t('onboarding.step6.yes')}</SelectItem>
@@ -254,7 +254,7 @@ export function Step6Preferences({
         >
           <Select value={smoking} onValueChange={setSmoking}>
             <SelectTrigger className="px-3 py-2 rounded-lg border-secondary bg-background">
-              <SelectValue placeholder="Select preference" />
+              <SelectValue placeholder={t('onboarding.step6.selectPreference')} />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="yes">{t('onboarding.step6.yes')}</SelectItem>
@@ -271,7 +271,7 @@ export function Step6Preferences({
         >
           <Select value={drinking} onValueChange={setDrinking}>
             <SelectTrigger className="px-3 py-2 rounded-lg border-secondary bg-background">
-              <SelectValue placeholder="Select preference" />
+              <SelectValue placeholder={t('onboarding.step6.selectPreference')} />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="never">{t('onboarding.step6.never')}</SelectItem>
@@ -285,7 +285,7 @@ export function Step6Preferences({
         <div className="space-y-3 p-4 rounded-2xl bg-destructive/5 border border-destructive/20">
           <div className="flex items-center gap-2">
             <Flame size={20} className="text-destructive" />
-            <h3 className="font-semibold text-foreground">Mark as dealbreaker</h3>
+            <h3 className="font-semibold text-foreground">{t('onboarding.step6.markAsDealbreaker')}</h3>
           </div>
           <div className="space-y-2">
             <DealBreakerOption
@@ -339,20 +339,20 @@ export function Step6Preferences({
       <AlertDialog open={showSkipWarning} onOpenChange={setShowSkipWarning}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Complete Your Profile</AlertDialogTitle>
+            <AlertDialogTitle>{t('onboarding.step6.completeProfileTitle')}</AlertDialogTitle>
             <AlertDialogDescription>
-              This is the final step of your profile setup. You must complete these preferences to finish onboarding and start connecting with others. Please provide your preferences to continue.
+              {t('onboarding.step6.completeProfileDesc')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="flex gap-3">
             <AlertDialogCancel className="flex-1">
-              Go Back
+              {t('onboarding.step6.goBack')}
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleNext}
               className="flex-1 bg-primary text-white hover:bg-rose-700"
             >
-              Complete Now
+              {t('onboarding.step6.completeNow')}
             </AlertDialogAction>
           </div>
         </AlertDialogContent>
