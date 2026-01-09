@@ -126,12 +126,12 @@ export function StepPersonality({
         <div className="space-y-4">
           <Label className="flex items-center gap-2 text-lg font-semibold">
             <Sparkles size={20} className="text-primary" />
-            What's Your Personality Style?
+            {t('onboarding.step0.personality')}
           </Label>
           <div className="space-y-2">
             <Select value={personality} onValueChange={setPersonality}>
               <SelectTrigger className="px-4 py-3 rounded-full border-secondary h-12">
-                <SelectValue placeholder="Select your personality" />
+                <SelectValue placeholder={t('onboarding.step0.personality')} />
               </SelectTrigger>
               <SelectContent>
                 {personalityOptions.map((option) => (
@@ -148,12 +148,12 @@ export function StepPersonality({
         <div className="space-y-4">
           <Label className="flex items-center gap-2 text-lg font-semibold">
             <Target size={20} className="text-primary" />
-            What Are You Looking For?
+            {t('onboarding.step0.relationshipGoal')}
           </Label>
           <div className="space-y-2">
             <Select value={relationshipGoal} onValueChange={setRelationshipGoal}>
               <SelectTrigger className="px-4 py-3 rounded-full border-secondary h-12">
-                <SelectValue placeholder="Select your goal" />
+                <SelectValue placeholder={t('onboarding.step0.relationshipGoal')} />
               </SelectTrigger>
               <SelectContent>
                 {relationshipGoals.map((goal) => (
