@@ -575,20 +575,36 @@ export function useMessages() {
 
           try {
             const conversationChannel = supabase.channel(`messages:${user.id}:${targetRecipientId}`)
+            await new Promise<void>((resolve) => {
+              conversationChannel.subscribe((status) => {
+                if (status === 'SUBSCRIBED') resolve()
+              })
+            })
             await conversationChannel.send({
               type: 'broadcast',
               event: 'message_read',
               payload: readReceipt,
             })
+            conversationChannel.unsubscribe()
+          } catch (broadcastErr) {
+            console.warn('Failed to broadcast read receipt on conversation channel:', broadcastErr)
+          }
 
+          try {
             const userChannel = supabase.channel(`messages:${user.id}`)
+            await new Promise<void>((resolve) => {
+              userChannel.subscribe((status) => {
+                if (status === 'SUBSCRIBED') resolve()
+              })
+            })
             await userChannel.send({
               type: 'broadcast',
               event: 'message_read',
               payload: readReceipt,
             })
+            userChannel.unsubscribe()
           } catch (broadcastErr) {
-            console.warn('Failed to broadcast read receipt:', broadcastErr)
+            console.warn('Failed to broadcast read receipt on user channel:', broadcastErr)
           }
         }
       } catch (err: any) {
