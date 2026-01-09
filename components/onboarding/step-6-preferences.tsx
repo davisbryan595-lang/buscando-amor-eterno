@@ -217,7 +217,7 @@ export function Step6Preferences({
         >
           <Select value={religion} onValueChange={setReligion}>
             <SelectTrigger className="px-3 py-2 rounded-lg border-secondary bg-background">
-              <SelectValue placeholder="Select religion" />
+              <SelectValue placeholder={t('onboarding.step6.selectReligion')} />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="catholic">{t('onboarding.step6.catholic')}</SelectItem>
