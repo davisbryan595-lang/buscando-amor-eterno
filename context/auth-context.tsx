@@ -106,6 +106,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     return () => {
       isMounted = false
+      clearTimeout(timeoutId)
       subscription?.unsubscribe()
     }
   }, [])
