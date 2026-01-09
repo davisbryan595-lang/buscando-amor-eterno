@@ -55,13 +55,13 @@ export default function LoungeChatWindow({ autoScroll = true }: LoungeChatWindow
       >
         {loading ? (
           <div className="flex items-center justify-center h-full w-full">
-            <p className="text-slate-500 text-xs sm:text-sm md:text-base">Loading messages...</p>
+            <p className="text-muted-foreground text-xs sm:text-sm md:text-base">Loading messages...</p>
           </div>
         ) : error ? (
           <div className="flex items-center justify-center h-full w-full px-4">
             <div className="text-center">
-              <p className="text-slate-700 font-semibold mb-1 text-xs sm:text-sm md:text-base">Something went wrong</p>
-              <p className="text-slate-500 text-xs sm:text-xs md:text-sm break-words">{error}</p>
+              <p className="text-foreground font-semibold mb-1 text-xs sm:text-sm md:text-base">Something went wrong</p>
+              <p className="text-muted-foreground text-xs sm:text-xs md:text-sm break-words">{error}</p>
             </div>
           </div>
         ) : messages.length === 0 ? (
@@ -103,7 +103,7 @@ export default function LoungeChatWindow({ autoScroll = true }: LoungeChatWindow
 
                 {/* Message Bubble */}
                 <div className={`flex flex-col gap-0.5 max-w-[calc(100%-2rem)] sm:max-w-[calc(100%-2.5rem)] md:max-w-[calc(100%-3rem)] ${isOwnMessage ? 'items-end order-1' : 'items-start order-2'}`}>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 px-1.5 sm:px-2 truncate">{message.sender_name}</p>
+                  <p className="text-xs text-muted-foreground px-1.5 sm:px-2 truncate">{message.sender_name}</p>
                   <div
                     className={`px-2.5 sm:px-3 md:px-4 py-1.5 sm:py-2 md:py-2.5 rounded-lg sm:rounded-xl max-w-full ${
                       isOwnMessage
