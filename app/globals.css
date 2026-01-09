@@ -123,12 +123,73 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground transition-colors duration-200;
   }
-  
+
   /* Removed invalid @import and manual font classes. Using Next.js font loader instead. */
-  
-  
+
+  /* Compact Mode - Reduced spacing */
+  :root.compact-mode {
+    --spacing-multiplier: 0.75;
+  }
+
+  :root.compact-mode * {
+    --tw-margin-multiplier: 0.75;
+    --tw-padding-multiplier: 0.75;
+  }
+
+  :root.compact-mode p,
+  :root.compact-mode h1,
+  :root.compact-mode h2,
+  :root.compact-mode h3,
+  :root.compact-mode h4,
+  :root.compact-mode h5,
+  :root.compact-mode h6 {
+    @apply mb-2;
+  }
+
+  :root.compact-mode div,
+  :root.compact-mode section,
+  :root.compact-mode article {
+    @apply gap-3;
+  }
+
+  /* Larger Text Mode */
+  :root.larger-text {
+    font-size: 18px;
+  }
+
+  :root.larger-text h1 {
+    @apply text-4xl;
+  }
+
+  :root.larger-text h2 {
+    @apply text-3xl;
+  }
+
+  :root.larger-text h3 {
+    @apply text-2xl;
+  }
+
+  :root.larger-text p,
+  :root.larger-text span,
+  :root.larger-text div {
+    font-size: 1.125rem;
+    line-height: 1.75;
+  }
+
+  :root.larger-text .text-sm {
+    @apply text-base;
+  }
+
+  :root.larger-text .text-xs {
+    @apply text-sm;
+  }
+
+  :root.larger-text button {
+    padding: 0.75rem 1.5rem;
+  }
+
   /* Added soft glow effect */
   .soft-glow {
     box-shadow: 0 0 30px rgba(190, 18, 60, 0.1);
