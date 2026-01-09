@@ -119,7 +119,10 @@ export default function CustomizationPage() {
               {themeOptions.map(({ value, label, icon: Icon }) => (
                 <button
                   key={value}
-                  onClick={() => setLocalTheme(value as typeof localTheme)}
+                  onClick={() => {
+                    setLocalTheme(value as typeof localTheme)
+                    toast.success(`Theme changed to ${label}`)
+                  }}
                   className={`flex flex-col items-center justify-center py-6 px-4 rounded-xl border-2 transition ${
                     localTheme === value
                       ? 'border-primary bg-rose-50 dark:bg-rose-900'
@@ -127,7 +130,7 @@ export default function CustomizationPage() {
                   }`}
                 >
                   <Icon size={32} className={localTheme === value ? 'text-primary' : 'text-muted-foreground'} />
-                  <p className="text-sm font-semibold text-foreground mt-2">
+                  <p className="text-sm font-semibold text-foreground dark:text-white mt-2">
                     {label}
                   </p>
                 </button>
