@@ -201,22 +201,22 @@ export function StepPersonality({
         <div className="space-y-4">
           <Label className="flex items-center gap-2 text-lg font-semibold">
             <Lightbulb size={20} className="text-primary" />
-            Your Core Values (Select at least 2)
+            {t('onboarding.step0.values')} (Select at least 2)
           </Label>
           <div className="grid grid-cols-2 gap-3">
             {valueOptions.map((value) => (
-              <div key={value} className="flex items-center space-x-2">
+              <div key={value.key} className="flex items-center space-x-2">
                 <Checkbox
-                  id={value}
-                  checked={values.includes(value)}
-                  onCheckedChange={() => handleValueToggle(value)}
+                  id={value.key}
+                  checked={values.includes(value.key)}
+                  onCheckedChange={() => handleValueToggle(value.key)}
                   className="rounded"
                 />
                 <Label
-                  htmlFor={value}
+                  htmlFor={value.key}
                   className="text-sm font-normal cursor-pointer text-foreground"
                 >
-                  {value}
+                  {value.label}
                 </Label>
               </div>
             ))}
