@@ -271,7 +271,7 @@ export function Step6Preferences({
         >
           <Select value={drinking} onValueChange={setDrinking}>
             <SelectTrigger className="px-3 py-2 rounded-lg border-secondary bg-background">
-              <SelectValue placeholder="Select preference" />
+              <SelectValue placeholder={t('onboarding.step6.selectPreference')} />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="never">{t('onboarding.step6.never')}</SelectItem>
