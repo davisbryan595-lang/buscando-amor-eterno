@@ -160,7 +160,10 @@ export default function CustomizationPage() {
                 <input
                   type="checkbox"
                   checked={compactMode}
-                  onChange={(e) => setCompactMode(e.target.checked)}
+                  onChange={(e) => {
+                    setCompactMode(e.target.checked)
+                    toast.success(e.target.checked ? 'Compact mode enabled' : 'Compact mode disabled')
+                  }}
                   className="w-5 h-5 rounded cursor-pointer accent-primary"
                 />
               </div>
@@ -178,7 +181,10 @@ export default function CustomizationPage() {
                 <input
                   type="checkbox"
                   checked={largerText}
-                  onChange={(e) => setLargerText(e.target.checked)}
+                  onChange={(e) => {
+                    setLargerText(e.target.checked)
+                    toast.success(e.target.checked ? 'Larger text enabled' : 'Larger text disabled')
+                  }}
                   className="w-5 h-5 rounded cursor-pointer accent-primary"
                 />
               </div>
