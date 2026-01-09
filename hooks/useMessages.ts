@@ -179,31 +179,49 @@ export function useMessages() {
     try {
       setLoading(true)
 
-      // Add a timeout for messages fetch (60 seconds)
+      // Fetch only recent messages from the user to get unique conversation partners
+      // Use a higher timeout (90 seconds) to account for slow connections
       const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Conversations fetch timed out')), 60000)
+        setTimeout(() => reject(new Error('Conversations fetch timed out after 90 seconds')), 90000)
       )
 
-      // Fetch messages more efficiently with smaller limit
-      const queryPromise = supabase
+      // Fetch messages where user is sender OR recipient
+      // Split into two queries and merge for better performance
+      const senderQuery = supabase
         .from('messages')
         .select('sender_id, recipient_id, content, created_at, read, type, call_type, call_status, call_duration, call_id')
-        .or(`sender_id.eq.${user.id},recipient_id.eq.${user.id}`)
+        .eq('sender_id', user.id)
         .order('created_at', { ascending: false })
-        .limit(150)
+        .limit(75)
 
-      const result = await Promise.race([queryPromise, timeoutPromise])
-      const { data, error: err } = result as any
+      const recipientQuery = supabase
+        .from('messages')
+        .select('sender_id, recipient_id, content, created_at, read, type, call_type, call_status, call_duration, call_id')
+        .eq('recipient_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(75)
 
-      if (err) throw err
+      // Race both queries together against the timeout
+      const queryPromise = Promise.all([senderQuery, recipientQuery])
+
+      const [senderResult, recipientResult] = await Promise.race([queryPromise, timeoutPromise]) as any
+
+      if (senderResult?.error) throw senderResult.error
+      if (recipientResult?.error) throw recipientResult.error
+
+      // Combine and deduplicate messages
+      const allMessages = [
+        ...(senderResult?.data || []),
+        ...(recipientResult?.data || [])
+      ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
 
       const conversationMap = new Map<string, any>()
-      const userIds = new Set<string>()
 
       // Process messages to build unique conversations
-      data?.forEach((msg: any) => {
+      allMessages.forEach((msg: any) => {
         const otherUserId = msg.sender_id === user.id ? msg.recipient_id : msg.sender_id
-        userIds.add(otherUserId)
+
+        // Only add if we haven't seen this conversation yet
         if (!conversationMap.has(otherUserId)) {
           const isUnread = msg.recipient_id === user.id && !msg.read
           conversationMap.set(otherUserId, {
@@ -215,16 +233,12 @@ export function useMessages() {
             last_message: msg.content,
             last_message_time: msg.created_at,
             unread_count: isUnread ? 1 : 0,
-            other_user_name: null,
-            other_user_image: null,
             is_online: false,
           })
-        } else {
-          // Count additional unread messages
+        } else if (msg.recipient_id === user.id && !msg.read) {
+          // Count unread messages from this conversation
           const conv = conversationMap.get(otherUserId)
-          if (msg.recipient_id === user.id && !msg.read) {
-            conv.unread_count += 1
-          }
+          conv.unread_count += 1
         }
       })
 
@@ -232,19 +246,31 @@ export function useMessages() {
 
       // Fetch profile details for conversation participants
       if (convArray.length > 0) {
-        const userIds = convArray.map((c) => c.other_user_id)
-        const { data: profiles } = await supabase
-          .from('profiles')
-          .select('user_id, full_name, photos, main_photo_index')
-          .in('user_id', userIds)
+        const otherUserIds = convArray.map((c) => c.other_user_id)
 
-        profiles?.forEach((profile) => {
-          const conv = convArray.find((c) => c.other_user_id === profile.user_id)
-          if (conv) {
-            conv.other_user_name = profile.full_name
-            conv.other_user_image = profile.photos?.[profile.main_photo_index || 0] || null
+        try {
+          const { data: profiles, error: profileError } = await supabase
+            .from('profiles')
+            .select('user_id, full_name, photos, main_photo_index')
+            .in('user_id', otherUserIds)
+
+          if (profileError) {
+            console.warn('Error fetching profiles:', profileError)
+          } else {
+            // Create a map for faster lookup
+            const profileMap = new Map(profiles?.map(p => [p.user_id, p]) || [])
+            convArray.forEach((conv) => {
+              const profile = profileMap.get(conv.other_user_id)
+              if (profile) {
+                conv.other_user_name = profile.full_name
+                conv.other_user_image = profile.photos?.[profile.main_photo_index || 0] || null
+              }
+            })
           }
-        })
+        } catch (profileErr) {
+          console.warn('Failed to fetch conversation profiles:', profileErr)
+          // Continue with conversations even if profile fetch fails
+        }
       }
 
       setConversations(convArray)
