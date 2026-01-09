@@ -223,7 +223,7 @@ export function StepPersonality({
           </div>
           {values.length < 2 && (
             <p className="text-sm text-amber-600">
-              Please select at least 2 values
+              {t('onboarding.step0.selectAtLeast2Values')}
             </p>
           )}
         </div>
