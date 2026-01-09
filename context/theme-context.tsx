@@ -6,6 +6,9 @@ type Theme = 'light' | 'dark' | 'system'
 
 // Helper function to apply theme to document
 const applyTheme = (selectedTheme: Theme) => {
+  if (typeof document === 'undefined') return
+
+  const htmlElement = document.documentElement
   let isDark = selectedTheme === 'dark'
 
   if (selectedTheme === 'system') {
@@ -14,16 +17,15 @@ const applyTheme = (selectedTheme: Theme) => {
     }
   }
 
-  // Apply to document root
-  if (typeof document !== 'undefined') {
-    const htmlElement = document.documentElement
-    if (isDark) {
-      htmlElement.classList.add('dark')
-      console.log('[Theme] Applied dark mode')
-    } else {
-      htmlElement.classList.remove('dark')
-      console.log('[Theme] Applied light mode')
-    }
+  // Always remove dark first to ensure clean state
+  htmlElement.classList.remove('dark')
+
+  // Then add if needed
+  if (isDark) {
+    htmlElement.classList.add('dark')
+    console.log('[Theme] Applied dark mode')
+  } else {
+    console.log('[Theme] Applied light mode')
   }
 }
 
