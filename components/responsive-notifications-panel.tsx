@@ -271,11 +271,11 @@ export function ResponsiveNotificationsPanel({
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: -10 }}
           transition={{ duration: 0.15, type: 'spring', damping: 20 }}
-          className="absolute top-full right-0 mt-2 w-96 bg-white border border-rose-100 rounded-2xl shadow-xl z-50 overflow-hidden"
+          className="absolute top-full right-0 mt-2 w-96 bg-card border border-border rounded-2xl shadow-xl z-50 overflow-hidden"
         >
           {/* Header */}
-          <div className="px-4 py-3 border-b border-rose-100 bg-gradient-to-r from-white to-rose-50">
-            <h3 className="font-semibold text-slate-900 flex items-center gap-2">
+          <div className="px-4 py-3 border-b border-border bg-gradient-to-r from-card to-card-subtle">
+            <h3 className="font-semibold text-foreground flex items-center gap-2">
               <Heart size={18} className="text-rose-500 fill-rose-500" />
               Activity ({notifications.length})
             </h3>
@@ -284,7 +284,7 @@ export function ResponsiveNotificationsPanel({
           {/* Content */}
           <div className="max-h-96 overflow-y-auto">
             {notifications.length === 0 ? (
-              <div className="p-8 text-center text-slate-600 min-h-24 flex items-center justify-center">
+              <div className="p-8 text-center text-muted-foreground min-h-24 flex items-center justify-center">
                 <p>No new notifications</p>
               </div>
             ) : (
