@@ -436,24 +436,41 @@ export function useMessages() {
       if (!user?.id) return
 
       try {
-        // Add timeout for individual message fetch (30 seconds)
+        // Add timeout for individual message fetch (45 seconds for conversation data)
         const timeoutPromise = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Message fetch timed out')), 30000)
+          setTimeout(() => reject(new Error('Message fetch timed out after 45 seconds')), 45000)
         )
 
-        const queryPromise = supabase
+        // Split OR query into two simpler queries for better performance
+        const userSentQuery = supabase
           .from('messages')
           .select('id,sender_id,recipient_id,content,read,created_at,type,call_type,call_status,call_duration,call_id')
-          .or(
-            `and(sender_id.eq.${user.id},recipient_id.eq.${otherUserId}),and(sender_id.eq.${otherUserId},recipient_id.eq.${user.id})`
-          )
+          .eq('sender_id', user.id)
+          .eq('recipient_id', otherUserId)
           .order('created_at', { ascending: true })
 
-        const result = await Promise.race([queryPromise, timeoutPromise])
-        const { data, error: err } = result as any
+        const userReceivedQuery = supabase
+          .from('messages')
+          .select('id,sender_id,recipient_id,content,read,created_at,type,call_type,call_status,call_duration,call_id')
+          .eq('sender_id', otherUserId)
+          .eq('recipient_id', user.id)
+          .order('created_at', { ascending: true })
 
-        if (err) throw err
-        setMessages((data as Message[]) || [])
+        // Execute both queries in parallel
+        const queryPromise = Promise.all([userSentQuery, userReceivedQuery])
+
+        const [sentResult, receivedResult] = await Promise.race([queryPromise, timeoutPromise]) as any
+
+        if (sentResult?.error) throw sentResult.error
+        if (receivedResult?.error) throw receivedResult.error
+
+        // Merge and sort messages
+        const allMessages = [
+          ...(sentResult?.data || []),
+          ...(receivedResult?.data || [])
+        ].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+
+        setMessages((allMessages as Message[]) || [])
         setError(null)
       } catch (err: any) {
         const errorMessage = err?.message || (typeof err === 'string' ? err : 'Failed to fetch messages')
