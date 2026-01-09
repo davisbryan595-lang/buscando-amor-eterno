@@ -62,46 +62,7 @@ export default function CustomizationPage() {
   const handleSavePreferences = async () => {
     setLoading(true)
     try {
-      // Save to localStorage
-      localStorage.setItem('app-theme', localTheme)
-      localStorage.setItem('compact-mode', compactMode.toString())
-      localStorage.setItem('larger-text', largerText.toString())
-      localStorage.setItem('app-font', selectedFont)
-
-      // Apply theme
-      const root = document.documentElement
-      let isDark = localTheme === 'dark'
-      if (localTheme === 'system') {
-        isDark = window.matchMedia('(prefers-color-scheme: dark)').matches
-      }
-
-      if (isDark) {
-        root.classList.add('dark')
-      } else {
-        root.classList.remove('dark')
-      }
-
-      // Apply font
-      if (selectedFont === 'playfair') {
-        root.style.fontFamily = 'var(--font-playfair)'
-      } else {
-        root.style.fontFamily = 'var(--font-inter)'
-      }
-
-      // Apply spacing adjustments
-      if (compactMode) {
-        root.classList.add('compact-mode')
-      } else {
-        root.classList.remove('compact-mode')
-      }
-
-      // Apply text size
-      if (largerText) {
-        root.classList.add('larger-text')
-      } else {
-        root.classList.remove('larger-text')
-      }
-
+      // Settings are saved in real-time via the hook functions
       toast.success('Preferences saved successfully')
     } catch (error: any) {
       toast.error(error.message || 'Failed to save preferences')
