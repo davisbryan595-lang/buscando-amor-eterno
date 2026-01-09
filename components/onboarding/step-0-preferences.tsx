@@ -192,7 +192,7 @@ export function StepPersonality({
           </div>
           {interests.length < 3 && (
             <p className="text-sm text-amber-600">
-              Please select at least 3 interests
+              {t('onboarding.step0.selectAtLeast3Interests')}
             </p>
           )}
         </div>
