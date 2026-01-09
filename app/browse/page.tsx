@@ -171,10 +171,10 @@ export default function BrowsePage() {
         <div className="flex-1 flex items-center justify-center px-4">
           <div className="text-center max-w-md">
             <Heart className="w-20 h-20 text-rose-300 mx-auto mb-6" />
-            <h1 className="text-3xl font-playfair font-bold text-slate-900 mb-4">
+            <h1 className="text-3xl font-playfair font-bold text-foreground mb-4">
               No New Profiles Yet
             </h1>
-            <p className="text-slate-600 mb-8">
+            <p className="text-muted-foreground mb-8">
               You've reviewed all available profiles that match your preferences. We'll notify you when someone suitable appears!
             </p>
             <Link
