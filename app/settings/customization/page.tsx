@@ -213,10 +213,13 @@ export default function CustomizationPage() {
                   name="font"
                   value="inter"
                   checked={selectedFont === 'inter'}
-                  onChange={() => setSelectedFont('inter')}
+                  onChange={() => {
+                    setSelectedFont('inter')
+                    toast.success('Font changed to Modern (Inter)')
+                  }}
                   className="cursor-pointer"
                 />
-                <Label htmlFor="font-inter" className="flex-1 cursor-pointer text-sm font-medium">
+                <Label htmlFor="font-inter" className="flex-1 cursor-pointer text-sm font-medium dark:text-white">
                   Modern (Inter)
                 </Label>
               </div>
@@ -227,10 +230,13 @@ export default function CustomizationPage() {
                   name="font"
                   value="playfair"
                   checked={selectedFont === 'playfair'}
-                  onChange={() => setSelectedFont('playfair')}
+                  onChange={() => {
+                    setSelectedFont('playfair')
+                    toast.success('Font changed to Elegant (Playfair Display)')
+                  }}
                   className="cursor-pointer"
                 />
-                <Label htmlFor="font-playfair" className="flex-1 cursor-pointer text-sm font-medium font-playfair">
+                <Label htmlFor="font-playfair" className="flex-1 cursor-pointer text-sm font-medium font-playfair dark:text-white">
                   Elegant (Playfair Display)
                 </Label>
               </div>
