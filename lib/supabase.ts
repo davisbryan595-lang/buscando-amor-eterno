@@ -28,36 +28,8 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 })
 
 // Configure realtime with extended timeouts and heartbeat
-if (typeof window !== 'undefined') {
-  // Auto-reconnect on visibility change
-  document.addEventListener('visibilitychange', () => {
-    if (document.hidden) {
-      console.log('[Supabase] Page hidden - subscriptions may pause')
-    } else {
-      console.log('[Supabase] Page visible - resuming subscriptions')
-      // Reconnect if needed
-      const channels = supabase.getChannels()
-      channels.forEach(channel => {
-        if (channel.state === 'CLOSED') {
-          console.log('[Supabase] Reconnecting channel:', channel.topic)
-          channel.subscribe()
-        }
-      })
-    }
-  })
-
-  // Setup periodic health check for subscriptions
-  setInterval(() => {
-    const channels = supabase.getChannels()
-    const closedChannels = channels.filter(ch => ch.state === 'CLOSED')
-    if (closedChannels.length > 0) {
-      console.log(`[Supabase] Found ${closedChannels.length} closed channels, attempting to reconnect`)
-      closedChannels.forEach(channel => {
-        channel.subscribe()
-      })
-    }
-  }, 15000)
-}
+// Note: Supabase's Realtime client handles reconnection automatically.
+// We don't need aggressive manual reconnect logic as it causes network errors during navigation.
 
 export type Database = {
   public: {
