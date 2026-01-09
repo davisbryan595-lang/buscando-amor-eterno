@@ -13,9 +13,21 @@ import { Loader } from 'lucide-react'
 export default function HomePage() {
   const { user, loading: authLoading } = useAuth()
   const { isLoading: protectionLoading } = useProfileProtection(true, '/onboarding')
+  const [loadingTimeout, setLoadingTimeout] = useState(false)
 
-  // Show loading while checking auth state
-  if (authLoading || protectionLoading) {
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (authLoading || protectionLoading) {
+        console.warn('Home page loading took too long - forcing render')
+        setLoadingTimeout(true)
+      }
+    }, 6000)
+
+    return () => clearTimeout(timeoutId)
+  }, [authLoading, protectionLoading])
+
+  // Show loading while checking auth state (but force render after 6 seconds)
+  if ((authLoading || protectionLoading) && !loadingTimeout) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader className="animate-spin" size={40} />

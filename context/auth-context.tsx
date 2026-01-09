@@ -24,6 +24,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     let isMounted = true
+    let timeoutId: NodeJS.Timeout
 
     const initializeAuth = async () => {
       try {
@@ -49,7 +50,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
-    initializeAuth()
+    // Set a 5-second timeout to prevent indefinite loading
+    timeoutId = setTimeout(() => {
+      if (isMounted) {
+        console.warn('Auth initialization timeout - proceeding without session')
+        setLoading(false)
+      }
+    }, 5000)
+
+    initializeAuth().then(() => {
+      if (isMounted) {
+        clearTimeout(timeoutId)
+      }
+    })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, sessionData) => {
       if (isMounted) {
@@ -93,6 +106,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     return () => {
       isMounted = false
+      clearTimeout(timeoutId)
       subscription?.unsubscribe()
     }
   }, [])
