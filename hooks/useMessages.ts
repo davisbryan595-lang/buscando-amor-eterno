@@ -1026,19 +1026,39 @@ export function useMessages() {
           }
 
           // Broadcast the updated call message
-          const conversationChannel = supabase.channel(`messages:${user.id}:${recipientId}`)
-          await conversationChannel.send({
-            type: 'broadcast',
-            event: 'new_message',
-            payload: callMessage,
-          })
+          try {
+            const conversationChannel = supabase.channel(`messages:${user.id}:${recipientId}`)
+            await new Promise<void>((resolve) => {
+              conversationChannel.subscribe((status) => {
+                if (status === 'SUBSCRIBED') resolve()
+              })
+            })
+            await conversationChannel.send({
+              type: 'broadcast',
+              event: 'new_message',
+              payload: callMessage,
+            })
+            conversationChannel.unsubscribe()
+          } catch (broadcastErr) {
+            console.warn('Failed to broadcast on conversation channel:', broadcastErr)
+          }
 
-          const userChannel = supabase.channel(`messages:${user.id}`)
-          await userChannel.send({
-            type: 'broadcast',
-            event: 'new_message',
-            payload: callMessage,
-          })
+          try {
+            const userChannel = supabase.channel(`messages:${user.id}`)
+            await new Promise<void>((resolve) => {
+              userChannel.subscribe((status) => {
+                if (status === 'SUBSCRIBED') resolve()
+              })
+            })
+            await userChannel.send({
+              type: 'broadcast',
+              event: 'new_message',
+              payload: callMessage,
+            })
+            userChannel.unsubscribe()
+          } catch (broadcastErr) {
+            console.warn('Failed to broadcast on user channel:', broadcastErr)
+          }
         }
       } catch (err: any) {
         console.error('Error logging call message:', err)
