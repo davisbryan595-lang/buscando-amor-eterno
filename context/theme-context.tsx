@@ -1,12 +1,20 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 
 type Theme = 'light' | 'dark' | 'system'
 
+interface ThemeContextType {
+  theme: Theme
+  setTheme: (theme: Theme) => void
+  effectiveTheme: 'light' | 'dark'
+}
+
+const ThemeContext = createContext<ThemeContextType | undefined>(undefined)
+
 // Helper function to apply theme to document
-const applyTheme = (selectedTheme: Theme) => {
-  if (typeof document === 'undefined') return
+const applyTheme = (selectedTheme: Theme): 'light' | 'dark' => {
+  if (typeof document === 'undefined') return 'light'
 
   const htmlElement = document.documentElement
   let isDark = selectedTheme === 'dark'
@@ -23,10 +31,57 @@ const applyTheme = (selectedTheme: Theme) => {
   // Then add if needed
   if (isDark) {
     htmlElement.classList.add('dark')
-    console.log('[Theme] Applied dark mode')
+    console.log('[Theme] Applied dark mode globally')
   } else {
-    console.log('[Theme] Applied light mode')
+    console.log('[Theme] Applied light mode globally')
   }
+
+  return isDark ? 'dark' : 'light'
+}
+
+export function ThemeProvider({ children }: { children: ReactNode }) {
+  const [theme, setThemeState] = useState<Theme>('light')
+  const [effectiveTheme, setEffectiveTheme] = useState<'light' | 'dark'>('light')
+  const [mounted, setMounted] = useState(false)
+
+  // Initialize theme from localStorage on mount
+  useEffect(() => {
+    // Get saved theme from localStorage, default to 'light'
+    const savedTheme = (localStorage.getItem('app-theme') as Theme) || 'light'
+    console.log('[ThemeProvider] Initializing with:', savedTheme)
+
+    setThemeState(savedTheme)
+    const effective = applyTheme(savedTheme)
+    setEffectiveTheme(effective)
+    setMounted(true)
+  }, [])
+
+  const setTheme = (newTheme: Theme) => {
+    console.log('[ThemeProvider] Changing theme to:', newTheme)
+    setThemeState(newTheme)
+    localStorage.setItem('app-theme', newTheme)
+    const effective = applyTheme(newTheme)
+    setEffectiveTheme(effective)
+    console.log('[ThemeProvider] Theme changed to:', newTheme, '- Effective:', effective)
+  }
+
+  if (!mounted) {
+    return <>{children}</>
+  }
+
+  return (
+    <ThemeContext.Provider value={{ theme, setTheme, effectiveTheme }}>
+      {children}
+    </ThemeContext.Provider>
+  )
+}
+
+export function useTheme() {
+  const context = useContext(ThemeContext)
+  if (!context) {
+    throw new Error('useTheme must be used within ThemeProvider')
+  }
+  return context
 }
 
 // Hook for managing theme settings on the customization page
