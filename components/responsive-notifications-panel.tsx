@@ -145,7 +145,7 @@ export function ResponsiveNotificationsPanel({
     const userImage = notif.from_user_image || notif.liker_image
 
     return (
-      <div className="p-4 hover:bg-rose-50 transition">
+      <div className="p-4 hover:bg-card-subtle dark:hover:bg-card-subtle transition">
         <div className="flex gap-3 items-start mb-3">
           <div className="relative w-12 h-12 flex-shrink-0">
             <Image
@@ -156,11 +156,11 @@ export function ResponsiveNotificationsPanel({
             />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="flex items-center gap-2 font-semibold text-slate-900">
+            <p className="flex items-center gap-2 font-semibold text-foreground dark:text-white">
               <span className="truncate">{userName || 'Someone'}</span>
               {getNotificationIcon(notif.type)}
             </p>
-            <p className="text-sm text-slate-600 line-clamp-2">
+            <p className="text-sm text-muted-foreground line-clamp-2">
               {getNotificationText(notif)}
             </p>
           </div>
@@ -177,7 +177,7 @@ export function ResponsiveNotificationsPanel({
           <button
             onClick={() => handleDismiss(notif.id)}
             disabled={loadingId === notif.id}
-            className="px-3 py-2 border border-slate-300 text-slate-700 rounded-full text-sm hover:bg-slate-50 transition disabled:opacity-50"
+            className="px-3 py-2 border border-muted text-foreground dark:border-slate-600 dark:text-white rounded-full text-sm hover:bg-card-subtle dark:hover:bg-card-subtle transition disabled:opacity-50"
             aria-label="Dismiss notification"
           >
             <X size={16} />
@@ -216,32 +216,32 @@ export function ResponsiveNotificationsPanel({
                 stiffness: 300,
                 opacity: { duration: 0.2 },
               }}
-              className="fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl z-50 max-h-[85vh] overflow-hidden flex flex-col shadow-2xl"
+              className="fixed bottom-0 left-0 right-0 bg-card dark:bg-card rounded-t-3xl z-50 max-h-[85vh] overflow-hidden flex flex-col shadow-2xl"
             >
               {/* Handle bar for swipe hint */}
               <div className="flex justify-center pt-2 pb-1">
-                <div className="w-12 h-1 bg-slate-300 rounded-full" />
+                <div className="w-12 h-1 bg-slate-300 dark:bg-slate-600 rounded-full" />
               </div>
 
               {/* Header - sticky so it doesn't scroll */}
-              <div className="px-4 py-3 border-b border-rose-100 bg-gradient-to-r from-white to-rose-50 flex-shrink-0 flex items-center justify-between sticky top-0 z-10">
-                <h3 className="font-semibold text-slate-900 flex items-center gap-2">
+              <div className="px-4 py-3 border-b border-rose-100 dark:border-rose-900/40 bg-gradient-to-r from-card to-card-subtle dark:from-card dark:to-card-subtle flex-shrink-0 flex items-center justify-between sticky top-0 z-10">
+                <h3 className="font-semibold text-foreground dark:text-white flex items-center gap-2">
                   <Heart size={18} className="text-rose-500 fill-rose-500" />
                   Activity ({notifications.length})
                 </h3>
                 <button
                   onClick={() => onOpenChange(false)}
-                  className="p-1 hover:bg-rose-100 rounded-full transition flex-shrink-0"
+                  className="p-1 hover:bg-card-subtle dark:hover:bg-card-subtle rounded-full transition flex-shrink-0"
                   aria-label="Close notifications"
                 >
-                  <X size={20} className="text-slate-600" />
+                  <X size={20} className="text-muted-foreground" />
                 </button>
               </div>
 
               {/* Content - scrollable */}
               <div className="flex-1 overflow-y-auto">
                 {notifications.length === 0 ? (
-                  <div className="flex items-center justify-center min-h-32 p-8 text-center text-slate-600">
+                  <div className="flex items-center justify-center min-h-32 p-8 text-center text-muted-foreground">
                     <p>No new notifications</p>
                   </div>
                 ) : (
