@@ -231,7 +231,8 @@
       "completeProfileTitle": "Complete Your Profile",
       "completeProfileDesc": "This is the final step of your profile setup. You must complete these preferences to finish onboarding and start connecting with others. Please provide your preferences to continue.",
       "goBack": "Go Back",
-      "completeNow": "Complete Now"
+      "completeNow": "Complete Now",
+      "markAsDealbreaker": "Mark as dealbreaker"
     },
     "completion": {
       "title": "Welcome to Buscando Amor Eterno! 🎉",
