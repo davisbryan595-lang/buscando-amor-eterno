@@ -110,6 +110,7 @@ export function Step6Preferences({
   const [dealbreakers, setDealbreakers] = useState<string[]>(
     initialData?.dealbreakers || []
   )
+  const [showSkipWarning, setShowSkipWarning] = useState(false)
 
   const toggleDealbreaker = (field: string) => {
     setDealbreakers((prev) =>
