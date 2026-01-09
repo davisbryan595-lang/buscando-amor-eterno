@@ -30,7 +30,7 @@ export function useThemeSettings() {
 
   // Load from localStorage on mount
   useEffect(() => {
-    setMounted(true)
+    // Immediately apply the saved theme from localStorage
     const savedTheme = (localStorage.getItem('app-theme') as Theme) || 'light'
     const savedCompact = localStorage.getItem('compact-mode') === 'true'
     const savedLargerText = localStorage.getItem('larger-text') === 'true'
@@ -40,6 +40,11 @@ export function useThemeSettings() {
     setCompactModeState(savedCompact)
     setLargerTextState(savedLargerText)
     setSelectedFontState(savedFont)
+
+    // Re-apply theme in case it got overridden
+    applyTheme(savedTheme)
+
+    setMounted(true)
   }, [])
 
   const applyTheme = (selectedTheme: Theme) => {
