@@ -66,22 +66,28 @@ export default function CustomizationPage() {
     )
   }
 
+  const hasChanges =
+    tempSettings.theme !== settings.theme ||
+    tempSettings.compactMode !== settings.compactMode ||
+    tempSettings.largerText !== settings.largerText
+
   const handleSavePreferences = async () => {
-    setLoading(true)
     try {
-      // TODO: Implement preference saving API call
+      await saveSettings()
       toast.success('Preferences saved successfully')
     } catch (error: any) {
       toast.error(error.message || 'Failed to save preferences')
-    } finally {
-      setLoading(false)
     }
+  }
+
+  const handleRevert = () => {
+    revertSettings()
+    toast.info('Changes reverted')
   }
 
   const themeOptions = [
     { value: 'light', label: 'Light', icon: Sun },
     { value: 'dark', label: 'Dark', icon: Moon },
-    { value: 'system', label: 'System', icon: Palette },
   ]
 
   return (
