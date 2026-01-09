@@ -199,7 +199,7 @@ export default function CustomizationPage() {
           </div>
 
           {/* Font Preferences */}
-          <div className="bg-white border border-rose-100 rounded-2xl p-8 space-y-6 mt-8">
+          <div className="bg-card border border-rose-100 rounded-2xl p-8 space-y-6 mt-8">
             <div>
               <h2 className="text-xl font-semibold text-foreground mb-2">
                 Font Preferences
@@ -210,7 +210,7 @@ export default function CustomizationPage() {
             </div>
 
             <div className="space-y-3">
-              <div className="flex items-center gap-3 p-3 border border-rose-100 rounded-lg cursor-pointer hover:bg-rose-50">
+              <div className="flex items-center gap-3 p-3 border border-border rounded-lg cursor-pointer hover:bg-muted">
                 <input
                   type="radio"
                   id="font-inter"
@@ -223,7 +223,7 @@ export default function CustomizationPage() {
                   Modern (Inter)
                 </Label>
               </div>
-              <div className="flex items-center gap-3 p-3 border border-rose-100 rounded-lg cursor-pointer hover:bg-rose-50">
+              <div className="flex items-center gap-3 p-3 border border-border rounded-lg cursor-pointer hover:bg-muted">
                 <input
                   type="radio"
                   id="font-playfair"
@@ -238,14 +238,35 @@ export default function CustomizationPage() {
             </div>
           </div>
 
-          {/* Save Button */}
-          <Button
-            onClick={handleSavePreferences}
-            disabled={loading}
-            className="w-full mt-8 py-3 rounded-full bg-primary text-white hover:bg-rose-700 font-semibold"
-          >
-            {loading ? 'Saving...' : 'Save Preferences'}
-          </Button>
+          {/* Unsaved Changes Indicator */}
+          {hasChanges && (
+            <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 mt-8">
+              <p className="text-sm text-amber-900">
+                You have unsaved changes. Click "Save Preferences" to apply your changes.
+              </p>
+            </div>
+          )}
+
+          {/* Action Buttons */}
+          <div className="flex gap-3 mt-8">
+            {hasChanges && (
+              <Button
+                onClick={handleRevert}
+                disabled={loading}
+                variant="outline"
+                className="flex-1 py-3 rounded-full border-rose-200 text-foreground hover:bg-muted font-semibold"
+              >
+                Revert Changes
+              </Button>
+            )}
+            <Button
+              onClick={handleSavePreferences}
+              disabled={loading || !hasChanges}
+              className="flex-1 py-3 rounded-full bg-primary text-white hover:bg-rose-700 font-semibold"
+            >
+              {loading ? 'Saving...' : 'Save Preferences'}
+            </Button>
+          </div>
         </div>
       </div>
 
