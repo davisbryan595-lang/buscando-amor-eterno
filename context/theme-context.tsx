@@ -84,9 +84,8 @@ export function useTheme() {
   return context
 }
 
-// Hook for managing theme settings on the customization page
-export function useThemeSettings() {
-  const [theme, setThemeState] = useState<Theme>('light')
+// Hook for customization-specific settings (compact mode, text size, font)
+export function useCustomizationSettings() {
   const [compactMode, setCompactModeState] = useState(false)
   const [largerText, setLargerTextState] = useState(false)
   const [selectedFont, setSelectedFontState] = useState('inter')
@@ -94,31 +93,18 @@ export function useThemeSettings() {
 
   // Load from localStorage on mount
   useEffect(() => {
-    const savedTheme = (localStorage.getItem('app-theme') as Theme) || 'light'
     const savedCompact = localStorage.getItem('compact-mode') === 'true'
     const savedLargerText = localStorage.getItem('larger-text') === 'true'
     const savedFont = localStorage.getItem('app-font') || 'inter'
 
-    console.log('[useThemeSettings] Initializing with:', { savedTheme, savedCompact, savedLargerText, savedFont })
+    console.log('[useCustomizationSettings] Initializing with:', { savedCompact, savedLargerText, savedFont })
 
-    setThemeState(savedTheme)
     setCompactModeState(savedCompact)
     setLargerTextState(savedLargerText)
     setSelectedFontState(savedFont)
 
-    // Apply the saved theme
-    applyTheme(savedTheme)
-
     setMounted(true)
   }, [])
-
-  const setTheme = (newTheme: Theme) => {
-    console.log('[setTheme] Changing theme to:', newTheme)
-    setThemeState(newTheme)
-    localStorage.setItem('app-theme', newTheme)
-    applyTheme(newTheme)
-    console.log('[setTheme] Theme changed successfully')
-  }
 
   const setCompactMode = (value: boolean) => {
     setCompactModeState(value)
@@ -160,8 +146,6 @@ export function useThemeSettings() {
   }
 
   return {
-    theme,
-    setTheme,
     compactMode,
     setCompactMode,
     largerText,
