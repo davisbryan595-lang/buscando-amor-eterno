@@ -1,8 +1,9 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/auth-context'
+import { useTheme } from '@/context/theme-context'
 import Navigation from '@/components/navigation'
 import Footer from '@/components/footer'
 import { Button } from '@/components/ui/button'
@@ -13,10 +14,25 @@ import { toast } from 'sonner'
 export default function CustomizationPage() {
   const router = useRouter()
   const { user } = useAuth()
-  const [theme, setTheme] = useState<'light' | 'dark' | 'system'>('light')
-  const [compactMode, setCompactMode] = useState(false)
-  const [largerText, setLargerText] = useState(false)
-  const [loading, setLoading] = useState(false)
+  const { settings, tempSettings, setTempTheme, setTempCompactMode, setTempLargerText, saveSettings, revertSettings, loading } = useTheme()
+
+  // Warn user if they try to leave with unsaved changes
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      const hasChanges =
+        tempSettings.theme !== settings.theme ||
+        tempSettings.compactMode !== settings.compactMode ||
+        tempSettings.largerText !== settings.largerText
+
+      if (hasChanges) {
+        e.preventDefault()
+        e.returnValue = ''
+      }
+    }
+
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload)
+  }, [settings, tempSettings])
 
   if (!user) {
     return (
