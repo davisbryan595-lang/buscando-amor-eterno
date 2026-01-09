@@ -339,20 +339,20 @@ export function Step6Preferences({
       <AlertDialog open={showSkipWarning} onOpenChange={setShowSkipWarning}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Complete Your Profile</AlertDialogTitle>
+            <AlertDialogTitle>{t('onboarding.step6.completeProfileTitle')}</AlertDialogTitle>
             <AlertDialogDescription>
-              This is the final step of your profile setup. You must complete these preferences to finish onboarding and start connecting with others. Please provide your preferences to continue.
+              {t('onboarding.step6.completeProfileDesc')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="flex gap-3">
             <AlertDialogCancel className="flex-1">
-              Go Back
+              {t('onboarding.step6.goBack')}
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleNext}
               className="flex-1 bg-primary text-white hover:bg-rose-700"
             >
-              Complete Now
+              {t('onboarding.step6.completeNow')}
             </AlertDialogAction>
           </div>
         </AlertDialogContent>
