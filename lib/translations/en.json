@@ -195,7 +195,9 @@
       "healthWellness": "Health & Wellness",
       "spirituality": "Spirituality",
       "intelligence": "Intelligence",
-      "humor": "Humor"
+      "humor": "Humor",
+      "selectAtLeast3Interests": "Please select at least 3 interests",
+      "selectAtLeast2Values": "Please select at least 2 values"
     },
     "step6": {
       "title": "Your preferences & dealbreakers",
