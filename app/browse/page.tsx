@@ -195,7 +195,7 @@ export default function BrowsePage() {
   const opacity = isDragging ? Math.max(0.5, 1 - Math.abs(dragOffset) / 200) : swipeDirection ? 0 : 1
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-rose-50 to-pink-50 overflow-hidden">
+    <main className="min-h-screen bg-gradient-to-br from-rose-50 dark:from-background to-pink-50 dark:to-background overflow-hidden">
       <Navigation />
 
       {/* Profile Incomplete Warning Banner */}
