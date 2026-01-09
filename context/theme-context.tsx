@@ -46,27 +46,32 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   // Initialize theme from localStorage on mount
   useEffect(() => {
-    // Get saved theme from localStorage, default to 'light'
-    const savedTheme = (localStorage.getItem('app-theme') as Theme) || 'light'
-    console.log('[ThemeProvider] Initializing with:', savedTheme)
+    try {
+      // Get saved theme from localStorage, default to 'light'
+      const savedTheme = (localStorage.getItem('app-theme') as Theme) || 'light'
+      console.log('[ThemeProvider] Initializing with:', savedTheme)
 
-    setThemeState(savedTheme)
-    const effective = applyTheme(savedTheme)
-    setEffectiveTheme(effective)
-    setMounted(true)
+      setThemeState(savedTheme)
+      const effective = applyTheme(savedTheme)
+      setEffectiveTheme(effective)
+    } catch (e) {
+      console.error('[ThemeProvider] Error initializing:', e)
+    } finally {
+      setMounted(true)
+    }
   }, [])
 
   const setTheme = (newTheme: Theme) => {
-    console.log('[ThemeProvider] Changing theme to:', newTheme)
-    setThemeState(newTheme)
-    localStorage.setItem('app-theme', newTheme)
-    const effective = applyTheme(newTheme)
-    setEffectiveTheme(effective)
-    console.log('[ThemeProvider] Theme changed to:', newTheme, '- Effective:', effective)
-  }
-
-  if (!mounted) {
-    return <>{children}</>
+    try {
+      console.log('[ThemeProvider] Changing theme to:', newTheme)
+      setThemeState(newTheme)
+      localStorage.setItem('app-theme', newTheme)
+      const effective = applyTheme(newTheme)
+      setEffectiveTheme(effective)
+      console.log('[ThemeProvider] Theme changed to:', newTheme, '- Effective:', effective)
+    } catch (e) {
+      console.error('[ThemeProvider] Error changing theme:', e)
+    }
   }
 
   return (
