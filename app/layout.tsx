@@ -56,20 +56,18 @@ export default function RootLayout({
           `,
         }} />
       </head>
-      <body className={`${inter.variable} ${playfair.variable} font-sans antialiased bg-white dark:bg-slate-950 text-slate-900 dark:text-white`}>
+      <body className={`${inter.variable} ${playfair.variable} font-sans antialiased bg-white text-slate-900`}>
         <Preloader />
         <ReconnectHandler />
-        <ThemeProvider>
-          <I18nProvider>
-            <AuthProvider>
-              <SessionManager />
-              <CallManager>
-                {children}
-              </CallManager>
-              <Toaster />
-            </AuthProvider>
-          </I18nProvider>
-        </ThemeProvider>
+        <I18nProvider>
+          <AuthProvider>
+            <SessionManager />
+            <CallManager>
+              {children}
+            </CallManager>
+            <Toaster />
+          </AuthProvider>
+        </I18nProvider>
       </body>
     </html>
   )
