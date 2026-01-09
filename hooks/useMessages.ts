@@ -656,11 +656,25 @@ export function useMessages() {
         }
 
         const conversationChannel = supabase.channel(`messages:${user.id}:${recipientId}`)
+
+        // Subscribe before sending
+        await new Promise<void>((resolve) => {
+          const timeout = setTimeout(() => resolve(), 5000) // Timeout after 5 seconds
+          conversationChannel.subscribe((status) => {
+            if (status === 'SUBSCRIBED') {
+              clearTimeout(timeout)
+              resolve()
+            }
+          })
+        })
+
         await conversationChannel.send({
           type: 'broadcast',
           event: 'typing_indicator',
           payload: typingStatus,
         })
+
+        conversationChannel.unsubscribe()
       } catch (err: any) {
         console.warn('Failed to broadcast typing status:', err)
       }
