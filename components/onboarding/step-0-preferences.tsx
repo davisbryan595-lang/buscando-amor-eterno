@@ -235,14 +235,14 @@ export function StepPersonality({
           variant="outline"
           className="flex-1 py-3 rounded-full border-secondary text-foreground hover:bg-muted"
         >
-          Skip for Now
+          {t('onboarding.skipForNow')}
         </Button>
         <Button
           onClick={handleNext}
           disabled={interests.length < 3 || values.length < 2}
           className="flex-1 py-3 rounded-full bg-primary text-white hover:bg-rose-700 font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Continue
+          {t('onboarding.nextStep')}
         </Button>
       </div>
     </div>
