@@ -124,7 +124,22 @@ export default function CustomizationPage() {
                 <button
                   key={value}
                   onClick={() => {
-                    setLocalTheme(value as typeof localTheme)
+                    const newTheme = value as typeof localTheme
+                    setLocalThemeState(newTheme)
+                    localStorage.setItem('app-theme', newTheme)
+
+                    // Apply theme immediately
+                    const htmlElement = document.documentElement
+                    let isDark = newTheme === 'dark'
+                    if (newTheme === 'system') {
+                      isDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+                    }
+
+                    htmlElement.classList.remove('dark')
+                    if (isDark) {
+                      htmlElement.classList.add('dark')
+                    }
+
                     toast.success(`Theme changed to ${label}`)
                   }}
                   className={`flex flex-col items-center justify-center py-6 px-4 rounded-xl border-2 transition ${
