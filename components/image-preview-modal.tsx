@@ -82,7 +82,7 @@ export default function ImagePreviewModal({ imageUrl, isOpen, onClose, sourceEle
     >
       <div
         ref={containerRef}
-        className="relative bg-white shadow-2xl flex items-center justify-center"
+        className="relative bg-card shadow-2xl flex items-center justify-center"
         onClick={(e) => e.stopPropagation()}
       >
         <img
