@@ -170,22 +170,22 @@ export function StepPersonality({
         <div className="space-y-4">
           <Label className="flex items-center gap-2 text-lg font-semibold">
             <Heart size={20} className="text-primary" />
-            Your Interests (Select at least 3)
+            {t('onboarding.step0.interests')} (Select at least 3)
           </Label>
           <div className="grid grid-cols-2 gap-3">
             {interestOptions.map((interest) => (
-              <div key={interest} className="flex items-center space-x-2">
+              <div key={interest.key} className="flex items-center space-x-2">
                 <Checkbox
-                  id={interest}
-                  checked={interests.includes(interest)}
-                  onCheckedChange={() => handleInterestToggle(interest)}
+                  id={interest.key}
+                  checked={interests.includes(interest.key)}
+                  onCheckedChange={() => handleInterestToggle(interest.key)}
                   className="rounded"
                 />
                 <Label
-                  htmlFor={interest}
+                  htmlFor={interest.key}
                   className="text-sm font-normal cursor-pointer text-foreground"
                 >
-                  {interest}
+                  {interest.label}
                 </Label>
               </div>
             ))}
