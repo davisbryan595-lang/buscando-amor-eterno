@@ -236,7 +236,7 @@ export function Step6Preferences({
         >
           <Select value={wantsKids} onValueChange={setWantsKids}>
             <SelectTrigger className="px-3 py-2 rounded-lg border-secondary bg-background">
-              <SelectValue placeholder="Select preference" />
+              <SelectValue placeholder={t('onboarding.step6.selectPreference')} />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="yes">{t('onboarding.step6.yes')}</SelectItem>
