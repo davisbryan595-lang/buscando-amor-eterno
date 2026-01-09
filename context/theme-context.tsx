@@ -20,6 +20,29 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
   }
 }
 
+// Helper function to apply theme to document
+const applyTheme = (selectedTheme: Theme) => {
+  let isDark = selectedTheme === 'dark'
+
+  if (selectedTheme === 'system') {
+    if (typeof window !== 'undefined') {
+      isDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+    }
+  }
+
+  // Apply to document root
+  if (typeof document !== 'undefined') {
+    const htmlElement = document.documentElement
+    if (isDark) {
+      htmlElement.classList.add('dark')
+      console.log('[Theme] Applied dark mode')
+    } else {
+      htmlElement.classList.remove('dark')
+      console.log('[Theme] Applied light mode')
+    }
+  }
+}
+
 // Hook for managing theme settings on the customization page
 export function useThemeSettings() {
   const [theme, setThemeState] = useState<Theme>('light')
@@ -46,28 +69,6 @@ export function useThemeSettings() {
 
     setMounted(true)
   }, [])
-
-  const applyTheme = (selectedTheme: Theme) => {
-    let isDark = selectedTheme === 'dark'
-
-    if (selectedTheme === 'system') {
-      if (typeof window !== 'undefined') {
-        isDark = window.matchMedia('(prefers-color-scheme: dark)').matches
-      }
-    }
-
-    // Apply to document root
-    if (typeof document !== 'undefined') {
-      const htmlElement = document.documentElement
-      if (isDark) {
-        htmlElement.classList.add('dark')
-        console.log('[Theme] Applied dark mode')
-      } else {
-        htmlElement.classList.remove('dark')
-        console.log('[Theme] Applied light mode')
-      }
-    }
-  }
 
   const setTheme = (newTheme: Theme) => {
     setThemeState(newTheme)
