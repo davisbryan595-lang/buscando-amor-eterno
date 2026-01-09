@@ -65,11 +65,23 @@ export function useMessages() {
 
         // Broadcast to all conversations
         const userChannel = supabase.channel(`user:${user.id}:online`)
+
+        // Subscribe before sending to ensure channel is ready
+        await new Promise<void>((resolve) => {
+          userChannel.subscribe((status) => {
+            if (status === 'SUBSCRIBED') {
+              resolve()
+            }
+          })
+        })
+
         await userChannel.send({
           type: 'broadcast',
           event: 'user_status',
           payload: onlineStatus,
         })
+
+        userChannel.unsubscribe()
       } catch (err: any) {
         console.warn('Failed to broadcast online status:', err)
       }
