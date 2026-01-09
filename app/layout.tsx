@@ -40,6 +40,14 @@ export default function RootLayout({
         <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
         <script dangerouslySetInnerHTML={{
           __html: `
+            // Ensure light mode is default at the very start
+            try {
+              document.documentElement.classList.remove('dark');
+            } catch (e) {}
+          `,
+        }} />
+        <script dangerouslySetInnerHTML={{
+          __html: `
             (function() {
               try {
                 // Default to light mode
