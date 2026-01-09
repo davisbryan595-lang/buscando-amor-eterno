@@ -109,15 +109,15 @@ export default function SignupPage() {
           {step === 'email' && (
             <form onSubmit={handleEmailSubmit} className="space-y-4 md:space-y-6">
               <div>
-                <h2 className="text-2xl sm:text-3xl font-playfair font-bold text-slate-900 mb-2">
+                <h2 className="text-2xl sm:text-3xl font-playfair font-bold text-foreground mb-2">
                   Create Account
                 </h2>
-                <p className="text-sm md:text-base text-slate-600">Join thousands finding love</p>
+                <p className="text-sm md:text-base text-muted-foreground">Join thousands finding love</p>
               </div>
 
               {error && (
-                <div className="p-3 md:p-4 bg-rose-50 border border-rose-200 rounded-lg">
-                  <p className="text-rose-800 text-xs md:text-sm">{error}</p>
+                <div className="p-3 md:p-4 bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-900/50 rounded-lg">
+                  <p className="text-rose-800 dark:text-rose-300 text-xs md:text-sm">{error}</p>
                 </div>
               )}
 
@@ -157,7 +157,7 @@ export default function SignupPage() {
           {step === 'profile' && (
             <form onSubmit={handleProfileSubmit} className="space-y-4 md:space-y-6">
               <div>
-                <h2 className="text-2xl sm:text-3xl font-playfair font-bold text-slate-900 mb-2">
+                <h2 className="text-2xl sm:text-3xl font-playfair font-bold text-foreground mb-2">
                   Your Profile
                 </h2>
                 <p className="text-sm md:text-base text-slate-600">Tell us about yourself</p>
@@ -203,7 +203,7 @@ export default function SignupPage() {
               </div>
 
               <div>
-                <h2 className="text-2xl sm:text-3xl font-playfair font-bold text-slate-900 mb-2">
+                <h2 className="text-2xl sm:text-3xl font-playfair font-bold text-foreground mb-2">
                   Welcome! 🎉
                 </h2>
                 <p className="text-sm md:text-base text-slate-600">
