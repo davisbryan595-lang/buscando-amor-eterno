@@ -85,7 +85,7 @@ export default function BrowsePage() {
 
   if (profilesError) {
     return (
-      <main className="min-h-screen bg-gradient-to-br from-rose-50 to-pink-50">
+      <main className="min-h-screen bg-background text-foreground">
         <Navigation />
         <div className="pt-24 pb-12 px-4 flex items-center justify-center min-h-[80vh]">
           <div className="text-center max-w-md">
