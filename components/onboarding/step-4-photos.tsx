@@ -10,7 +10,6 @@ import Image from 'next/image'
 
 interface Step4Props {
   onNext: () => void
-  onSkip: () => void
   initialPhotos?: File[]
   onDataChange: (files: File[]) => void
   onUploadComplete?: (urls: string[]) => void
