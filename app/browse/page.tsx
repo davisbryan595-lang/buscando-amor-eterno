@@ -42,7 +42,7 @@ export default function BrowsePage() {
 
   if (authLoading || isLoading || profilesLoading) {
     return (
-      <main className="h-screen bg-gradient-to-br from-rose-50 to-pink-50 flex items-center justify-center">
+      <main className="h-screen bg-background text-foreground flex items-center justify-center">
         <Loader className="animate-spin" size={40} />
       </main>
     )
