@@ -118,7 +118,7 @@ export default function CustomizationPage() {
           </div>
 
           {/* Theme Section */}
-          <div className="bg-white border border-rose-100 rounded-2xl p-8 space-y-6">
+          <div className="bg-card border border-rose-100 rounded-2xl p-8 space-y-6">
             <div>
               <h2 className="text-xl font-semibold text-foreground mb-2">
                 Theme
@@ -128,18 +128,18 @@ export default function CustomizationPage() {
               </p>
             </div>
 
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 gap-4">
               {themeOptions.map(({ value, label, icon: Icon }) => (
                 <button
                   key={value}
-                  onClick={() => setTheme(value as typeof theme)}
+                  onClick={() => setTempTheme(value as 'light' | 'dark')}
                   className={`flex flex-col items-center justify-center py-6 px-4 rounded-xl border-2 transition ${
-                    theme === value
-                      ? 'border-primary bg-rose-50'
+                    tempSettings.theme === value
+                      ? 'border-primary bg-primary/10'
                       : 'border-rose-100 hover:border-primary'
                   }`}
                 >
-                  <Icon size={32} className={theme === value ? 'text-primary' : 'text-muted-foreground'} />
+                  <Icon size={32} className={tempSettings.theme === value ? 'text-primary' : 'text-muted-foreground'} />
                   <p className="text-sm font-semibold text-foreground mt-2">
                     {label}
                   </p>
