@@ -285,7 +285,7 @@ export function Step6Preferences({
         <div className="space-y-3 p-4 rounded-2xl bg-destructive/5 border border-destructive/20">
           <div className="flex items-center gap-2">
             <Flame size={20} className="text-destructive" />
-            <h3 className="font-semibold text-foreground">Mark as dealbreaker</h3>
+            <h3 className="font-semibold text-foreground">{t('onboarding.step6.markAsDealbreaker')}</h3>
           </div>
           <div className="space-y-2">
             <DealBreakerOption
