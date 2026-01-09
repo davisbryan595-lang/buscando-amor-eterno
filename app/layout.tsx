@@ -42,17 +42,31 @@ export default function RootLayout({
           __html: `
             (function() {
               try {
+                // Default to light mode
                 const theme = localStorage.getItem('app-theme') || 'light';
-                let isDark = theme === 'dark';
-                if (theme === 'system') {
+                console.log('[Theme Init] Stored theme:', theme);
+
+                let isDark = false;
+                if (theme === 'dark') {
+                  isDark = true;
+                } else if (theme === 'system') {
                   isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                } else {
+                  isDark = false;
                 }
+
+                console.log('[Theme Init] isDark:', isDark);
+
+                // Remove dark class first to ensure clean state
+                document.documentElement.classList.remove('dark');
+
+                // Then add if needed
                 if (isDark) {
                   document.documentElement.classList.add('dark');
-                } else {
-                  document.documentElement.classList.remove('dark');
                 }
-              } catch (e) {}
+              } catch (e) {
+                console.error('[Theme Init Error]', e);
+              }
             })();
           `,
         }} />
