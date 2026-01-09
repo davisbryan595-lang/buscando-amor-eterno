@@ -39,7 +39,7 @@ export function LikeNotification({ notification, onDismiss }: LikeNotificationPr
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
-      <div className="bg-white rounded-3xl max-w-md w-full p-8 space-y-6 animate-in fade-in zoom-in-95 duration-300">
+      <div className="bg-card rounded-3xl max-w-md w-full p-8 space-y-6 animate-in fade-in zoom-in-95 duration-300">
         <div className="relative h-48 rounded-2xl overflow-hidden bg-gradient-to-br from-rose-100 to-pink-100">
           {notification.liker_image ? (
             <Image
@@ -55,9 +55,9 @@ export function LikeNotification({ notification, onDismiss }: LikeNotificationPr
           )}
           <button
             onClick={onDismiss}
-            className="absolute top-3 right-3 w-10 h-10 bg-white rounded-full flex items-center justify-center hover:bg-gray-100 transition"
+            className="absolute top-3 right-3 w-10 h-10 bg-card rounded-full flex items-center justify-center hover:bg-card-hover transition"
           >
-            <X className="w-5 h-5 text-gray-600" />
+            <X className="w-5 h-5 text-foreground" />
           </button>
         </div>
 
@@ -67,11 +67,11 @@ export function LikeNotification({ notification, onDismiss }: LikeNotificationPr
             <span className="text-sm font-semibold text-rose-500">Someone likes you!</span>
           </div>
 
-          <h2 className="text-2xl font-playfair font-bold text-slate-900">
+          <h2 className="text-2xl font-playfair font-bold text-foreground">
             {notification.liker_name || 'Someone'} likes your profile!
           </h2>
 
-          <p className="text-slate-600">
+          <p className="text-muted-foreground">
             Ready to start a conversation?
           </p>
         </div>
@@ -89,7 +89,7 @@ export function LikeNotification({ notification, onDismiss }: LikeNotificationPr
             onClick={onDismiss}
             disabled={isLoading}
             variant="outline"
-            className="w-full py-3 border-2 border-slate-300 text-slate-700 rounded-full font-semibold hover:bg-slate-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full py-3 border-2 border-border text-foreground rounded-full font-semibold hover:bg-card-hover transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Not Now
           </Button>

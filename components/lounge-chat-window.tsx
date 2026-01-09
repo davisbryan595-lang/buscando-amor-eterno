@@ -47,28 +47,28 @@ export default function LoungeChatWindow({ autoScroll = true }: LoungeChatWindow
   }
 
   return (
-    <div ref={containerRef} className="flex flex-col h-full w-full bg-white rounded-xl sm:rounded-2xl border border-rose-100/40 shadow-lg overflow-hidden">
+    <div ref={containerRef} className="flex flex-col h-full w-full bg-card dark:bg-card rounded-xl sm:rounded-2xl border border-rose-100/40 dark:border-rose-900/40 shadow-lg overflow-hidden">
       {/* Messages Container - Clean background */}
       <div
         ref={messagesContainerRef}
-        className="flex-1 overflow-y-auto px-2 py-3 sm:px-4 sm:py-4 md:px-6 md:py-6 space-y-2 sm:space-y-3 lg:space-y-4 bg-white"
+        className="flex-1 overflow-y-auto px-2 py-3 sm:px-4 sm:py-4 md:px-6 md:py-6 space-y-2 sm:space-y-3 lg:space-y-4 bg-card dark:bg-card"
       >
         {loading ? (
           <div className="flex items-center justify-center h-full w-full">
-            <p className="text-slate-500 text-xs sm:text-sm md:text-base">Loading messages...</p>
+            <p className="text-muted-foreground text-xs sm:text-sm md:text-base">Loading messages...</p>
           </div>
         ) : error ? (
           <div className="flex items-center justify-center h-full w-full px-4">
             <div className="text-center">
-              <p className="text-slate-700 font-semibold mb-1 text-xs sm:text-sm md:text-base">Something went wrong</p>
-              <p className="text-slate-500 text-xs sm:text-xs md:text-sm break-words">{error}</p>
+              <p className="text-foreground font-semibold mb-1 text-xs sm:text-sm md:text-base">Something went wrong</p>
+              <p className="text-muted-foreground text-xs sm:text-xs md:text-sm break-words">{error}</p>
             </div>
           </div>
         ) : messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full w-full text-center px-3 sm:px-4">
             <Heart className="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 text-rose-300 mb-2 sm:mb-3 md:mb-4 drop-shadow-lg" fill="currentColor" />
-            <p className="text-base sm:text-lg md:text-2xl font-playfair font-bold text-slate-900 mb-1 sm:mb-2">Welcome to the Lounge!</p>
-            <p className="text-xs sm:text-sm md:text-base text-slate-600 max-w-xs sm:max-w-sm">Be the first to say hello to our community 💕</p>
+            <p className="text-base sm:text-lg md:text-2xl font-playfair font-bold text-foreground dark:text-white mb-1 sm:mb-2">Welcome to the Lounge!</p>
+            <p className="text-xs sm:text-sm md:text-base text-slate-600 dark:text-slate-400 max-w-xs sm:max-w-sm">Be the first to say hello to our community 💕</p>
           </div>
         ) : (
           messages.map((message, index) => {
@@ -103,17 +103,17 @@ export default function LoungeChatWindow({ autoScroll = true }: LoungeChatWindow
 
                 {/* Message Bubble */}
                 <div className={`flex flex-col gap-0.5 max-w-[calc(100%-2rem)] sm:max-w-[calc(100%-2.5rem)] md:max-w-[calc(100%-3rem)] ${isOwnMessage ? 'items-end order-1' : 'items-start order-2'}`}>
-                  <p className="text-xs text-slate-500 px-1.5 sm:px-2 truncate">{message.sender_name}</p>
+                  <p className="text-xs text-muted-foreground px-1.5 sm:px-2 truncate">{message.sender_name}</p>
                   <div
                     className={`px-2.5 sm:px-3 md:px-4 py-1.5 sm:py-2 md:py-2.5 rounded-lg sm:rounded-xl max-w-full ${
                       isOwnMessage
                         ? 'bg-gradient-to-r from-primary to-rose-600 text-white rounded-br-none shadow-sm sm:shadow-md'
-                        : 'bg-white border border-rose-100/50 text-slate-900 rounded-bl-none shadow-xs sm:shadow-sm'
+                        : 'bg-card-subtle dark:bg-card-subtle border border-rose-100/50 dark:border-rose-900/30 text-foreground dark:text-white rounded-bl-none shadow-xs sm:shadow-sm'
                     }`}
                   >
                     <p className="text-xs sm:text-sm md:text-sm whitespace-pre-wrap break-words">{message.message || message.content}</p>
                   </div>
-                  <p className="text-xs text-slate-400 px-1.5 sm:px-2">
+                  <p className="text-xs text-slate-400 dark:text-slate-500 px-1.5 sm:px-2">
                     {new Date(message.created_at).toLocaleTimeString([], {
                       hour: '2-digit',
                       minute: '2-digit',
@@ -130,7 +130,7 @@ export default function LoungeChatWindow({ autoScroll = true }: LoungeChatWindow
       {/* Input Form - Clean styling */}
       <form
         onSubmit={handleSendMessage}
-        className="px-2 py-3 sm:px-3 sm:py-4 md:px-4 md:py-5 border-t border-rose-100/30 bg-white flex gap-2 sm:gap-2.5 flex-shrink-0"
+        className="px-2 py-3 sm:px-3 sm:py-4 md:px-4 md:py-5 border-t border-rose-100/30 dark:border-rose-900/30 bg-card dark:bg-card flex gap-2 sm:gap-2.5 flex-shrink-0"
       >
         <input
           type="text"
@@ -138,7 +138,7 @@ export default function LoungeChatWindow({ autoScroll = true }: LoungeChatWindow
           onChange={(e) => setNewMessage(e.target.value)}
           placeholder="Say hello to community..."
           disabled={sendingMessage}
-          className="flex-1 px-3 sm:px-4 md:px-5 py-2.5 sm:py-3 md:py-3.5 bg-slate-50 border border-rose-100 rounded-full focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/30 focus:bg-white hover:border-rose-200 transition disabled:opacity-50 text-xs sm:text-sm md:text-base placeholder-slate-400 placeholder:text-xs sm:placeholder:text-sm shadow-sm"
+          className="flex-1 px-3 sm:px-4 md:px-5 py-2.5 sm:py-3 md:py-3.5 bg-card-subtle dark:bg-card-subtle border border-rose-100 dark:border-rose-900/30 rounded-full focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/30 focus:bg-card dark:focus:bg-card-hover hover:border-rose-200 dark:hover:border-rose-800 transition disabled:opacity-50 text-xs sm:text-sm md:text-base placeholder-slate-400 dark:placeholder-slate-500 placeholder:text-xs sm:placeholder:text-sm shadow-sm"
         />
         <button
           type="submit"

@@ -96,16 +96,16 @@ export default function CallLogMessage({
     if (callLog.status === 'completed') {
       return 'text-green-600'
     }
-    return 'text-slate-600'
+    return 'text-muted-foreground'
   }
 
   return (
-    <div className={`flex items-center gap-3 py-3 px-4 my-2 rounded-lg bg-slate-50 border border-slate-100 ${getTextColor()}`}>
+    <div className={`flex items-center gap-3 py-3 px-4 my-2 rounded-lg bg-card-subtle border border-border ${getTextColor()}`}>
       <div className="flex-shrink-0">{getCallIcon()}</div>
 
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-slate-900">{getCallText()}</p>
-        <p className="text-xs text-slate-500 mt-0.5">
+        <p className="text-sm font-medium text-foreground">{getCallText()}</p>
+        <p className="text-xs text-muted-foreground mt-0.5">
           {formatTime(callLog.started_at)}
         </p>
       </div>

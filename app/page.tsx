@@ -9,7 +9,7 @@ import Footer from '@/components/footer'
 
 export default function HomePage() {
   return (
-    <main className="w-full bg-white">
+    <main className="w-full bg-background text-foreground">
       <Navigation />
       <Hero />
       <SuccessStories />

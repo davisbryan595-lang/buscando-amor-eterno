@@ -119,10 +119,10 @@ export default function IncomingCallModal({
           </div>
 
           {/* Caller Name */}
-          <h3 className="text-2xl font-bold text-slate-900 mb-1">
+          <h3 className="text-2xl font-bold text-foreground dark:text-white mb-1">
             {call.caller_name || 'Unknown Caller'}
           </h3>
-          <p className="text-slate-600 text-sm">
+          <p className="text-muted-foreground text-sm">
             {call.call_type === 'video'
               ? 'wants to video call with you'
               : 'wants to call you'}
@@ -130,11 +130,11 @@ export default function IncomingCallModal({
         </div>
 
         {/* Action Buttons */}
-        <div className="p-6 flex gap-4 bg-white">
+        <div className="p-6 flex gap-4 bg-card dark:bg-card">
           <button
             onClick={handleReject}
             disabled={isRejecting || isAccepting}
-            className="flex-1 py-4 px-6 bg-slate-100 hover:bg-slate-200 disabled:bg-slate-100 disabled:opacity-50 text-slate-900 rounded-full font-semibold transition flex items-center justify-center gap-2 transform active:scale-95"
+            className="flex-1 py-4 px-6 bg-card-subtle dark:bg-card-subtle hover:bg-card-hover dark:hover:bg-card-hover disabled:bg-card-subtle dark:disabled:bg-card-subtle disabled:opacity-50 text-foreground dark:text-white rounded-full font-semibold transition flex items-center justify-center gap-2 transform active:scale-95"
           >
             <PhoneOff size={20} />
             <span>Decline</span>
@@ -150,8 +150,8 @@ export default function IncomingCallModal({
         </div>
 
         {/* Timer Footer */}
-        <div className="px-6 pb-6 text-center bg-white">
-          <div className="inline-flex items-center gap-2 text-xs text-slate-600 bg-slate-50 px-4 py-2 rounded-full">
+        <div className="px-6 pb-6 text-center bg-card dark:bg-card">
+          <div className="inline-flex items-center gap-2 text-xs text-muted-foreground bg-card-subtle dark:bg-card-subtle px-4 py-2 rounded-full">
             <Clock size={12} />
             <span>Call will auto-decline in {timeLeft} seconds</span>
           </div>

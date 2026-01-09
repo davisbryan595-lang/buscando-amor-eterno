@@ -2,16 +2,18 @@
 @import 'tw-animate-css';
 @import '../styles/livekit-custom.css';
 
-@custom-variant dark (&:is(.dark *));
-
 :root {
   /* Updated color scheme for Buscando Amor Eterno dating website - deep red, rose gold, white, soft pink */
   --background: #FFFFFF;
   --foreground: #1a1a1a;
   --card: #FFFFFF;
   --card-foreground: #1a1a1a;
+  --card-subtle: #FFF5F7;
+  --card-hover: #FFF0F6;
   --popover: #FFFFFF;
   --popover-foreground: #1a1a1a;
+  --surface: #FFF0F6;
+  --surface-subtle: #FFF5F7;
   --primary: #BE123C;
   --primary-foreground: #FFFFFF;
   --secondary: #F4C2C2;
@@ -46,8 +48,12 @@
   --foreground: #FFFFFF;
   --card: #1a1a1a;
   --card-foreground: #FFFFFF;
+  --card-subtle: #2a2a2a;
+  --card-hover: #262626;
   --popover: #1a1a1a;
   --popover-foreground: #FFFFFF;
+  --surface: #1a1a1a;
+  --surface-subtle: #2a2a2a;
   --primary: #FF69B4;
   --primary-foreground: #0a0a0a;
   --secondary: #8B4A5C;
@@ -84,6 +90,10 @@
   --color-foreground: var(--foreground);
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
+  --color-card-subtle: var(--card-subtle);
+  --color-card-hover: var(--card-hover);
+  --color-surface: var(--surface);
+  --color-surface-subtle: var(--surface-subtle);
   --color-popover: var(--popover);
   --color-popover-foreground: var(--popover-foreground);
   --color-primary: var(--primary);
@@ -140,6 +150,15 @@
 }
 
 @layer components {
+  /* Display customization classes */
+  html.compact-mode {
+    --spacing-multiplier: 0.75;
+  }
+
+  html.larger-text {
+    font-size: 18px;
+  }
+
   /* Toast Notification Responsiveness */
   .toaster {
     position: fixed;

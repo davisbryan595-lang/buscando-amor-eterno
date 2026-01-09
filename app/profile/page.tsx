@@ -19,7 +19,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { AccountMenu } from '@/components/account-menu'
-import { Loader, LogOut, Trash2, Download, Camera, X, Plus, AlertCircle } from 'lucide-react'
+import { Loader, LogOut, Trash2, Download, Camera, X, Plus, AlertCircle, ChevronLeft } from 'lucide-react'
 import { toast } from 'sonner'
 import { ProfilePhotosTab } from '@/components/profile/photos-tab'
 import { ProfilePromptsTab } from '@/components/profile/prompts-tab'
@@ -132,7 +132,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-background text-foreground">
       <Navigation />
 
       {/* Hero Image Section */}

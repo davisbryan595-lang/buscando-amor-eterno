@@ -350,17 +350,17 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
   }
 
   return (
-    <div className="bg-gradient-to-b from-white to-rose-50 rounded-none md:rounded-xl border-0 md:border border-rose-100 flex flex-col h-full w-full soft-glow overflow-hidden">
+    <div className="bg-gradient-to-b from-card to-card-subtle dark:from-card dark:to-card-subtle rounded-none md:rounded-xl border-0 md:border border-rose-100 dark:border-rose-900/40 flex flex-col h-full w-full soft-glow overflow-hidden">
       {/* Header */}
-      <div className="sticky top-16 md:top-24 z-20 px-3 py-3 sm:p-4 lg:p-6 border-b border-rose-100 flex items-center justify-between flex-shrink-0 gap-2 bg-gradient-to-b from-white to-rose-50">
+      <div className="sticky top-16 md:top-24 z-20 px-3 py-3 sm:p-4 lg:p-6 border-b border-rose-100 dark:border-rose-900/40 flex items-center justify-between flex-shrink-0 gap-2 bg-gradient-to-b from-card to-card-subtle dark:from-card dark:to-card-subtle">
         <div className="flex items-center gap-2 sm:gap-3 lg:gap-4 min-w-0 flex-1">
           {onBack && (
             <button
               onClick={onBack}
-              className="md:hidden p-1.5 sm:p-2 hover:bg-rose-100 rounded-full transition flex-shrink-0"
+              className="md:hidden p-1.5 sm:p-2 hover:bg-card-hover dark:hover:bg-card-hover rounded-full transition flex-shrink-0"
               aria-label="Back to conversations"
             >
-              <ArrowLeft size={18} className="text-slate-700" />
+              <ArrowLeft size={18} className="text-foreground" />
             </button>
           )}
           <button
@@ -380,8 +380,8 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
               )}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="font-semibold text-slate-900 text-sm sm:text-base lg:text-lg truncate">{otherUserDetails?.name || conversation.other_user_name || 'User'}</p>
-              <p className="text-xs sm:text-sm lg:text-base text-slate-600 truncate">
+              <p className="font-semibold text-foreground text-sm sm:text-base lg:text-lg truncate">{otherUserDetails?.name || conversation.other_user_name || 'User'}</p>
+              <p className="text-xs sm:text-sm lg:text-base text-muted-foreground truncate">
                 {conversation.is_online ? 'Online' : getLastSeenText(conversation.last_message_time)}
               </p>
             </div>
@@ -392,7 +392,7 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
           <button
             onClick={handleStartAudioCall}
             disabled={callingState === 'calling'}
-            className="p-1.5 sm:p-2 lg:p-3 hover:bg-rose-100 disabled:opacity-50 disabled:cursor-not-allowed rounded-full transition"
+            className="p-1.5 sm:p-2 lg:p-3 hover:bg-card-hover dark:hover:bg-card-hover disabled:opacity-50 disabled:cursor-not-allowed rounded-full transition"
             title="Start audio call"
           >
             <Phone size={16} className="sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-primary" />
@@ -400,7 +400,7 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
           <button
             onClick={handleStartVideoCall}
             disabled={callingState === 'calling'}
-            className="p-1.5 sm:p-2 lg:p-3 hover:bg-rose-100 disabled:opacity-50 disabled:cursor-not-allowed rounded-full transition"
+            className="p-1.5 sm:p-2 lg:p-3 hover:bg-card-hover dark:hover:bg-card-hover disabled:opacity-50 disabled:cursor-not-allowed rounded-full transition"
             title="Start video call"
           >
             <Video size={16} className="sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-primary" />
@@ -411,7 +411,7 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
       {/* Messages */}
       <div ref={messagesContainerRef} className="flex-1 overflow-y-auto overflow-x-hidden px-3 py-3 sm:p-4 lg:p-6 space-y-2 sm:space-y-3 lg:space-y-4 min-h-0">
         {combinedMessages.length === 0 ? (
-          <div className="flex items-center justify-center h-full text-slate-500">
+          <div className="flex items-center justify-center h-full text-muted-foreground">
             <p className="text-sm sm:text-base lg:text-lg">No messages yet. Start the conversation!</p>
           </div>
         ) : (
@@ -452,7 +452,7 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
             })}
             {showTypingIndicator && (
               <div className="flex justify-start">
-                <div className="px-4 sm:px-5 md:px-6 py-2 sm:py-3 md:py-4 rounded-3xl rounded-bl-none bg-gradient-to-r from-slate-100 to-slate-50">
+                <div className="px-4 sm:px-5 md:px-6 py-2 sm:py-3 md:py-4 rounded-3xl rounded-bl-none bg-gradient-to-r from-card-subtle to-card-subtle dark:from-card-subtle dark:to-card-subtle">
                   <TypingIndicator />
                 </div>
               </div>
@@ -464,7 +464,7 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
       </div>
 
       {/* Input */}
-      <div className="sticky bottom-0 z-20 px-3 py-3 sm:p-4 lg:p-6 border-t border-rose-100 flex gap-2 flex-shrink-0 bg-gradient-to-t from-white to-rose-50">
+      <div className="sticky bottom-0 z-20 px-3 py-3 sm:p-4 lg:p-6 border-t border-rose-100 dark:border-rose-900/40 flex gap-2 flex-shrink-0 bg-gradient-to-t from-card to-card-subtle dark:from-card dark:to-card-subtle">
         <input
           ref={inputRef}
           type="text"
@@ -473,7 +473,7 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
           onKeyPress={(e) => e.key === 'Enter' && handleSend()}
           placeholder="Type a message..."
           disabled={loading}
-          className="flex-1 px-3 sm:px-4 lg:px-6 py-1.5 sm:py-2 lg:py-3 text-xs sm:text-sm lg:text-base bg-white border border-rose-200 rounded-full focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
+          className="flex-1 px-3 sm:px-4 lg:px-6 py-1.5 sm:py-2 lg:py-3 text-xs sm:text-sm lg:text-base bg-card-subtle dark:bg-card-subtle border border-rose-200 dark:border-rose-900/30 rounded-full focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 text-foreground dark:text-white"
         />
         <button
           onClick={handleSend}
