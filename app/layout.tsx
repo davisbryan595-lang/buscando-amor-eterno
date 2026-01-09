@@ -96,7 +96,7 @@ export default function RootLayout({
           `,
         }} />
       </head>
-      <body className={`${inter.variable} ${playfair.variable} font-sans antialiased bg-white dark:bg-slate-950 text-slate-900 dark:text-white`}>
+      <body className={`${inter.variable} ${playfair.variable} font-sans antialiased bg-background text-foreground`}>
         <Preloader />
         <ReconnectHandler />
         <I18nProvider>
