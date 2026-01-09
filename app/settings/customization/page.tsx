@@ -3,7 +3,7 @@
 import React, { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/auth-context'
-import { useThemeSettings } from '@/context/theme-context'
+import { useTheme, useCustomizationSettings } from '@/context/theme-context'
 import Navigation from '@/components/navigation'
 import Footer from '@/components/footer'
 import { Button } from '@/components/ui/button'
@@ -14,9 +14,8 @@ import { toast } from 'sonner'
 export default function CustomizationPage() {
   const router = useRouter()
   const { user } = useAuth()
+  const { theme: localTheme, setTheme: setLocalTheme } = useTheme()
   const {
-    theme: localTheme,
-    setTheme: setLocalTheme,
     compactMode,
     setCompactMode,
     largerText,
@@ -24,7 +23,7 @@ export default function CustomizationPage() {
     selectedFont,
     setSelectedFont,
     mounted,
-  } = useThemeSettings()
+  } = useCustomizationSettings()
   const [loading, setLoading] = useState(false)
 
   if (!user) {
