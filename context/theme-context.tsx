@@ -4,22 +4,6 @@ import { useState, useEffect } from 'react'
 
 type Theme = 'light' | 'dark' | 'system'
 
-// Initialize theme on mount
-if (typeof window !== 'undefined' && typeof document !== 'undefined') {
-  const savedTheme = (localStorage.getItem('app-theme') as Theme) || 'light'
-  let isDark = savedTheme === 'dark'
-
-  if (savedTheme === 'system') {
-    isDark = window.matchMedia('(prefers-color-scheme: dark)').matches
-  }
-
-  if (isDark) {
-    document.documentElement.classList.add('dark')
-  } else {
-    document.documentElement.classList.remove('dark')
-  }
-}
-
 // Helper function to apply theme to document
 const applyTheme = (selectedTheme: Theme) => {
   let isDark = selectedTheme === 'dark'
