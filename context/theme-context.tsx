@@ -53,10 +53,13 @@ export function useThemeSettings() {
 
     // Apply to document root
     if (typeof document !== 'undefined') {
+      const htmlElement = document.documentElement
       if (isDark) {
-        document.documentElement.classList.add('dark')
+        htmlElement.classList.add('dark')
+        console.log('[Theme] Applied dark mode')
       } else {
-        document.documentElement.classList.remove('dark')
+        htmlElement.classList.remove('dark')
+        console.log('[Theme] Applied light mode')
       }
     }
   }
