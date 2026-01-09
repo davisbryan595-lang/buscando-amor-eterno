@@ -3,7 +3,7 @@
 import React, { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/auth-context'
-import { useTheme, useCustomizationSettings } from '@/context/theme-context'
+import { useCustomizationSettings } from '@/context/theme-context'
 import Navigation from '@/components/navigation'
 import Footer from '@/components/footer'
 import { Button } from '@/components/ui/button'
