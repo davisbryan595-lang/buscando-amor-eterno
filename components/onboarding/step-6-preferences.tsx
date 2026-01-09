@@ -13,6 +13,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { Heart, Flame } from 'lucide-react'
 
 const PreferenceSection = ({
@@ -101,6 +110,7 @@ export function Step6Preferences({
   const [dealbreakers, setDealbreakers] = useState<string[]>(
     initialData?.dealbreakers || []
   )
+  const [showSkipWarning, setShowSkipWarning] = useState(false)
 
   const toggleDealbreaker = (field: string) => {
     setDealbreakers((prev) =>
@@ -312,7 +322,7 @@ export function Step6Preferences({
 
       <div className="flex gap-4">
         <Button
-          onClick={onSkip}
+          onClick={() => setShowSkipWarning(true)}
           variant="outline"
           className="flex-1 py-3 rounded-full border-secondary text-foreground hover:bg-muted"
         >
@@ -325,6 +335,28 @@ export function Step6Preferences({
           {t('onboarding.complete')}
         </Button>
       </div>
+
+      <AlertDialog open={showSkipWarning} onOpenChange={setShowSkipWarning}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Complete Your Profile</AlertDialogTitle>
+            <AlertDialogDescription>
+              This is the final step of your profile setup. You must complete these preferences to finish onboarding and start connecting with others. Please provide your preferences to continue.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="flex gap-3">
+            <AlertDialogCancel className="flex-1">
+              Go Back
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleNext}
+              className="flex-1 bg-primary text-white hover:bg-rose-700"
+            >
+              Complete Now
+            </AlertDialogAction>
+          </div>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

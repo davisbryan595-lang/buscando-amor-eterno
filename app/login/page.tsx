@@ -1,11 +1,12 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import Navigation from '@/components/navigation'
 import Footer from '@/components/footer'
 import { useAuth } from '@/context/auth-context'
+import { useProfile } from '@/hooks/useProfile'
 import { toast } from 'sonner'
 
 export default function LoginPage() {
@@ -13,8 +14,16 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const { signIn } = useAuth()
+  const { signIn, user } = useAuth()
+  const { profile, loading: profileLoading } = useProfile()
   const router = useRouter()
+
+  // Check if user is already logged in with incomplete profile, redirect to onboarding
+  useEffect(() => {
+    if (user && profile && !profileLoading && !profile.profile_complete) {
+      router.push('/onboarding')
+    }
+  }, [user, profile, profileLoading, router])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
