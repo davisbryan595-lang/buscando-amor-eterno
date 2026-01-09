@@ -116,7 +116,7 @@ export default function NuestraHistoriaPage() {
   }, [])
 
   return (
-    <main className="w-full bg-white">
+    <main className="w-full bg-background text-foreground">
       <Navigation />
 
       {/* Hero Section */}

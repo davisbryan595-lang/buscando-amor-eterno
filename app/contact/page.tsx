@@ -20,7 +20,7 @@ export default function ContactPage() {
   }
 
   return (
-    <main className="min-h-screen bg-white">
+    <main className="min-h-screen bg-background text-foreground">
       <Navigation />
       <div className="pt-20 md:pt-24 pb-16 md:pb-20 px-4">
         <div className="w-full max-w-2xl mx-auto">
