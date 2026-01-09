@@ -117,8 +117,8 @@ export function UserProfileDetail({ userId, onBack, compact = false }: UserProfi
                 key={index}
                 className={`h-1 sm:h-1.5 flex-1 rounded-full ${
                   index === (userProfile.main_photo_index || 0)
-                    ? 'bg-white'
-                    : 'bg-white/50'
+                    ? 'bg-white dark:bg-slate-300'
+                    : 'bg-white/60 dark:bg-slate-300/50'
                 }`}
               />
             ))}
