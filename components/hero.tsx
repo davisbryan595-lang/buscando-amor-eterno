@@ -116,7 +116,7 @@ export default function Hero() {
       </div>
 
       <div className="w-full max-w-5xl mx-auto text-center relative z-20">
-        <h1 ref={titleRef} className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-playfair font-bold mb-6 md:mb-8 text-slate-900 leading-tight tracking-tight">
+        <h1 ref={titleRef} className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-playfair font-bold mb-6 md:mb-8 text-foreground dark:text-white leading-tight tracking-tight">
           <span className="text-primary relative inline-block">
             {t('hero.title').split(' ').slice(0, 2).join(' ')}
             <svg className="absolute -bottom-2 left-0 w-full h-3 text-rose-200 -z-10" viewBox="0 0 100 10" preserveAspectRatio="none">
@@ -128,7 +128,7 @@ export default function Hero() {
           {t('hero.subtitle')}
         </h2>
 
-        <p ref={descriptionRef} className="text-base sm:text-lg md:text-xl text-slate-600 mb-8 md:mb-12 max-w-2xl mx-auto leading-relaxed">
+        <p ref={descriptionRef} className="text-base sm:text-lg md:text-xl text-slate-700 dark:text-slate-300 mb-8 md:mb-12 max-w-2xl mx-auto leading-relaxed">
           {t('hero.description')}
         </p>
 
@@ -141,7 +141,7 @@ export default function Hero() {
           </Link>
           <Link
             href="/browse"
-            className="w-full sm:w-auto px-6 sm:px-8 py-3 md:py-4 border-2 border-primary text-primary rounded-full text-base md:text-lg font-semibold hover:bg-rose-50 transition"
+            className="w-full sm:w-auto px-6 sm:px-8 py-3 md:py-4 border-2 border-primary text-primary rounded-full text-base md:text-lg font-semibold hover:bg-rose-50 dark:hover:bg-rose-900/30 transition"
           >
             {t('common.browseProfiles')}
           </Link>
@@ -150,15 +150,15 @@ export default function Hero() {
         <div ref={statsRef} className="mt-12 md:mt-16 grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6 text-center">
           <div>
             <p className="text-2xl sm:text-3xl font-bold text-primary mb-2">50M+</p>
-            <p className="text-sm md:text-base text-slate-600">{t('hero.membersWorldwide')}</p>
+            <p className="text-sm md:text-base text-slate-700 dark:text-slate-300">{t('hero.membersWorldwide')}</p>
           </div>
           <div>
             <p className="text-2xl sm:text-3xl font-bold text-primary mb-2">1M+</p>
-            <p className="text-sm md:text-base text-slate-600">{t('hero.matchesMade')}</p>
+            <p className="text-sm md:text-base text-slate-700 dark:text-slate-300">{t('hero.matchesMade')}</p>
           </div>
           <div>
             <p className="text-2xl sm:text-3xl font-bold text-primary mb-2">100+</p>
-            <p className="text-sm md:text-base text-slate-600">{t('hero.countries')}</p>
+            <p className="text-sm md:text-base text-slate-700 dark:text-slate-300">{t('hero.countries')}</p>
           </div>
         </div>
       </div>
