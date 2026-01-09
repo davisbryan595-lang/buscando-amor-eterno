@@ -58,9 +58,11 @@ export function useThemeSettings() {
   }, [])
 
   const setTheme = (newTheme: Theme) => {
+    console.log('[setTheme] Changing theme to:', newTheme)
     setThemeState(newTheme)
     localStorage.setItem('app-theme', newTheme)
     applyTheme(newTheme)
+    console.log('[setTheme] Theme changed successfully')
   }
 
   const setCompactMode = (value: boolean) => {
