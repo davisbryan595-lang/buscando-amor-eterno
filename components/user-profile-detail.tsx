@@ -36,7 +36,7 @@ export function UserProfileDetail({ userId, onBack, compact = false }: UserProfi
   if (!userProfile) {
     return (
       <div className="text-center py-12">
-        <p className="text-slate-600">Profile not found</p>
+        <p className="text-muted-foreground">Profile not found</p>
       </div>
     )
   }
@@ -81,14 +81,14 @@ export function UserProfileDetail({ userId, onBack, compact = false }: UserProfi
   }
 
   return (
-    <div className={`bg-white rounded-none md:rounded-2xl overflow-hidden ${!compact ? 'md:shadow-lg' : ''}`}>
+    <div className={`bg-card rounded-none md:rounded-2xl overflow-hidden ${!compact ? 'md:shadow-lg' : ''}`}>
       {/* Header */}
       {!compact && (
-        <div className="flex items-center justify-between px-3 sm:px-4 py-2 sm:py-3 border-b border-slate-200">
+        <div className="flex items-center justify-between px-3 sm:px-4 py-2 sm:py-3 border-b border-border">
           {onBack ? (
             <button
               onClick={onBack}
-              className="p-1.5 sm:p-2 hover:bg-slate-100 rounded-full transition flex-shrink-0"
+              className="p-1.5 sm:p-2 hover:bg-card-hover rounded-full transition flex-shrink-0"
               aria-label="Go back"
             >
               <ChevronLeft className="w-5 h-5" />
@@ -96,13 +96,13 @@ export function UserProfileDetail({ userId, onBack, compact = false }: UserProfi
           ) : (
             <div className="w-8 sm:w-10" />
           )}
-          <h2 className="text-base sm:text-lg font-semibold text-slate-900">Profile</h2>
+          <h2 className="text-base sm:text-lg font-semibold text-foreground">Profile</h2>
           <div className="w-8 sm:w-10" />
         </div>
       )}
 
       {/* Profile Images */}
-      <div className="relative h-64 sm:h-80 md:h-96 lg:h-[500px] w-full bg-slate-200 overflow-hidden">
+      <div className="relative h-64 sm:h-80 md:h-96 lg:h-[500px] w-full bg-card-subtle overflow-hidden">
         <Image
           src={profileImage}
           alt={userProfile.full_name || 'User profile'}
@@ -131,17 +131,17 @@ export function UserProfileDetail({ userId, onBack, compact = false }: UserProfi
         {/* Name and Age */}
         <div>
           <div className="flex items-baseline gap-2 mb-2 flex-wrap">
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-playfair font-bold text-slate-900">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-playfair font-bold text-foreground">
               {userProfile.full_name || 'User'}
             </h1>
-            <span className="text-xl sm:text-2xl md:text-3xl font-playfair text-slate-700">
+            <span className="text-xl sm:text-2xl md:text-3xl font-playfair text-muted-foreground">
               {userAge}
             </span>
           </div>
 
           {/* Location */}
           {userProfile.city && (
-            <div className="flex items-center gap-1 sm:gap-2 text-slate-600 mb-3 flex-wrap">
+            <div className="flex items-center gap-1 sm:gap-2 text-muted-foreground mb-3 flex-wrap">
               <MapPin className="w-4 h-4 flex-shrink-0" />
               <span className="text-sm sm:text-base">
                 {userProfile.city}
@@ -156,40 +156,40 @@ export function UserProfileDetail({ userId, onBack, compact = false }: UserProfi
         {/* Bio */}
         {userProfile.prompt_1 && (
           <div>
-            <h3 className="text-sm md:text-base font-semibold text-slate-900 mb-2">About</h3>
-            <p className="text-sm md:text-base text-slate-700 leading-relaxed">{userProfile.prompt_1}</p>
+            <h3 className="text-sm md:text-base font-semibold text-foreground mb-2">About</h3>
+            <p className="text-sm md:text-base text-foreground dark:text-slate-200 leading-relaxed">{userProfile.prompt_1}</p>
           </div>
         )}
 
         {/* Additional Prompts */}
         {userProfile.prompt_2 && (
-          <div className="bg-rose-50 rounded-lg p-3 md:p-4">
-            <p className="text-xs md:text-sm text-slate-600 mb-1">What they're looking for</p>
-            <p className="text-sm md:text-base text-slate-900">{userProfile.prompt_2}</p>
+          <div className="bg-card-subtle dark:bg-rose-900/30 rounded-lg p-3 md:p-4">
+            <p className="text-xs md:text-sm text-muted-foreground mb-1">What they're looking for</p>
+            <p className="text-sm md:text-base text-foreground">{userProfile.prompt_2}</p>
           </div>
         )}
         {userProfile.prompt_3 && (
-          <div className="bg-rose-50 rounded-lg p-3 md:p-4">
-            <p className="text-xs md:text-sm text-slate-600 mb-1">Interests</p>
-            <p className="text-sm md:text-base text-slate-900">{userProfile.prompt_3}</p>
+          <div className="bg-card-subtle dark:bg-rose-900/30 rounded-lg p-3 md:p-4">
+            <p className="text-xs md:text-sm text-muted-foreground mb-1">Interests</p>
+            <p className="text-sm md:text-base text-foreground">{userProfile.prompt_3}</p>
           </div>
         )}
         {userProfile.prompt_4 && (
-          <div className="bg-rose-50 rounded-lg p-3 md:p-4">
-            <p className="text-xs md:text-sm text-slate-600 mb-1">A perfect weekend</p>
-            <p className="text-sm md:text-base text-slate-900">{userProfile.prompt_4}</p>
+          <div className="bg-card-subtle dark:bg-rose-900/30 rounded-lg p-3 md:p-4">
+            <p className="text-xs md:text-sm text-muted-foreground mb-1">A perfect weekend</p>
+            <p className="text-sm md:text-base text-foreground">{userProfile.prompt_4}</p>
           </div>
         )}
         {userProfile.prompt_5 && (
-          <div className="bg-rose-50 rounded-lg p-3 md:p-4">
-            <p className="text-xs md:text-sm text-slate-600 mb-1">Fun fact</p>
-            <p className="text-sm md:text-base text-slate-900">{userProfile.prompt_5}</p>
+          <div className="bg-card-subtle dark:bg-rose-900/30 rounded-lg p-3 md:p-4">
+            <p className="text-xs md:text-sm text-muted-foreground mb-1">Fun fact</p>
+            <p className="text-sm md:text-base text-foreground">{userProfile.prompt_5}</p>
           </div>
         )}
         {userProfile.prompt_6 && (
-          <div className="bg-rose-50 rounded-lg p-3 md:p-4">
-            <p className="text-xs md:text-sm text-slate-600 mb-1">Looking for</p>
-            <p className="text-sm md:text-base text-slate-900">{userProfile.prompt_6}</p>
+          <div className="bg-card-subtle dark:bg-rose-900/30 rounded-lg p-3 md:p-4">
+            <p className="text-xs md:text-sm text-muted-foreground mb-1">Looking for</p>
+            <p className="text-sm md:text-base text-foreground">{userProfile.prompt_6}</p>
           </div>
         )}
 
@@ -221,78 +221,78 @@ export function UserProfileDetail({ userId, onBack, compact = false }: UserProfi
           <>
             <Separator />
             <div>
-              <h3 className="text-base md:text-lg font-semibold text-slate-900 mb-4">
+              <h3 className="text-base md:text-lg font-semibold text-foreground mb-4">
                 Their Preferences
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 md:gap-3">
                 {userProfile.relationship_type && (
-                  <div className="bg-slate-50 rounded-lg p-3 md:p-4">
-                    <p className="text-xs md:text-sm text-slate-600 mb-1">Looking for</p>
-                    <p className="text-sm md:text-base font-medium text-slate-900 break-words">
+                  <div className="bg-card-subtle dark:bg-surface rounded-lg p-3 md:p-4">
+                    <p className="text-xs md:text-sm text-muted-foreground mb-1">Looking for</p>
+                    <p className="text-sm md:text-base font-medium text-foreground break-words">
                       {userProfile.relationship_type}
                     </p>
                   </div>
                 )}
                 {userProfile.religion && (
-                  <div className="bg-slate-50 rounded-lg p-3 md:p-4">
-                    <p className="text-xs md:text-sm text-slate-600 mb-1">Religion</p>
-                    <p className="text-sm md:text-base font-medium text-slate-900 break-words">
+                  <div className="bg-card-subtle dark:bg-surface rounded-lg p-3 md:p-4">
+                    <p className="text-xs md:text-sm text-muted-foreground mb-1">Religion</p>
+                    <p className="text-sm md:text-base font-medium text-foreground break-words">
                       {userProfile.religion}
                     </p>
                   </div>
                 )}
                 {userProfile.wants_kids && (
-                  <div className="bg-slate-50 rounded-lg p-3 md:p-4">
-                    <p className="text-xs md:text-sm text-slate-600 mb-1">Kids</p>
-                    <p className="text-sm md:text-base font-medium text-slate-900 break-words">
+                  <div className="bg-card-subtle dark:bg-surface rounded-lg p-3 md:p-4">
+                    <p className="text-xs md:text-sm text-muted-foreground mb-1">Kids</p>
+                    <p className="text-sm md:text-base font-medium text-foreground break-words">
                       {userProfile.wants_kids}
                     </p>
                   </div>
                 )}
                 {userProfile.smoking && (
-                  <div className="bg-slate-50 rounded-lg p-3 md:p-4">
-                    <p className="text-xs md:text-sm text-slate-600 mb-1">Smoking</p>
-                    <p className="text-sm md:text-base font-medium text-slate-900 break-words">
+                  <div className="bg-card-subtle dark:bg-surface rounded-lg p-3 md:p-4">
+                    <p className="text-xs md:text-sm text-muted-foreground mb-1">Smoking</p>
+                    <p className="text-sm md:text-base font-medium text-foreground break-words">
                       {userProfile.smoking}
                     </p>
                   </div>
                 )}
                 {userProfile.drinking && (
-                  <div className="bg-slate-50 rounded-lg p-3 md:p-4">
-                    <p className="text-xs md:text-sm text-slate-600 mb-1">Drinking</p>
-                    <p className="text-sm md:text-base font-medium text-slate-900 break-words">
+                  <div className="bg-card-subtle dark:bg-surface rounded-lg p-3 md:p-4">
+                    <p className="text-xs md:text-sm text-muted-foreground mb-1">Drinking</p>
+                    <p className="text-sm md:text-base font-medium text-foreground break-words">
                       {userProfile.drinking}
                     </p>
                   </div>
                 )}
                 {userProfile.love_language && (
-                  <div className="bg-slate-50 rounded-lg p-3 md:p-4">
-                    <p className="text-xs md:text-sm text-slate-600 mb-1">Love Language</p>
-                    <p className="text-sm md:text-base font-medium text-slate-900 break-words">
+                  <div className="bg-card-subtle dark:bg-surface rounded-lg p-3 md:p-4">
+                    <p className="text-xs md:text-sm text-muted-foreground mb-1">Love Language</p>
+                    <p className="text-sm md:text-base font-medium text-foreground break-words">
                       {userProfile.love_language}
                     </p>
                   </div>
                 )}
                 {userProfile.height_cm && userProfile.height_cm > 0 && (
-                  <div className="bg-slate-50 rounded-lg p-3 md:p-4">
-                    <p className="text-xs md:text-sm text-slate-600 mb-1">Height</p>
-                    <p className="text-sm md:text-base font-medium text-slate-900">
+                  <div className="bg-card-subtle dark:bg-surface rounded-lg p-3 md:p-4">
+                    <p className="text-xs md:text-sm text-muted-foreground mb-1">Height</p>
+                    <p className="text-sm md:text-base font-medium text-foreground">
                       {userProfile.height_cm} cm
                     </p>
                   </div>
                 )}
                 {userProfile.age_range_min && userProfile.age_range_max && (
-                  <div className="bg-slate-50 rounded-lg p-3 md:p-4">
-                    <p className="text-xs md:text-sm text-slate-600 mb-1">Age Range</p>
-                    <p className="text-sm md:text-base font-medium text-slate-900">
+                  <div className="bg-card-subtle dark:bg-surface rounded-lg p-3 md:p-4">
+                    <p className="text-xs md:text-sm text-muted-foreground mb-1">Age Range</p>
+                    <p className="text-sm md:text-base font-medium text-foreground">
                       {userProfile.age_range_min} - {userProfile.age_range_max}
                     </p>
                   </div>
                 )}
                 {userProfile.distance_radius && (
-                  <div className="bg-slate-50 rounded-lg p-3 md:p-4">
-                    <p className="text-xs md:text-sm text-slate-600 mb-1">Distance Radius</p>
-                    <p className="text-sm md:text-base font-medium text-slate-900">
+                  <div className="bg-card-subtle dark:bg-surface rounded-lg p-3 md:p-4">
+                    <p className="text-xs md:text-sm text-muted-foreground mb-1">Distance Radius</p>
+                    <p className="text-sm md:text-base font-medium text-foreground">
                       {userProfile.distance_radius} km
                     </p>
                   </div>
@@ -301,15 +301,15 @@ export function UserProfileDetail({ userId, onBack, compact = false }: UserProfi
 
               {/* Dealbreakers */}
               {userProfile.dealbreakers && userProfile.dealbreakers.length > 0 && (
-                <div className="mt-4 md:mt-6 p-3 md:p-4 bg-red-50 rounded-lg border border-red-100">
-                  <p className="text-xs md:text-sm font-semibold text-red-900 mb-2">
+                <div className="mt-4 md:mt-6 p-3 md:p-4 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-900/50">
+                  <p className="text-xs md:text-sm font-semibold text-red-900 dark:text-red-300 mb-2">
                     Dealbreakers ⚠️
                   </p>
                   <div className="flex flex-wrap gap-2">
                     {userProfile.dealbreakers.map((dealbreaker) => (
                       <span
                         key={dealbreaker}
-                        className="inline-block bg-red-100 text-red-700 text-xs md:text-sm px-2.5 md:px-3 py-1 md:py-1.5 rounded-full font-medium"
+                        className="inline-block bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-200 text-xs md:text-sm px-2.5 md:px-3 py-1 md:py-1.5 rounded-full font-medium"
                       >
                         {dealbreaker.charAt(0).toUpperCase() +
                           dealbreaker.slice(1).replace(/([A-Z])/g, ' $1')}
