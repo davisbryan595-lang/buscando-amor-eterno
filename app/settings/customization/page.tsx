@@ -149,7 +149,7 @@ export default function CustomizationPage() {
           </div>
 
           {/* Display Options */}
-          <div className="bg-white border border-rose-100 rounded-2xl p-8 space-y-6 mt-8">
+          <div className="bg-card border border-rose-100 rounded-2xl p-8 space-y-6 mt-8">
             <div>
               <h2 className="text-xl font-semibold text-foreground mb-2">
                 Display Options
@@ -161,7 +161,7 @@ export default function CustomizationPage() {
 
             <div className="space-y-4">
               {/* Compact Mode */}
-              <div className="flex items-center justify-between p-4 bg-rose-50 rounded-xl">
+              <div className="flex items-center justify-between p-4 bg-muted rounded-xl">
                 <div>
                   <p className="font-semibold text-foreground text-sm">
                     Compact Mode
@@ -172,14 +172,14 @@ export default function CustomizationPage() {
                 </div>
                 <input
                   type="checkbox"
-                  checked={compactMode}
-                  onChange={(e) => setCompactMode(e.target.checked)}
+                  checked={tempSettings.compactMode}
+                  onChange={(e) => setTempCompactMode(e.target.checked)}
                   className="w-5 h-5 rounded cursor-pointer"
                 />
               </div>
 
               {/* Larger Text */}
-              <div className="flex items-center justify-between p-4 bg-rose-50 rounded-xl">
+              <div className="flex items-center justify-between p-4 bg-muted rounded-xl">
                 <div>
                   <p className="font-semibold text-foreground text-sm">
                     Larger Text
@@ -190,8 +190,8 @@ export default function CustomizationPage() {
                 </div>
                 <input
                   type="checkbox"
-                  checked={largerText}
-                  onChange={(e) => setLargerText(e.target.checked)}
+                  checked={tempSettings.largerText}
+                  onChange={(e) => setTempLargerText(e.target.checked)}
                   className="w-5 h-5 rounded cursor-pointer"
                 />
               </div>
