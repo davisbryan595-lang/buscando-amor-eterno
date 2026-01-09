@@ -51,7 +51,7 @@ export default function BrowsePage() {
   // Check if user is logged in
   if (!user) {
     return (
-      <main className="h-screen bg-gradient-to-br from-rose-50 to-pink-50 flex flex-col">
+      <main className="h-screen bg-background text-foreground flex flex-col">
         <Navigation />
         <div className="flex-1 flex items-center justify-center px-4">
           <div className="text-center max-w-md">
@@ -166,7 +166,7 @@ export default function BrowsePage() {
 
   if (!currentProfile) {
     return (
-      <main className="h-screen bg-gradient-to-br from-rose-50 to-pink-50 flex flex-col">
+      <main className="h-screen bg-background text-foreground flex flex-col">
         <Navigation />
         <div className="flex-1 flex items-center justify-center px-4">
           <div className="text-center max-w-md">
