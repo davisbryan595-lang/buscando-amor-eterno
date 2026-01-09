@@ -3,15 +3,14 @@ import { useEffect } from 'react';
 
 export function ReconnectHandler() {
   useEffect(() => {
-    let wasHidden = false;
-
+    // Track visibility state for debugging
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'hidden') {
-        wasHidden = true;
-      } else if (wasHidden && document.visibilityState === 'visible') {
-        // Tab became visible after being hidden - reload to refresh state
-        console.log('[ReconnectHandler] Tab activated after idle period, reloading app');
-        window.location.reload();
+        console.log('[ReconnectHandler] Tab hidden - Supabase will pause subscriptions');
+      } else {
+        console.log('[ReconnectHandler] Tab visible - Supabase will auto-reconnect subscriptions');
+        // Supabase Realtime client automatically handles reconnection when page becomes visible
+        // No manual reload needed - it would abort in-flight network requests during navigation
       }
     };
 
