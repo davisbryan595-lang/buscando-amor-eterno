@@ -141,6 +141,10 @@ export default function OnboardingPage() {
   }
 
   const handleSkip = () => {
+    // Prevent skipping Step 4 (Photos) and Step 6 (Preferences)
+    if (currentStep === 4 || currentStep === 6) {
+      return
+    }
     handleNext()
   }
 
