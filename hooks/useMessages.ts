@@ -493,19 +493,39 @@ export function useMessages() {
         }
 
         // Broadcast to all relevant channels so subscribers get instant update
-        const conversationChannel = supabase.channel(`messages:${user.id}:${recipientId}`)
-        await conversationChannel.send({
-          type: 'broadcast',
-          event: 'new_message',
-          payload: realMessage,
-        })
+        try {
+          const conversationChannel = supabase.channel(`messages:${user.id}:${recipientId}`)
+          await new Promise<void>((resolve) => {
+            conversationChannel.subscribe((status) => {
+              if (status === 'SUBSCRIBED') resolve()
+            })
+          })
+          await conversationChannel.send({
+            type: 'broadcast',
+            event: 'new_message',
+            payload: realMessage,
+          })
+          conversationChannel.unsubscribe()
+        } catch (broadcastErr) {
+          console.warn('Failed to broadcast message on conversation channel:', broadcastErr)
+        }
 
-        const userChannel = supabase.channel(`messages:${user.id}`)
-        await userChannel.send({
-          type: 'broadcast',
-          event: 'new_message',
-          payload: realMessage,
-        })
+        try {
+          const userChannel = supabase.channel(`messages:${user.id}`)
+          await new Promise<void>((resolve) => {
+            userChannel.subscribe((status) => {
+              if (status === 'SUBSCRIBED') resolve()
+            })
+          })
+          await userChannel.send({
+            type: 'broadcast',
+            event: 'new_message',
+            payload: realMessage,
+          })
+          userChannel.unsubscribe()
+        } catch (broadcastErr) {
+          console.warn('Failed to broadcast message on user channel:', broadcastErr)
+        }
 
         return realMessage
       } catch (err: any) {
