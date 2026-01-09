@@ -82,6 +82,7 @@ export function useProfile() {
     }
 
     let isMounted = true
+    let timeoutId: NodeJS.Timeout
 
     const fetchProfileData = async () => {
       try {
@@ -118,10 +119,24 @@ export function useProfile() {
       }
     }
 
-    fetchProfileData()
+    // Set a 5-second timeout to prevent indefinite loading
+    timeoutId = setTimeout(() => {
+      if (isMounted) {
+        console.warn('Profile fetch timeout - proceeding without profile data')
+        setLoading(false)
+        setProfile(null)
+      }
+    }, 5000)
+
+    fetchProfileData().then(() => {
+      if (isMounted) {
+        clearTimeout(timeoutId)
+      }
+    })
 
     return () => {
       isMounted = false
+      clearTimeout(timeoutId)
     }
   }, [user])
 
