@@ -56,10 +56,10 @@ export default function BrowsePage() {
         <div className="flex-1 flex items-center justify-center px-4">
           <div className="text-center max-w-md">
             <Heart className="w-20 h-20 text-rose-300 mx-auto mb-6" />
-            <h1 className="text-3xl font-playfair font-bold text-slate-900 mb-4">
+            <h1 className="text-3xl font-playfair font-bold text-foreground mb-4">
               Sign In to Browse
             </h1>
-            <p className="text-slate-600 mb-8">
+            <p className="text-muted-foreground mb-8">
               Log in to start discovering amazing profiles and find your soulmate.
             </p>
             <div className="flex flex-col gap-3">
@@ -71,7 +71,7 @@ export default function BrowsePage() {
               </Link>
               <Link
                 href="/signup"
-                className="px-8 py-3 bg-white text-rose-700 border-2 border-rose-700 rounded-full font-semibold hover:bg-rose-50 transition-colors"
+                className="px-8 py-3 bg-card text-rose-700 border-2 border-rose-700 rounded-full font-semibold hover:bg-card-hover transition-colors"
               >
                 Sign Up
               </Link>
@@ -90,10 +90,10 @@ export default function BrowsePage() {
         <div className="pt-24 pb-12 px-4 flex items-center justify-center min-h-[80vh]">
           <div className="text-center max-w-md">
             <AlertCircle className="w-16 h-16 text-rose-400 mx-auto mb-6" />
-            <h1 className="text-2xl font-playfair font-bold text-slate-900 mb-2">
+            <h1 className="text-2xl font-playfair font-bold text-foreground mb-2">
               Unable to Load Profiles
             </h1>
-            <p className="text-slate-600 mb-6">{profilesError}</p>
+            <p className="text-muted-foreground mb-6">{profilesError}</p>
             <button
               onClick={() => window.location.reload()}
               className="px-8 py-3 bg-rose-700 text-white rounded-full hover:bg-rose-800 transition-colors"
