@@ -14,7 +14,6 @@ import { toast } from 'sonner'
 export default function CustomizationPage() {
   const router = useRouter()
   const { user } = useAuth()
-  const { theme: localTheme, setTheme: setLocalTheme } = useTheme()
   const {
     compactMode,
     setCompactMode,
@@ -25,6 +24,12 @@ export default function CustomizationPage() {
     mounted,
   } = useCustomizationSettings()
   const [loading, setLoading] = useState(false)
+  const [localTheme, setLocalThemeState] = useState<'light' | 'dark' | 'system'>('light')
+
+  React.useEffect(() => {
+    const savedTheme = (localStorage.getItem('app-theme') as 'light' | 'dark' | 'system') || 'light'
+    setLocalThemeState(savedTheme)
+  }, [])
 
   if (!user) {
     return (
