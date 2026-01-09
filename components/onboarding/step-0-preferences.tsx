@@ -114,10 +114,10 @@ export function StepPersonality({
     <div className="space-y-8">
       <div className="text-center space-y-2">
         <h1 className="text-4xl font-playfair font-bold text-foreground">
-          Let's Get to Know You
+          {t('onboarding.step0.title')}
         </h1>
         <p className="text-lg text-muted-foreground">
-          Help us find your perfect match
+          {t('onboarding.step0.subtitle')}
         </p>
       </div>
 
