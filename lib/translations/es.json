@@ -195,7 +195,9 @@
       "healthWellness": "Salud y Bienestar",
       "spirituality": "Espiritualidad",
       "intelligence": "Inteligencia",
-      "humor": "Humor"
+      "humor": "Humor",
+      "selectAtLeast3Interests": "Por favor selecciona al menos 3 intereses",
+      "selectAtLeast2Values": "Por favor selecciona al menos 2 valores"
     },
     "step6": {
       "title": "Tus preferencias y límites",
