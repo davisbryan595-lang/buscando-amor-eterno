@@ -178,14 +178,14 @@ export default function NuestraHistoriaPage() {
       </section>
 
       {/* Introduction Section */}
-      <section className="py-16 md:py-24 px-4 md:px-6" style={{ backgroundColor: '#FFF5F7' }}>
+      <section className="py-16 md:py-24 px-4 md:px-6 bg-background dark:bg-card-subtle">
         <div className="w-full max-w-3xl mx-auto" data-scroll-animate="fade-in">
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-playfair font-bold text-center mb-6 md:mb-8 text-slate-900">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-playfair font-bold text-center mb-6 md:mb-8 text-foreground">
             {t('ourStory.intro.heading')}
           </h2>
 
           <div className="mb-12 md:mb-16">
-            <p className="text-base sm:text-lg md:text-lg text-slate-700 leading-relaxed">
+            <p className="text-base sm:text-lg md:text-lg text-foreground dark:text-slate-200 leading-relaxed">
               {t('ourStory.intro.text')}
             </p>
           </div>
@@ -206,9 +206,9 @@ export default function NuestraHistoriaPage() {
       </section>
 
       {/* Dark Valley Section */}
-      <section className="py-16 md:py-24 px-4 md:px-6">
+      <section className="py-16 md:py-24 px-4 md:px-6 bg-background">
         <div className="w-full max-w-5xl mx-auto" data-scroll-animate="fade-in">
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-playfair font-bold text-center mb-12 md:mb-16 text-slate-900">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-playfair font-bold text-center mb-12 md:mb-16 text-foreground">
             {t('ourStory.darkValley.heading')}
           </h2>
 
@@ -229,7 +229,7 @@ export default function NuestraHistoriaPage() {
 
             {/* Text */}
             <div className="w-full md:w-1/2" data-scroll-animate="fade-in-right">
-              <p className="text-base sm:text-lg md:text-lg text-slate-700 leading-relaxed">
+              <p className="text-base sm:text-lg md:text-lg text-foreground dark:text-slate-200 leading-relaxed">
                 {t('ourStory.darkValley.text')}
               </p>
             </div>
@@ -238,22 +238,22 @@ export default function NuestraHistoriaPage() {
       </section>
 
       {/* Turning Point Section */}
-      <section className="py-16 md:py-24 px-4 md:px-6 bg-gradient-to-b from-white to-rose-50">
+      <section className="py-16 md:py-24 px-4 md:px-6 bg-gradient-to-b from-background to-card-subtle dark:from-background dark:to-card-subtle">
         <div className="w-full max-w-4xl mx-auto" data-scroll-animate="fade-in">
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-playfair font-bold text-center mb-8 md:mb-12 text-slate-900">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-playfair font-bold text-center mb-8 md:mb-12 text-foreground">
             {t('ourStory.turningPoint.heading')}
           </h2>
 
           <div className="flex flex-col md:flex-row gap-8 md:gap-12 items-start">
             {/* Main text */}
             <div className="w-full md:w-2/3">
-              <p className="text-base sm:text-lg md:text-lg text-slate-700 leading-relaxed mb-6">
+              <p className="text-base sm:text-lg md:text-lg text-foreground dark:text-slate-200 leading-relaxed mb-6">
                 {t('ourStory.turningPoint.text')}
               </p>
 
               {/* Pull Quote */}
-              <div className="bg-yellow-50 border-l-4 border-yellow-400 pl-6 py-4 my-8 md:my-12 rounded">
-                <p className="text-lg md:text-xl font-playfair italic text-slate-800">
+              <div className="bg-amber-50 dark:bg-amber-900/30 border-l-4 border-amber-400 dark:border-amber-600 pl-6 py-4 my-8 md:my-12 rounded">
+                <p className="text-lg md:text-xl font-playfair italic text-amber-900 dark:text-amber-100">
                   "{t('ourStory.turningPoint.quote')}"
                 </p>
               </div>
@@ -274,9 +274,9 @@ export default function NuestraHistoriaPage() {
       </section>
 
       {/* Finding Love Section */}
-      <section className="py-16 md:py-24 px-4 md:px-6">
+      <section className="py-16 md:py-24 px-4 md:px-6 bg-background">
         <div className="w-full max-w-5xl mx-auto" data-scroll-animate="fade-in">
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-playfair font-bold text-center mb-12 md:mb-16 text-slate-900">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-playfair font-bold text-center mb-12 md:mb-16 text-foreground">
             {t('ourStory.findingLove.heading')}
           </h2>
 
@@ -295,15 +295,15 @@ export default function NuestraHistoriaPage() {
 
             {/* Text */}
             <div className="w-full md:w-1/2" data-scroll-animate="fade-in-right">
-              <p className="text-base sm:text-lg md:text-lg text-slate-700 leading-relaxed">
+              <p className="text-base sm:text-lg md:text-lg text-foreground dark:text-slate-200 leading-relaxed">
                 {t('ourStory.findingLove.textPart1')}
               </p>
             </div>
           </div>
 
           {/* Second part */}
-          <div className="bg-rose-50 rounded-lg p-8 md:p-12" data-scroll-animate="fade-in">
-            <p className="text-base sm:text-lg md:text-lg text-slate-700 leading-relaxed">
+          <div className="bg-rose-50 dark:bg-rose-900/30 rounded-lg p-8 md:p-12" data-scroll-animate="fade-in">
+            <p className="text-base sm:text-lg md:text-lg text-foreground dark:text-slate-200 leading-relaxed">
               {t('ourStory.findingLove.textPart2')}
             </p>
           </div>
@@ -312,10 +312,7 @@ export default function NuestraHistoriaPage() {
 
       {/* Mission Statement Section */}
       <section
-        className="py-16 md:py-24 px-4 md:px-6 relative overflow-hidden"
-        style={{
-          backgroundImage: `linear-gradient(135deg, #FF9AA2 0%, #FAD0C4 50%, #F4C430 100%)`,
-        }}
+        className="py-16 md:py-24 px-4 md:px-6 relative overflow-hidden bg-gradient-to-r from-primary/10 to-rose-500/10 dark:from-primary/20 dark:to-rose-600/20"
       >
         {/* Floating hearts background */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -331,32 +328,32 @@ export default function NuestraHistoriaPage() {
         </div>
 
         <div className="w-full max-w-3xl mx-auto text-center relative z-10" data-scroll-animate="fade-in">
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-playfair font-bold mb-6 md:mb-8 text-white drop-shadow-lg">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-playfair font-bold mb-6 md:mb-8 text-primary dark:text-rose-300 drop-shadow-lg">
             {t('ourStory.mission.heading')}
           </h2>
 
-          <p className="text-base sm:text-lg md:text-xl text-white drop-shadow-md leading-relaxed">
+          <p className="text-base sm:text-lg md:text-xl text-foreground dark:text-slate-100 drop-shadow-md leading-relaxed">
             {t('ourStory.mission.text')}
           </p>
         </div>
       </section>
 
       {/* Closing Quote & CTA Section */}
-      <section className="py-16 md:py-24 px-4 md:px-6">
+      <section className="py-16 md:py-24 px-4 md:px-6 bg-background">
         <div className="w-full max-w-2xl mx-auto text-center" data-scroll-animate="fade-in">
           {/* Large Quote */}
           <div className="mb-12 md:mb-16">
-            <p className="text-3xl sm:text-4xl md:text-5xl font-playfair italic text-slate-900 leading-relaxed">
+            <p className="text-3xl sm:text-4xl md:text-5xl font-playfair italic text-foreground dark:text-white leading-relaxed">
               "{t('ourStory.closing.quote')}"
             </p>
           </div>
 
           {/* Subtext */}
           <div className="mb-8 md:mb-12">
-            <p className="text-base sm:text-lg text-slate-600 mb-2">
+            <p className="text-base sm:text-lg text-muted-foreground mb-2">
               {t('ourStory.closing.subtext1')}
             </p>
-            <p className="text-base sm:text-lg text-slate-600">
+            <p className="text-base sm:text-lg text-muted-foreground">
               {t('ourStory.closing.subtext2')}
             </p>
           </div>
