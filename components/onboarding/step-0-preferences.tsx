@@ -44,49 +44,49 @@ export function StepPersonality({
   const [values, setValues] = useState(initialData?.values || [])
 
   const personalityOptions = [
-    { value: 'introvert', label: 'Introvert - I recharge alone' },
-    { value: 'ambivert', label: 'Ambivert - Balanced social' },
-    { value: 'extrovert', label: 'Extrovert - I love socializing' },
+    { value: 'introvert', label: t('onboarding.step0.introvert') },
+    { value: 'ambivert', label: t('onboarding.step0.ambivert') },
+    { value: 'extrovert', label: t('onboarding.step0.extrovert') },
   ]
 
   const relationshipGoals = [
-    { value: 'casual', label: 'Casual Dating' },
-    { value: 'serious', label: 'Serious Relationship' },
-    { value: 'marriage', label: 'Looking to Marry' },
-    { value: 'friendship', label: 'Friendship First' },
+    { value: 'casual', label: t('onboarding.step0.casualDating') },
+    { value: 'serious', label: t('onboarding.step0.seriousRelationship') },
+    { value: 'marriage', label: t('onboarding.step0.lookingToMarry') },
+    { value: 'friendship', label: t('onboarding.step0.friendshipFirst') },
   ]
 
   const interestOptions = [
-    'Travel',
-    'Sports',
-    'Music',
-    'Art & Culture',
-    'Cooking',
-    'Fitness',
-    'Reading',
-    'Movies',
-    'Technology',
-    'Nature',
-    'Photography',
-    'Gaming',
-    'Yoga',
-    'Volunteering',
-    'Fashion',
+    { key: 'travel', label: t('onboarding.step0.travel') },
+    { key: 'sports', label: t('onboarding.step0.sports') },
+    { key: 'music', label: t('onboarding.step0.music') },
+    { key: 'artCulture', label: t('onboarding.step0.artCulture') },
+    { key: 'cooking', label: t('onboarding.step0.cooking') },
+    { key: 'fitness', label: t('onboarding.step0.fitness') },
+    { key: 'reading', label: t('onboarding.step0.reading') },
+    { key: 'movies', label: t('onboarding.step0.movies') },
+    { key: 'technology', label: t('onboarding.step0.technology') },
+    { key: 'nature', label: t('onboarding.step0.nature') },
+    { key: 'photography', label: t('onboarding.step0.photography') },
+    { key: 'gaming', label: t('onboarding.step0.gaming') },
+    { key: 'yoga', label: t('onboarding.step0.yoga') },
+    { key: 'volunteering', label: t('onboarding.step0.volunteering') },
+    { key: 'fashion', label: t('onboarding.step0.fashion') },
   ]
 
   const valueOptions = [
-    'Family-oriented',
-    'Ambition & Success',
-    'Honesty & Integrity',
-    'Kindness & Empathy',
-    'Independence',
-    'Adventure',
-    'Stability',
-    'Creativity',
-    'Health & Wellness',
-    'Spirituality',
-    'Intelligence',
-    'Humor',
+    { key: 'familyOriented', label: t('onboarding.step0.familyOriented') },
+    { key: 'ambitionSuccess', label: t('onboarding.step0.ambitionSuccess') },
+    { key: 'honestyIntegrity', label: t('onboarding.step0.honestyIntegrity') },
+    { key: 'kindnessEmpathy', label: t('onboarding.step0.kindnessEmpathy') },
+    { key: 'independence', label: t('onboarding.step0.independence') },
+    { key: 'adventure', label: t('onboarding.step0.adventure') },
+    { key: 'stability', label: t('onboarding.step0.stability') },
+    { key: 'creativity', label: t('onboarding.step0.creativity') },
+    { key: 'healthWellness', label: t('onboarding.step0.healthWellness') },
+    { key: 'spirituality', label: t('onboarding.step0.spirituality') },
+    { key: 'intelligence', label: t('onboarding.step0.intelligence') },
+    { key: 'humor', label: t('onboarding.step0.humor') },
   ]
 
   const handleInterestToggle = (interest: string) => {
