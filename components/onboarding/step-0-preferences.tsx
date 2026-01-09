@@ -89,19 +89,19 @@ export function StepPersonality({
     { key: 'humor', label: t('onboarding.step0.humor') },
   ]
 
-  const handleInterestToggle = (interest: string) => {
+  const handleInterestToggle = (interestKey: string) => {
     setInterests((prev) =>
-      prev.includes(interest)
-        ? prev.filter((i) => i !== interest)
-        : [...prev, interest]
+      prev.includes(interestKey)
+        ? prev.filter((i) => i !== interestKey)
+        : [...prev, interestKey]
     )
   }
 
-  const handleValueToggle = (value: string) => {
+  const handleValueToggle = (valueKey: string) => {
     setValues((prev) =>
-      prev.includes(value)
-        ? prev.filter((v) => v !== value)
-        : [...prev, value]
+      prev.includes(valueKey)
+        ? prev.filter((v) => v !== valueKey)
+        : [...prev, valueKey]
     )
   }
 
