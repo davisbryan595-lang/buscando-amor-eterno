@@ -4,7 +4,23 @@ import { useState, useEffect } from 'react'
 
 type Theme = 'light' | 'dark' | 'system'
 
-// Simple hook for managing theme in the customization page only
+// Initialize theme on mount
+if (typeof window !== 'undefined' && typeof document !== 'undefined') {
+  const savedTheme = (localStorage.getItem('app-theme') as Theme) || 'light'
+  let isDark = savedTheme === 'dark'
+
+  if (savedTheme === 'system') {
+    isDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+  }
+
+  if (isDark) {
+    document.documentElement.classList.add('dark')
+  } else {
+    document.documentElement.classList.remove('dark')
+  }
+}
+
+// Hook for managing theme settings on the customization page
 export function useThemeSettings() {
   const [theme, setThemeState] = useState<Theme>('light')
   const [compactMode, setCompactModeState] = useState(false)
@@ -24,9 +40,6 @@ export function useThemeSettings() {
     setCompactModeState(savedCompact)
     setLargerTextState(savedLargerText)
     setSelectedFontState(savedFont)
-
-    // Apply theme
-    applyTheme(savedTheme)
   }, [])
 
   const applyTheme = (selectedTheme: Theme) => {
@@ -38,7 +51,7 @@ export function useThemeSettings() {
       }
     }
 
-    // Only apply to document if we're on a page that supports it
+    // Apply to document root
     if (typeof document !== 'undefined') {
       if (isDark) {
         document.documentElement.classList.add('dark')
@@ -57,33 +70,39 @@ export function useThemeSettings() {
   const setCompactMode = (value: boolean) => {
     setCompactModeState(value)
     localStorage.setItem('compact-mode', value.toString())
-    const root = document.documentElement
-    if (value) {
-      root.classList.add('compact-mode')
-    } else {
-      root.classList.remove('compact-mode')
+    if (typeof document !== 'undefined') {
+      const root = document.documentElement
+      if (value) {
+        root.classList.add('compact-mode')
+      } else {
+        root.classList.remove('compact-mode')
+      }
     }
   }
 
   const setLargerText = (value: boolean) => {
     setLargerTextState(value)
     localStorage.setItem('larger-text', value.toString())
-    const root = document.documentElement
-    if (value) {
-      root.classList.add('larger-text')
-    } else {
-      root.classList.remove('larger-text')
+    if (typeof document !== 'undefined') {
+      const root = document.documentElement
+      if (value) {
+        root.classList.add('larger-text')
+      } else {
+        root.classList.remove('larger-text')
+      }
     }
   }
 
   const setSelectedFont = (font: string) => {
     setSelectedFontState(font)
     localStorage.setItem('app-font', font)
-    const root = document.documentElement
-    if (font === 'playfair') {
-      root.style.fontFamily = 'var(--font-playfair)'
-    } else {
-      root.style.fontFamily = 'var(--font-inter)'
+    if (typeof document !== 'undefined') {
+      const root = document.documentElement
+      if (font === 'playfair') {
+        root.style.fontFamily = 'var(--font-playfair)'
+      } else {
+        root.style.fontFamily = 'var(--font-inter)'
+      }
     }
   }
 
