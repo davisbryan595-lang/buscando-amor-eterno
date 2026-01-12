@@ -393,7 +393,7 @@ export default function BrowsePage() {
           </div>
 
           {/* Progress Indicator */}
-          <div className="mt-6 text-center text-slate-600">
+          <div className="mt-6 text-center text-muted-foreground">
             {currentIndex + 1} / {profiles.length}
           </div>
         </div>
