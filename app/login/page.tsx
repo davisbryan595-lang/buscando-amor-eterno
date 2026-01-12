@@ -32,6 +32,8 @@ export default function LoginPage() {
 
     try {
       console.log('[LoginPage] Starting login...')
+      toast.loading('Logging in...')
+
       await signIn(email, password)
       console.log('[LoginPage] Login successful')
 
@@ -47,7 +49,7 @@ export default function LoginPage() {
         router.push('/')
       }, 500)
     } catch (error: any) {
-      const errorMessage = error.message || 'Failed to log in'
+      const errorMessage = error.message || 'Failed to log in. Please try again.'
       console.error('Login error:', error)
       setError(errorMessage)
       toast.error(errorMessage)
