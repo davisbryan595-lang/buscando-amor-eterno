@@ -185,7 +185,7 @@ export default function NuestraHistoriaPage() {
           </h2>
 
           <div className="mb-12 md:mb-16">
-            <p className="text-base sm:text-lg md:text-lg text-foreground dark:text-slate-200 leading-relaxed">
+            <p className="text-base sm:text-lg md:text-lg text-black dark:text-slate-200 leading-relaxed">
               {t('ourStory.intro.text')}
             </p>
           </div>
