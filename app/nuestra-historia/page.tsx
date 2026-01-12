@@ -229,7 +229,7 @@ export default function NuestraHistoriaPage() {
 
             {/* Text */}
             <div className="w-full md:w-1/2" data-scroll-animate="fade-in-right">
-              <p className="text-base sm:text-lg md:text-lg text-foreground dark:text-slate-200 leading-relaxed">
+              <p className="text-base sm:text-lg md:text-lg text-black dark:text-slate-200 leading-relaxed">
                 {t('ourStory.darkValley.text')}
               </p>
             </div>
