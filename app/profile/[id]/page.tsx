@@ -32,10 +32,10 @@ export default function UserProfilePage({ params }: UserProfilePageProps) {
         <Navigation />
         <div className="flex-1 flex items-center justify-center px-4">
           <div className="text-center max-w-md">
-            <h1 className="text-2xl font-playfair font-bold text-slate-900 mb-4">
+            <h1 className="text-2xl font-playfair font-bold text-foreground mb-4">
               Sign In Required
             </h1>
-            <p className="text-slate-600 mb-6">
+            <p className="text-muted-foreground mb-6">
               Please sign in to view user profiles
             </p>
             <button
