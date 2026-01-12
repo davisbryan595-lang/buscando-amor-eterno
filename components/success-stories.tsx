@@ -126,7 +126,7 @@ export default function SuccessStories() {
                   <span className="inline-block w-2 h-2 rounded-full bg-rose-400"></span>
                   {t(story.locationKey)}
                 </p>
-                <p className="text-lg md:text-2xl lg:text-3xl font-playfair text-foreground dark:text-white mb-6 md:mb-8 leading-relaxed italic">
+                <p className="text-lg md:text-2xl lg:text-3xl font-playfair text-black dark:text-white mb-6 md:mb-8 leading-relaxed italic">
                   "{t(story.storyKey)}"
                 </p>
 
