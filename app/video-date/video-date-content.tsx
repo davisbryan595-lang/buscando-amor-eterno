@@ -159,10 +159,10 @@ export default function VideoDateContent() {
             <div className="flex-1 bg-gradient-to-br from-slate-100 to-slate-50 rounded-xl overflow-hidden soft-glow-lg flex items-center justify-center">
               <div className="bg-white p-8 rounded-2xl text-center soft-glow-lg max-w-md">
                 <Lock size={48} className="text-primary mx-auto mb-4" />
-                <h2 className="text-2xl font-bold text-slate-900 mb-2">
+                <h2 className="text-2xl font-bold text-foreground mb-2">
                   {error ? 'Unable to Start Call' : 'Authentication Required'}
                 </h2>
-                <p className="text-slate-600 mb-6">
+                <p className="text-muted-foreground mb-6">
                   {error ||
                     'You need to be logged in to start a video date. Please log in and try again.'}
                 </p>
