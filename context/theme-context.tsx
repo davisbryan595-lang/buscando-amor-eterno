@@ -28,11 +28,13 @@ const applyTheme = (selectedTheme: Theme): 'light' | 'dark' => {
   // Always remove dark first to ensure clean state
   htmlElement.classList.remove('dark')
 
-  // Then add if needed
+  // Set data-theme attribute for CSS selectors
   if (isDark) {
+    htmlElement.setAttribute('data-theme', 'dark')
     htmlElement.classList.add('dark')
     console.log('[Theme] Applied dark mode globally')
   } else {
+    htmlElement.setAttribute('data-theme', 'light')
     console.log('[Theme] Applied light mode globally')
   }
 
