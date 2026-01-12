@@ -68,9 +68,12 @@ export default function RootLayout({
                 // Remove dark class first to ensure clean state
                 document.documentElement.classList.remove('dark');
 
-                // Then add if needed
+                // Set data-theme attribute
                 if (isDark) {
+                  document.documentElement.setAttribute('data-theme', 'dark');
                   document.documentElement.classList.add('dark');
+                } else {
+                  document.documentElement.setAttribute('data-theme', 'light');
                 }
               } catch (e) {
                 console.error('[Theme Init Error]', e);
