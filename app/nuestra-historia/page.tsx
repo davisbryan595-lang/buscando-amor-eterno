@@ -343,17 +343,17 @@ export default function NuestraHistoriaPage() {
         <div className="w-full max-w-2xl mx-auto text-center" data-scroll-animate="fade-in">
           {/* Large Quote */}
           <div className="mb-12 md:mb-16">
-            <p className="text-3xl sm:text-4xl md:text-5xl font-playfair italic text-foreground dark:text-white leading-relaxed">
+            <p className="text-3xl sm:text-4xl md:text-5xl font-playfair italic text-black dark:text-white leading-relaxed">
               "{t('ourStory.closing.quote')}"
             </p>
           </div>
 
           {/* Subtext */}
           <div className="mb-8 md:mb-12">
-            <p className="text-base sm:text-lg text-muted-foreground mb-2">
+            <p className="text-base sm:text-lg text-black dark:text-slate-200 mb-2">
               {t('ourStory.closing.subtext1')}
             </p>
-            <p className="text-base sm:text-lg text-muted-foreground">
+            <p className="text-base sm:text-lg text-black dark:text-slate-200">
               {t('ourStory.closing.subtext2')}
             </p>
           </div>
