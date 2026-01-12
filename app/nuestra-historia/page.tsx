@@ -253,7 +253,7 @@ export default function NuestraHistoriaPage() {
 
               {/* Pull Quote */}
               <div className="bg-amber-50 dark:bg-amber-900/30 border-l-4 border-amber-400 dark:border-amber-600 pl-6 py-4 my-8 md:my-12 rounded">
-                <p className="text-lg md:text-xl font-playfair italic text-amber-900 dark:text-amber-100">
+                <p className="text-lg md:text-xl font-playfair italic text-amber-900 dark:text-amber-200">
                   "{t('ourStory.turningPoint.quote')}"
                 </p>
               </div>
