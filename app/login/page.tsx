@@ -31,15 +31,8 @@ export default function LoginPage() {
     setError(null)
 
     try {
-      // Create a timeout promise (10 seconds)
-      const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Login request timed out - please check your internet connection and try again')), 10000)
-      )
-
       console.log('[LoginPage] Starting login...')
-      const signInPromise = signIn(email, password)
-
-      await Promise.race([signInPromise, timeoutPromise])
+      await signIn(email, password)
       console.log('[LoginPage] Login successful')
 
       // Track login event
