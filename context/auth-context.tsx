@@ -24,33 +24,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     let isMounted = true
-    let timeoutId: NodeJS.Timeout | undefined
 
     const initializeAuth = async () => {
       try {
         console.log('[Auth] Initializing auth...')
 
-        // Create a timeout promise for getSession
-        const sessionTimeoutPromise = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Session retrieval timeout')), 3000)
-        )
-
         // Get existing session from localStorage (persisted across page refreshes)
-        const sessionPromise = supabase.auth.getSession()
+        // Don't use Promise.race - let Supabase complete naturally
+        const { data: { session: sessionData }, error } = await supabase.auth.getSession()
 
-        const { data: { session: sessionData }, error } = await Promise.race([
-          sessionPromise,
-          sessionTimeoutPromise
-        ]) as any
-
-        if (error) throw error
+        if (error) {
+          console.warn('[Auth] getSession error:', error.message)
+          // Don't throw - session might not be available initially
+        }
 
         if (isMounted) {
           console.log('[Auth] Session retrieved:', sessionData ? 'User logged in' : 'No session')
           setSession(sessionData)
           setUser(sessionData?.user ?? null)
           setLoading(false)
-          if (timeoutId) clearTimeout(timeoutId)
         }
       } catch (error) {
         console.error('[Auth] Error initializing auth:', error instanceof Error ? error.message : JSON.stringify(error))
@@ -58,20 +50,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setSession(null)
           setUser(null)
           setLoading(false)
-          if (timeoutId) clearTimeout(timeoutId)
         }
       }
     }
-
-    // Set a 3.5-second timeout to ensure loading completes
-    timeoutId = setTimeout(() => {
-      if (isMounted) {
-        console.warn('[Auth] Auth initialization timeout - proceeding without session')
-        setSession(null)
-        setUser(null)
-        setLoading(false)
-      }
-    }, 3500)
 
     initializeAuth()
 
