@@ -24,45 +24,56 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     let isMounted = true
-    let timeoutId: NodeJS.Timeout
+    let timeoutId: NodeJS.Timeout | undefined
 
     const initializeAuth = async () => {
       try {
+        console.log('[Auth] Initializing auth...')
+
+        // Create a timeout promise for getSession
+        const sessionTimeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Session retrieval timeout')), 3000)
+        )
+
         // Get existing session from localStorage (persisted across page refreshes)
-        const { data: { session: sessionData }, error } = await supabase.auth.getSession()
+        const sessionPromise = supabase.auth.getSession()
+
+        const { data: { session: sessionData }, error } = await Promise.race([
+          sessionPromise,
+          sessionTimeoutPromise
+        ]) as any
 
         if (error) throw error
 
         if (isMounted) {
+          console.log('[Auth] Session retrieved:', sessionData ? 'User logged in' : 'No session')
           setSession(sessionData)
           setUser(sessionData?.user ?? null)
+          setLoading(false)
+          if (timeoutId) clearTimeout(timeoutId)
         }
       } catch (error) {
-        console.error('Error initializing auth:', error)
+        console.error('[Auth] Error initializing auth:', error instanceof Error ? error.message : JSON.stringify(error))
         if (isMounted) {
           setSession(null)
           setUser(null)
-        }
-      } finally {
-        if (isMounted) {
           setLoading(false)
+          if (timeoutId) clearTimeout(timeoutId)
         }
       }
     }
 
-    // Set a 5-second timeout to prevent indefinite loading
+    // Set a 3.5-second timeout to ensure loading completes
     timeoutId = setTimeout(() => {
       if (isMounted) {
-        console.warn('Auth initialization timeout - proceeding without session')
+        console.warn('[Auth] Auth initialization timeout - proceeding without session')
+        setSession(null)
+        setUser(null)
         setLoading(false)
       }
-    }, 5000)
+    }, 3500)
 
-    initializeAuth().then(() => {
-      if (isMounted) {
-        clearTimeout(timeoutId)
-      }
-    })
+    initializeAuth()
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, sessionData) => {
       console.log('[Auth] onAuthStateChange event:', event)
