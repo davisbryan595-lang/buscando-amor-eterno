@@ -149,9 +149,44 @@
   }
 }
 
-/* Override muted text to be black in light mode for better visibility */
+/* Override grey/muted text to be black in light mode for better visibility */
 .text-muted-foreground {
   @apply text-black dark:text-gray-400;
+}
+
+.text-gray-300 {
+  @apply dark:text-gray-300;
+  color: #000000;
+}
+
+.text-gray-400 {
+  @apply dark:text-gray-400;
+  color: #000000;
+}
+
+.text-gray-500 {
+  @apply dark:text-gray-500;
+  color: #000000;
+}
+
+.text-gray-600 {
+  @apply dark:text-gray-600;
+  color: #000000;
+}
+
+.text-slate-400 {
+  @apply dark:text-slate-400;
+  color: #000000;
+}
+
+.text-slate-500 {
+  @apply dark:text-slate-500;
+  color: #000000;
+}
+
+.text-slate-600 {
+  @apply dark:text-slate-600;
+  color: #000000;
 }
 
 @layer components {
