@@ -136,6 +136,7 @@ export default function CustomizationPage() {
                     }
 
                     htmlElement.classList.remove('dark')
+                    htmlElement.setAttribute('data-theme', isDark ? 'dark' : 'light')
                     if (isDark) {
                       htmlElement.classList.add('dark')
                     }
