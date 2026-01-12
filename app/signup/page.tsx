@@ -32,15 +32,8 @@ export default function SignupPage() {
     setError(null)
 
     try {
-      // Create a timeout promise (10 seconds)
-      const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Signup request timed out - please check your internet connection and try again')), 10000)
-      )
-
       console.log('[SignupPage] Starting signup...')
-      const signUpPromise = signUp(formData.email, formData.password)
-
-      await Promise.race([signUpPromise, timeoutPromise])
+      await signUp(formData.email, formData.password)
       console.log('[SignupPage] Signup successful')
 
       // Track signup event
