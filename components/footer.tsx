@@ -51,7 +51,7 @@ export default function Footer() {
               if (el) columnsRef.current[0] = el
             }}
           >
-            <h3 className="text-lg md:text-xl font-playfair font-bold mb-2 flex items-center gap-2">
+            <h3 className="text-lg md:text-xl font-playfair font-bold mb-2 flex items-center gap-2 text-white">
               <Heart className="text-rose-400 flex-shrink-0" size={20} /> Buscando Amor Eterno
             </h3>
             <p className="text-xs md:text-sm text-gray-400">{t('footer.tagline')}</p>
@@ -62,7 +62,7 @@ export default function Footer() {
               if (el) columnsRef.current[1] = el
             }}
           >
-            <h4 className="font-bold mb-2 text-sm md:text-base">{t('footer.platform')}</h4>
+            <h4 className="font-bold mb-2 text-sm md:text-base text-white">{t('footer.platform')}</h4>
             <ul className="space-y-1 text-xs md:text-sm text-gray-400">
               <li><Link href="/" className="hover:text-white transition">{t('common.home')}</Link></li>
               <li><Link href="/browse" className="hover:text-white transition">{t('common.browse')}</Link></li>
