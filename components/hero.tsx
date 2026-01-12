@@ -116,15 +116,15 @@ export default function Hero() {
       </div>
 
       <div className="w-full max-w-5xl mx-auto text-center relative z-20">
-        <h1 ref={titleRef} className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-playfair font-bold mb-6 md:mb-8 text-foreground dark:text-white leading-tight tracking-tight">
-          <span className="text-primary relative inline-block">
+        <h1 ref={titleRef} className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-playfair font-bold mb-6 md:mb-8 leading-tight tracking-tight">
+          <span className="bg-gradient-to-r from-rose-500 via-pink-500 to-rose-600 bg-clip-text text-transparent relative inline-block">
             {t('hero.title').split(' ').slice(0, 2).join(' ')}
             <svg className="absolute -bottom-2 left-0 w-full h-3 text-rose-200 -z-10" viewBox="0 0 100 10" preserveAspectRatio="none">
               <path d="M0 5 Q 50 10 100 5" stroke="currentColor" strokeWidth="8" fill="none" />
             </svg>
-          </span> {t('hero.title').split(' ').slice(2).join(' ')}
+          </span> <span className="bg-gradient-to-r from-rose-600 to-pink-600 bg-clip-text text-transparent">{t('hero.title').split(' ').slice(2).join(' ')}</span>
         </h1>
-        <h2 ref={subtitleRef} className="text-xl sm:text-2xl md:text-4xl font-playfair font-bold mb-6 md:mb-8 text-rose-600">
+        <h2 ref={subtitleRef} className="text-xl sm:text-2xl md:text-4xl font-playfair font-bold mb-6 md:mb-8 bg-gradient-to-r from-rose-500 to-rose-600 bg-clip-text text-transparent">
           {t('hero.subtitle')}
         </h2>
 
