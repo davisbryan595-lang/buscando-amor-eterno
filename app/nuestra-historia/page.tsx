@@ -247,7 +247,7 @@ export default function NuestraHistoriaPage() {
           <div className="flex flex-col md:flex-row gap-8 md:gap-12 items-start">
             {/* Main text */}
             <div className="w-full md:w-2/3">
-              <p className="text-base sm:text-lg md:text-lg text-foreground dark:text-slate-200 leading-relaxed mb-6">
+              <p className="text-base sm:text-lg md:text-lg text-black dark:text-slate-200 leading-relaxed mb-6">
                 {t('ourStory.turningPoint.text')}
               </p>
 
