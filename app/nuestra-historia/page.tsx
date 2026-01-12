@@ -332,7 +332,7 @@ export default function NuestraHistoriaPage() {
             {t('ourStory.mission.heading')}
           </h2>
 
-          <p className="text-base sm:text-lg md:text-xl text-foreground dark:text-slate-100 drop-shadow-md leading-relaxed">
+          <p className="text-base sm:text-lg md:text-xl text-black dark:text-slate-100 drop-shadow-md leading-relaxed">
             {t('ourStory.mission.text')}
           </p>
         </div>
