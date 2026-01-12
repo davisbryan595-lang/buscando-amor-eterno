@@ -33,6 +33,8 @@ export default function SignupPage() {
 
     try {
       console.log('[SignupPage] Starting signup...')
+      toast.loading('Creating your account...')
+
       await signUp(formData.email, formData.password)
       console.log('[SignupPage] Signup successful')
 
@@ -45,7 +47,7 @@ export default function SignupPage() {
       toast.success('Account created! Setting up your profile...')
       setStep('profile')
     } catch (error: any) {
-      const errorMessage = error.message || 'Failed to create account'
+      const errorMessage = error.message || 'Failed to create account. Please try again.'
       console.error('Signup error:', error)
       setError(errorMessage)
       toast.error(errorMessage)
