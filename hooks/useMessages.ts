@@ -52,26 +52,35 @@ export function useMessages() {
   const onlineTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Define broadcastOnlineStatus early so it can be used in setupHeartbeat
+  // Note: Online status is tracked via presence in individual channel subscriptions
   const broadcastOnlineStatus = useCallback(
     async (isOnline: boolean) => {
       if (!user) return
 
       try {
-        const onlineStatus = {
-          user_id: user.id,
-          is_online: isOnline,
-          timestamp: new Date().toISOString(),
-        }
+        // Update last seen timestamp in database for simple online tracking
+        // This is more reliable than broadcast and doesn't require channel subscription
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/rpc/update_last_seen`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${supabase.auth.session ? (await supabase.auth.getSession()).data.session?.access_token : process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
+              'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '',
+            },
+            body: JSON.stringify({
+              is_online: isOnline,
+            }),
+          }
+        )
 
-        // Broadcast to all conversations
-        const userChannel = supabase.channel(`user:${user.id}:online`)
-        await userChannel.send({
-          type: 'broadcast',
-          event: 'user_status',
-          payload: onlineStatus,
-        })
+        if (!response.ok) {
+          console.warn('Failed to update online status:', response.statusText)
+        }
       } catch (err: any) {
-        console.warn('Failed to broadcast online status:', err)
+        // Silently fail - online status is not critical
+        // The app will continue working fine without it
       }
     },
     [user]
