@@ -149,6 +149,17 @@
   }
 }
 
+/* Force all muted/grey text to be black in light mode */
+:root:not(.dark) .text-muted-foreground,
+:root:not(.dark) .text-gray-300,
+:root:not(.dark) .text-gray-400,
+:root:not(.dark) .text-gray-500,
+:root:not(.dark) .text-gray-600,
+:root:not(.dark) .text-slate-400,
+:root:not(.dark) .text-slate-500,
+:root:not(.dark) .text-slate-600 {
+  color: #000000 !important;
+}
 
 @layer components {
   /* Display customization classes */
