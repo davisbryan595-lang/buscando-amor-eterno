@@ -52,27 +52,15 @@ export function useMessages() {
   const onlineTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Define broadcastOnlineStatus early so it can be used in setupHeartbeat
+  // Online status is handled via presence in individual conversation channels
   const broadcastOnlineStatus = useCallback(
     async (isOnline: boolean) => {
       if (!user) return
 
-      try {
-        const onlineStatus = {
-          user_id: user.id,
-          is_online: isOnline,
-          timestamp: new Date().toISOString(),
-        }
-
-        // Broadcast to all conversations
-        const userChannel = supabase.channel(`user:${user.id}:online`)
-        await userChannel.send({
-          type: 'broadcast',
-          event: 'user_status',
-          payload: onlineStatus,
-        })
-      } catch (err: any) {
-        console.warn('Failed to broadcast online status:', err)
-      }
+      // Note: Online status updates are now handled per-conversation via the
+      // conversation-specific channel subscriptions. This avoids the need to
+      // create/send on channels without proper subscription, which was causing
+      // "Failed to fetch" errors in the Realtime HTTP fallback mechanism.
     },
     [user]
   )
