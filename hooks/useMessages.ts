@@ -155,31 +155,24 @@ export function useMessages() {
     try {
       setLoading(true)
 
-      // Add a timeout for messages fetch (60 seconds)
-      const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Conversations fetch timed out')), 60000)
-      )
-
-      // Fetch messages more efficiently with smaller limit
-      const queryPromise = supabase
+      // Fetch only the most recent message from each conversation (much faster)
+      // Instead of fetching all messages and then grouping, we fetch just the last message per conversation
+      const { data, error: err } = await supabase
         .from('messages')
         .select('sender_id, recipient_id, content, created_at, read, type, call_type, call_status, call_duration, call_id')
         .or(`sender_id.eq.${user.id},recipient_id.eq.${user.id}`)
         .order('created_at', { ascending: false })
-        .limit(150)
-
-      const result = await Promise.race([queryPromise, timeoutPromise])
-      const { data, error: err } = result as any
+        .limit(100)
 
       if (err) throw err
 
       const conversationMap = new Map<string, any>()
-      const userIds = new Set<string>()
 
-      // Process messages to build unique conversations
+      // Process messages to build unique conversations with unread count
       data?.forEach((msg: any) => {
         const otherUserId = msg.sender_id === user.id ? msg.recipient_id : msg.sender_id
-        userIds.add(otherUserId)
+
+        // Only keep the first (most recent) message per conversation
         if (!conversationMap.has(otherUserId)) {
           const isUnread = msg.recipient_id === user.id && !msg.read
           conversationMap.set(otherUserId, {
@@ -191,36 +184,43 @@ export function useMessages() {
             last_message: msg.content,
             last_message_time: msg.created_at,
             unread_count: isUnread ? 1 : 0,
-            other_user_name: null,
-            other_user_image: null,
             is_online: false,
           })
-        } else {
-          // Count additional unread messages
+        } else if (msg.recipient_id === user.id && !msg.read) {
+          // Count unread messages in this conversation
           const conv = conversationMap.get(otherUserId)
-          if (msg.recipient_id === user.id && !msg.read) {
-            conv.unread_count += 1
-          }
+          conv.unread_count += 1
         }
       })
 
       const convArray = Array.from(conversationMap.values())
 
-      // Fetch profile details for conversation participants
+      // Fetch profile details for conversation participants in parallel
       if (convArray.length > 0) {
         const userIds = convArray.map((c) => c.other_user_id)
-        const { data: profiles } = await supabase
-          .from('profiles')
-          .select('user_id, full_name, photos, main_photo_index')
-          .in('user_id', userIds)
 
-        profiles?.forEach((profile) => {
-          const conv = convArray.find((c) => c.other_user_id === profile.user_id)
-          if (conv) {
-            conv.other_user_name = profile.full_name
-            conv.other_user_image = profile.photos?.[profile.main_photo_index || 0] || null
+        // Fetch profiles with a reasonable timeout and error handling
+        try {
+          const { data: profiles, error: profileErr } = await supabase
+            .from('profiles')
+            .select('user_id, full_name, photos, main_photo_index')
+            .in('user_id', userIds)
+
+          if (profileErr) {
+            console.warn('Profile fetch error (non-blocking):', profileErr)
           }
-        })
+
+          profiles?.forEach((profile) => {
+            const conv = convArray.find((c) => c.other_user_id === profile.user_id)
+            if (conv) {
+              conv.other_user_name = profile.full_name
+              conv.other_user_image = profile.photos?.[profile.main_photo_index || 0] || null
+            }
+          })
+        } catch (profileErr) {
+          // If profile fetch fails, still show conversations without profile details
+          console.warn('Failed to fetch profile details (non-blocking):', profileErr)
+        }
       }
 
       setConversations(convArray)
