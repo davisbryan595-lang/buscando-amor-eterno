@@ -64,54 +64,54 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         if ((event === 'SIGNED_IN' || event === 'USER_UPDATED') && sessionData?.user) {
           // Run user setup in the background without blocking auth
-          try {
-            console.log('[Auth] Checking if user exists...')
+          // Don't use Promise.race - let database operations complete naturally
+          ;(async () => {
+            try {
+              console.log('[Auth] Checking if user exists...')
 
-            // Create a timeout promise for database queries
-            const timeoutPromise = new Promise((_, reject) =>
-              setTimeout(() => reject(new Error('User setup timeout')), 5000)
-            )
+              const { data: existingUser, error: checkError } = await supabase
+                .from('users')
+                .select('id')
+                .eq('id', sessionData.user.id)
+                .maybeSingle()
 
-            const checkUserPromise = supabase
-              .from('users')
-              .select('id')
-              .eq('id', sessionData.user.id)
-              .maybeSingle()
+              if (checkError && checkError.code !== 'PGRST116') {
+                console.warn('[Auth] Error checking user:', checkError.message)
+                return
+              }
 
-            const { data: existingUser, error: checkError } = await Promise.race([
-              checkUserPromise,
-              timeoutPromise
-            ]) as any
+              if (!existingUser) {
+                console.log('[Auth] Creating user profile...')
+                const { error: userError } = await supabase.from('users').insert({
+                  id: sessionData.user.id,
+                  email: sessionData.user.email || '',
+                })
 
-            if (checkError && checkError.code !== 'PGRST116') {
-              throw checkError
+                if (userError && userError.code !== 'PGRST103') {
+                  console.warn('[Auth] Error creating user:', userError.message)
+                } else {
+                  console.log('[Auth] User profile created')
+                }
+
+                const { error: subError } = await supabase.from('subscriptions').insert({
+                  user_id: sessionData.user.id,
+                  plan: 'free',
+                  status: 'active',
+                })
+
+                if (subError && subError.code !== 'PGRST103') {
+                  console.warn('[Auth] Error creating subscription:', subError.message)
+                } else {
+                  console.log('[Auth] Subscription created')
+                }
+              } else {
+                console.log('[Auth] User already exists')
+              }
+            } catch (err) {
+              console.error('[Auth] Error in user setup:', err instanceof Error ? err.message : JSON.stringify(err))
+              // Don't block auth flow if user setup fails
             }
-
-            if (!existingUser) {
-              console.log('[Auth] Creating user profile...')
-              const { error: userError } = await supabase.from('users').insert({
-                id: sessionData.user.id,
-                email: sessionData.user.email || '',
-              })
-
-              if (userError && userError.code !== 'PGRST103') throw userError
-
-              const { error: subError } = await supabase.from('subscriptions').insert({
-                user_id: sessionData.user.id,
-                plan: 'free',
-                status: 'active',
-              })
-
-              if (subError && subError.code !== 'PGRST103') throw subError
-
-              console.log('[Auth] User profile created')
-            } else {
-              console.log('[Auth] User already exists')
-            }
-          } catch (err) {
-            console.error('[Auth] Error in onAuthStateChange user setup:', err instanceof Error ? err.message : JSON.stringify(err))
-            // Don't block auth flow if user setup fails
-          }
+          })()
         }
       }
     })
