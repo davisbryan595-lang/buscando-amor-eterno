@@ -185,7 +185,7 @@ export default function NuestraHistoriaPage() {
           </h2>
 
           <div className="mb-12 md:mb-16">
-            <p className="text-base sm:text-lg md:text-lg text-foreground dark:text-slate-200 leading-relaxed">
+            <p className="text-base sm:text-lg md:text-lg text-black dark:text-slate-200 leading-relaxed">
               {t('ourStory.intro.text')}
             </p>
           </div>
@@ -229,7 +229,7 @@ export default function NuestraHistoriaPage() {
 
             {/* Text */}
             <div className="w-full md:w-1/2" data-scroll-animate="fade-in-right">
-              <p className="text-base sm:text-lg md:text-lg text-foreground dark:text-slate-200 leading-relaxed">
+              <p className="text-base sm:text-lg md:text-lg text-black dark:text-slate-200 leading-relaxed">
                 {t('ourStory.darkValley.text')}
               </p>
             </div>
@@ -247,13 +247,13 @@ export default function NuestraHistoriaPage() {
           <div className="flex flex-col md:flex-row gap-8 md:gap-12 items-start">
             {/* Main text */}
             <div className="w-full md:w-2/3">
-              <p className="text-base sm:text-lg md:text-lg text-foreground dark:text-slate-200 leading-relaxed mb-6">
+              <p className="text-base sm:text-lg md:text-lg text-black dark:text-slate-200 leading-relaxed mb-6">
                 {t('ourStory.turningPoint.text')}
               </p>
 
               {/* Pull Quote */}
               <div className="bg-amber-50 dark:bg-amber-900/30 border-l-4 border-amber-400 dark:border-amber-600 pl-6 py-4 my-8 md:my-12 rounded">
-                <p className="text-lg md:text-xl font-playfair italic text-amber-900 dark:text-amber-100">
+                <p className="text-lg md:text-xl font-playfair italic text-amber-900 dark:text-amber-200">
                   "{t('ourStory.turningPoint.quote')}"
                 </p>
               </div>
@@ -295,7 +295,7 @@ export default function NuestraHistoriaPage() {
 
             {/* Text */}
             <div className="w-full md:w-1/2" data-scroll-animate="fade-in-right">
-              <p className="text-base sm:text-lg md:text-lg text-foreground dark:text-slate-200 leading-relaxed">
+              <p className="text-base sm:text-lg md:text-lg text-black dark:text-slate-200 leading-relaxed">
                 {t('ourStory.findingLove.textPart1')}
               </p>
             </div>
@@ -303,7 +303,7 @@ export default function NuestraHistoriaPage() {
 
           {/* Second part */}
           <div className="bg-rose-50 dark:bg-rose-900/30 rounded-lg p-8 md:p-12" data-scroll-animate="fade-in">
-            <p className="text-base sm:text-lg md:text-lg text-foreground dark:text-slate-200 leading-relaxed">
+            <p className="text-base sm:text-lg md:text-lg text-black dark:text-slate-200 leading-relaxed">
               {t('ourStory.findingLove.textPart2')}
             </p>
           </div>
@@ -332,7 +332,7 @@ export default function NuestraHistoriaPage() {
             {t('ourStory.mission.heading')}
           </h2>
 
-          <p className="text-base sm:text-lg md:text-xl text-foreground dark:text-slate-100 drop-shadow-md leading-relaxed">
+          <p className="text-base sm:text-lg md:text-xl text-black dark:text-slate-100 drop-shadow-md leading-relaxed">
             {t('ourStory.mission.text')}
           </p>
         </div>
@@ -343,17 +343,17 @@ export default function NuestraHistoriaPage() {
         <div className="w-full max-w-2xl mx-auto text-center" data-scroll-animate="fade-in">
           {/* Large Quote */}
           <div className="mb-12 md:mb-16">
-            <p className="text-3xl sm:text-4xl md:text-5xl font-playfair italic text-foreground dark:text-white leading-relaxed">
+            <p className="text-3xl sm:text-4xl md:text-5xl font-playfair italic text-black dark:text-white leading-relaxed">
               "{t('ourStory.closing.quote')}"
             </p>
           </div>
 
           {/* Subtext */}
           <div className="mb-8 md:mb-12">
-            <p className="text-base sm:text-lg text-muted-foreground mb-2">
+            <p className="text-base sm:text-lg text-black dark:text-slate-200 mb-2">
               {t('ourStory.closing.subtext1')}
             </p>
-            <p className="text-base sm:text-lg text-muted-foreground">
+            <p className="text-base sm:text-lg text-black dark:text-slate-200">
               {t('ourStory.closing.subtext2')}
             </p>
           </div>

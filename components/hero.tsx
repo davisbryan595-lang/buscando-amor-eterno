@@ -128,7 +128,7 @@ export default function Hero() {
           {t('hero.subtitle')}
         </h2>
 
-        <p ref={descriptionRef} className="text-base sm:text-lg md:text-xl text-slate-700 dark:text-slate-300 mb-8 md:mb-12 max-w-2xl mx-auto leading-relaxed">
+        <p ref={descriptionRef} className="text-base sm:text-lg md:text-xl text-black dark:text-slate-300 mb-8 md:mb-12 max-w-2xl mx-auto leading-relaxed">
           {t('hero.description')}
         </p>
 
@@ -150,15 +150,15 @@ export default function Hero() {
         <div ref={statsRef} className="mt-12 md:mt-16 grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6 text-center">
           <div>
             <p className="text-2xl sm:text-3xl font-bold text-primary mb-2">50M+</p>
-            <p className="text-sm md:text-base text-slate-700 dark:text-slate-300">{t('hero.membersWorldwide')}</p>
+            <p className="text-sm md:text-base text-black dark:text-slate-300">{t('hero.membersWorldwide')}</p>
           </div>
           <div>
             <p className="text-2xl sm:text-3xl font-bold text-primary mb-2">1M+</p>
-            <p className="text-sm md:text-base text-slate-700 dark:text-slate-300">{t('hero.matchesMade')}</p>
+            <p className="text-sm md:text-base text-black dark:text-slate-300">{t('hero.matchesMade')}</p>
           </div>
           <div>
             <p className="text-2xl sm:text-3xl font-bold text-primary mb-2">100+</p>
-            <p className="text-sm md:text-base text-slate-700 dark:text-slate-300">{t('hero.countries')}</p>
+            <p className="text-sm md:text-base text-black dark:text-slate-300">{t('hero.countries')}</p>
           </div>
         </div>
       </div>
