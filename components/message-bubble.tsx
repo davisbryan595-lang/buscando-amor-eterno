@@ -128,7 +128,7 @@ export default function MessageBubble({
           )}
 
           <span
-            className={`text-xs mt-2 block ${
+            className={`text-xs mt-2 block opacity-70 ${
               isOwn ? 'text-white/70' : 'text-muted-foreground'
             }`}
           >
