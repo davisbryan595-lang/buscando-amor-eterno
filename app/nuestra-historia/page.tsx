@@ -350,10 +350,10 @@ export default function NuestraHistoriaPage() {
 
           {/* Subtext */}
           <div className="mb-8 md:mb-12">
-            <p className="text-base sm:text-lg text-black dark:text-slate-200 mb-2">
+            <p className="text-base sm:text-lg text-foreground mb-2">
               {t('ourStory.closing.subtext1')}
             </p>
-            <p className="text-base sm:text-lg text-black dark:text-slate-200">
+            <p className="text-base sm:text-lg text-foreground">
               {t('ourStory.closing.subtext2')}
             </p>
           </div>

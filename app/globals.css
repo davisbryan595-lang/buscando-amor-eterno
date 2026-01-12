@@ -149,9 +149,9 @@
   }
 }
 
-/* COMPREHENSIVE LIGHT MODE TEXT COLOR FIXES */
+/* THEME-SPECIFIC TEXT COLOR RULES - NO !IMPORTANT FLAGS */
 
-/* Force all text elements to dark colors in light mode using [data-theme="light"] */
+/* Light theme: dark text colors */
 [data-theme="light"] body,
 [data-theme="light"] p,
 [data-theme="light"] h1,
@@ -161,68 +161,22 @@
 [data-theme="light"] h5,
 [data-theme="light"] h6,
 [data-theme="light"] span,
-[data-theme="light"] div,
-[data-theme="light"] a,
-[data-theme="light"] li,
-[data-theme="light"] label,
-[data-theme="light"] button {
-  color: #1a1a1a !important;
+[data-theme="light"] div {
+  color: #1a1a1a;
 }
 
-/* Force all text elements to dark colors when NOT in dark mode (default light mode) */
-:root:not(.dark) body,
-:root:not(.dark) p,
-:root:not(.dark) h1,
-:root:not(.dark) h2,
-:root:not(.dark) h3,
-:root:not(.dark) h4,
-:root:not(.dark) h5,
-:root:not(.dark) h6,
-:root:not(.dark) span,
-:root:not(.dark) div,
-:root:not(.dark) a,
-:root:not(.dark) li,
-:root:not(.dark) label {
-  color: #1a1a1a !important;
-}
-
-/* Force all muted/grey text to be dark in light mode */
-:root:not(.dark) .text-muted-foreground,
-:root:not(.dark) .text-gray-300,
-:root:not(.dark) .text-gray-400,
-:root:not(.dark) .text-gray-500,
-:root:not(.dark) .text-gray-600,
-:root:not(.dark) .text-slate-400,
-:root:not(.dark) .text-slate-500,
-:root:not(.dark) .text-slate-600,
-:root:not(.dark) .text-slate-700,
-:root:not(.dark) .text-slate-900 {
-  color: #1a1a1a !important;
-}
-
-[data-theme="light"] .text-muted-foreground,
-[data-theme="light"] .text-gray-300,
-[data-theme="light"] .text-gray-400,
-[data-theme="light"] .text-gray-500,
-[data-theme="light"] .text-gray-600,
-[data-theme="light"] .text-slate-400,
-[data-theme="light"] .text-slate-500,
-[data-theme="light"] .text-slate-600,
-[data-theme="light"] .text-slate-700,
-[data-theme="light"] .text-slate-900 {
-  color: #1a1a1a !important;
-}
-
-/* Remove opacity that makes text faded in light mode */
-:root:not(.dark) [style*="opacity"],
-[data-theme="light"] [style*="opacity"] {
-  opacity: 1 !important;
-}
-
-/* Override rgba colors with low alpha in light mode */
-:root:not(.dark) {
-  --muted-foreground: #1a1a1a !important;
-  --foreground: #1a1a1a !important;
+/* Dark theme: light text colors */
+[data-theme="dark"] body,
+[data-theme="dark"] p,
+[data-theme="dark"] h1,
+[data-theme="dark"] h2,
+[data-theme="dark"] h3,
+[data-theme="dark"] h4,
+[data-theme="dark"] h5,
+[data-theme="dark"] h6,
+[data-theme="dark"] span,
+[data-theme="dark"] div {
+  color: #ffffff;
 }
 
 @layer components {

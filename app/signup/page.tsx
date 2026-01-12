@@ -160,7 +160,7 @@ export default function SignupPage() {
                 <h2 className="text-2xl sm:text-3xl font-playfair font-bold text-foreground mb-2">
                   Your Profile
                 </h2>
-                <p className="text-sm md:text-base text-slate-600">Tell us about yourself</p>
+                <p className="text-sm md:text-base text-muted-foreground">Tell us about yourself</p>
               </div>
 
               <input
@@ -206,17 +206,17 @@ export default function SignupPage() {
                 <h2 className="text-2xl sm:text-3xl font-playfair font-bold text-foreground mb-2">
                   Welcome! 🎉
                 </h2>
-                <p className="text-sm md:text-base text-slate-600">
+                <p className="text-sm md:text-base text-muted-foreground">
                   Account created successfully. Complete your profile to start browsing!
                 </p>
               </div>
 
-              <div className="bg-rose-50 border border-rose-200 rounded-lg p-3 md:p-4 text-xs md:text-sm text-slate-700">
+              <div className="bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 rounded-lg p-3 md:p-4 text-xs md:text-sm text-foreground">
                 <p className="font-semibold mb-2">You're in! ✨</p>
                 <p>Create your profile to connect with other members. Messaging and likes require a subscription.</p>
               </div>
 
-              <p className="text-slate-600 text-xs md:text-sm">
+              <p className="text-muted-foreground text-xs md:text-sm">
                 Redirecting to profile setup...
               </p>
             </div>
