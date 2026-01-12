@@ -4,8 +4,10 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
 
 if (typeof window !== 'undefined') {
-  console.log('[Supabase] Client initialized with URL:', supabaseUrl ? '✓ Set' : '✗ Missing')
-  console.log('[Supabase] Client initialized with key:', supabaseAnonKey ? '✓ Set' : '✗ Missing')
+  console.log('[Supabase] Client initialized')
+  console.log('[Supabase] URL:', supabaseUrl ? '✓ Set' : '✗ Missing', supabaseUrl ? supabaseUrl.substring(0, 30) + '...' : 'MISSING')
+  console.log('[Supabase] Key:', supabaseAnonKey ? '✓ Set' : '✗ Missing', supabaseAnonKey ? supabaseAnonKey.substring(0, 20) + '...' : 'MISSING')
+  console.log('[Supabase] Auth config:', { flowType: 'pkce', persistSession: true, autoRefreshToken: true })
 }
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
