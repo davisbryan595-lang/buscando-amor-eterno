@@ -128,8 +128,8 @@ export default function MessageBubble({
           )}
 
           <span
-            className={`text-xs mt-2 block opacity-70 ${
-              isOwn ? 'text-white/70' : 'text-muted-foreground'
+            className={`text-xs mt-2 block ${
+              isOwn ? 'text-white/70' : 'text-gray-600 dark:text-gray-400'
             }`}
           >
             {getFormattedTime(timestamp)}
