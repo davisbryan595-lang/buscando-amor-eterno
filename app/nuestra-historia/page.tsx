@@ -303,7 +303,7 @@ export default function NuestraHistoriaPage() {
 
           {/* Second part */}
           <div className="bg-rose-50 dark:bg-rose-900/30 rounded-lg p-8 md:p-12" data-scroll-animate="fade-in">
-            <p className="text-base sm:text-lg md:text-lg text-foreground dark:text-slate-200 leading-relaxed">
+            <p className="text-base sm:text-lg md:text-lg text-black dark:text-slate-200 leading-relaxed">
               {t('ourStory.findingLove.textPart2')}
             </p>
           </div>
