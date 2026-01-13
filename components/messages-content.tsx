@@ -124,7 +124,7 @@ function MessagesContentInner({ onChatOpenChange, isChatOpen }: MessagesContentI
   return (
     <div className={`h-full w-full px-0 sm:px-4 lg:px-6 flex flex-col overflow-hidden ${selectedConversation ? 'md:mt-24' : 'mt-24'}`}>
       <div className="max-w-7xl mx-auto w-full flex-1 flex flex-col md:flex-row gap-0 md:gap-4 lg:gap-6 overflow-hidden rounded-none md:rounded-xl">
-        <div className={`w-full md:w-80 lg:w-96 bg-card dark:bg-card rounded-none md:rounded-xl border-0 md:border border-rose-100 dark:border-rose-900/40 flex-shrink-0 flex flex-col overflow-hidden ${selectedConversation ? 'hidden md:flex' : 'flex'}`}>
+        <div className={`w-full md:w-80 lg:w-96 bg-card dark:bg-card rounded-none md:rounded-xl border-0 md:border border-rose-100 dark:border-rose-900/40 flex-shrink-0 flex flex-col overflow-hidden ${selectedConversation ? 'hidden md:flex' : 'flex'} card-gradient`}>
           <div className="px-4 py-3 sm:p-4 lg:p-6 border-b border-rose-100 dark:border-rose-900/40 bg-card dark:bg-card flex items-center justify-between flex-shrink-0">
             <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground">Messages</h2>
             {selectedConversation && (
