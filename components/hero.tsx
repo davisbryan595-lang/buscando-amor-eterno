@@ -128,7 +128,7 @@ export default function Hero() {
           {t('hero.subtitle')}
         </h2>
 
-        <p ref={descriptionRef} className="text-base sm:text-lg md:text-xl text-black dark:text-white mb-8 md:mb-12 max-w-2xl mx-auto leading-relaxed font-medium">
+        <p ref={descriptionRef} className="text-base sm:text-lg md:text-xl mb-8 md:mb-12 max-w-2xl mx-auto leading-relaxed font-semibold" style={{ color: 'rgba(14, 13, 13, 1)' }}>
           {t('hero.description')}
         </p>
 
