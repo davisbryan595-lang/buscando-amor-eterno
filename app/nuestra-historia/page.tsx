@@ -343,7 +343,7 @@ export default function NuestraHistoriaPage() {
         <div className="w-full max-w-2xl mx-auto text-center" data-scroll-animate="fade-in">
           {/* Large Quote */}
           <div className="mb-12 md:mb-16">
-            <p className="text-3xl sm:text-4xl md:text-5xl font-playfair italic text-black dark:text-white leading-relaxed">
+            <p className="text-3xl sm:text-4xl md:text-5xl font-playfair italic text-black dark:text-slate-200 leading-relaxed">
               "{t('ourStory.closing.quote')}"
             </p>
           </div>
