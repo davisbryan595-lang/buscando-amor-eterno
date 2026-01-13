@@ -56,7 +56,7 @@ export default function Features() {
             return (
               <div
                 key={index}
-                className="p-6 md:p-8 rounded-xl bg-gradient-to-br from-card to-card-subtle dark:from-card dark:to-card-subtle border border-rose-100 dark:border-rose-900/40 hover:soft-glow transition"
+                className="p-6 md:p-8 rounded-xl bg-gradient-to-br from-card to-card-subtle dark:from-card dark:to-card-subtle border border-rose-100 dark:border-rose-900/40 hover:soft-glow transition card-gradient"
               >
                 <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center mb-4 text-white">
                   <Icon size={24} />
