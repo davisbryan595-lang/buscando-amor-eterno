@@ -104,7 +104,7 @@ export default function SuccessStories() {
           {t('stories.sectionDescription')}
         </p>
 
-        <div className="relative soft-glow rounded-2xl overflow-hidden bg-card dark:bg-card">
+        <div className="relative soft-glow rounded-2xl overflow-hidden bg-card dark:bg-card card-gradient">
           <div className="p-4 md:p-6 lg:p-12">
             <div className="flex flex-col md:flex-row gap-6 md:gap-8 items-center">
               <div ref={imageRef} className="w-full md:w-1/2 relative h-56 sm:h-64 md:h-96 rounded-xl overflow-hidden shadow-lg">
