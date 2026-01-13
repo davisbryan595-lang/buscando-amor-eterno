@@ -119,12 +119,12 @@ export default function Navigation() {
             <AccountMenu />
           ) : isMounted ? (
             <>
-              <Link href="/login" className="px-4 py-2 text-foreground hover:text-primary transition">
+              <Link href="/login" className="px-3 py-1 text-foreground hover:text-primary transition text-sm whitespace-nowrap">
                 {t('common.logIn')}
               </Link>
               <Link
                 href="/signup"
-                className="px-6 py-2 bg-primary text-white rounded-full hover:bg-rose-700 transition font-semibold"
+                className="px-5 py-1.5 bg-primary text-white rounded-full hover:bg-rose-700 transition font-semibold text-sm whitespace-nowrap"
               >
                 {t('common.joinForPrice')}
               </Link>
