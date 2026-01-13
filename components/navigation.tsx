@@ -150,18 +150,18 @@ export default function Navigation() {
             <>
               <button
                 onClick={() => setMenuOpen(!menuOpen)}
-                className="p-2 hover:bg-card-subtle dark:hover:bg-card-subtle rounded-lg transition"
+                className="p-1.5 hover:bg-card-subtle dark:hover:bg-card-subtle rounded-lg transition"
               >
-                {menuOpen ? <X size={24} /> : <Menu size={24} />}
+                {menuOpen ? <X size={20} /> : <Menu size={20} />}
               </button>
               <AccountMenu />
             </>
           ) : isMounted ? (
             <button
               onClick={() => setMenuOpen(!menuOpen)}
-              className="p-2 hover:bg-card-subtle dark:hover:bg-card-subtle rounded-lg transition"
+              className="p-1.5 hover:bg-card-subtle dark:hover:bg-card-subtle rounded-lg transition"
             >
-              {menuOpen ? <X size={24} /> : <Menu size={24} />}
+              {menuOpen ? <X size={20} /> : <Menu size={20} />}
             </button>
           ) : null}
         </div>
