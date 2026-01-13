@@ -111,10 +111,10 @@ export default function CustomizationPage() {
           {/* Theme Section */}
           <div className="bg-white dark:bg-slate-900 border border-rose-100 dark:border-rose-900 rounded-2xl p-8 space-y-6">
             <div>
-              <h2 className="text-xl font-semibold text-foreground dark:text-white mb-2">
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
                 Theme
               </h2>
-              <p className="text-sm text-muted-foreground dark:text-slate-400">
+              <p className="text-sm text-gray-600 dark:text-slate-400">
                 Choose your preferred display theme
               </p>
             </div>
