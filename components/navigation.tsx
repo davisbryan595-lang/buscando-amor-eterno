@@ -133,13 +133,13 @@ export default function Navigation() {
         </div>
 
         {/* Mobile Menu Button */}
-        <div className="md:hidden flex items-center gap-2">
+        <div className="md:hidden flex items-center gap-1.5">
           <button
             onClick={() => setNotificationsOpen(!notificationsOpen)}
-            className="p-2 hover:bg-card-subtle dark:hover:bg-card-subtle rounded-full transition relative"
+            className="p-1.5 hover:bg-card-subtle dark:hover:bg-card-subtle rounded-full transition relative"
             aria-label="Notifications"
           >
-            <Bell size={20} className="text-primary" />
+            <Bell size={18} className="text-primary" />
             {notifications.length > 0 && (
               <span className="absolute top-1 right-1 bg-rose-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-semibold">
                 {notifications.length > 9 ? '9+' : notifications.length}
