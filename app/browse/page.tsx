@@ -322,8 +322,8 @@ export default function BrowsePage() {
                       <p className="text-white text-base sm:text-lg line-clamp-1">{currentProfile.city || 'Location not set'}</p>
                       {currentProfile.prompt_1 && (
                         <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-3 sm:p-4">
-                          <p className="text-xs sm:text-sm text-white/80 mb-2">About</p>
-                          <p className="text-sm sm:text-base line-clamp-4">{currentProfile.prompt_1}</p>
+                          <p className="text-xs sm:text-sm text-white mb-2">About</p>
+                          <p className="text-sm sm:text-base text-white line-clamp-4">{currentProfile.prompt_1}</p>
                         </div>
                       )}
                       {mutualPreferences.length > 0 && (
