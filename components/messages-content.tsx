@@ -140,7 +140,7 @@ function MessagesContentInner({ onChatOpenChange, isChatOpen }: MessagesContentI
 
           <div className="divide-y dark:divide-slate-700 flex-1 overflow-y-auto">
             {conversations.length === 0 ? (
-              <div className="p-4 text-center text-muted-foreground text-sm">No conversations yet</div>
+              <div className="p-4 text-center text-white/75 text-sm">No conversations yet</div>
             ) : (
               conversations.map((conv) => (
                 <div
