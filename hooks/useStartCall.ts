@@ -29,6 +29,25 @@ export function useStartCall() {
       const expiresAt = new Date()
       expiresAt.setMinutes(expiresAt.getMinutes() + 5)
 
+      // Create call log entry with 'ongoing' status
+      const { data: callLog, error: callLogError } = await supabase
+        .from('call_logs')
+        .insert({
+          caller_id: user.id,
+          receiver_id: recipientId,
+          call_type: callType,
+          status: 'ongoing',
+          started_at: new Date().toISOString(),
+        })
+        .select()
+        .single()
+
+      if (callLogError) {
+        console.error('Failed to create call log:', callLogError)
+        toast.error('Failed to initiate call. Please try again.')
+        return
+      }
+
       // Use upsert to handle existing call invitations gracefully
       // If a call invitation with the same (caller_id, recipient_id, room_name) exists,
       // update it instead of failing with a unique constraint violation (409)
@@ -40,7 +59,7 @@ export function useStartCall() {
             recipient_id: recipientId,
             call_type: callType,
             room_name: roomName,
-            call_id: callId,
+            call_id: callLog.id, // Use call_logs id as the call identifier
             status: 'pending',
             expires_at: expiresAt.toISOString(),
           },
@@ -59,7 +78,7 @@ export function useStartCall() {
 
       // Navigate to video call page as the caller
       router.push(
-        `/video-date?partner=${recipientId}&type=${callType}&callId=${invitation?.id}&mode=outgoing`
+        `/video-date?partner=${recipientId}&type=${callType}&callId=${invitation?.id}&mode=outgoing&logId=${callLog.id}`
       )
     } catch (err: any) {
       console.error('Error starting call:', err)

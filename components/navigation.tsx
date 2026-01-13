@@ -53,7 +53,7 @@ export default function Navigation() {
   }
 
   return (
-    <nav ref={navRef} className="fixed top-0 left-0 right-0 z-50 bg-white/90 md:bg-white/95 backdrop-blur-md border-b border-rose-100/50 md:border-rose-100">
+    <nav ref={navRef} className="fixed top-0 left-0 right-0 z-50 bg-background/90 dark:bg-background/95 md:bg-background/95 dark:md:bg-background/95 backdrop-blur-md border-b border-rose-100/50 dark:border-rose-900/40 md:border-rose-100 dark:md:border-rose-900/40 nav-gradient">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 md:py-4 flex justify-between items-center">
         <Link href="/" className="flex items-center gap-2">
           <img
@@ -71,11 +71,12 @@ export default function Navigation() {
           <Link href="/pricing" className="text-foreground hover:text-primary transition">{t('common.pricing')}</Link>
           <Link href="/messages" className="text-foreground hover:text-primary transition">{t('common.messages')}</Link>
           <Link href="/lounge" className="text-foreground hover:text-primary transition">{t('common.lounge')}</Link>
+          <Link href="/nuestra-historia" className="text-foreground hover:text-primary transition">{t('common.ourStory')}</Link>
 
           <div className="relative">
             <button
               onClick={() => setNotificationsOpen(!notificationsOpen)}
-              className="p-2 hover:bg-rose-50 rounded-full transition relative"
+              className="p-2 hover:bg-card-subtle dark:hover:bg-card-subtle rounded-full transition relative"
               aria-label="Notifications"
             >
               <Bell size={20} className="text-primary" />
@@ -85,37 +86,28 @@ export default function Navigation() {
                 </span>
               )}
             </button>
-            {/* Desktop notification dropdown */}
-            <div className="hidden md:block">
-              <ResponsiveNotificationsPanel
-                open={notificationsOpen}
-                onOpenChange={setNotificationsOpen}
-                notifications={notifications}
-                onDismiss={handleNotificationDismiss}
-              />
-            </div>
           </div>
 
           <div className="relative">
             <button
               onClick={() => setLangDropdown(!langDropdown)}
-              className="p-2 hover:bg-rose-50 rounded-full transition flex items-center gap-1"
+              className="p-2 hover:bg-card-subtle dark:hover:bg-card-subtle rounded-full transition flex items-center gap-1"
               aria-label="Language"
             >
               <Globe size={20} className="text-primary" />
               <span className="text-sm font-semibold text-primary uppercase">{language}</span>
             </button>
             {langDropdown && (
-              <div className="absolute right-0 mt-2 bg-white border border-rose-100 rounded-lg shadow-lg z-50">
+              <div className="absolute right-0 mt-2 bg-card dark:bg-card border border-rose-100 dark:border-rose-900/40 rounded-lg shadow-lg z-50">
                 <button
                   onClick={() => handleLanguageChange('en')}
-                  className={`block w-full text-left px-4 py-2 hover:bg-rose-50 ${language === 'en' ? 'bg-rose-50 text-primary font-semibold' : 'text-foreground'}`}
+                  className={`block w-full text-left px-4 py-2 hover:bg-card-subtle dark:hover:bg-card-subtle ${language === 'en' ? 'bg-card-subtle dark:bg-card-subtle text-primary font-semibold' : 'text-foreground dark:text-white'}`}
                 >
                   English
                 </button>
                 <button
                   onClick={() => handleLanguageChange('es')}
-                  className={`block w-full text-left px-4 py-2 hover:bg-rose-50 ${language === 'es' ? 'bg-rose-50 text-primary font-semibold' : 'text-foreground'}`}
+                  className={`block w-full text-left px-4 py-2 hover:bg-card-subtle dark:hover:bg-card-subtle ${language === 'es' ? 'bg-card-subtle dark:bg-card-subtle text-primary font-semibold' : 'text-foreground dark:text-white'}`}
                 >
                   Español
                 </button>
@@ -144,7 +136,7 @@ export default function Navigation() {
         <div className="md:hidden flex items-center gap-2">
           <button
             onClick={() => setNotificationsOpen(!notificationsOpen)}
-            className="p-2 hover:bg-rose-50 rounded-full transition relative"
+            className="p-2 hover:bg-card-subtle dark:hover:bg-card-subtle rounded-full transition relative"
             aria-label="Notifications"
           >
             <Bell size={20} className="text-primary" />
@@ -158,7 +150,7 @@ export default function Navigation() {
             <>
               <button
                 onClick={() => setMenuOpen(!menuOpen)}
-                className="p-2 hover:bg-rose-50 rounded-lg transition"
+                className="p-2 hover:bg-card-subtle dark:hover:bg-card-subtle rounded-lg transition"
               >
                 {menuOpen ? <X size={24} /> : <Menu size={24} />}
               </button>
@@ -167,7 +159,7 @@ export default function Navigation() {
           ) : isMounted ? (
             <button
               onClick={() => setMenuOpen(!menuOpen)}
-              className="p-2 hover:bg-rose-50 rounded-lg transition"
+              className="p-2 hover:bg-card-subtle dark:hover:bg-card-subtle rounded-lg transition"
             >
               {menuOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
@@ -188,7 +180,7 @@ export default function Navigation() {
               stiffness: 300,
               opacity: { duration: 0.2 },
             }}
-            className="md:hidden bg-white border-t border-rose-100 py-4 px-4 space-y-3 overflow-hidden"
+            className="md:hidden bg-background dark:bg-background border-t border-rose-100 dark:border-rose-900/40 py-4 px-4 space-y-3 overflow-hidden nav-gradient"
           >
           <motion.div
             initial={{ opacity: 0, x: -20 }}
@@ -240,24 +232,34 @@ export default function Navigation() {
               {t('common.lounge')}
             </Link>
           </motion.div>
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ delay: 0.32, duration: 0.3 }}
+          >
+            <Link href="/nuestra-historia" className="block text-foreground hover:text-primary transition py-2" onClick={() => setMenuOpen(false)}>
+              {t('common.ourStory')}
+            </Link>
+          </motion.div>
 
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
             transition={{ delay: 0.35, duration: 0.3 }}
-            className="border-t border-rose-100 pt-3 mt-3"
+            className="border-t border-rose-100 dark:border-rose-900/40 pt-3 mt-3"
           >
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Language</p>
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Language</p>
             <button
               onClick={() => handleLanguageChange('en')}
-              className={`block w-full text-left px-4 py-2 rounded-lg transition ${language === 'en' ? 'bg-rose-50 text-primary font-semibold' : 'text-foreground hover:bg-rose-50'}`}
+              className={`block w-full text-left px-4 py-2 rounded-lg transition ${language === 'en' ? 'bg-card-subtle dark:bg-card-subtle text-primary font-semibold' : 'text-foreground dark:text-white hover:bg-card-subtle dark:hover:bg-card-subtle'}`}
             >
               English
             </button>
             <button
               onClick={() => handleLanguageChange('es')}
-              className={`block w-full text-left px-4 py-2 rounded-lg transition ${language === 'es' ? 'bg-rose-50 text-primary font-semibold' : 'text-foreground hover:bg-rose-50'}`}
+              className={`block w-full text-left px-4 py-2 rounded-lg transition ${language === 'es' ? 'bg-card-subtle dark:bg-card-subtle text-primary font-semibold' : 'text-foreground dark:text-white hover:bg-card-subtle dark:hover:bg-card-subtle'}`}
             >
               Español
             </button>
@@ -270,7 +272,7 @@ export default function Navigation() {
               exit={{ opacity: 0, x: -20 }}
               transition={{ delay: 0.4, duration: 0.3 }}
             >
-              <div className="border-t border-rose-100 pt-3 mt-3 space-y-3">
+              <div className="border-t border-rose-100 dark:border-rose-900/40 pt-3 mt-3 space-y-3">
                 <Link href="/login" className="block text-foreground hover:text-primary transition py-2" onClick={() => setMenuOpen(false)}>
                   {t('common.logIn')}
                 </Link>
@@ -288,7 +290,7 @@ export default function Navigation() {
         )}
       </AnimatePresence>
 
-      {/* Mobile Notification Drawer - uses Portal so only needs one instance */}
+      {/* Single Notification Panel - handles both desktop and mobile via isMobile hook */}
       <ResponsiveNotificationsPanel
         open={notificationsOpen}
         onOpenChange={setNotificationsOpen}

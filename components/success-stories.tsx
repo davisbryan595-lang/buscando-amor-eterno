@@ -95,16 +95,16 @@ export default function SuccessStories() {
   const story = stories[currentIndex]
 
   return (
-    <section className="py-16 md:py-20 px-4 bg-gradient-to-b from-white to-rose-50">
+    <section className="py-16 md:py-20 px-4 bg-gradient-to-b from-background to-background">
       <div className="w-full max-w-4xl mx-auto">
-        <h2 className="text-3xl sm:text-4xl md:text-5xl font-playfair font-bold text-center mb-3 md:mb-4 text-slate-900">
+        <h2 className="text-3xl sm:text-4xl md:text-5xl font-playfair font-bold text-center mb-3 md:mb-4 text-foreground">
           {t('stories.sectionTitle')}
         </h2>
-        <p className="text-center text-slate-600 mb-10 md:mb-12 text-base md:text-lg">
+        <p className="text-center text-muted-foreground mb-10 md:mb-12 text-base md:text-lg">
           {t('stories.sectionDescription')}
         </p>
 
-        <div className="relative soft-glow rounded-2xl overflow-hidden bg-white">
+        <div className="relative soft-glow rounded-2xl overflow-hidden bg-card dark:bg-card card-gradient">
           <div className="p-4 md:p-6 lg:p-12">
             <div className="flex flex-col md:flex-row gap-6 md:gap-8 items-center">
               <div ref={imageRef} className="w-full md:w-1/2 relative h-56 sm:h-64 md:h-96 rounded-xl overflow-hidden shadow-lg">
@@ -122,25 +122,25 @@ export default function SuccessStories() {
                   <Heart className="text-primary fill-primary w-5 h-5 md:w-6 md:h-6" />
                   <p className="text-primary font-semibold text-base md:text-lg">{t(story.coupleKey)}</p>
                 </div>
-                <p className="text-sm md:text-base text-slate-600 mb-4 flex items-center justify-center md:justify-start gap-2">
+                <p className="text-sm md:text-base text-muted-foreground mb-4 flex items-center justify-center md:justify-start gap-2">
                   <span className="inline-block w-2 h-2 rounded-full bg-rose-400"></span>
                   {t(story.locationKey)}
                 </p>
-                <p className="text-lg md:text-2xl lg:text-3xl font-playfair text-slate-900 mb-6 md:mb-8 leading-relaxed italic">
+                <p className="text-lg md:text-2xl lg:text-3xl font-playfair mb-6 md:mb-8 leading-relaxed italic text-black dark:text-white">
                   "{t(story.storyKey)}"
                 </p>
 
                 <div className="flex gap-3 md:gap-4 justify-center md:justify-start">
                   <button
                     onClick={prev}
-                    className="p-3 md:p-4 bg-rose-50 hover:bg-primary hover:text-white text-primary rounded-full transition-all duration-300 shadow-sm hover:shadow-md"
+                    className="p-3 md:p-4 bg-card-subtle dark:bg-card-subtle hover:bg-primary hover:text-white text-primary rounded-full transition-all duration-300 shadow-sm hover:shadow-md"
                     aria-label={t('stories.previousStory')}
                   >
                     <ChevronLeft className="w-5 h-5 md:w-6 md:h-6" />
                   </button>
                   <button
                     onClick={next}
-                    className="p-3 md:p-4 bg-rose-50 hover:bg-primary hover:text-white text-primary rounded-full transition-all duration-300 shadow-sm hover:shadow-md"
+                    className="p-3 md:p-4 bg-card-subtle dark:bg-card-subtle hover:bg-primary hover:text-white text-primary rounded-full transition-all duration-300 shadow-sm hover:shadow-md"
                     aria-label={t('stories.nextStory')}
                   >
                     <ChevronRight className="w-5 h-5 md:w-6 md:h-6" />

@@ -8,9 +8,11 @@ import { useMessages } from '@/hooks/useMessages'
 import { useAuth } from '@/context/auth-context'
 import { useStartCall } from '@/hooks/useStartCall'
 import { toast } from 'sonner'
+import { supabase } from '@/lib/supabase'
 import MessageContextMenu from '@/components/message-context-menu'
 import TypingIndicator from '@/components/typing-indicator'
 import { AnimatedMessage } from '@/components/animated-message'
+import CallLogMessage from '@/components/call-log-message'
 
 const getLastSeenText = (timestamp?: string): string => {
   if (!timestamp) return 'Offline'
@@ -46,6 +48,35 @@ interface ChatWindowProps {
   onBack?: () => void
 }
 
+interface CallLog {
+  id: string
+  caller_id: string
+  receiver_id: string
+  call_type: 'audio' | 'video'
+  status: 'ongoing' | 'completed' | 'missed' | 'declined' | 'cancelled'
+  started_at: string
+  answered_at?: string
+  ended_at?: string
+  duration?: number
+  type: 'call_log'
+}
+
+interface CombinedMessage {
+  id: string
+  type: 'text' | 'call_log'
+  created_at: string
+  sender_id?: string
+  recipient_id?: string
+  content?: string
+  read?: boolean
+  call_type?: 'audio' | 'video'
+  status?: string
+  started_at?: string
+  duration?: number
+  caller_id?: string
+  receiver_id?: string
+}
+
 export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
   const router = useRouter()
   const { user } = useAuth()
@@ -55,6 +86,8 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
   const [loading, setLoading] = useState(false)
   const [callingState, setCallingState] = useState<'idle' | 'calling'>('idle')
   const [otherUserDetails, setOtherUserDetails] = useState<{ name: string; image: string | null } | null>(null)
+  const [callLogs, setCallLogs] = useState<CallLog[]>([])
+  const [combinedMessages, setCombinedMessages] = useState<CombinedMessage[]>([])
   const [contextMenu, setContextMenu] = useState<{
     x: number
     y: number
@@ -78,10 +111,55 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
     }
   }
 
+  // Fetch call logs and merge with messages
+  const fetchAndMergeMessages = async () => {
+    if (!conversation?.other_user_id || !user) return
+
+    try {
+      // Fetch call logs from call_logs table
+      const { data: callLogsData } = await supabase
+        .from('call_logs')
+        .select('*')
+        .or(`and(caller_id.eq.${user.id},receiver_id.eq.${conversation.other_user_id}),and(caller_id.eq.${conversation.other_user_id},receiver_id.eq.${user.id})`)
+        .order('started_at', { ascending: true })
+
+      if (callLogsData) {
+        setCallLogs(callLogsData)
+      }
+    } catch (err) {
+      console.error('Error fetching call logs:', err)
+    }
+  }
+
+  // Merge messages and call logs chronologically
+  useEffect(() => {
+    const merged: CombinedMessage[] = [
+      ...(messages || []).map(m => ({
+        ...m,
+        type: 'text' as const,
+        created_at: m.created_at,
+      })),
+      ...(callLogs || []).map(c => ({
+        id: c.id,
+        type: 'call_log' as const,
+        created_at: c.started_at,
+        caller_id: c.caller_id,
+        receiver_id: c.receiver_id,
+        call_type: c.call_type,
+        status: c.status,
+        started_at: c.started_at,
+        duration: c.duration,
+      })),
+    ].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+
+    setCombinedMessages(merged)
+  }, [messages, callLogs])
+
   useEffect(() => {
     if (conversation?.other_user_id) {
       setPreviousMessageCount(0)
       fetchMessages(conversation.other_user_id)
+      fetchAndMergeMessages()
 
       // Subscribe to real-time updates for this conversation
       unsubscribeRef.current = subscribeToConversation(conversation.other_user_id) || null
@@ -182,11 +260,11 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
   // Scroll to bottom when new messages arrive
   useEffect(() => {
     // Auto-scroll when new messages arrive
-    if (messages.length > previousMessageCount) {
+    if (combinedMessages.length > previousMessageCount) {
       scrollToBottom()
-      setPreviousMessageCount(messages.length)
+      setPreviousMessageCount(combinedMessages.length)
     }
-  }, [messages, previousMessageCount])
+  }, [combinedMessages, previousMessageCount])
 
   const handleSend = async () => {
     if (!newMessage.trim() || !user) return
@@ -272,17 +350,17 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
   }
 
   return (
-    <div className="bg-gradient-to-b from-white to-rose-50 rounded-none md:rounded-xl border-0 md:border border-rose-100 flex flex-col h-full w-full soft-glow overflow-hidden">
+    <div className="bg-gradient-to-b from-card to-card-subtle dark:from-card dark:to-card-subtle rounded-none md:rounded-xl border-0 md:border border-rose-100 dark:border-rose-900/40 flex flex-col h-full w-full soft-glow overflow-hidden gradient-40">
       {/* Header */}
-      <div className="sticky top-16 md:top-24 z-20 px-3 py-3 sm:p-4 lg:p-6 border-b border-rose-100 flex items-center justify-between flex-shrink-0 gap-2 bg-gradient-to-b from-white to-rose-50">
+      <div className="sticky top-16 md:top-24 z-20 px-3 py-3 sm:p-4 lg:p-6 border-b border-rose-100 dark:border-rose-900/40 flex items-center justify-between flex-shrink-0 gap-2 bg-gradient-to-b from-card to-card-subtle dark:from-card dark:to-card-subtle gradient-40">
         <div className="flex items-center gap-2 sm:gap-3 lg:gap-4 min-w-0 flex-1">
           {onBack && (
             <button
               onClick={onBack}
-              className="md:hidden p-1.5 sm:p-2 hover:bg-rose-100 rounded-full transition flex-shrink-0"
+              className="md:hidden p-1.5 sm:p-2 hover:bg-card-hover dark:hover:bg-card-hover rounded-full transition flex-shrink-0"
               aria-label="Back to conversations"
             >
-              <ArrowLeft size={18} className="text-slate-700" />
+              <ArrowLeft size={18} className="text-foreground" />
             </button>
           )}
           <button
@@ -302,8 +380,8 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
               )}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="font-semibold text-slate-900 text-sm sm:text-base lg:text-lg truncate">{otherUserDetails?.name || conversation.other_user_name || 'User'}</p>
-              <p className="text-xs sm:text-sm lg:text-base text-slate-600 truncate">
+              <p className="font-semibold text-foreground text-sm sm:text-base lg:text-lg truncate">{otherUserDetails?.name || conversation.other_user_name || 'User'}</p>
+              <p className="text-xs sm:text-sm lg:text-base text-muted-foreground truncate">
                 {conversation.is_online ? 'Online' : getLastSeenText(conversation.last_message_time)}
               </p>
             </div>
@@ -314,7 +392,7 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
           <button
             onClick={handleStartAudioCall}
             disabled={callingState === 'calling'}
-            className="p-1.5 sm:p-2 lg:p-3 hover:bg-rose-100 disabled:opacity-50 disabled:cursor-not-allowed rounded-full transition"
+            className="p-1.5 sm:p-2 lg:p-3 hover:bg-card-hover dark:hover:bg-card-hover disabled:opacity-50 disabled:cursor-not-allowed rounded-full transition"
             title="Start audio call"
           >
             <Phone size={16} className="sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-primary" />
@@ -322,7 +400,7 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
           <button
             onClick={handleStartVideoCall}
             disabled={callingState === 'calling'}
-            className="p-1.5 sm:p-2 lg:p-3 hover:bg-rose-100 disabled:opacity-50 disabled:cursor-not-allowed rounded-full transition"
+            className="p-1.5 sm:p-2 lg:p-3 hover:bg-card-hover dark:hover:bg-card-hover disabled:opacity-50 disabled:cursor-not-allowed rounded-full transition"
             title="Start video call"
           >
             <Video size={16} className="sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-primary" />
@@ -332,55 +410,49 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
 
       {/* Messages */}
       <div ref={messagesContainerRef} className="flex-1 overflow-y-auto overflow-x-hidden px-3 py-3 sm:p-4 lg:p-6 space-y-2 sm:space-y-3 lg:space-y-4 min-h-0">
-        {messages.length === 0 ? (
-          <div className="flex items-center justify-center h-full text-slate-500">
+        {combinedMessages.length === 0 ? (
+          <div className="flex items-center justify-center h-full text-muted-foreground">
             <p className="text-sm sm:text-base lg:text-lg">No messages yet. Start the conversation!</p>
           </div>
         ) : (
           <>
-            {messages.map((msg) => {
-              // Render call log messages differently
-              if (msg.type === 'call_log') {
-                const formatDuration = (seconds: number) => {
-                  const mins = Math.floor(seconds / 60)
-                  const secs = seconds % 60
-                  return `${mins}:${String(secs).padStart(2, '0')}`
-                }
-
-                const getCallEmoji = (status: string, callType?: string) => {
-                  if (status === 'missed') return '📵'
-                  if (status === 'ongoing') return '☎️'
-                  return callType === 'video' ? '📹' : '☎️'
-                }
-
-                const callText =
-                  msg.call_status === 'missed' ? `Missed ${msg.call_type} call` :
-                  msg.call_status === 'ended' && msg.call_duration ? `${msg.call_type} call · ${formatDuration(msg.call_duration)}` :
-                  msg.call_status === 'ongoing' ? `Ongoing ${msg.call_type} call` :
-                  `${msg.call_type} call`
-
+            {combinedMessages.map((item) => {
+              // Render call log messages with WhatsApp-style formatting
+              if (item.type === 'call_log') {
                 return (
-                  <div key={msg.id} className="flex justify-center my-3">
-                    <div className="text-center text-slate-500 text-xs sm:text-sm">
-                      <span>{getCallEmoji(msg.call_status, msg.call_type)} {callText}</span>
-                    </div>
+                  <div key={item.id} className="flex justify-center my-3">
+                    <CallLogMessage
+                      callLog={{
+                        id: item.id,
+                        caller_id: item.caller_id || '',
+                        receiver_id: item.receiver_id || '',
+                        call_type: (item.call_type as 'audio' | 'video') || 'audio',
+                        status: (item.status as 'ongoing' | 'completed' | 'missed' | 'declined' | 'cancelled') || 'completed',
+                        started_at: item.started_at || item.created_at,
+                        duration: item.duration,
+                      }}
+                      currentUserId={user?.id || ''}
+                      onCallBack={() =>
+                        handleStartAudioCall()
+                      }
+                    />
                   </div>
                 )
               }
 
               return (
                 <AnimatedMessage
-                  key={msg.id}
-                  id={msg.id}
-                  content={msg.content}
-                  isOwn={msg.sender_id === user?.id}
+                  key={item.id}
+                  id={item.id}
+                  content={item.content || ''}
+                  isOwn={item.sender_id === user?.id}
                   onContextMenu={handleContextMenu}
                 />
               )
             })}
             {showTypingIndicator && (
               <div className="flex justify-start">
-                <div className="px-4 sm:px-5 md:px-6 py-2 sm:py-3 md:py-4 rounded-3xl rounded-bl-none bg-gradient-to-r from-slate-100 to-slate-50">
+                <div className="px-4 sm:px-5 md:px-6 py-2 sm:py-3 md:py-4 rounded-3xl rounded-bl-none bg-gradient-to-r from-card-subtle to-card-subtle dark:from-card-subtle dark:to-card-subtle">
                   <TypingIndicator />
                 </div>
               </div>
@@ -392,7 +464,7 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
       </div>
 
       {/* Input */}
-      <div className="sticky bottom-0 z-20 px-3 py-3 sm:p-4 lg:p-6 border-t border-rose-100 flex gap-2 flex-shrink-0 bg-gradient-to-t from-white to-rose-50">
+      <div className="sticky bottom-0 z-20 px-3 py-3 sm:p-4 lg:p-6 border-t border-rose-100 dark:border-rose-900/40 flex gap-2 flex-shrink-0 bg-gradient-to-t from-card to-card-subtle dark:from-card dark:to-card-subtle">
         <input
           ref={inputRef}
           type="text"
@@ -401,7 +473,7 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
           onKeyPress={(e) => e.key === 'Enter' && handleSend()}
           placeholder="Type a message..."
           disabled={loading}
-          className="flex-1 px-3 sm:px-4 lg:px-6 py-1.5 sm:py-2 lg:py-3 text-xs sm:text-sm lg:text-base bg-white border border-rose-200 rounded-full focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
+          className="flex-1 px-3 sm:px-4 lg:px-6 py-1.5 sm:py-2 lg:py-3 text-xs sm:text-sm lg:text-base bg-card-subtle dark:bg-card-subtle border border-rose-200 dark:border-rose-900/30 rounded-full focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 text-foreground dark:text-white"
         />
         <button
           onClick={handleSend}

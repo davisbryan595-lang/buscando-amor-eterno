@@ -76,6 +76,17 @@ export default function OnboardingPage() {
     }
   }, [authLoading, user, router])
 
+  // Prevent browser back navigation during onboarding
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault()
+      e.returnValue = ''
+    }
+
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload)
+  }, [])
+
   if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -141,6 +152,10 @@ export default function OnboardingPage() {
   }
 
   const handleSkip = () => {
+    // Prevent skipping Step 4 (Photos) and Step 6 (Preferences)
+    if (currentStep === 4 || currentStep === 6) {
+      return
+    }
     handleNext()
   }
 
@@ -308,7 +323,6 @@ export default function OnboardingPage() {
         {currentStep === 4 && (
           <Step4Photos
             onNext={handleNext}
-            onSkip={handleSkip}
             initialPhotos={data.photos}
             onDataChange={(photos) => setData({ ...data, photos })}
           />

@@ -7,14 +7,15 @@ import { Preloader } from '@/components/preloader'
 import CallManager from '@/components/call-manager'
 import { Toaster } from '@/components/ui/sonner'
 import { SessionManager } from '@/components/session-manager'
+import { ReconnectHandler } from '@/components/reconnect-handler'
 
 const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
-const inter = Inter({ 
+const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
 });
-const playfair = Playfair_Display({ 
+const playfair = Playfair_Display({
   subsets: ["latin"],
   variable: "--font-playfair",
 });
@@ -37,6 +38,49 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+        <script dangerouslySetInnerHTML={{
+          __html: `
+            // Ensure light mode is default at the very start
+            try {
+              document.documentElement.classList.remove('dark');
+            } catch (e) {}
+          `,
+        }} />
+        <script dangerouslySetInnerHTML={{
+          __html: `
+            (function() {
+              try {
+                // Default to light mode
+                const theme = localStorage.getItem('app-theme') || 'light';
+                console.log('[Theme Init] Stored theme:', theme);
+
+                let isDark = false;
+                if (theme === 'dark') {
+                  isDark = true;
+                } else if (theme === 'system') {
+                  isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                } else {
+                  isDark = false;
+                }
+
+                console.log('[Theme Init] isDark:', isDark);
+
+                // Remove dark class first to ensure clean state
+                document.documentElement.classList.remove('dark');
+
+                // Set data-theme attribute
+                if (isDark) {
+                  document.documentElement.setAttribute('data-theme', 'dark');
+                  document.documentElement.classList.add('dark');
+                } else {
+                  document.documentElement.setAttribute('data-theme', 'light');
+                }
+              } catch (e) {
+                console.error('[Theme Init Error]', e);
+              }
+            })();
+          `,
+        }} />
         <script async src="https://cdn.onesignal.com/sdks/onesignal.js"></script>
         <script dangerouslySetInnerHTML={{
           __html: `
@@ -55,8 +99,9 @@ export default function RootLayout({
           `,
         }} />
       </head>
-      <body className={`${inter.variable} ${playfair.variable} font-sans antialiased bg-white text-slate-900`}>
+      <body className={`${inter.variable} ${playfair.variable} font-sans antialiased bg-background text-foreground`}>
         <Preloader />
+        <ReconnectHandler />
         <I18nProvider>
           <AuthProvider>
             <SessionManager />

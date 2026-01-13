@@ -43,18 +43,18 @@ export default function Footer() {
   }, [])
 
   return (
-    <footer ref={footerRef} className="bg-slate-900 text-white py-12 md:py-16 px-4">
+    <footer ref={footerRef} className="bg-slate-900 text-white py-6 md:py-8 px-4">
       <div className="w-full max-w-6xl mx-auto">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-6">
           <div
             ref={(el) => {
               if (el) columnsRef.current[0] = el
             }}
           >
-            <h3 className="text-xl md:text-2xl font-playfair font-bold mb-4 flex items-center gap-2">
-              <Heart className="text-rose-400 flex-shrink-0" size={24} /> Buscando Amor Eterno
+            <h3 className="text-lg md:text-xl font-playfair font-bold mb-2 flex items-center gap-2 text-white">
+              <Heart className="text-rose-400 flex-shrink-0" size={20} /> Buscando Amor Eterno
             </h3>
-            <p className="text-sm md:text-base text-gray-400">{t('footer.tagline')}</p>
+            <p className="text-xs md:text-sm text-gray-400">{t('footer.tagline')}</p>
           </div>
 
           <div
@@ -62,8 +62,8 @@ export default function Footer() {
               if (el) columnsRef.current[1] = el
             }}
           >
-            <h4 className="font-bold mb-4 text-base md:text-lg">{t('footer.platform')}</h4>
-            <ul className="space-y-2 text-sm md:text-base text-gray-400">
+            <h4 className="font-bold mb-2 text-sm md:text-base text-white">{t('footer.platform')}</h4>
+            <ul className="space-y-1 text-xs md:text-sm text-gray-400">
               <li><Link href="/" className="hover:text-white transition">{t('common.home')}</Link></li>
               <li><Link href="/browse" className="hover:text-white transition">{t('common.browse')}</Link></li>
               <li><Link href="/pricing" className="hover:text-white transition">{t('common.pricing')}</Link></li>
@@ -77,8 +77,8 @@ export default function Footer() {
               if (el) columnsRef.current[2] = el
             }}
           >
-            <h4 className="font-bold mb-4 text-base md:text-lg">{t('footer.legal')}</h4>
-            <ul className="space-y-2 text-sm md:text-base text-gray-400">
+            <h4 className="font-bold mb-2 text-sm md:text-base text-white">{t('footer.legal')}</h4>
+            <ul className="space-y-1 text-xs md:text-sm text-gray-400">
               <li><a href="#" className="hover:text-white transition">{t('footer.privacy')}</a></li>
               <li><a href="#" className="hover:text-white transition">{t('footer.terms')}</a></li>
               <li><a href="#" className="hover:text-white transition">{t('footer.safety')}</a></li>
@@ -87,7 +87,7 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="border-t border-slate-700 pt-8 text-center text-sm md:text-base text-gray-400">
+        <div className="border-t border-slate-700 pt-4 text-center text-xs md:text-sm text-gray-400">
           <p>{t('footer.copyright')}</p>
         </div>
       </div>

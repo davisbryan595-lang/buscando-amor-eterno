@@ -20,7 +20,7 @@ export default function UserProfilePage({ params }: UserProfilePageProps) {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-gradient-to-br from-rose-50 to-pink-50 flex items-center justify-center">
+      <main className="min-h-screen bg-background text-foreground flex items-center justify-center">
         <div className="w-8 h-8 border-4 border-rose-200 border-t-rose-700 rounded-full animate-spin" />
       </main>
     )
@@ -28,14 +28,14 @@ export default function UserProfilePage({ params }: UserProfilePageProps) {
 
   if (!user) {
     return (
-      <main className="min-h-screen bg-gradient-to-br from-rose-50 to-pink-50 flex flex-col">
+      <main className="min-h-screen bg-background text-foreground flex flex-col">
         <Navigation />
         <div className="flex-1 flex items-center justify-center px-4">
           <div className="text-center max-w-md">
-            <h1 className="text-2xl font-playfair font-bold text-slate-900 mb-4">
+            <h1 className="text-2xl font-playfair font-bold text-foreground mb-4">
               Sign In Required
             </h1>
-            <p className="text-slate-600 mb-6">
+            <p className="text-muted-foreground mb-6">
               Please sign in to view user profiles
             </p>
             <button
@@ -52,7 +52,7 @@ export default function UserProfilePage({ params }: UserProfilePageProps) {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-rose-50 to-pink-50">
+    <main className="min-h-screen bg-background text-foreground">
       <Navigation />
 
       <div className="pt-20 md:pt-24 pb-12 px-0 md:px-4">

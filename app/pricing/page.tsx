@@ -23,24 +23,24 @@ export default function PricingPage() {
   }
 
   return (
-    <main className="min-h-screen bg-white">
+    <main className="min-h-screen bg-background text-foreground">
       <Navigation />
       <div className="pt-20 md:pt-24 pb-16 md:pb-20 px-4">
         <div className="w-full max-w-2xl mx-auto">
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-playfair font-bold text-center mb-3 md:mb-4 text-slate-900">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-playfair font-bold text-center mb-3 md:mb-4 text-foreground">
             Premium Membership
           </h1>
-          <p className="text-center text-slate-600 mb-8 md:mb-12 text-base sm:text-lg">
+          <p className="text-center text-muted-foreground mb-8 md:mb-12 text-base sm:text-lg">
             Start your journey to eternal love today
           </p>
 
-          <div className="bg-gradient-to-br from-white to-rose-50 border-2 border-primary rounded-2xl p-6 sm:p-8 md:p-12 soft-glow-lg">
+          <div className="bg-gradient-to-br from-card to-card-subtle dark:from-card dark:to-card-subtle border-2 border-primary rounded-2xl p-6 sm:p-8 md:p-12 soft-glow-lg">
             <div className="text-center mb-8">
-              <p className="text-sm md:text-base text-slate-600 mb-2">Monthly Subscription</p>
+              <p className="text-sm md:text-base text-muted-foreground mb-2">Monthly Subscription</p>
               <p className="text-4xl sm:text-5xl md:text-6xl font-playfair font-bold text-primary mb-2">
-                $12<span className="text-lg md:text-2xl text-slate-600">/month</span>
+                $12<span className="text-lg md:text-2xl text-muted-foreground">/month</span>
               </p>
-              <p className="text-sm md:text-base text-slate-600">Billed monthly, cancel anytime</p>
+              <p className="text-sm md:text-base text-muted-foreground">Billed monthly, cancel anytime</p>
             </div>
 
             <ul className="space-y-3 md:space-y-4 mb-8 md:mb-12">
@@ -49,7 +49,7 @@ export default function PricingPage() {
                   <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center text-white flex-shrink-0">
                     <Check size={16} />
                   </div>
-                  <span className="text-sm md:text-base text-slate-700">{feature}</span>
+                  <span className="text-sm md:text-base text-foreground">{feature}</span>
                 </li>
               ))}
             </ul>
@@ -61,7 +61,7 @@ export default function PricingPage() {
               Start Your Premium Membership
             </button>
 
-            <p className="text-center text-slate-600 text-xs md:text-sm mt-6">
+            <p className="text-center text-muted-foreground text-xs md:text-sm mt-6">
               Secure payment with SSL encryption. No hidden fees.
             </p>
           </div>

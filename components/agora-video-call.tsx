@@ -26,6 +26,7 @@ interface AgoraCallProps {
   callType?: 'audio' | 'video'
   mode?: 'outgoing' | 'incoming' | null
   callId?: string | null
+  logId?: string | null
 }
 
 export default function AgoraVideoCall({
@@ -34,6 +35,7 @@ export default function AgoraVideoCall({
   callType = 'video',
   mode = null,
   callId = null,
+  logId = null,
 }: AgoraCallProps) {
   const router = useRouter()
   const { user, getSession } = useAuth()
@@ -50,11 +52,13 @@ export default function AgoraVideoCall({
   const [error, setError] = useState<string | null>(null)
   const [otherUserImage, setOtherUserImage] = useState<string | null>(null)
   const [callDuration, setCallDuration] = useState(0)
+  const [isCallEndedCleanly, setIsCallEndedCleanly] = useState(false)
   const [remoteCameraEnabled, setRemoteCameraEnabled] = useState(true)
   const [remoteAudioEnabled, setRemoteAudioEnabled] = useState(true)
   const [connectionState, setConnectionState] = useState<'connected' | 'reconnecting' | 'disconnected'>('connected')
   const [loggedCallId, setLoggedCallId] = useState<string | null>(null)
   const [justReceivedEndSignal, setJustReceivedEndSignal] = useState(false)
+  const [useEarpiece, setUseEarpiece] = useState(false)
   const localVideoContainerRef = useRef<HTMLDivElement>(null)
   const remoteVideoContainerRef = useRef<HTMLDivElement>(null)
   const callStartTimeRef = useRef<number>(0)
@@ -64,8 +68,37 @@ export default function AgoraVideoCall({
   const justReceivedEndSignalRef = useRef(false)
 
   const appId = process.env.NEXT_PUBLIC_AGORA_APP_ID
+  const missedCallTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
-  // Listen for remote call end via Supabase Realtime
+  // Auto-mark as missed if call is not answered within 30 seconds (for outgoing calls)
+  useEffect(() => {
+    if (logId && !isConnected && mode === 'outgoing') {
+      // Set timeout to mark call as missed after 30 seconds
+      missedCallTimeoutRef.current = setTimeout(async () => {
+        if (!isConnected && logId) {
+          try {
+            await supabase
+              .from('call_logs')
+              .update({
+                status: 'missed',
+                ended_at: new Date().toISOString(),
+              })
+              .eq('id', logId)
+          } catch (err) {
+            console.warn('Failed to mark call as missed:', err)
+          }
+        }
+      }, 30000)
+    }
+
+    return () => {
+      if (missedCallTimeoutRef.current) {
+        clearTimeout(missedCallTimeoutRef.current)
+      }
+    }
+  }, [logId, isConnected, mode])
+
+  // Listen for force_end_call broadcast from remote user
   useEffect(() => {
     if (!user || !partnerId) return
 
@@ -73,8 +106,8 @@ export default function AgoraVideoCall({
     const channel = supabase.channel(`call:${roomName}`)
 
     channel
-      .on('broadcast', { event: 'call_ended' }, async (payload) => {
-        console.log('Remote end detected — cleaning up')
+      .on('broadcast', { event: 'force_end_call' }, async (payload) => {
+        console.log('Force end received — cleaning up')
 
         // Mark this as an intentional end to suppress "connection lost" UI
         setJustReceivedEndSignal(true)
@@ -87,23 +120,20 @@ export default function AgoraVideoCall({
 
         // Safely stop and close tracks
         if (localAudioTrack) {
-          localAudioTrack.stop()
-          localAudioTrack.close()
-          setLocalAudioTrack(null)
+          try {
+            await localAudioTrack.setEnabled(false)
+            localAudioTrack.close()
+          } catch (err) {
+            console.warn('Error closing audio track:', err)
+          }
         }
 
         if (localVideoTrack) {
-          localVideoTrack.stop()
-          localVideoTrack.close()
-          setLocalVideoTrack(null)
-        }
-
-        // Unpublish if still published
-        if (client) {
           try {
-            await client.unpublish()
+            await localVideoTrack.setEnabled(false)
+            localVideoTrack.close()
           } catch (err) {
-            console.warn('Error unpublishing:', err)
+            console.warn('Error closing video track:', err)
           }
         }
 
@@ -112,20 +142,12 @@ export default function AgoraVideoCall({
           try {
             await client.leave()
           } catch (err) {
-            console.warn('Error leaving channel:', err)
+            console.warn('Error leaving Agora channel:', err)
           }
         }
 
-        // Clear video containers
-        if (localVideoContainerRef.current) {
-          localVideoContainerRef.current.srcObject = null
-        }
-        if (remoteVideoContainerRef.current) {
-          remoteVideoContainerRef.current.srcObject = null
-        }
-
-        // Navigate back to conversation with this user
-        router.push(`/messages?user=${partnerId}`)
+        // Force redirect — no hanging
+        window.location.href = `/messages?user=${partnerId}`
       })
       .subscribe()
 
@@ -133,30 +155,55 @@ export default function AgoraVideoCall({
       channel.unsubscribe()
       supabase.removeChannel(channel)
     }
-  }, [user, partnerId, client, localAudioTrack, localVideoTrack, router])
+  }, [user, partnerId, client, localAudioTrack, localVideoTrack])
 
-  // Handle page unload (refresh/close tab) - broadcast clean call end
+  // Listen for remote media state changes (camera/mic toggle)
+  useEffect(() => {
+    if (!user || !partnerId) return
+
+    const roomName = [user.id, partnerId].sort().join('-')
+    const channel = supabase.channel(`call:${roomName}`)
+
+    channel
+      .on('broadcast', { event: 'media_state' }, (payload) => {
+        console.log('Remote media state changed:', payload.payload)
+
+        if (payload.payload.type === 'camera') {
+          setRemoteCameraEnabled(payload.payload.enabled)
+        } else if (payload.payload.type === 'mic') {
+          setRemoteAudioEnabled(payload.payload.enabled)
+        }
+      })
+      .subscribe()
+
+    return () => {
+      channel.unsubscribe()
+      supabase.removeChannel(channel)
+    }
+  }, [user, partnerId])
+
+  // Handle page unload (refresh/close tab) - broadcast force end
   useEffect(() => {
     const handleUnload = async () => {
-      // Broadcast end signal to other user via Supabase Realtime
+      // Broadcast force end signal to other user via Supabase Realtime
       if (user && partnerId) {
         const roomName = [user.id, partnerId].sort().join('-')
         const channel = supabase.channel(`call:${roomName}`)
         try {
           await channel.send({
             type: 'broadcast',
-            event: 'call_ended',
+            event: 'force_end_call',
             payload: { ended_by: user.id },
           })
         } catch (err) {
-          console.warn('Failed to broadcast call_ended on unload:', err)
+          console.warn('Failed to broadcast force_end_call on unload:', err)
         }
       }
 
       // Close Agora tracks and leave channel
       if (localAudioTrack) {
         try {
-          localAudioTrack.stop()
+          await localAudioTrack.setEnabled(false)
           localAudioTrack.close()
         } catch (err) {
           console.warn('Error closing audio track on unload:', err)
@@ -165,7 +212,7 @@ export default function AgoraVideoCall({
 
       if (localVideoTrack) {
         try {
-          localVideoTrack.stop()
+          await localVideoTrack.setEnabled(false)
           localVideoTrack.close()
         } catch (err) {
           console.warn('Error closing video track on unload:', err)
@@ -195,19 +242,19 @@ export default function AgoraVideoCall({
   useEffect(() => {
     const handleVisibilityChange = async () => {
       if (document.hidden && isConnected) {
-        console.log('Page hidden — broadcasting end call to prevent hanging')
-        // Broadcast end signal to other user via Supabase Realtime
+        console.log('Page hidden — broadcasting force end call to prevent hanging')
+        // Broadcast force end signal to other user via Supabase Realtime
         if (user && partnerId) {
           const roomName = [user.id, partnerId].sort().join('-')
           const channel = supabase.channel(`call:${roomName}`)
           try {
             await channel.send({
               type: 'broadcast',
-              event: 'call_ended',
+              event: 'force_end_call',
               payload: { ended_by: user.id },
             })
           } catch (err) {
-            console.warn('Failed to broadcast call_ended on visibility change:', err)
+            console.warn('Failed to broadcast force_end_call on visibility change:', err)
           }
         }
       }
@@ -326,6 +373,13 @@ export default function AgoraVideoCall({
               if (isFirstRemoteUser) {
                 setIsConnected(true)
                 callStartTimeRef.current = Date.now()
+
+                // Clear missed call timeout since the call was answered
+                if (missedCallTimeoutRef.current) {
+                  clearTimeout(missedCallTimeoutRef.current)
+                  missedCallTimeoutRef.current = null
+                }
+
                 if (callTimerRef.current) {
                   clearInterval(callTimerRef.current)
                 }
@@ -356,6 +410,13 @@ export default function AgoraVideoCall({
             setIsConnected(true)
             if (callStartTimeRef.current === 0) {
               callStartTimeRef.current = Date.now()
+
+              // Clear missed call timeout since the call was answered
+              if (missedCallTimeoutRef.current) {
+                clearTimeout(missedCallTimeoutRef.current)
+                missedCallTimeoutRef.current = null
+              }
+
               if (callTimerRef.current) {
                 clearInterval(callTimerRef.current)
               }
@@ -395,7 +456,11 @@ export default function AgoraVideoCall({
                 clearInterval(callTimerRef.current)
                 callTimerRef.current = null
               }
-              setIsConnected(false)
+              // Only update connection state if call didn't end cleanly
+              // (clean end is handled by force_end_call broadcast listener)
+              if (!isCallEndedCleanly) {
+                setIsConnected(false)
+              }
               callStartTimeRef.current = 0
             }
             return updated
@@ -459,9 +524,13 @@ export default function AgoraVideoCall({
     return () => {
       // Cleanup
       const cleanup = async () => {
-        // Clear call timer
+        // Clear call timer and missed call timeout
         if (callTimerRef.current) {
           clearInterval(callTimerRef.current)
+        }
+
+        if (missedCallTimeoutRef.current) {
+          clearTimeout(missedCallTimeoutRef.current)
         }
 
         // Stop and close audio track
@@ -485,6 +554,7 @@ export default function AgoraVideoCall({
     }
   }, [user, partnerId, appId, getSession, isAudioOnly])
 
+
   // Play remote video when remote users change
   useEffect(() => {
     remoteUsers.forEach((user) => {
@@ -494,16 +564,44 @@ export default function AgoraVideoCall({
     })
   }, [remoteUsers])
 
+  // Play local video track to container once both are ready
+  useEffect(() => {
+    if (!isAudioOnly && localVideoTrack && localVideoContainerRef.current && !loading) {
+      try {
+        localVideoTrack.play(localVideoContainerRef.current)
+        console.log('Local video track played to container')
+      } catch (err) {
+        console.warn('Error playing local video track:', err)
+      }
+    }
+  }, [localVideoTrack, loading, isAudioOnly])
+
   const toggleAudio = async () => {
     if (!localAudioTrack) return
 
     try {
-      if (isMuted) {
-        await localAudioTrack.setEnabled(true)
-      } else {
+      const newMutedState = !isMuted
+      if (newMutedState) {
         await localAudioTrack.setEnabled(false)
+      } else {
+        await localAudioTrack.setEnabled(true)
       }
-      setIsMuted(!isMuted)
+      setIsMuted(newMutedState)
+
+      // Broadcast media state change to remote user
+      if (user && partnerId) {
+        const roomName = [user.id, partnerId].sort().join('-')
+        const channel = supabase.channel(`call:${roomName}`)
+        try {
+          await channel.send({
+            type: 'broadcast',
+            event: 'media_state',
+            payload: { type: 'mic', enabled: !newMutedState },
+          })
+        } catch (err) {
+          console.warn('Failed to broadcast media state change for mic:', err)
+        }
+      }
     } catch (err) {
       console.error('Error toggling audio:', err)
       toast.error('Failed to toggle microphone')
@@ -514,15 +612,213 @@ export default function AgoraVideoCall({
     if (!localVideoTrack) return
 
     try {
-      if (isCameraOff) {
-        await localVideoTrack.setEnabled(true)
-      } else {
+      const newCameraOffState = !isCameraOff
+      if (newCameraOffState) {
         await localVideoTrack.setEnabled(false)
+      } else {
+        await localVideoTrack.setEnabled(true)
       }
-      setIsCameraOff(!isCameraOff)
+      setIsCameraOff(newCameraOffState)
+
+      // Broadcast media state change to remote user
+      if (user && partnerId) {
+        const roomName = [user.id, partnerId].sort().join('-')
+        const channel = supabase.channel(`call:${roomName}`)
+        try {
+          await channel.send({
+            type: 'broadcast',
+            event: 'media_state',
+            payload: { type: 'camera', enabled: !newCameraOffState },
+          })
+        } catch (err) {
+          console.warn('Failed to broadcast media state change for camera:', err)
+        }
+      }
     } catch (err) {
       console.error('Error toggling video:', err)
       toast.error('Failed to toggle camera')
+    }
+  }
+
+  const toggleAudioOutput = async () => {
+    // Note: Audio output routing on web is limited by platform constraints:
+    // - iOS: Must use system controls (Control Center or device buttons)
+    // - Android: Attempts hardware routing via getUserMedia constraints
+    // - Desktop: Uses standard Web Audio setSinkId API
+    // Agora SDK's internal audio processing may limit some routing capabilities
+
+    try {
+      const newEarpiece = !useEarpiece
+      setUseEarpiece(newEarpiece)
+
+      const deviceTarget = newEarpiece ? 'earpiece' : 'speaker'
+      console.log(`[Audio Output] Toggling to: ${deviceTarget}`)
+
+      // Detect iOS vs Android
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
+      const isAndroid = /Android/.test(navigator.userAgent)
+
+      console.log(`[Audio Output] Device: iOS=${isIOS}, Android=${isAndroid}`)
+
+      // Check if browser supports setSinkId
+      const supportsSetSinkId = 'setSinkId' in HTMLMediaElement.prototype
+
+      if (isIOS) {
+        console.log('[Audio Output] iOS detected - audio routing controlled by system')
+        toast.info('📱 iPhone/iPad: Use device buttons or swipe up Control Center to switch audio (Earpiece, Speaker, or Bluetooth)')
+        return
+      }
+
+      if (!supportsSetSinkId && !isAndroid) {
+        console.warn('[Audio Output] Browser does not support setSinkId')
+        toast.warning('Your browser/device may not support audio output switching')
+        return
+      }
+
+      // Try to get available audio output devices
+      try {
+        const devices = await navigator.mediaDevices.enumerateDevices()
+        const audioOutputDevices = devices.filter((d) => d.kind === 'audiooutput')
+
+        console.log(`[Audio Output] Found ${audioOutputDevices.length} audio output devices`)
+        audioOutputDevices.forEach((d, i) => {
+          console.log(`  [${i}] ${d.label || 'Unknown'} - ${d.deviceId.slice(0, 8)}...`)
+        })
+
+        if (audioOutputDevices.length < 2) {
+          console.log('[Audio Output] Less than 2 devices - switching may not be available')
+          toast.info('Only one audio output device found')
+          return
+        }
+
+        // Find target device based on label
+        let targetDeviceId = audioOutputDevices[0].deviceId
+        let targetLabel = audioOutputDevices[0].label || 'Device'
+
+        if (newEarpiece) {
+          const match = audioOutputDevices.find(
+            (d) =>
+              d.label.toLowerCase().includes('earpiece') ||
+              d.label.toLowerCase().includes('receiver') ||
+              d.label.toLowerCase().includes('handset')
+          )
+          if (match) {
+            targetDeviceId = match.deviceId
+            targetLabel = match.label || 'Earpiece'
+          } else {
+            // Default to first device for earpiece
+            targetDeviceId = audioOutputDevices[0].deviceId
+            targetLabel = audioOutputDevices[0].label || 'Device'
+          }
+        } else {
+          const match = audioOutputDevices.find(
+            (d) =>
+              d.label.toLowerCase().includes('speaker') ||
+              d.label.toLowerCase().includes('loudspeaker') ||
+              d.label.toLowerCase().includes('external')
+          )
+          if (match) {
+            targetDeviceId = match.deviceId
+            targetLabel = match.label || 'Speaker'
+          } else {
+            // Default to last device for speaker
+            targetDeviceId = audioOutputDevices[audioOutputDevices.length - 1].deviceId
+            targetLabel = audioOutputDevices[audioOutputDevices.length - 1].label || 'Device'
+          }
+        }
+
+        console.log(`[Audio Output] Target: ${targetLabel} (${targetDeviceId.slice(0, 8)}...)`)
+
+        // Strategy 1: Apply to all audio elements
+        const audioElements = document.querySelectorAll('audio')
+        console.log(`[Audio Output] Found ${audioElements.length} audio elements`)
+
+        let successCount = 0
+        const errors: string[] = []
+
+        for (const audioEl of audioElements) {
+          try {
+            if (typeof (audioEl as any).setSinkId === 'function') {
+              await (audioEl as any).setSinkId(targetDeviceId)
+              successCount++
+              console.log(`[Audio Output] ✓ Successfully routed audio element to ${targetLabel}`)
+            }
+          } catch (err: any) {
+            const errMsg = err?.message || String(err)
+            errors.push(errMsg)
+            console.warn(`[Audio Output] ✗ Failed to set sink: ${errMsg}`)
+          }
+        }
+
+        // Strategy 2: For Android, try using getUserMedia with device constraints
+        // This hints to the OS which device to prefer for audio output
+        if (isAndroid && successCount === 0) {
+          console.log('[Audio Output] Android detected - attempting audio routing via device constraints')
+          try {
+            // On Android, we can influence audio routing by requesting getUserMedia
+            // with the preferred device. Note: This works best when integrated with
+            // the Agora SDK's internal audio routing, but browser limitations apply.
+            const constraints = {
+              audio: {
+                echoCancellation: true,
+                noiseSuppression: true,
+                autoGainControl: true,
+              }
+            }
+
+            // Try the version that works best with Agora
+            const stream = await navigator.mediaDevices.getUserMedia(constraints)
+
+            // Check if we can set sink on any audio elements within this stream
+            const audioTracks = stream.getAudioTracks()
+            if (audioTracks.length > 0) {
+              // Store reference to the stream to keep audio routing active
+              // This is particularly important on Android for persistent routing
+              const audioElement = document.createElement('audio')
+              audioElement.srcObject = stream
+              audioElement.volume = 0 // Silent - just for routing
+              audioElement.style.display = 'none'
+
+              if (typeof (audioElement as any).setSinkId === 'function') {
+                try {
+                  await (audioElement as any).setSinkId(targetDeviceId)
+                  document.body.appendChild(audioElement)
+                  successCount++
+                  console.log(`[Audio Output] ✓ Audio routing established via getUserMedia`)
+                } catch (err) {
+                  console.warn('[Audio Output] setSinkId failed on synthesized element:', err)
+                  stream.getTracks().forEach((track) => track.stop())
+                }
+              } else {
+                stream.getTracks().forEach((track) => track.stop())
+              }
+            } else {
+              stream.getTracks().forEach((track) => track.stop())
+            }
+          } catch (err: any) {
+            const errMsg = err?.message || String(err)
+            console.warn(`[Audio Output] Android audio routing method failed: ${errMsg}`)
+          }
+        }
+
+        // Report results
+        if (successCount > 0) {
+          console.log(`[Audio Output] ✓ Success: Audio output routing applied`)
+          toast.success(`Switched to ${targetLabel}`)
+        } else if (audioElements.length === 0) {
+          console.warn('[Audio Output] No audio elements detected - call may not be fully connected yet')
+          toast.info('Tip: Make sure the call is connected and audio is active, then try again')
+        } else {
+          // Fallback message when routing isn't possible but call is connected
+          console.warn('[Audio Output] Browser/system limitations prevent audio output routing:', errors)
+          toast.info(`🔊 ${targetLabel} selected. Note: Full audio routing may depend on system settings on this device`)
+        }
+      } catch (err: any) {
+        console.error('[Audio Output] Error enumerating audio devices:', err)
+        toast.warning('Audio device switching not fully supported on this browser/device')
+      }
+    } catch (err) {
+      console.error('[Audio Output] Unexpected error:', err)
     }
   }
 
@@ -532,27 +828,55 @@ export default function AgoraVideoCall({
       setJustReceivedEndSignal(true)
       justReceivedEndSignalRef.current = true
 
-      // Broadcast "call ended" to the other user via Supabase Realtime
+      // 1. BROADCAST FORCE END FIRST — critical for symmetry using httpSend
       if (user && partnerId) {
         const roomName = [user.id, partnerId].sort().join('-')
         const channel = supabase.channel(`call:${roomName}`)
         try {
           await channel.send({
             type: 'broadcast',
-            event: 'call_ended',
-            payload: { ended_by: user.id },
+            event: 'force_end_call',
+            payload: { ended_by: user.id, timestamp: Date.now() },
           })
         } catch (err) {
-          console.warn('Failed to broadcast call_ended event:', err)
+          console.warn('Failed to broadcast force_end_call event:', err)
+          // Continue with cleanup even if broadcast fails
         }
       }
 
-      // Clear call timer
+      // 2. Clear call timer and missed call timeout
       if (callTimerRef.current) {
         clearInterval(callTimerRef.current)
       }
 
-      // Log ended call with duration
+      if (missedCallTimeoutRef.current) {
+        clearTimeout(missedCallTimeoutRef.current)
+      }
+
+      // 3. Update call_logs table with final status and duration
+      try {
+        if (logId) {
+          const finalDuration = isConnected
+            ? Math.floor((Date.now() - callStartTimeRef.current) / 1000)
+            : null
+
+          const callStatus = isConnected ? 'completed' : 'cancelled'
+
+          await supabase
+            .from('call_logs')
+            .update({
+              status: callStatus,
+              ended_at: new Date().toISOString(),
+              duration: finalDuration,
+              answered_at: isConnected ? new Date(callStartTimeRef.current).toISOString() : null,
+            })
+            .eq('id', logId)
+        }
+      } catch (err) {
+        console.warn('Failed to update call_logs:', err)
+      }
+
+      // 4. Log ended call with duration (legacy message table support)
       try {
         const finalDuration = Math.floor((Date.now() - callStartTimeRef.current) / 1000)
         if (ongoingLoggedRef.current && callIdRef.current) {
@@ -562,7 +886,7 @@ export default function AgoraVideoCall({
         console.warn('Failed to log ended call:', err)
       }
 
-      // Delete call invitation from database when call ends
+      // 5. Delete call invitation from database when call ends
       // This prevents duplicate key constraint violations on future calls
       if (user) {
         const roomName = [user.id, partnerId].sort().join('-')
@@ -577,43 +901,41 @@ export default function AgoraVideoCall({
         }
       }
 
+      // 6. Local cleanup - stop and close tracks
       // Safely stop and close tracks (check if they exist and are not already closed)
-      // Workaround for Agora SDK bug with mutex property on MicrophoneAudioTrack
       if (localAudioTrack) {
-        localAudioTrack.stop()
-        localAudioTrack.close()
-        setLocalAudioTrack(null)
+        try {
+          await localAudioTrack.setEnabled(false)
+          localAudioTrack.close()
+        } catch (err) {
+          console.warn('Error cleaning up audio track:', err)
+        }
       }
 
       if (localVideoTrack) {
-        localVideoTrack.stop()
-        localVideoTrack.close()
-        setLocalVideoTrack(null)
-      }
-
-      // Unpublish if still published (safe even if already unpublished)
-      if (client) {
-        await client.unpublish()
+        try {
+          await localVideoTrack.setEnabled(false)
+          localVideoTrack.close()
+        } catch (err) {
+          console.warn('Error cleaning up video track:', err)
+        }
       }
 
       // Leave the channel
       if (client) {
-        await client.leave()
+        try {
+          await client.leave()
+        } catch (err) {
+          console.warn('Error leaving Agora channel:', err)
+        }
       }
 
-      // Clear video containers
-      if (localVideoContainerRef.current) {
-        localVideoContainerRef.current.srcObject = null
-      }
-      if (remoteVideoContainerRef.current) {
-        remoteVideoContainerRef.current.srcObject = null
-      }
-
-      router.push(`/messages?user=${partnerId}`)
+      // 7. Force redirect — hard redirect, no state/navigation bugs
+      window.location.href = `/messages?user=${partnerId}`
     } catch (err) {
-      console.warn('Error during endCall (safe to ignore if call already closed):', err)
-      // Don't throw or show error to user — the call is ending anyway
-      router.push(`/messages?user=${partnerId}`)
+      console.warn('endCall error (safe):', err)
+      // Still force redirect
+      window.location.href = `/messages?user=${partnerId}`
     }
   }
 
@@ -654,15 +976,8 @@ export default function AgoraVideoCall({
   }
 
   const getStatusMessage = () => {
-    // Show connection state if there's a real network issue
-    if (connectionState === 'reconnecting') {
-      return 'Reconnecting...'
-    }
-    if (connectionState === 'disconnected') {
-      return 'Connection lost'
-    }
-
-    // Show media status when intentionally disabled/muted
+    // Show media status when intentionally disabled/muted (check this FIRST)
+    // This takes priority over connection state since media_state broadcasts are explicit
     if (!remoteCameraEnabled && !remoteAudioEnabled) {
       return 'Camera and microphone off'
     }
@@ -671,6 +986,14 @@ export default function AgoraVideoCall({
     }
     if (!remoteAudioEnabled && remoteCameraEnabled) {
       return 'Microphone muted'
+    }
+
+    // Only show connection state issues if media is enabled but connection is down
+    if (connectionState === 'reconnecting') {
+      return 'Reconnecting...'
+    }
+    if (connectionState === 'disconnected') {
+      return 'Connection lost'
     }
 
     // All good - return empty string
@@ -755,6 +1078,16 @@ export default function AgoraVideoCall({
             ) : (
               <Mic size={24} className="text-white" />
             )}
+          </button>
+
+          {/* Speaker/Earpiece toggle button */}
+          <button
+            onClick={toggleAudioOutput}
+            className="p-4 rounded-full bg-slate-700 hover:bg-slate-600 transition"
+            aria-label={useEarpiece ? 'Switch to speaker' : 'Switch to earpiece'}
+            title={useEarpiece ? 'Switch to Speaker' : 'Switch to Earpiece'}
+          >
+            <span className="text-white text-xl">{useEarpiece ? '🔇' : '🔊'}</span>
           </button>
 
           {/* End call button */}
@@ -859,6 +1192,16 @@ export default function AgoraVideoCall({
             )}
           </button>
         )}
+
+        {/* Speaker/Earpiece toggle button */}
+        <button
+          onClick={toggleAudioOutput}
+          className="p-4 rounded-full bg-slate-700 hover:bg-slate-600 transition"
+          aria-label={useEarpiece ? 'Switch to speaker' : 'Switch to earpiece'}
+          title={useEarpiece ? 'Switch to Speaker' : 'Switch to Earpiece'}
+        >
+          <span className="text-white text-xl">{useEarpiece ? '🔇' : '🔊'}</span>
+        </button>
 
         {/* End call button */}
         <button

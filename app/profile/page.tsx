@@ -19,7 +19,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { AccountMenu } from '@/components/account-menu'
-import { Loader, LogOut, Trash2, Download, Camera, X, Plus, AlertCircle } from 'lucide-react'
+import { Loader, LogOut, Trash2, Download, Camera, X, Plus, AlertCircle, ChevronLeft } from 'lucide-react'
 import { toast } from 'sonner'
 import { ProfilePhotosTab } from '@/components/profile/photos-tab'
 import { ProfilePromptsTab } from '@/components/profile/prompts-tab'
@@ -49,10 +49,10 @@ export default function ProfilePage() {
       <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-rose-50 to-pink-50">
         <div className="text-center max-w-md">
           <Camera className="w-16 h-16 text-rose-300 mx-auto mb-6" />
-          <h1 className="text-3xl font-playfair font-bold text-slate-900 mb-4">
+          <h1 className="text-3xl font-playfair font-bold text-foreground mb-4">
             Profile Not Found
           </h1>
-          <p className="text-slate-600 mb-8">
+          <p className="text-muted-foreground mb-8">
             {!user ? 'Please log in to view your profile' : 'Complete your profile to get started'}
           </p>
           <div className="flex flex-col gap-3">
@@ -132,7 +132,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-background text-foreground">
       <Navigation />
 
       {/* Hero Image Section */}

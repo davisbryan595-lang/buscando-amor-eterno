@@ -2,22 +2,24 @@
 @import 'tw-animate-css';
 @import '../styles/livekit-custom.css';
 
-@custom-variant dark (&:is(.dark *));
-
 :root {
   /* Updated color scheme for Buscando Amor Eterno dating website - deep red, rose gold, white, soft pink */
   --background: #FFFFFF;
   --foreground: #1a1a1a;
   --card: #FFFFFF;
   --card-foreground: #1a1a1a;
+  --card-subtle: #FFF5F7;
+  --card-hover: #FFF0F6;
   --popover: #FFFFFF;
   --popover-foreground: #1a1a1a;
+  --surface: #FFF0F6;
+  --surface-subtle: #FFF5F7;
   --primary: #BE123C;
   --primary-foreground: #FFFFFF;
   --secondary: #F4C2C2;
   --secondary-foreground: #1a1a1a;
   --muted: #FFF0F6;
-  --muted-foreground: #666666;
+  --muted-foreground: #000000;
   --accent: #F4C2C2;
   --accent-foreground: #BE123C;
   --destructive: #BE123C;
@@ -46,8 +48,12 @@
   --foreground: #FFFFFF;
   --card: #1a1a1a;
   --card-foreground: #FFFFFF;
+  --card-subtle: #2a2a2a;
+  --card-hover: #262626;
   --popover: #1a1a1a;
   --popover-foreground: #FFFFFF;
+  --surface: #1a1a1a;
+  --surface-subtle: #2a2a2a;
   --primary: #FF69B4;
   --primary-foreground: #0a0a0a;
   --secondary: #8B4A5C;
@@ -84,6 +90,10 @@
   --color-foreground: var(--foreground);
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
+  --color-card-subtle: var(--card-subtle);
+  --color-card-hover: var(--card-hover);
+  --color-surface: var(--surface);
+  --color-surface-subtle: var(--surface-subtle);
   --color-popover: var(--popover);
   --color-popover-foreground: var(--popover-foreground);
   --color-primary: var(--primary);
@@ -125,10 +135,10 @@
   body {
     @apply bg-background text-foreground;
   }
-  
+
   /* Removed invalid @import and manual font classes. Using Next.js font loader instead. */
-  
-  
+
+
   /* Added soft glow effect */
   .soft-glow {
     box-shadow: 0 0 30px rgba(190, 18, 60, 0.1);
@@ -139,7 +149,149 @@
   }
 }
 
+/* THEME-SPECIFIC TEXT COLOR RULES - Applied only to body to avoid overriding component-specific colors */
+
+/* Light theme: body inherits dark text color from CSS variables */
+[data-theme="light"] body {
+  color: var(--foreground);
+}
+
+/* Dark theme: body inherits light text color from CSS variables */
+[data-theme="dark"] body {
+  color: var(--foreground);
+}
+
 @layer components {
+  /* Hero Section Theme-Consistent Gradients */
+  .hero-title-gradient {
+    background: linear-gradient(to right,
+      #BE123C 0%,
+      #E11B6A 25%,
+      #FF69B4 50%,
+      #E11B6A 75%,
+      #BE123C 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .dark .hero-title-gradient {
+    background: linear-gradient(to right,
+      #FF69B4 0%,
+      #FF85C0 25%,
+      #FFB6D9 50%,
+      #FF85C0 75%,
+      #FF69B4 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hero-subtitle-gradient {
+    background: linear-gradient(135deg,
+      #BE123C 0%,
+      #E84C89 50%,
+      #F4A4C0 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .dark .hero-subtitle-gradient {
+    background: linear-gradient(135deg,
+      #FF85C0 0%,
+      #FFB6D9 50%,
+      #FF69B4 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Navbar Gradient Background - same colors as hero title (90% opacity) */
+  .nav-gradient {
+    background: linear-gradient(to right,
+      rgba(190, 18, 60, 0.9) 0%,
+      rgba(225, 27, 106, 0.9) 25%,
+      rgba(255, 105, 180, 0.9) 50%,
+      rgba(225, 27, 106, 0.9) 75%,
+      rgba(190, 18, 60, 0.9) 100%) !important;
+  }
+
+  .dark .nav-gradient {
+    background: linear-gradient(to right,
+      rgba(255, 105, 180, 0.9) 0%,
+      rgba(255, 133, 192, 0.9) 25%,
+      rgba(255, 182, 217, 0.9) 50%,
+      rgba(255, 133, 192, 0.9) 75%,
+      rgba(255, 105, 180, 0.9) 100%) !important;
+  }
+
+  /* Gradient with 50% opacity for messages and lounge pages */
+  .gradient-50 {
+    background: linear-gradient(to right,
+      rgba(190, 18, 60, 0.5) 0%,
+      rgba(225, 27, 106, 0.5) 25%,
+      rgba(255, 105, 180, 0.5) 50%,
+      rgba(225, 27, 106, 0.5) 75%,
+      rgba(190, 18, 60, 0.5) 100%) !important;
+  }
+
+  .dark .gradient-50 {
+    background: linear-gradient(to right,
+      rgba(255, 105, 180, 0.5) 0%,
+      rgba(255, 133, 192, 0.5) 25%,
+      rgba(255, 182, 217, 0.5) 50%,
+      rgba(255, 133, 192, 0.5) 75%,
+      rgba(255, 105, 180, 0.5) 100%) !important;
+  }
+
+  /* Gradient with 40% opacity for chat window */
+  .gradient-40 {
+    background: linear-gradient(to right,
+      rgba(190, 18, 60, 0.4) 0%,
+      rgba(225, 27, 106, 0.4) 25%,
+      rgba(255, 105, 180, 0.4) 50%,
+      rgba(225, 27, 106, 0.4) 75%,
+      rgba(190, 18, 60, 0.4) 100%) !important;
+  }
+
+  .dark .gradient-40 {
+    background: linear-gradient(to right,
+      rgba(255, 105, 180, 0.4) 0%,
+      rgba(255, 133, 192, 0.4) 25%,
+      rgba(255, 182, 217, 0.4) 50%,
+      rgba(255, 133, 192, 0.4) 75%,
+      rgba(255, 105, 180, 0.4) 100%) !important;
+  }
+
+  /* Card Gradient Background - same colors as hero title */
+  .card-gradient {
+    background: linear-gradient(to right,
+      rgba(190, 18, 60, 0.9) 0%,
+      rgba(225, 27, 106, 0.9) 25%,
+      rgba(255, 105, 180, 0.9) 50%,
+      rgba(225, 27, 106, 0.9) 75%,
+      rgba(190, 18, 60, 0.9) 100%) !important;
+  }
+
+  .dark .card-gradient {
+    background: linear-gradient(to right,
+      rgba(255, 105, 180, 0.9) 0%,
+      rgba(255, 133, 192, 0.9) 25%,
+      rgba(255, 182, 217, 0.9) 50%,
+      rgba(255, 133, 192, 0.9) 75%,
+      rgba(255, 105, 180, 0.9) 100%) !important;
+  }
+
+  /* Display customization classes */
+  html.compact-mode {
+    --spacing-multiplier: 0.75;
+  }
+
+  html.larger-text {
+    font-size: 18px;
+  }
+
   /* Toast Notification Responsiveness */
   .toaster {
     position: fixed;

@@ -44,64 +44,64 @@ export function StepPersonality({
   const [values, setValues] = useState(initialData?.values || [])
 
   const personalityOptions = [
-    { value: 'introvert', label: 'Introvert - I recharge alone' },
-    { value: 'ambivert', label: 'Ambivert - Balanced social' },
-    { value: 'extrovert', label: 'Extrovert - I love socializing' },
+    { value: 'introvert', label: t('onboarding.step0.introvert') },
+    { value: 'ambivert', label: t('onboarding.step0.ambivert') },
+    { value: 'extrovert', label: t('onboarding.step0.extrovert') },
   ]
 
   const relationshipGoals = [
-    { value: 'casual', label: 'Casual Dating' },
-    { value: 'serious', label: 'Serious Relationship' },
-    { value: 'marriage', label: 'Looking to Marry' },
-    { value: 'friendship', label: 'Friendship First' },
+    { value: 'casual', label: t('onboarding.step0.casualDating') },
+    { value: 'serious', label: t('onboarding.step0.seriousRelationship') },
+    { value: 'marriage', label: t('onboarding.step0.lookingToMarry') },
+    { value: 'friendship', label: t('onboarding.step0.friendshipFirst') },
   ]
 
   const interestOptions = [
-    'Travel',
-    'Sports',
-    'Music',
-    'Art & Culture',
-    'Cooking',
-    'Fitness',
-    'Reading',
-    'Movies',
-    'Technology',
-    'Nature',
-    'Photography',
-    'Gaming',
-    'Yoga',
-    'Volunteering',
-    'Fashion',
+    { key: 'travel', label: t('onboarding.step0.travel') },
+    { key: 'sports', label: t('onboarding.step0.sports') },
+    { key: 'music', label: t('onboarding.step0.music') },
+    { key: 'artCulture', label: t('onboarding.step0.artCulture') },
+    { key: 'cooking', label: t('onboarding.step0.cooking') },
+    { key: 'fitness', label: t('onboarding.step0.fitness') },
+    { key: 'reading', label: t('onboarding.step0.reading') },
+    { key: 'movies', label: t('onboarding.step0.movies') },
+    { key: 'technology', label: t('onboarding.step0.technology') },
+    { key: 'nature', label: t('onboarding.step0.nature') },
+    { key: 'photography', label: t('onboarding.step0.photography') },
+    { key: 'gaming', label: t('onboarding.step0.gaming') },
+    { key: 'yoga', label: t('onboarding.step0.yoga') },
+    { key: 'volunteering', label: t('onboarding.step0.volunteering') },
+    { key: 'fashion', label: t('onboarding.step0.fashion') },
   ]
 
   const valueOptions = [
-    'Family-oriented',
-    'Ambition & Success',
-    'Honesty & Integrity',
-    'Kindness & Empathy',
-    'Independence',
-    'Adventure',
-    'Stability',
-    'Creativity',
-    'Health & Wellness',
-    'Spirituality',
-    'Intelligence',
-    'Humor',
+    { key: 'familyOriented', label: t('onboarding.step0.familyOriented') },
+    { key: 'ambitionSuccess', label: t('onboarding.step0.ambitionSuccess') },
+    { key: 'honestyIntegrity', label: t('onboarding.step0.honestyIntegrity') },
+    { key: 'kindnessEmpathy', label: t('onboarding.step0.kindnessEmpathy') },
+    { key: 'independence', label: t('onboarding.step0.independence') },
+    { key: 'adventure', label: t('onboarding.step0.adventure') },
+    { key: 'stability', label: t('onboarding.step0.stability') },
+    { key: 'creativity', label: t('onboarding.step0.creativity') },
+    { key: 'healthWellness', label: t('onboarding.step0.healthWellness') },
+    { key: 'spirituality', label: t('onboarding.step0.spirituality') },
+    { key: 'intelligence', label: t('onboarding.step0.intelligence') },
+    { key: 'humor', label: t('onboarding.step0.humor') },
   ]
 
-  const handleInterestToggle = (interest: string) => {
+  const handleInterestToggle = (interestKey: string) => {
     setInterests((prev) =>
-      prev.includes(interest)
-        ? prev.filter((i) => i !== interest)
-        : [...prev, interest]
+      prev.includes(interestKey)
+        ? prev.filter((i) => i !== interestKey)
+        : [...prev, interestKey]
     )
   }
 
-  const handleValueToggle = (value: string) => {
+  const handleValueToggle = (valueKey: string) => {
     setValues((prev) =>
-      prev.includes(value)
-        ? prev.filter((v) => v !== value)
-        : [...prev, value]
+      prev.includes(valueKey)
+        ? prev.filter((v) => v !== valueKey)
+        : [...prev, valueKey]
     )
   }
 
@@ -114,10 +114,10 @@ export function StepPersonality({
     <div className="space-y-8">
       <div className="text-center space-y-2">
         <h1 className="text-4xl font-playfair font-bold text-foreground">
-          Let's Get to Know You
+          {t('onboarding.step0.title')}
         </h1>
         <p className="text-lg text-muted-foreground">
-          Help us find your perfect match
+          {t('onboarding.step0.subtitle')}
         </p>
       </div>
 
@@ -126,12 +126,12 @@ export function StepPersonality({
         <div className="space-y-4">
           <Label className="flex items-center gap-2 text-lg font-semibold">
             <Sparkles size={20} className="text-primary" />
-            What's Your Personality Style?
+            {t('onboarding.step0.personality')}
           </Label>
           <div className="space-y-2">
             <Select value={personality} onValueChange={setPersonality}>
               <SelectTrigger className="px-4 py-3 rounded-full border-secondary h-12">
-                <SelectValue placeholder="Select your personality" />
+                <SelectValue placeholder={t('onboarding.step0.personality')} />
               </SelectTrigger>
               <SelectContent>
                 {personalityOptions.map((option) => (
@@ -148,12 +148,12 @@ export function StepPersonality({
         <div className="space-y-4">
           <Label className="flex items-center gap-2 text-lg font-semibold">
             <Target size={20} className="text-primary" />
-            What Are You Looking For?
+            {t('onboarding.step0.relationshipGoal')}
           </Label>
           <div className="space-y-2">
             <Select value={relationshipGoal} onValueChange={setRelationshipGoal}>
               <SelectTrigger className="px-4 py-3 rounded-full border-secondary h-12">
-                <SelectValue placeholder="Select your goal" />
+                <SelectValue placeholder={t('onboarding.step0.relationshipGoal')} />
               </SelectTrigger>
               <SelectContent>
                 {relationshipGoals.map((goal) => (
@@ -170,29 +170,29 @@ export function StepPersonality({
         <div className="space-y-4">
           <Label className="flex items-center gap-2 text-lg font-semibold">
             <Heart size={20} className="text-primary" />
-            Your Interests (Select at least 3)
+            {t('onboarding.step0.interests')} (Select at least 3)
           </Label>
           <div className="grid grid-cols-2 gap-3">
             {interestOptions.map((interest) => (
-              <div key={interest} className="flex items-center space-x-2">
+              <div key={interest.key} className="flex items-center space-x-2">
                 <Checkbox
-                  id={interest}
-                  checked={interests.includes(interest)}
-                  onCheckedChange={() => handleInterestToggle(interest)}
+                  id={interest.key}
+                  checked={interests.includes(interest.key)}
+                  onCheckedChange={() => handleInterestToggle(interest.key)}
                   className="rounded"
                 />
                 <Label
-                  htmlFor={interest}
+                  htmlFor={interest.key}
                   className="text-sm font-normal cursor-pointer text-foreground"
                 >
-                  {interest}
+                  {interest.label}
                 </Label>
               </div>
             ))}
           </div>
           {interests.length < 3 && (
             <p className="text-sm text-amber-600">
-              Please select at least 3 interests
+              {t('onboarding.step0.selectAtLeast3Interests')}
             </p>
           )}
         </div>
@@ -201,29 +201,29 @@ export function StepPersonality({
         <div className="space-y-4">
           <Label className="flex items-center gap-2 text-lg font-semibold">
             <Lightbulb size={20} className="text-primary" />
-            Your Core Values (Select at least 2)
+            {t('onboarding.step0.values')} (Select at least 2)
           </Label>
           <div className="grid grid-cols-2 gap-3">
             {valueOptions.map((value) => (
-              <div key={value} className="flex items-center space-x-2">
+              <div key={value.key} className="flex items-center space-x-2">
                 <Checkbox
-                  id={value}
-                  checked={values.includes(value)}
-                  onCheckedChange={() => handleValueToggle(value)}
+                  id={value.key}
+                  checked={values.includes(value.key)}
+                  onCheckedChange={() => handleValueToggle(value.key)}
                   className="rounded"
                 />
                 <Label
-                  htmlFor={value}
+                  htmlFor={value.key}
                   className="text-sm font-normal cursor-pointer text-foreground"
                 >
-                  {value}
+                  {value.label}
                 </Label>
               </div>
             ))}
           </div>
           {values.length < 2 && (
             <p className="text-sm text-amber-600">
-              Please select at least 2 values
+              {t('onboarding.step0.selectAtLeast2Values')}
             </p>
           )}
         </div>
@@ -235,14 +235,14 @@ export function StepPersonality({
           variant="outline"
           className="flex-1 py-3 rounded-full border-secondary text-foreground hover:bg-muted"
         >
-          Skip for Now
+          {t('onboarding.skipForNow')}
         </Button>
         <Button
           onClick={handleNext}
           disabled={interests.length < 3 || values.length < 2}
           className="flex-1 py-3 rounded-full bg-primary text-white hover:bg-rose-700 font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Continue
+          {t('onboarding.nextStep')}
         </Button>
       </div>
     </div>

@@ -44,13 +44,13 @@ function LoungeChatContent() {
 
   if (!user) {
     return (
-      <div className="h-screen flex flex-col items-center justify-center bg-gradient-to-br from-rose-50 to-pink-50">
+      <div className="h-screen flex flex-col items-center justify-center bg-gradient-to-br from-rose-50 dark:from-rose-950/30 to-pink-50 dark:to-pink-950/30">
         <div className="text-center max-w-md">
           <Users className="w-16 h-16 text-rose-300 mx-auto mb-6" />
-          <h1 className="text-3xl font-playfair font-bold text-slate-900 mb-4">
+          <h1 className="text-3xl font-playfair font-bold text-foreground mb-4">
             Join the Lounge
           </h1>
-          <p className="text-slate-600 mb-8">
+          <p className="text-muted-foreground mb-8">
             Please log in to chat with singles in the lounge
           </p>
           <div className="flex flex-col gap-3">
@@ -62,7 +62,7 @@ function LoungeChatContent() {
             </button>
             <button
               onClick={() => router.push('/')}
-              className="w-full px-8 py-3 bg-white text-primary border-2 border-primary rounded-full font-semibold hover:bg-rose-50 transition-colors flex items-center justify-center gap-2"
+              className="w-full px-8 py-3 bg-card text-primary border-2 border-primary rounded-full font-semibold hover:bg-card-hover transition-colors flex items-center justify-center gap-2"
             >
               <ArrowLeft size={18} />
               Back to Home
@@ -74,7 +74,7 @@ function LoungeChatContent() {
   }
 
   return (
-    <div className="h-screen flex flex-col bg-white relative overflow-hidden">
+    <div className="h-screen flex flex-col bg-background relative overflow-hidden">
       {/* Animated background elements - subtle romantic theme */}
       <div className="fixed inset-0 pointer-events-none">
         {/* Subtle floating gradient orbs - very minimal */}
@@ -133,7 +133,7 @@ function LoungeChatContent() {
       </div>
 
       {/* Header */}
-      <div className="bg-white border-b border-rose-100/40 px-6 py-4 relative z-20">
+      <div className="bg-card border-b border-border px-6 py-4 relative z-20">
         <div className="max-w-6xl mx-auto">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-4">
@@ -145,14 +145,14 @@ function LoungeChatContent() {
                 <ArrowLeft size={24} />
               </button>
               <div>
-                <h1 className="text-2xl font-playfair font-bold text-slate-900">💕 Singles Lounge</h1>
-                <p className="text-slate-600 text-sm">Real-time chat with singles worldwide</p>
+                <h1 className="text-2xl font-playfair font-bold text-foreground">💕 Singles Lounge</h1>
+                <p className="text-muted-foreground text-sm">Real-time chat with singles worldwide</p>
               </div>
             </div>
-            <div className="flex items-center gap-2 bg-rose-50 rounded-full px-4 py-2">
+            <div className="flex items-center gap-2 bg-card-subtle dark:bg-rose-900/30 rounded-full px-4 py-2">
               <Users size={16} className="text-primary" />
-              <span className="text-slate-900 font-semibold">{onlineUsers.length}</span>
-              <span className="text-slate-600 text-sm">online</span>
+              <span className="text-foreground font-semibold">{onlineUsers.length}</span>
+              <span className="text-muted-foreground text-sm">online</span>
             </div>
           </div>
 
@@ -193,13 +193,13 @@ function LoungeChatContent() {
       <div className="flex-1 overflow-y-auto px-6 py-4 max-w-6xl mx-auto w-full relative z-10">
         {loading ? (
           <div className="flex items-center justify-center h-full">
-            <div className="text-slate-500">Loading messages...</div>
+            <div className="text-muted-foreground">Loading messages...</div>
           </div>
         ) : messages.length === 0 ? (
           <div className="flex items-center justify-center h-full">
             <div className="text-center">
-              <p className="text-xl font-playfair font-bold text-slate-900 mb-2">Welcome to the Lounge!</p>
-              <p className="text-slate-600">Be the first to say hello to our community 💕</p>
+              <p className="text-xl font-playfair font-bold text-foreground mb-2">Welcome to the Lounge!</p>
+              <p className="text-muted-foreground">Be the first to say hello to our community 💕</p>
             </div>
           </div>
         ) : (
@@ -228,20 +228,20 @@ function LoungeChatContent() {
                 <div className={`flex-1 ${msg.message_type === 'system' ? '' : ''}`}>
                   {msg.message_type === 'system' ? (
                     <div className="flex justify-center">
-                      <p className="text-slate-500 text-sm italic">{msg.message}</p>
+                      <p className="text-muted-foreground text-sm italic">{msg.message}</p>
                     </div>
                   ) : (
                     <>
                       <div className="flex items-baseline gap-2">
-                        <p className="font-semibold text-slate-900">{msg.sender_name}</p>
-                        <p className="text-xs text-slate-500">
+                        <p className="font-semibold text-foreground">{msg.sender_name}</p>
+                        <p className="text-xs text-muted-foreground">
                           {new Date(msg.created_at).toLocaleTimeString([], {
                             hour: '2-digit',
                             minute: '2-digit',
                           })}
                         </p>
                       </div>
-                      <p className="text-slate-700 mt-1 break-words">{msg.message}</p>
+                      <p className="text-foreground mt-1 break-words">{msg.message}</p>
 
                       {/* Report button */}
                       {msg.user_id !== user?.id && (
@@ -251,7 +251,7 @@ function LoungeChatContent() {
                               ? setReportingMessageId(null)
                               : setReportingMessageId(msg.id)
                           }
-                          className="text-xs text-slate-500 hover:text-rose-600 mt-2 flex items-center gap-1 transition"
+                          className="text-xs text-muted-foreground hover:text-rose-600 mt-2 flex items-center gap-1 transition"
                         >
                           <Flag size={12} />
                           Report
@@ -265,7 +265,7 @@ function LoungeChatContent() {
                             value={reportReason}
                             onChange={(e) => setReportReason(e.target.value)}
                             placeholder="Why are you reporting this message?"
-                            className="w-full bg-white text-slate-900 text-sm rounded px-2 py-1 border border-rose-200 placeholder-slate-400 resize-none"
+                            className="w-full bg-white text-foreground text-sm rounded px-2 py-1 border border-rose-200 placeholder-muted-foreground resize-none"
                             rows={2}
                           />
                           <div className="flex gap-2">
@@ -280,7 +280,7 @@ function LoungeChatContent() {
                                 setReportingMessageId(null)
                                 setReportReason('')
                               }}
-                              className="text-xs bg-rose-100 hover:bg-rose-200 text-slate-900 px-3 py-1 rounded transition"
+                              className="text-xs bg-rose-100 hover:bg-rose-200 text-foreground px-3 py-1 rounded transition"
                             >
                               Cancel
                             </button>
@@ -298,7 +298,7 @@ function LoungeChatContent() {
       </div>
 
       {/* Message input */}
-      <div className="bg-white border-t border-rose-100/40 px-6 py-4 relative z-20">
+      <div className="bg-card border-t border-border px-6 py-4 relative z-20">
         <div className="max-w-6xl mx-auto">
           <form onSubmit={handleSendMessage} className="flex gap-3">
             <input
@@ -306,12 +306,12 @@ function LoungeChatContent() {
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               placeholder="Say something to the lounge..."
-              className="flex-1 bg-slate-50 border border-rose-200 rounded-full px-4 py-3 text-slate-900 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition"
+              className="flex-1 bg-card-subtle border border-border rounded-full px-4 py-3 text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition"
             />
             <button
               type="submit"
               disabled={!inputValue.trim()}
-              className="bg-gradient-to-r from-primary to-rose-600 hover:from-rose-600 hover:to-rose-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white px-6 py-3 rounded-full transition flex items-center gap-2 font-semibold"
+              className="bg-gradient-to-r from-primary to-rose-600 hover:from-rose-600 hover:to-rose-700 disabled:bg-muted disabled:cursor-not-allowed text-white px-6 py-3 rounded-full transition flex items-center gap-2 font-semibold"
             >
               <Send size={18} />
               <span className="hidden sm:inline">Send</span>

@@ -20,34 +20,34 @@ export default function ContactPage() {
   }
 
   return (
-    <main className="min-h-screen bg-white">
+    <main className="min-h-screen bg-background text-foreground">
       <Navigation />
       <div className="pt-20 md:pt-24 pb-16 md:pb-20 px-4">
         <div className="w-full max-w-2xl mx-auto">
           <div className="text-center mb-8 md:mb-12">
-            <h1 className="text-3xl sm:text-4xl md:text-5xl font-playfair font-bold text-slate-900 mb-3 md:mb-4">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-playfair font-bold text-foreground mb-3 md:mb-4">
               Get in Touch
             </h1>
-            <p className="text-slate-600 text-base md:text-lg">
+            <p className="text-muted-foreground text-base md:text-lg">
               Questions? We're here to help.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8 mb-8 md:mb-12">
-            <div className="bg-gradient-to-br from-white to-rose-50 border border-rose-100 rounded-xl p-4 md:p-6 soft-glow">
+            <div className="bg-gradient-to-br from-card-subtle to-card border border-border dark:border-rose-900/30 rounded-xl p-4 md:p-6 soft-glow">
               <Mail className="text-primary mb-4" size={28} />
-              <h3 className="text-base md:text-lg font-bold text-slate-900 mb-2">Email</h3>
-              <p className="text-sm md:text-base text-slate-600">
+              <h3 className="text-base md:text-lg font-bold text-foreground mb-2">Email</h3>
+              <p className="text-sm md:text-base text-muted-foreground">
                 <a href="mailto:support@buscandoamoreterno.com" className="hover:text-primary break-all">
                   support@buscandoamoreterno.com
                 </a>
               </p>
             </div>
 
-            <div className="bg-gradient-to-br from-white to-rose-50 border border-rose-100 rounded-xl p-4 md:p-6 soft-glow">
+            <div className="bg-gradient-to-br from-card-subtle to-card border border-border dark:border-rose-900/30 rounded-xl p-4 md:p-6 soft-glow">
               <MessageSquare className="text-primary mb-4" size={28} />
-              <h3 className="text-base md:text-lg font-bold text-slate-900 mb-2">Live Chat</h3>
-              <p className="text-sm md:text-base text-slate-600">
+              <h3 className="text-base md:text-lg font-bold text-foreground mb-2">Live Chat</h3>
+              <p className="text-sm md:text-base text-muted-foreground">
                 Chat with our team using the widget on any page
               </p>
             </div>
@@ -61,7 +61,7 @@ export default function ContactPage() {
               onChange={(e) =>
                 setFormData({ ...formData, name: e.target.value })
               }
-              className="w-full px-4 py-3 text-sm md:text-base border border-rose-200 rounded-full focus:outline-none focus:ring-2 focus:ring-primary"
+              className="w-full px-4 py-3 text-sm md:text-base border border-border bg-card text-foreground placeholder-muted-foreground rounded-full focus:outline-none focus:ring-2 focus:ring-primary"
               required
             />
 
@@ -72,7 +72,7 @@ export default function ContactPage() {
               onChange={(e) =>
                 setFormData({ ...formData, email: e.target.value })
               }
-              className="w-full px-4 py-3 text-sm md:text-base border border-rose-200 rounded-full focus:outline-none focus:ring-2 focus:ring-primary"
+              className="w-full px-4 py-3 text-sm md:text-base border border-border bg-card text-foreground placeholder-muted-foreground rounded-full focus:outline-none focus:ring-2 focus:ring-primary"
               required
             />
 
@@ -83,7 +83,7 @@ export default function ContactPage() {
               onChange={(e) =>
                 setFormData({ ...formData, subject: e.target.value })
               }
-              className="w-full px-4 py-3 text-sm md:text-base border border-rose-200 rounded-full focus:outline-none focus:ring-2 focus:ring-primary"
+              className="w-full px-4 py-3 text-sm md:text-base border border-border bg-card text-foreground placeholder-muted-foreground rounded-full focus:outline-none focus:ring-2 focus:ring-primary"
               required
             />
 
@@ -93,7 +93,7 @@ export default function ContactPage() {
               onChange={(e) =>
                 setFormData({ ...formData, message: e.target.value })
               }
-              className="w-full px-4 py-3 text-sm md:text-base border border-rose-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+              className="w-full px-4 py-3 text-sm md:text-base border border-border bg-card text-foreground placeholder-muted-foreground rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary resize-none"
               rows={6}
               required
             />

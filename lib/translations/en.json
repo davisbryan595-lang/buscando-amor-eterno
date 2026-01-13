@@ -5,6 +5,7 @@
     "pricing": "Pricing",
     "messages": "Messages",
     "lounge": "Lounge",
+    "ourStory": "Our Story",
     "logIn": "Log in",
     "joinForPrice": "Join for $12/month",
     "browseProfiles": "Browse Profiles"
@@ -154,6 +155,50 @@
       "required": "This field is required",
       "characterCount": "{{current}}/{{max}} characters"
     },
+    "step0": {
+      "title": "Let's Get to Know You",
+      "subtitle": "Help us find your perfect match",
+      "personality": "What's Your Personality Style?",
+      "introvert": "Introvert - I recharge alone",
+      "ambivert": "Ambivert - Balanced social",
+      "extrovert": "Extrovert - I love socializing",
+      "relationshipGoal": "What Are You Looking For?",
+      "casualDating": "Casual Dating",
+      "seriousRelationship": "Serious Relationship",
+      "lookingToMarry": "Looking to Marry",
+      "friendshipFirst": "Friendship First",
+      "interests": "Your Interests",
+      "values": "Your Core Values",
+      "travel": "Travel",
+      "sports": "Sports",
+      "music": "Music",
+      "artCulture": "Art & Culture",
+      "cooking": "Cooking",
+      "fitness": "Fitness",
+      "reading": "Reading",
+      "movies": "Movies",
+      "technology": "Technology",
+      "nature": "Nature",
+      "photography": "Photography",
+      "gaming": "Gaming",
+      "yoga": "Yoga",
+      "volunteering": "Volunteering",
+      "fashion": "Fashion",
+      "familyOriented": "Family-oriented",
+      "ambitionSuccess": "Ambition & Success",
+      "honestyIntegrity": "Honesty & Integrity",
+      "kindnessEmpathy": "Kindness & Empathy",
+      "independence": "Independence",
+      "adventure": "Adventure",
+      "stability": "Stability",
+      "creativity": "Creativity",
+      "healthWellness": "Health & Wellness",
+      "spirituality": "Spirituality",
+      "intelligence": "Intelligence",
+      "humor": "Humor",
+      "selectAtLeast3Interests": "Please select at least 3 interests",
+      "selectAtLeast2Values": "Please select at least 2 values"
+    },
     "step6": {
       "title": "Your preferences & dealbreakers",
       "subtitle": "Help us find your perfect match",
@@ -163,9 +208,11 @@
       "height": "Height (optional)",
       "cm": "cm",
       "religion": "Religion",
+      "selectReligion": "Select religion",
       "wantsKids": "Wants kids?",
       "smoking": "Smoking?",
       "drinking": "Drinking?",
+      "selectPreference": "Select preference",
       "markAsBreaker": "Mark as dealbreaker",
       "dealbreaker": "Dealbreaker",
       "catholic": "Catholic",
@@ -180,7 +227,12 @@
       "never": "Never",
       "occasionally": "Occasionally",
       "frequently": "Frequently",
-      "socially": "Socially"
+      "socially": "Socially",
+      "completeProfileTitle": "Complete Your Profile",
+      "completeProfileDesc": "This is the final step of your profile setup. You must complete these preferences to finish onboarding and start connecting with others. Please provide your preferences to continue.",
+      "goBack": "Go Back",
+      "completeNow": "Complete Now",
+      "markAsDealbreaker": "Mark as dealbreaker"
     },
     "completion": {
       "title": "Welcome to Buscando Amor Eterno! 🎉",
@@ -212,5 +264,38 @@
     "exporting": "Exporting...",
     "exportSuccess": "Data exported successfully",
     "exportFailed": "Failed to export data"
+  },
+  "ourStory": {
+    "heroTitle": "Our Story",
+    "heroSubtitle": "Our Story",
+    "heroDescription": "The journey of faith, love and service that brought Buscando Amor Eterno to life",
+    "intro": {
+      "heading": "From Child to Father: The Beginning",
+      "text": "When I was a child I always tried to figure out how I could help people, and follow God. In my 17 years of marriage I was able to follow faith with my son. However; my spouse chose to not participate in the Lord's following, and I guess I just didn't understand what a happy marriage, and being loved meant? Shortly after my wife asked for separation."
+    },
+    "darkValley": {
+      "heading": "The Hardest Trials",
+      "text": "So after being scammed by hackers, and people just wanting to scam you for money. I was down, and depressed... So I currently work with kids in a hospital who need guidance, and assistance with them growing up, and being beneficial to society rather than creating crimes. So in other words I enjoy helping people, and paying it forward. So after being depressed and doing my best to help my child persevere with his special needs. I quickly realized I needed to help others as well."
+    },
+    "turningPoint": {
+      "heading": "Birth of a Mission",
+      "text": "So I decided to go after my goal, and create a singles group on social media to local people trying to make new friends, and new relationships (amor eterno). Many people have thanked me for helping them find their eternal love. I asked God when I would find my eternal love. He told me I have a very special person for you... But, you need to keep helping people out till you meet your Raina eterno (my eternal queen).",
+      "quote": "I have a very special person for you... But, you need to keep helping people out till you meet your Raina eterno (my eternal queen)."
+    },
+    "findingLove": {
+      "heading": "My Eternal Queen",
+      "textPart1": "My current wife had a situation as well. Where she was looking for a husband, esposo, and a father to her kids. Just as I needed a wife/mother to my son My latina love showed me what love truly is. Having a family of boys and girls now. How blessed I am.",
+      "textPart2": "She understood that with my singles group my goal is to help people, and help troubled kids with my job. So with her beautiful ideas, and my ideas we were able to create Buscando Amor Eterno with the goal in mind that everyone deserves to have that special someone that is undying eternal love."
+    },
+    "mission": {
+      "heading": "Our Promise",
+      "text": "This website is designed for any person, race, culture around the world to find their special soulmate"
+    },
+    "closing": {
+      "quote": "Everyone deserves to have that special someone that is undying eternal love.",
+      "subtext1": "Join us in the search for eternal love.",
+      "subtext2": "Join us in the search for eternal love.",
+      "ctaButton": "Find My Soulmate"
+    }
   }
 }

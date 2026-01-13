@@ -106,16 +106,16 @@ export function NotificationsDropdown({
   }
 
   return (
-    <div className="absolute right-0 mt-2 w-96 max-w-[calc(100vw-16px)] bg-white border border-rose-100 rounded-2xl shadow-2xl z-50 overflow-hidden">
-      <div className="p-4 border-b border-rose-100 bg-gradient-to-r from-white to-rose-50">
-        <h3 className="font-semibold text-slate-900 flex items-center gap-2">
+    <div className="absolute right-0 mt-2 w-96 max-w-[calc(100vw-16px)] bg-card dark:bg-card border border-rose-100 dark:border-rose-900/40 rounded-2xl shadow-2xl z-50 overflow-hidden">
+      <div className="p-4 border-b border-rose-100 dark:border-rose-900/40 bg-gradient-to-r from-card to-card-subtle dark:from-card dark:to-card-subtle">
+        <h3 className="font-semibold text-foreground dark:text-white flex items-center gap-2">
           <Heart size={18} className="text-rose-500 fill-rose-500" />
           Activity ({notifications.length})
         </h3>
       </div>
 
       {notifications.length === 0 ? (
-        <div className="p-8 text-center text-slate-600">
+        <div className="p-8 text-center text-muted-foreground">
           <p className="text-sm">No new notifications</p>
         </div>
       ) : (
@@ -126,7 +126,7 @@ export function NotificationsDropdown({
             const userImage = notif.from_user_image || notif.liker_image
 
             return (
-              <div key={notif.id} className="p-4 hover:bg-rose-50 transition">
+              <div key={notif.id} className="p-4 hover:bg-card-subtle dark:hover:bg-card-subtle transition">
                 <div className="flex gap-3 items-start mb-3">
                   <div className="relative w-12 h-12 flex-shrink-0">
                     <Image
@@ -137,11 +137,11 @@ export function NotificationsDropdown({
                     />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="flex items-center gap-2 font-semibold text-slate-900">
+                    <p className="flex items-center gap-2 font-semibold text-foreground dark:text-white">
                       <span className="truncate">{userName || 'Someone'}</span>
                       {getNotificationIcon(notif.type)}
                     </p>
-                    <p className="text-sm text-slate-600 line-clamp-2">
+                    <p className="text-sm text-muted-foreground line-clamp-2">
                       {getNotificationText(notif)}
                     </p>
                   </div>
@@ -158,7 +158,7 @@ export function NotificationsDropdown({
                   <button
                     onClick={() => handleDismiss(notif.id)}
                     disabled={loadingId === notif.id}
-                    className="px-3 py-2 border border-slate-300 text-slate-700 rounded-full text-sm hover:bg-slate-50 transition disabled:opacity-50"
+                    className="px-3 py-2 border border-muted dark:border-slate-600 text-foreground dark:text-white rounded-full text-sm hover:bg-card-subtle dark:hover:bg-card-subtle transition disabled:opacity-50"
                     aria-label="Dismiss notification"
                   >
                     <X size={16} />

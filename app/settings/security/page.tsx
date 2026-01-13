@@ -25,10 +25,10 @@ export default function SecuritySettingsPage() {
       <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-rose-50 to-pink-50">
         <div className="text-center max-w-md">
           <Lock className="w-16 h-16 text-rose-300 mx-auto mb-6" />
-          <h1 className="text-3xl font-playfair font-bold text-slate-900 mb-4">
+          <h1 className="text-3xl font-playfair font-bold text-foreground mb-4">
             Please Log In
           </h1>
-          <p className="text-slate-600 mb-8">
+          <p className="text-muted-foreground mb-8">
             You need to log in to access settings
           </p>
           <div className="flex flex-col gap-3">
@@ -54,7 +54,7 @@ export default function SecuritySettingsPage() {
 
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     if (!currentPassword || !newPassword || !confirmPassword) {
       toast.error('All fields are required')
       return
@@ -72,11 +72,42 @@ export default function SecuritySettingsPage() {
 
     setLoading(true)
     try {
-      // TODO: Implement password change API call
-      toast.success('Password changed successfully')
+      // Import Supabase client
+      const { supabase } = await import('@/lib/supabase')
+
+      // Verify current password by attempting to sign in
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: user.email || '',
+        password: currentPassword,
+      })
+
+      if (signInError) {
+        toast.error('Current password is incorrect')
+        setLoading(false)
+        return
+      }
+
+      // Update password
+      const { error: updateError } = await supabase.auth.updateUser({
+        password: newPassword,
+      })
+
+      if (updateError) {
+        toast.error(updateError.message || 'Failed to change password')
+        setLoading(false)
+        return
+      }
+
+      toast.success('Password changed successfully! Please log in again.')
       setCurrentPassword('')
       setNewPassword('')
       setConfirmPassword('')
+
+      // Sign out and redirect to login
+      await supabase.auth.signOut()
+      setTimeout(() => {
+        router.push('/login')
+      }, 1500)
     } catch (error: any) {
       toast.error(error.message || 'Failed to change password')
     } finally {
@@ -85,7 +116,7 @@ export default function SecuritySettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-background text-foreground">
       <Navigation />
 
       <div className="pt-24 pb-20 px-4">
@@ -102,60 +133,60 @@ export default function SecuritySettingsPage() {
           <div className="mb-8">
             <div className="flex items-center gap-3 mb-2">
               <Lock size={28} className="text-primary" />
-              <h1 className="text-3xl font-playfair font-bold text-foreground">
+              <h1 className="text-3xl font-playfair font-bold text-foreground dark:text-white">
                 Security Settings
               </h1>
             </div>
-            <p className="text-muted-foreground">
+            <p className="text-muted-foreground dark:text-slate-400">
               Manage your account security and password
             </p>
           </div>
 
           {/* Change Password Section */}
-          <div className="bg-white border border-rose-100 rounded-2xl p-8 space-y-6">
+          <div className="bg-white dark:bg-slate-900 border border-rose-100 dark:border-rose-900 rounded-2xl p-8 space-y-6">
             <div>
-              <h2 className="text-xl font-semibold text-foreground mb-2">
+              <h2 className="text-xl font-semibold text-foreground dark:text-white mb-2">
                 Change Password
               </h2>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-muted-foreground dark:text-slate-400">
                 Update your password to keep your account secure
               </p>
             </div>
 
             <form onSubmit={handleChangePassword} className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="currentPassword">Current Password</Label>
+                <Label htmlFor="currentPassword" className="dark:text-white">Current Password</Label>
                 <Input
                   id="currentPassword"
                   type={showPasswords ? 'text' : 'password'}
                   placeholder="Enter current password"
                   value={currentPassword}
                   onChange={(e) => setCurrentPassword(e.target.value)}
-                  className="px-4 py-3 rounded-full border-secondary"
+                  className="px-4 py-3 rounded-full border-secondary dark:bg-slate-800 dark:border-slate-700 dark:text-white"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="newPassword">New Password</Label>
+                <Label htmlFor="newPassword" className="dark:text-white">New Password</Label>
                 <Input
                   id="newPassword"
                   type={showPasswords ? 'text' : 'password'}
                   placeholder="Enter new password"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
-                  className="px-4 py-3 rounded-full border-secondary"
+                  className="px-4 py-3 rounded-full border-secondary dark:bg-slate-800 dark:border-slate-700 dark:text-white"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirm Password</Label>
+                <Label htmlFor="confirmPassword" className="dark:text-white">Confirm Password</Label>
                 <Input
                   id="confirmPassword"
                   type={showPasswords ? 'text' : 'password'}
                   placeholder="Confirm new password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="px-4 py-3 rounded-full border-secondary"
+                  className="px-4 py-3 rounded-full border-secondary dark:bg-slate-800 dark:border-slate-700 dark:text-white"
                 />
               </div>
 
@@ -165,9 +196,9 @@ export default function SecuritySettingsPage() {
                   type="checkbox"
                   checked={showPasswords}
                   onChange={(e) => setShowPasswords(e.target.checked)}
-                  className="rounded cursor-pointer"
+                  className="rounded cursor-pointer accent-primary"
                 />
-                <Label htmlFor="showPasswords" className="text-sm cursor-pointer">
+                <Label htmlFor="showPasswords" className="text-sm cursor-pointer dark:text-white">
                   Show passwords
                 </Label>
               </div>
@@ -175,60 +206,35 @@ export default function SecuritySettingsPage() {
               <Button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3 rounded-full bg-primary text-white hover:bg-rose-700 font-semibold"
+                className="w-full py-3 rounded-full bg-primary text-white hover:bg-rose-700 dark:hover:bg-rose-600 font-semibold"
               >
                 {loading ? 'Updating...' : 'Update Password'}
               </Button>
             </form>
           </div>
 
-          {/* Two-Factor Authentication Section */}
-          <div className="bg-rose-50 border border-rose-200 rounded-2xl p-8 space-y-6 mt-8">
-            <div>
-              <h2 className="text-xl font-semibold text-foreground mb-2">
-                Two-Factor Authentication
-              </h2>
-              <p className="text-sm text-muted-foreground">
-                Add an extra layer of security to your account
-              </p>
-            </div>
-
-            <div className="bg-white rounded-xl p-4">
-              <p className="text-sm text-muted-foreground mb-4">
-                Two-factor authentication is not yet enabled on your account.
-              </p>
-              <Button
-                disabled
-                variant="outline"
-                className="rounded-full border-secondary"
-              >
-                Enable Two-Factor Authentication
-              </Button>
-            </div>
-          </div>
-
           {/* Active Sessions */}
-          <div className="bg-white border border-rose-100 rounded-2xl p-8 space-y-6 mt-8">
+          <div className="bg-white dark:bg-slate-900 border border-rose-100 dark:border-rose-900 rounded-2xl p-8 space-y-6 mt-8">
             <div>
-              <h2 className="text-xl font-semibold text-foreground mb-2">
+              <h2 className="text-xl font-semibold text-foreground dark:text-white mb-2">
                 Active Sessions
               </h2>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-muted-foreground dark:text-slate-400">
                 Manage devices accessing your account
               </p>
             </div>
 
             <div className="space-y-4">
-              <div className="bg-rose-50 rounded-xl p-4 flex items-center justify-between">
+              <div className="bg-rose-50 dark:bg-rose-950 rounded-xl p-4 flex items-center justify-between">
                 <div>
-                  <p className="font-semibold text-foreground text-sm">
+                  <p className="font-semibold text-foreground dark:text-white text-sm">
                     Current Session
                   </p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-muted-foreground dark:text-slate-400">
                     This device
                   </p>
                 </div>
-                <span className="text-xs bg-green-100 text-green-700 px-3 py-1 rounded-full">
+                <span className="text-xs bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-200 px-3 py-1 rounded-full">
                   Active
                 </span>
               </div>

@@ -24,6 +24,7 @@ export default function VideoDateContent() {
   const callType = (searchParams.get('type') as 'audio' | 'video') || 'video'
   const mode = searchParams.get('mode') as 'outgoing' | 'incoming' | null
   const callId = searchParams.get('callId')
+  const logId = searchParams.get('logId')
 
   useEffect(() => {
     // Wait for auth to load before proceeding
@@ -103,6 +104,12 @@ export default function VideoDateContent() {
                   setError('Call was declined')
                 } else if (status === 'ended') {
                   setError('Call has ended')
+                  // Auto-navigate after brief delay
+                  setTimeout(() => {
+                    if (isMounted) {
+                      router.push('/messages')
+                    }
+                  }, 500)
                 }
               }
             }
@@ -140,22 +147,22 @@ export default function VideoDateContent() {
   }, [mode, callId, user])
 
   // Show error if no partner or authentication issues
-  if (error || !user) {
+    if (error || !user) {
     return (
-      <main className="min-h-screen bg-white">
+      <main className="min-h-screen bg-background text-foreground">
         <Navigation />
         <div className="pt-24 pb-12 px-4 h-screen flex flex-col">
           <div className="max-w-4xl mx-auto w-full flex-1 flex flex-col">
-            <h1 className="text-3xl md:text-4xl font-playfair font-bold mb-6 text-slate-900">
+            <h1 className="text-3xl md:text-4xl font-playfair font-bold mb-6 text-foreground">
               Start a Call
             </h1>
             <div className="flex-1 bg-gradient-to-br from-slate-100 to-slate-50 rounded-xl overflow-hidden soft-glow-lg flex items-center justify-center">
               <div className="bg-white p-8 rounded-2xl text-center soft-glow-lg max-w-md">
                 <Lock size={48} className="text-primary mx-auto mb-4" />
-                <h2 className="text-2xl font-bold text-slate-900 mb-2">
+                <h2 className="text-2xl font-bold text-foreground mb-2">
                   {error ? 'Unable to Start Call' : 'Authentication Required'}
                 </h2>
-                <p className="text-slate-600 mb-6">
+                <p className="text-muted-foreground mb-6">
                   {error ||
                     'You need to be logged in to start a video date. Please log in and try again.'}
                 </p>
@@ -221,6 +228,7 @@ export default function VideoDateContent() {
           callType={callType}
           mode={mode}
           callId={callId}
+          logId={logId}
         />
       </div>
     )

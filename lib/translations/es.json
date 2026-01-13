@@ -5,6 +5,7 @@
     "pricing": "Precios",
     "messages": "Mensajes",
     "lounge": "Salón",
+    "ourStory": "Nuestra Historia",
     "logIn": "Inicia sesión",
     "joinForPrice": "Únete por $12/mes",
     "browseProfiles": "Explorar Perfiles"
@@ -154,6 +155,50 @@
       "required": "Este campo es requerido",
       "characterCount": "{{current}}/{{max}} caracteres"
     },
+    "step0": {
+      "title": "Conozcámonos",
+      "subtitle": "Ayúdanos a encontrar tu pareja perfecta",
+      "personality": "¿Cuál es Tu Estilo de Personalidad?",
+      "introvert": "Introvertido/a - Me recargo en soledad",
+      "ambivert": "Ambiverso/a - Equilibrio social",
+      "extrovert": "Extrovertido/a - Me encanta socializar",
+      "relationshipGoal": "¿Qué Estás Buscando?",
+      "casualDating": "Citas Casuales",
+      "seriousRelationship": "Relación Seria",
+      "lookingToMarry": "Buscando Casarme",
+      "friendshipFirst": "Amistad Primero",
+      "interests": "Tus Intereses",
+      "values": "Tus Valores Principales",
+      "travel": "Viajes",
+      "sports": "Deportes",
+      "music": "Música",
+      "artCulture": "Arte y Cultura",
+      "cooking": "Cocina",
+      "fitness": "Fitness",
+      "reading": "Lectura",
+      "movies": "Películas",
+      "technology": "Tecnología",
+      "nature": "Naturaleza",
+      "photography": "Fotografía",
+      "gaming": "Videojuegos",
+      "yoga": "Yoga",
+      "volunteering": "Voluntariado",
+      "fashion": "Moda",
+      "familyOriented": "Orientado/a a la familia",
+      "ambitionSuccess": "Ambición y Éxito",
+      "honestyIntegrity": "Honestidad e Integridad",
+      "kindnessEmpathy": "Bondad y Empatía",
+      "independence": "Independencia",
+      "adventure": "Aventura",
+      "stability": "Estabilidad",
+      "creativity": "Creatividad",
+      "healthWellness": "Salud y Bienestar",
+      "spirituality": "Espiritualidad",
+      "intelligence": "Inteligencia",
+      "humor": "Humor",
+      "selectAtLeast3Interests": "Por favor selecciona al menos 3 intereses",
+      "selectAtLeast2Values": "Por favor selecciona al menos 2 valores"
+    },
     "step6": {
       "title": "Tus preferencias y límites",
       "subtitle": "Ayúdanos a encontrar tu pareja perfecta",
@@ -163,9 +208,11 @@
       "height": "Altura (opcional)",
       "cm": "cm",
       "religion": "Religión",
+      "selectReligion": "Selecciona religión",
       "wantsKids": "¿Quieres hijos?",
       "smoking": "¿Fumas?",
       "drinking": "¿Bebes?",
+      "selectPreference": "Selecciona preferencia",
       "markAsBreaker": "Marcar como límite",
       "dealbreaker": "Límite",
       "catholic": "Católico/a",
@@ -180,7 +227,12 @@
       "never": "Nunca",
       "occasionally": "Ocasionalmente",
       "frequently": "Frecuentemente",
-      "socially": "Socialmente"
+      "socially": "Socialmente",
+      "completeProfileTitle": "Completa Tu Perfil",
+      "completeProfileDesc": "Este es el paso final de tu configuración de perfil. Debes completar estas preferencias para terminar la incorporación y comenzar a conectar con otros. Por favor proporciona tus preferencias para continuar.",
+      "goBack": "Volver",
+      "completeNow": "Completar Ahora",
+      "markAsDealbreaker": "Marcar como límite"
     },
     "completion": {
       "title": "¡Bienvenido a Buscando Amor Eterno! 🎉",
@@ -212,5 +264,38 @@
     "exporting": "Exportando...",
     "exportSuccess": "Datos exportados correctamente",
     "exportFailed": "Error al exportar datos"
+  },
+  "ourStory": {
+    "heroTitle": "Nuestra Historia",
+    "heroSubtitle": "Nuestra Historia",
+    "heroDescription": "El viaje de fe, amor y servicio que dio vida a Buscando Amor Eterno",
+    "intro": {
+      "heading": "De Niño a Padre: El Comienzo",
+      "text": "Cuando era niño siempre intenté entender cómo podía ayudar a las personas y seguir a Dios. En mis 17 años de matrimonio pude seguir la fe con mi hijo. Sin embargo, mi esposa eligió no participar en el seguimiento del Señor, y supongo que simplemente no entendía qué significaba un matrimonio feliz y ser amado. Poco después, mi esposa pidió la separación."
+    },
+    "darkValley": {
+      "heading": "Las Pruebas Más Difíciles",
+      "text": "Después de ser estafado por hackers y personas que solo querían estafar dinero, estaba deprimido. Actualmente trabajo con niños en un hospital que necesitan orientación y asistencia para crecer y ser beneficiosos para la sociedad en lugar de crear crímenes. En otras palabras, disfruto ayudando a las personas y devolviendo el favor. Después de estar deprimido e hizo mi mejor esfuerzo para ayudar a mi hijo a perseverar con sus necesidades especiales, rápidamente me di cuenta de que también necesitaba ayudar a otros."
+    },
+    "turningPoint": {
+      "heading": "Nacimiento de una Misión",
+      "text": "Entonces decidí perseguir mi objetivo y crear un grupo de solteros en las redes sociales para personas locales que intentaban hacer nuevos amigos y nuevas relaciones (amor eterno). Muchas personas me han agradecido por ayudarles a encontrar su amor eterno. Le pregunté a Dios cuándo encontraría mi amor eterno. Me dijo que tengo una persona muy especial para ti... Pero, necesitas seguir ayudando a las personas hasta que encuentres a tu Reina Eterna.",
+      "quote": "Tengo una persona muy especial para ti... Pero, necesitas seguir ayudando a las personas hasta que encuentres a tu Reina Eterna."
+    },
+    "findingLove": {
+      "heading": "Mi Reina Eterna",
+      "textPart1": "Mi esposa actual también tenía una situación similar. Donde estaba buscando un esposo, esposo y padre para sus hijos. Así como yo necesitaba una esposa/madre para mi hijo, mi amor latina me mostró lo que es el amor verdadero. Teniendo una familia de niños y niñas ahora. Lo bendecido que soy.",
+      "textPart2": "Ella entendía que con mi grupo de solteros mi objetivo es ayudar a las personas y ayudar a los niños problémicos con mi trabajo. Entonces, con sus hermosas ideas y mis ideas, pudimos crear Buscando Amor Eterno con el objetivo en mente de que todos merecen tener a esa persona especial que es amor eterno perdurable."
+    },
+    "mission": {
+      "heading": "Nuestra Promesa",
+      "text": "Este sitio web está diseñado para cualquier persona, raza, cultura alrededor del mundo para encontrar a su pareja especial"
+    },
+    "closing": {
+      "quote": "Todos merecen tener a esa persona especial que es amor eterno perdurable.",
+      "subtext1": "Únete a nosotros en la búsqueda del amor eterno.",
+      "subtext2": "Únete a nosotros en la búsqueda del amor eterno.",
+      "ctaButton": "Encontrar Mi Alma Gemela"
+    }
   }
 }

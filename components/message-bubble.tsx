@@ -106,7 +106,7 @@ export default function MessageBubble({
           className={`relative max-w-xs sm:max-w-sm md:max-w-2xl lg:max-w-3xl px-4 sm:px-5 md:px-6 py-3 sm:py-4 md:py-5 rounded-3xl text-sm sm:text-base md:text-lg break-words shadow-md transition-all duration-200 hover:shadow-lg ${
             isOwn
               ? 'bg-primary text-white rounded-br-none'
-              : 'bg-gradient-to-r from-slate-100 to-slate-50 text-slate-900 rounded-bl-none border border-slate-200'
+              : 'bg-gradient-to-r from-card-subtle to-card text-black dark:text-slate-100 rounded-bl-none border border-border dark:from-card-subtle dark:to-card'
           }`}
         >
           {textContent && <p className="leading-relaxed">{textContent}</p>}
@@ -128,8 +128,8 @@ export default function MessageBubble({
           )}
 
           <span
-            className={`text-xs mt-2 block opacity-70 ${
-              isOwn ? 'text-white/70' : 'text-slate-500'
+            className={`text-xs mt-2 block ${
+              isOwn ? 'text-white/70' : 'text-gray-600 dark:text-gray-400'
             }`}
           >
             {getFormattedTime(timestamp)}
@@ -137,7 +137,7 @@ export default function MessageBubble({
 
           {/* Hover action indicator */}
           <div
-            className={`absolute top-1/2 -translate-y-1/2 text-xs px-2 py-1 rounded-full bg-slate-800 text-white opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap ${
+            className={`absolute top-1/2 -translate-y-1/2 text-xs px-2 py-1 rounded-full bg-foreground text-background dark:bg-card-subtle dark:text-foreground opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap ${
               isOwn ? '-left-20' : '-right-20'
             }`}
           >
