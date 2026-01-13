@@ -111,10 +111,10 @@ export default function CustomizationPage() {
           {/* Theme Section */}
           <div className="bg-white dark:bg-slate-900 border border-rose-100 dark:border-rose-900 rounded-2xl p-8 space-y-6">
             <div>
-              <h2 className="text-xl font-semibold text-foreground dark:text-white mb-2">
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
                 Theme
               </h2>
-              <p className="text-sm text-muted-foreground dark:text-slate-400">
+              <p className="text-sm text-gray-600 dark:text-slate-400">
                 Choose your preferred display theme
               </p>
             </div>
@@ -161,10 +161,10 @@ export default function CustomizationPage() {
           {/* Display Options */}
           <div className="bg-white dark:bg-slate-900 border border-rose-100 dark:border-rose-900 rounded-2xl p-8 space-y-6 mt-8">
             <div>
-              <h2 className="text-xl font-semibold text-foreground dark:text-white mb-2">
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
                 Display Options
               </h2>
-              <p className="text-sm text-muted-foreground dark:text-slate-400">
+              <p className="text-sm text-gray-600 dark:text-slate-400">
                 Adjust the layout and text size
               </p>
             </div>
@@ -173,10 +173,10 @@ export default function CustomizationPage() {
               {/* Compact Mode */}
               <div className="flex items-center justify-between p-4 bg-rose-50 dark:bg-rose-950 rounded-xl">
                 <div>
-                  <p className="font-semibold text-foreground dark:text-white text-sm">
+                  <p className="font-semibold text-gray-900 dark:text-white text-sm">
                     Compact Mode
                   </p>
-                  <p className="text-xs text-muted-foreground dark:text-slate-400">
+                  <p className="text-xs text-gray-600 dark:text-slate-400">
                     Reduce spacing between elements
                   </p>
                 </div>
@@ -194,10 +194,10 @@ export default function CustomizationPage() {
               {/* Larger Text */}
               <div className="flex items-center justify-between p-4 bg-rose-50 dark:bg-rose-950 rounded-xl">
                 <div>
-                  <p className="font-semibold text-foreground dark:text-white text-sm">
+                  <p className="font-semibold text-gray-900 dark:text-white text-sm">
                     Larger Text
                   </p>
-                  <p className="text-xs text-muted-foreground dark:text-slate-400">
+                  <p className="text-xs text-gray-600 dark:text-slate-400">
                     Increase text size for better readability
                   </p>
                 </div>
@@ -217,10 +217,10 @@ export default function CustomizationPage() {
           {/* Font Preferences */}
           <div className="bg-white dark:bg-slate-900 border border-rose-100 dark:border-rose-900 rounded-2xl p-8 space-y-6 mt-8">
             <div>
-              <h2 className="text-xl font-semibold text-foreground dark:text-white mb-2">
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
                 Font Preferences
               </h2>
-              <p className="text-sm text-muted-foreground dark:text-slate-400">
+              <p className="text-sm text-gray-600 dark:text-slate-400">
                 Choose your preferred font style
               </p>
             </div>
@@ -239,7 +239,7 @@ export default function CustomizationPage() {
                   }}
                   className="cursor-pointer"
                 />
-                <Label htmlFor="font-inter" className="flex-1 cursor-pointer text-sm font-medium dark:text-white">
+                <Label htmlFor="font-inter" className="flex-1 cursor-pointer text-sm font-medium text-gray-900 dark:text-white">
                   Modern (Inter)
                 </Label>
               </div>
@@ -256,7 +256,7 @@ export default function CustomizationPage() {
                   }}
                   className="cursor-pointer"
                 />
-                <Label htmlFor="font-playfair" className="flex-1 cursor-pointer text-sm font-medium font-playfair dark:text-white">
+                <Label htmlFor="font-playfair" className="flex-1 cursor-pointer text-sm font-medium font-playfair text-gray-900 dark:text-white">
                   Elegant (Playfair Display)
                 </Label>
               </div>

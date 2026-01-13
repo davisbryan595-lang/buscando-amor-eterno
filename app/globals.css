@@ -149,34 +149,16 @@
   }
 }
 
-/* THEME-SPECIFIC TEXT COLOR RULES - NO !IMPORTANT FLAGS */
+/* THEME-SPECIFIC TEXT COLOR RULES - Applied only to body to avoid overriding component-specific colors */
 
-/* Light theme: dark text colors */
-[data-theme="light"] body,
-[data-theme="light"] p,
-[data-theme="light"] h1,
-[data-theme="light"] h2,
-[data-theme="light"] h3,
-[data-theme="light"] h4,
-[data-theme="light"] h5,
-[data-theme="light"] h6,
-[data-theme="light"] span,
-[data-theme="light"] div {
-  color: #1a1a1a;
+/* Light theme: body inherits dark text color from CSS variables */
+[data-theme="light"] body {
+  color: var(--foreground);
 }
 
-/* Dark theme: light text colors */
-[data-theme="dark"] body,
-[data-theme="dark"] p,
-[data-theme="dark"] h1,
-[data-theme="dark"] h2,
-[data-theme="dark"] h3,
-[data-theme="dark"] h4,
-[data-theme="dark"] h5,
-[data-theme="dark"] h6,
-[data-theme="dark"] span,
-[data-theme="dark"] div {
-  color: #ffffff;
+/* Dark theme: body inherits light text color from CSS variables */
+[data-theme="dark"] body {
+  color: var(--foreground);
 }
 
 @layer components {
