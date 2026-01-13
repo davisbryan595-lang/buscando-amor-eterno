@@ -198,7 +198,7 @@ function MessagesContentInner({ onChatOpenChange, isChatOpen }: MessagesContentI
 
         {!selectedConversation && conversations.length > 0 && (
           <div className="flex-1 hidden md:flex items-center justify-center bg-card dark:bg-card rounded-xl border border-rose-100 dark:border-rose-900/40">
-            <div className="text-center text-foreground dark:text-white">
+            <div className="text-center text-black dark:text-white">
               <p className="text-lg">Select a conversation to start chatting</p>
             </div>
           </div>

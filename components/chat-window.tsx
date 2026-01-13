@@ -380,8 +380,8 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
               )}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="font-semibold text-foreground dark:text-white text-sm sm:text-base lg:text-lg truncate">{otherUserDetails?.name || conversation.other_user_name || 'User'}</p>
-              <p className="text-xs sm:text-sm lg:text-base text-foreground/60 dark:text-muted-foreground truncate">
+              <p className="font-semibold text-black dark:text-white text-sm sm:text-base lg:text-lg truncate">{otherUserDetails?.name || conversation.other_user_name || 'User'}</p>
+              <p className="text-xs sm:text-sm lg:text-base text-black/70 dark:text-muted-foreground truncate">
                 {conversation.is_online ? 'Online' : getLastSeenText(conversation.last_message_time)}
               </p>
             </div>
@@ -411,7 +411,7 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
       {/* Messages */}
       <div ref={messagesContainerRef} className="flex-1 overflow-y-auto overflow-x-hidden px-3 py-3 sm:p-4 lg:p-6 space-y-2 sm:space-y-3 lg:space-y-4 min-h-0">
         {combinedMessages.length === 0 ? (
-          <div className="flex items-center justify-center h-full text-foreground/60 dark:text-muted-foreground">
+          <div className="flex items-center justify-center h-full text-black/70 dark:text-muted-foreground">
             <p className="text-sm sm:text-base lg:text-lg">No messages yet. Start the conversation!</p>
           </div>
         ) : (
