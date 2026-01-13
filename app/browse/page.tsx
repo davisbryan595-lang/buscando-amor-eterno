@@ -293,10 +293,10 @@ export default function BrowsePage() {
                     <>
                       <div className="flex items-center justify-between gap-2">
                         <div className="min-w-0 flex-1">
-                          <h2 className="text-2xl sm:text-3xl md:text-4xl font-playfair font-bold mb-1 line-clamp-1">
+                          <h2 className="text-2xl sm:text-3xl md:text-4xl font-playfair font-bold mb-1 line-clamp-1 text-white">
                             {currentProfile.full_name || 'User'}, {currentProfile.birthday ? new Date().getFullYear() - new Date(currentProfile.birthday).getFullYear() : '?'}
                           </h2>
-                          <p className="text-white/90 text-base sm:text-lg line-clamp-1">{currentProfile.city || 'Location not set'}</p>
+                          <p className="text-white text-base sm:text-lg line-clamp-1">{currentProfile.city || 'Location not set'}</p>
                         </div>
                         <button
                           onClick={() => setShowInfo(true)}
