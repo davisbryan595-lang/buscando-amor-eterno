@@ -149,16 +149,16 @@ export default function Hero() {
 
         <div ref={statsRef} className="mt-12 md:mt-16 grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6 text-center">
           <div>
-            <p className="text-2xl sm:text-3xl font-bold text-primary dark:text-white mb-2">50M+</p>
-            <p className="text-sm md:text-base text-black dark:text-white">{t('hero.membersWorldwide')}</p>
+            <p className="text-2xl sm:text-3xl font-bold mb-2" style={{ color: '#e2164b' }}>50M+</p>
+            <p className="text-sm md:text-base font-semibold" style={{ color: 'rgba(0, 0, 0, 1)' }}>{t('hero.membersWorldwide')}</p>
           </div>
           <div>
-            <p className="text-2xl sm:text-3xl font-bold text-primary dark:text-white mb-2">1M+</p>
-            <p className="text-sm md:text-base text-black dark:text-white">{t('hero.matchesMade')}</p>
+            <p className="text-2xl sm:text-3xl font-bold mb-2" style={{ color: '#e2164b' }}>1M+</p>
+            <p className="text-sm md:text-base font-semibold" style={{ color: 'rgba(0, 0, 0, 1)' }}>{t('hero.matchesMade')}</p>
           </div>
           <div>
-            <p className="text-2xl sm:text-3xl font-bold text-primary dark:text-white mb-2">100+</p>
-            <p className="text-sm md:text-base text-black dark:text-white">{t('hero.countries')}</p>
+            <p className="text-2xl sm:text-3xl font-bold mb-2" style={{ color: '#e2164b' }}>100+</p>
+            <p className="text-sm md:text-base font-semibold" style={{ color: 'rgba(0, 0, 0, 1)' }}>{t('hero.countries')}</p>
           </div>
         </div>
       </div>
