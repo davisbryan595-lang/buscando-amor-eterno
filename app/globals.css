@@ -263,6 +263,25 @@
       rgba(255, 105, 180, 0.5) 100%) !important;
   }
 
+  /* Gradient with 40% opacity for chat window */
+  .gradient-40 {
+    background: linear-gradient(to right,
+      rgba(190, 18, 60, 0.4) 0%,
+      rgba(225, 27, 106, 0.4) 25%,
+      rgba(255, 105, 180, 0.4) 50%,
+      rgba(225, 27, 106, 0.4) 75%,
+      rgba(190, 18, 60, 0.4) 100%) !important;
+  }
+
+  .dark .gradient-40 {
+    background: linear-gradient(to right,
+      rgba(255, 105, 180, 0.4) 0%,
+      rgba(255, 133, 192, 0.4) 25%,
+      rgba(255, 182, 217, 0.4) 50%,
+      rgba(255, 133, 192, 0.4) 75%,
+      rgba(255, 105, 180, 0.4) 100%) !important;
+  }
+
   /* Card Gradient Background - same colors as hero title */
   .card-gradient {
     background: linear-gradient(to right,
