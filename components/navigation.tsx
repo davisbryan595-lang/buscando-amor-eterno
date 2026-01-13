@@ -54,18 +54,18 @@ export default function Navigation() {
 
   return (
     <nav ref={navRef} className="fixed top-0 left-0 right-0 z-50 bg-background/90 dark:bg-background/95 md:bg-background/95 dark:md:bg-background/95 backdrop-blur-md border-b border-rose-100/50 dark:border-rose-900/40 md:border-rose-100 dark:md:border-rose-900/40">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 md:py-4 flex justify-between items-center">
-        <Link href="/" className="flex items-center gap-2">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-1 md:py-2 flex justify-between items-center">
+        <Link href="/" className="flex items-center gap-1 md:gap-2 flex-shrink-0">
           <img
             src="https://cdn.builder.io/api/v1/image/assets%2F5517f718aa7348e88214250292563028%2F09ca0588ac3741678f0d49e142dede0b?format=webp&width=800"
             alt="Buscando Amor Eterno Logo"
-            className="h-10 w-10 md:h-16 md:w-16 object-contain"
+            className="h-10 w-10 md:h-12 md:w-12 object-contain"
           />
-          <span className="hidden sm:inline text-lg md:text-lg font-playfair font-bold text-rose-600">Buscando Amor Eterno</span>
+          <span className="hidden sm:inline text-sm md:text-base font-playfair font-bold text-rose-600 whitespace-nowrap">Buscando Amor Eterno</span>
         </Link>
 
         {/* Desktop Menu */}
-        <div className="hidden md:flex gap-8 items-center">
+        <div className="hidden md:flex gap-6 items-center">
           <Link href="/" className="text-foreground hover:text-primary transition">{t('common.home')}</Link>
           <Link href="/browse" className="text-foreground hover:text-primary transition">{t('common.browse')}</Link>
           <Link href="/pricing" className="text-foreground hover:text-primary transition">{t('common.pricing')}</Link>
