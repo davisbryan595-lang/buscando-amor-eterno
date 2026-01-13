@@ -8,7 +8,7 @@ export default function MessagesPage() {
   const [isChatOpen, setIsChatOpen] = useState(false)
 
   return (
-    <main className="h-screen bg-gradient-to-br from-rose-50 dark:from-background to-pink-50 dark:to-background text-foreground flex flex-col overflow-hidden">
+    <main className="h-screen bg-background dark:bg-background text-foreground flex flex-col overflow-hidden gradient-50">
       <div className={`${isChatOpen ? 'md:block hidden' : 'block'}`}>
         <Navigation />
       </div>

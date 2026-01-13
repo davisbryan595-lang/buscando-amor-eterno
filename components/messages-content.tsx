@@ -78,7 +78,7 @@ function MessagesContentInner({ onChatOpenChange, isChatOpen }: MessagesContentI
   if (loading) {
     return (
       <div className="pt-24 pb-12 px-4 h-screen flex items-center justify-center">
-        <p className="text-muted-foreground">Loading conversations...</p>
+        <p className="text-white/75">Loading conversations...</p>
       </div>
     )
   }
@@ -87,8 +87,8 @@ function MessagesContentInner({ onChatOpenChange, isChatOpen }: MessagesContentI
     return (
       <div className="pt-24 pb-12 px-4 h-screen flex items-center justify-center">
         <div className="text-center max-w-md">
-          <p className="text-foreground font-semibold mb-3">Unable to load conversations</p>
-          <p className="text-muted-foreground text-sm mb-6">
+          <p className="text-white font-semibold mb-3">Unable to load conversations</p>
+          <p className="text-white/75 text-sm mb-6">
             {error.includes('timed out')
               ? 'The connection is taking longer than expected. Please check your internet connection and try again.'
               : error}
@@ -96,13 +96,13 @@ function MessagesContentInner({ onChatOpenChange, isChatOpen }: MessagesContentI
           <div className="flex gap-3 justify-center">
             <button
               onClick={() => window.location.reload()}
-              className="px-6 py-2 bg-primary text-white rounded-full hover:bg-rose-700 transition"
+              className="px-6 py-2 bg-white text-primary rounded-full hover:bg-white/90 transition font-semibold"
             >
               Reload Page
             </button>
             <Link
               href="/browse"
-              className="px-6 py-2 bg-card-subtle text-foreground dark:bg-card-subtle dark:text-white rounded-full hover:bg-card-hover dark:hover:bg-card-hover transition"
+              className="px-6 py-2 bg-white/20 text-white rounded-full hover:bg-white/30 transition font-semibold border border-white/40"
             >
               Browse Profiles
             </Link>
@@ -115,7 +115,7 @@ function MessagesContentInner({ onChatOpenChange, isChatOpen }: MessagesContentI
   if (!user) {
     return (
       <div className="pt-24 pb-12 px-4 h-screen flex items-center justify-center">
-        <p className="text-muted-foreground">Please log in to view messages.</p>
+        <p className="text-white/75">Please log in to view messages.</p>
       </div>
     )
   }
@@ -124,29 +124,29 @@ function MessagesContentInner({ onChatOpenChange, isChatOpen }: MessagesContentI
   return (
     <div className={`h-full w-full px-0 sm:px-4 lg:px-6 flex flex-col overflow-hidden ${selectedConversation ? 'md:mt-24' : 'mt-24'}`}>
       <div className="max-w-7xl mx-auto w-full flex-1 flex flex-col md:flex-row gap-0 md:gap-4 lg:gap-6 overflow-hidden rounded-none md:rounded-xl">
-        <div className={`w-full md:w-80 lg:w-96 bg-card dark:bg-card rounded-none md:rounded-xl border-0 md:border border-rose-100 dark:border-rose-900/40 flex-shrink-0 flex flex-col overflow-hidden ${selectedConversation ? 'hidden md:flex' : 'flex'}`}>
+        <div className={`w-full md:w-80 lg:w-96 bg-card dark:bg-card rounded-none md:rounded-xl border-0 md:border border-rose-100 dark:border-rose-900/40 flex-shrink-0 flex flex-col overflow-hidden ${selectedConversation ? 'hidden md:flex' : 'flex'} card-gradient`}>
           <div className="px-4 py-3 sm:p-4 lg:p-6 border-b border-rose-100 dark:border-rose-900/40 bg-card dark:bg-card flex items-center justify-between flex-shrink-0">
-            <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground">Messages</h2>
+            <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-white dark:text-white">Messages</h2>
             {selectedConversation && (
               <button
                 onClick={() => setSelectedConversation(null)}
-                className="md:hidden p-2 hover:bg-card-hover dark:hover:bg-card-hover rounded-full transition"
+                className="md:hidden p-2 hover:bg-white/20 dark:hover:bg-white/20 rounded-full transition"
                 aria-label="Close chat"
               >
-                <X size={20} className="text-foreground" />
+                <X size={20} className="text-white" />
               </button>
             )}
           </div>
 
           <div className="divide-y dark:divide-slate-700 flex-1 overflow-y-auto">
             {conversations.length === 0 ? (
-              <div className="p-4 text-center text-muted-foreground text-sm">No conversations yet</div>
+              <div className="p-4 text-center text-white/75 text-sm">No conversations yet</div>
             ) : (
               conversations.map((conv) => (
                 <div
                   key={conv.id}
                   className={`px-3 py-3 sm:px-4 sm:py-4 lg:p-5 text-left transition border-b dark:border-slate-700 ${
-                    selectedConversation?.id === conv.id ? 'bg-card-hover dark:bg-card-hover' : ''
+                    selectedConversation?.id === conv.id ? 'bg-white/20 dark:bg-white/20' : ''
                   }`}
                 >
                   <button
@@ -172,8 +172,8 @@ function MessagesContentInner({ onChatOpenChange, isChatOpen }: MessagesContentI
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-foreground text-sm sm:text-base lg:text-lg truncate">{conv.other_user_name || 'User'}</p>
-                      <p className="text-xs sm:text-sm lg:text-base text-muted-foreground truncate">{conv.last_message}</p>
+                      <p className="font-semibold text-white dark:text-white text-sm sm:text-base lg:text-lg truncate">{conv.other_user_name || 'User'}</p>
+                      <p className="text-xs sm:text-sm lg:text-base text-white/75 dark:text-white/75 truncate">{conv.last_message}</p>
                     </div>
                     {conv.unread_count > 0 && (
                       <span className="bg-rose-500 text-white text-xs rounded-full w-5 h-5 lg:w-6 lg:h-6 flex items-center justify-center flex-shrink-0">
@@ -197,8 +197,8 @@ function MessagesContentInner({ onChatOpenChange, isChatOpen }: MessagesContentI
         )}
 
         {!selectedConversation && conversations.length > 0 && (
-          <div className="flex-1 hidden md:flex items-center justify-center bg-card dark:bg-card rounded-xl border border-rose-100 dark:border-rose-900/40">
-            <div className="text-center text-muted-foreground">
+          <div className="flex-1 hidden md:flex items-center justify-center bg-card dark:bg-card rounded-xl border border-rose-100 dark:border-rose-900/40 card-gradient">
+            <div className="text-center text-white">
               <p className="text-lg">Select a conversation to start chatting</p>
             </div>
           </div>
