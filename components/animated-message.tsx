@@ -59,7 +59,7 @@ export function AnimatedMessage({
         className={`max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg px-3 sm:px-4 py-1.5 sm:py-2 lg:py-3 rounded-2xl ${
           isOwn
             ? 'bg-primary text-white rounded-br-none'
-            : 'bg-card-subtle dark:bg-card-subtle text-black dark:text-white rounded-bl-none'
+            : 'bg-card-subtle dark:bg-card-subtle text-foreground rounded-bl-none'
         }`}
       >
         <p className="text-xs sm:text-sm lg:text-base break-words">{content}</p>
