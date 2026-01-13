@@ -228,39 +228,39 @@
   /* Navbar Gradient Background - same colors as hero title */
   .nav-gradient {
     background: linear-gradient(to right,
-      rgba(190, 18, 60, 0.15) 0%,
-      rgba(225, 27, 106, 0.18) 25%,
-      rgba(255, 105, 180, 0.15) 50%,
-      rgba(225, 27, 106, 0.18) 75%,
-      rgba(190, 18, 60, 0.15) 100%);
+      rgb(190, 18, 60) 0%,
+      rgb(225, 27, 106) 25%,
+      rgb(255, 105, 180) 50%,
+      rgb(225, 27, 106) 75%,
+      rgb(190, 18, 60) 100%);
   }
 
   .dark .nav-gradient {
     background: linear-gradient(to right,
-      rgba(255, 105, 180, 0.2) 0%,
-      rgba(255, 133, 192, 0.25) 25%,
-      rgba(255, 182, 217, 0.2) 50%,
-      rgba(255, 133, 192, 0.25) 75%,
-      rgba(255, 105, 180, 0.2) 100%);
+      rgb(255, 105, 180) 0%,
+      rgb(255, 133, 192) 25%,
+      rgb(255, 182, 217) 50%,
+      rgb(255, 133, 192) 75%,
+      rgb(255, 105, 180) 100%);
   }
 
   /* Card Gradient Background - same colors as hero title */
   .card-gradient {
     background: linear-gradient(to right,
-      rgba(190, 18, 60, 0.08) 0%,
-      rgba(225, 27, 106, 0.1) 25%,
-      rgba(255, 105, 180, 0.08) 50%,
-      rgba(225, 27, 106, 0.1) 75%,
-      rgba(190, 18, 60, 0.08) 100%);
+      rgb(190, 18, 60) 0%,
+      rgb(225, 27, 106) 25%,
+      rgb(255, 105, 180) 50%,
+      rgb(225, 27, 106) 75%,
+      rgb(190, 18, 60) 100%);
   }
 
   .dark .card-gradient {
     background: linear-gradient(to right,
-      rgba(255, 105, 180, 0.12) 0%,
-      rgba(255, 133, 192, 0.15) 25%,
-      rgba(255, 182, 217, 0.12) 50%,
-      rgba(255, 133, 192, 0.15) 75%,
-      rgba(255, 105, 180, 0.12) 100%);
+      rgb(255, 105, 180) 0%,
+      rgb(255, 133, 192) 25%,
+      rgb(255, 182, 217) 50%,
+      rgb(255, 133, 192) 75%,
+      rgb(255, 105, 180) 100%);
   }
 
   /* Display customization classes */
