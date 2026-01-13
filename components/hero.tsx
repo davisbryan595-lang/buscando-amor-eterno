@@ -149,16 +149,16 @@ export default function Hero() {
 
         <div ref={statsRef} className="mt-12 md:mt-16 grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6 text-center">
           <div>
-            <p className="text-2xl sm:text-3xl font-bold text-primary mb-2">50M+</p>
-            <p className="text-sm md:text-base text-foreground">{t('hero.membersWorldwide')}</p>
+            <p className="text-2xl sm:text-3xl font-bold text-white drop-shadow-md mb-2">50M+</p>
+            <p className="text-sm md:text-base text-white drop-shadow-md">{t('hero.membersWorldwide')}</p>
           </div>
           <div>
-            <p className="text-2xl sm:text-3xl font-bold text-primary mb-2">1M+</p>
-            <p className="text-sm md:text-base text-foreground">{t('hero.matchesMade')}</p>
+            <p className="text-2xl sm:text-3xl font-bold text-white drop-shadow-md mb-2">1M+</p>
+            <p className="text-sm md:text-base text-white drop-shadow-md">{t('hero.matchesMade')}</p>
           </div>
           <div>
-            <p className="text-2xl sm:text-3xl font-bold text-primary mb-2">100+</p>
-            <p className="text-sm md:text-base text-foreground">{t('hero.countries')}</p>
+            <p className="text-2xl sm:text-3xl font-bold text-white drop-shadow-md mb-2">100+</p>
+            <p className="text-sm md:text-base text-white drop-shadow-md">{t('hero.countries')}</p>
           </div>
         </div>
       </div>
