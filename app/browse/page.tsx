@@ -319,7 +319,7 @@ export default function BrowsePage() {
                           <X className="w-4 h-4 sm:w-5 sm:h-5" />
                         </button>
                       </div>
-                      <p className="text-white/90 text-base sm:text-lg line-clamp-1">{currentProfile.city || 'Location not set'}</p>
+                      <p className="text-white text-base sm:text-lg line-clamp-1">{currentProfile.city || 'Location not set'}</p>
                       {currentProfile.prompt_1 && (
                         <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-3 sm:p-4">
                           <p className="text-xs sm:text-sm text-white/80 mb-2">About</p>
