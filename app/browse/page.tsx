@@ -307,9 +307,9 @@ export default function BrowsePage() {
                       </div>
                     </>
                   ) : (
-                    <div className="space-y-3 sm:space-y-4 max-h-[calc(100vh-400px)] overflow-y-auto px-0 sm:px-1">
+                    <div className="space-y-3 sm:space-y-4 max-h-[calc(100vh-400px)] overflow-y-auto px-0 sm:px-1 text-white">
                       <div className="flex items-center justify-between gap-2">
-                        <h2 className="text-2xl sm:text-3xl font-playfair font-bold line-clamp-2">
+                        <h2 className="text-2xl sm:text-3xl font-playfair font-bold line-clamp-2 text-white">
                           {currentProfile.full_name || 'User'}, {currentProfile.birthday ? new Date().getFullYear() - new Date(currentProfile.birthday).getFullYear() : '?'}
                         </h2>
                         <button
