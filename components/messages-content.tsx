@@ -126,14 +126,14 @@ function MessagesContentInner({ onChatOpenChange, isChatOpen }: MessagesContentI
       <div className="max-w-7xl mx-auto w-full flex-1 flex flex-col md:flex-row gap-0 md:gap-4 lg:gap-6 overflow-hidden rounded-none md:rounded-xl">
         <div className={`w-full md:w-80 lg:w-96 bg-card dark:bg-card rounded-none md:rounded-xl border-0 md:border border-rose-100 dark:border-rose-900/40 flex-shrink-0 flex flex-col overflow-hidden ${selectedConversation ? 'hidden md:flex' : 'flex'} card-gradient`}>
           <div className="px-4 py-3 sm:p-4 lg:p-6 border-b border-rose-100 dark:border-rose-900/40 bg-card dark:bg-card flex items-center justify-between flex-shrink-0">
-            <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground">Messages</h2>
+            <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-white dark:text-white">Messages</h2>
             {selectedConversation && (
               <button
                 onClick={() => setSelectedConversation(null)}
-                className="md:hidden p-2 hover:bg-card-hover dark:hover:bg-card-hover rounded-full transition"
+                className="md:hidden p-2 hover:bg-white/20 dark:hover:bg-white/20 rounded-full transition"
                 aria-label="Close chat"
               >
-                <X size={20} className="text-foreground" />
+                <X size={20} className="text-white" />
               </button>
             )}
           </div>
