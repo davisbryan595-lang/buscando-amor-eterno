@@ -124,7 +124,7 @@ export default function Hero() {
             </svg>
           </span> <span className="hero-title-gradient">{t('hero.title').split(' ').slice(2).join(' ')}</span>
         </h1>
-        <h2 ref={subtitleRef} className="text-xl sm:text-2xl md:text-4xl font-playfair font-bold mb-6 md:mb-8 hero-subtitle-gradient drop-shadow-md">
+        <h2 ref={subtitleRef} className="text-xl sm:text-2xl md:text-4xl font-playfair font-bold mb-6 md:mb-8 hero-subtitle-gradient" style={{textShadow: '0 3px 10px rgba(0, 0, 0, 0.7), 0 1px 3px rgba(0, 0, 0, 0.5)'}}>
           {t('hero.subtitle')}
         </h2>
 
