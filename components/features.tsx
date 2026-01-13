@@ -58,11 +58,11 @@ export default function Features() {
                 key={index}
                 className="p-6 md:p-8 rounded-xl bg-gradient-to-br from-card to-card-subtle dark:from-card dark:to-card-subtle border border-rose-100 dark:border-rose-900/40 hover:soft-glow transition card-gradient"
               >
-                <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center mb-4 text-white">
+                <div className="w-12 h-12 bg-white dark:bg-white rounded-full flex items-center justify-center mb-4 text-primary shadow-md">
                   <Icon size={24} />
                 </div>
-                <h3 className="text-lg md:text-xl font-bold text-foreground mb-2">{t(feature.titleKey)}</h3>
-                <p className="text-sm md:text-base text-muted-foreground">{t(feature.descKey)}</p>
+                <h3 className="text-lg md:text-xl font-bold text-white dark:text-white mb-2">{t(feature.titleKey)}</h3>
+                <p className="text-sm md:text-base text-white/90 dark:text-white/85">{t(feature.descKey)}</p>
               </div>
             )
           })}
