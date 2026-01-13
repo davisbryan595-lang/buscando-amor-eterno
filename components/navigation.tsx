@@ -65,7 +65,7 @@ export default function Navigation() {
         </Link>
 
         {/* Desktop Menu */}
-        <div className="hidden md:flex gap-4 items-center text-sm">
+        <div className="hidden md:flex gap-6 items-center text-sm ml-8">
           <Link href="/" className="text-foreground hover:text-primary transition">{t('common.home')}</Link>
           <Link href="/browse" className="text-foreground hover:text-primary transition">{t('common.browse')}</Link>
           <Link href="/pricing" className="text-foreground hover:text-primary transition">{t('common.pricing')}</Link>
