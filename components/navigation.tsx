@@ -180,7 +180,7 @@ export default function Navigation() {
               stiffness: 300,
               opacity: { duration: 0.2 },
             }}
-            className="md:hidden bg-background dark:bg-background border-t border-rose-100 dark:border-rose-900/40 py-4 px-4 space-y-3 overflow-hidden"
+            className="md:hidden bg-background dark:bg-background border-t border-rose-100 dark:border-rose-900/40 py-4 px-4 space-y-3 overflow-hidden nav-gradient"
           >
           <motion.div
             initial={{ opacity: 0, x: -20 }}
