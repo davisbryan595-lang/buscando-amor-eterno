@@ -352,7 +352,7 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
   return (
     <div className="bg-gradient-to-b from-card to-card-subtle dark:from-card dark:to-card-subtle rounded-none md:rounded-xl border-0 md:border border-rose-100 dark:border-rose-900/40 flex flex-col h-full w-full soft-glow overflow-hidden gradient-40">
       {/* Header */}
-      <div className="sticky top-16 md:top-24 z-20 px-3 py-3 sm:p-4 lg:p-6 border-b border-rose-100 dark:border-rose-900/40 flex items-center justify-between flex-shrink-0 gap-2 bg-gradient-to-b from-card to-card-subtle dark:from-card dark:to-card-subtle">
+      <div className="sticky top-16 md:top-24 z-20 px-3 py-3 sm:p-4 lg:p-6 border-b border-rose-100 dark:border-rose-900/40 flex items-center justify-between flex-shrink-0 gap-2 bg-gradient-to-b from-card to-card-subtle dark:from-card dark:to-card-subtle gradient-40">
         <div className="flex items-center gap-2 sm:gap-3 lg:gap-4 min-w-0 flex-1">
           {onBack && (
             <button
