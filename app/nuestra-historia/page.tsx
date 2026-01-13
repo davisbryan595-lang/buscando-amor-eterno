@@ -145,21 +145,21 @@ export default function NuestraHistoriaPage() {
         <div className="relative z-10 w-full max-w-4xl mx-auto text-center px-4 md:px-6">
           <h1
             ref={heroTitleRef}
-            className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-playfair font-bold mb-4 md:mb-6 text-white drop-shadow-lg"
+            className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-playfair font-bold mb-4 md:mb-6 hero-title-gradient drop-shadow-lg"
           >
             {t('ourStory.heroTitle')}
           </h1>
 
           <h2
             ref={heroSubtitleRef}
-            className="text-2xl sm:text-3xl md:text-4xl font-playfair font-semibold mb-6 md:mb-8 text-rose-100"
+            className="text-2xl sm:text-3xl md:text-4xl font-playfair font-semibold mb-6 md:mb-8 hero-subtitle-gradient"
           >
             {t('ourStory.heroSubtitle')}
           </h2>
 
           <p
             ref={heroDescriptionRef}
-            className="text-base sm:text-lg md:text-xl text-white drop-shadow-md leading-relaxed max-w-2xl mx-auto"
+            className="text-base sm:text-lg md:text-xl text-black dark:text-slate-200 drop-shadow-md leading-relaxed max-w-2xl mx-auto"
           >
             {t('ourStory.heroDescription')}
           </p>
