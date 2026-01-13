@@ -78,7 +78,7 @@ function MessagesContentInner({ onChatOpenChange, isChatOpen }: MessagesContentI
   if (loading) {
     return (
       <div className="pt-24 pb-12 px-4 h-screen flex items-center justify-center">
-        <p className="text-muted-foreground">Loading conversations...</p>
+        <p className="text-white/75">Loading conversations...</p>
       </div>
     )
   }
@@ -87,8 +87,8 @@ function MessagesContentInner({ onChatOpenChange, isChatOpen }: MessagesContentI
     return (
       <div className="pt-24 pb-12 px-4 h-screen flex items-center justify-center">
         <div className="text-center max-w-md">
-          <p className="text-foreground font-semibold mb-3">Unable to load conversations</p>
-          <p className="text-muted-foreground text-sm mb-6">
+          <p className="text-white font-semibold mb-3">Unable to load conversations</p>
+          <p className="text-white/75 text-sm mb-6">
             {error.includes('timed out')
               ? 'The connection is taking longer than expected. Please check your internet connection and try again.'
               : error}
@@ -96,13 +96,13 @@ function MessagesContentInner({ onChatOpenChange, isChatOpen }: MessagesContentI
           <div className="flex gap-3 justify-center">
             <button
               onClick={() => window.location.reload()}
-              className="px-6 py-2 bg-primary text-white rounded-full hover:bg-rose-700 transition"
+              className="px-6 py-2 bg-white text-primary rounded-full hover:bg-white/90 transition font-semibold"
             >
               Reload Page
             </button>
             <Link
               href="/browse"
-              className="px-6 py-2 bg-card-subtle text-foreground dark:bg-card-subtle dark:text-white rounded-full hover:bg-card-hover dark:hover:bg-card-hover transition"
+              className="px-6 py-2 bg-white/20 text-white rounded-full hover:bg-white/30 transition font-semibold border border-white/40"
             >
               Browse Profiles
             </Link>
@@ -115,7 +115,7 @@ function MessagesContentInner({ onChatOpenChange, isChatOpen }: MessagesContentI
   if (!user) {
     return (
       <div className="pt-24 pb-12 px-4 h-screen flex items-center justify-center">
-        <p className="text-muted-foreground">Please log in to view messages.</p>
+        <p className="text-white/75">Please log in to view messages.</p>
       </div>
     )
   }
