@@ -146,7 +146,7 @@ function MessagesContentInner({ onChatOpenChange, isChatOpen }: MessagesContentI
                 <div
                   key={conv.id}
                   className={`px-3 py-3 sm:px-4 sm:py-4 lg:p-5 text-left transition border-b dark:border-slate-700 ${
-                    selectedConversation?.id === conv.id ? 'bg-card-hover dark:bg-card-hover' : ''
+                    selectedConversation?.id === conv.id ? 'bg-white/20 dark:bg-white/20' : ''
                   }`}
                 >
                   <button
