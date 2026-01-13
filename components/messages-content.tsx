@@ -78,7 +78,7 @@ function MessagesContentInner({ onChatOpenChange, isChatOpen }: MessagesContentI
   if (loading) {
     return (
       <div className="pt-24 pb-12 px-4 h-screen flex items-center justify-center">
-        <p className="text-white/75">Loading conversations...</p>
+        <p className="text-muted-foreground">Loading conversations...</p>
       </div>
     )
   }
@@ -87,8 +87,8 @@ function MessagesContentInner({ onChatOpenChange, isChatOpen }: MessagesContentI
     return (
       <div className="pt-24 pb-12 px-4 h-screen flex items-center justify-center">
         <div className="text-center max-w-md">
-          <p className="text-white font-semibold mb-3">Unable to load conversations</p>
-          <p className="text-white/75 text-sm mb-6">
+          <p className="text-foreground font-semibold mb-3">Unable to load conversations</p>
+          <p className="text-muted-foreground text-sm mb-6">
             {error.includes('timed out')
               ? 'The connection is taking longer than expected. Please check your internet connection and try again.'
               : error}
@@ -96,13 +96,13 @@ function MessagesContentInner({ onChatOpenChange, isChatOpen }: MessagesContentI
           <div className="flex gap-3 justify-center">
             <button
               onClick={() => window.location.reload()}
-              className="px-6 py-2 bg-white text-primary rounded-full hover:bg-white/90 transition font-semibold"
+              className="px-6 py-2 bg-primary text-primary-foreground rounded-full hover:bg-rose-700 transition font-semibold"
             >
               Reload Page
             </button>
             <Link
               href="/browse"
-              className="px-6 py-2 bg-white/20 text-white rounded-full hover:bg-white/30 transition font-semibold border border-white/40"
+              className="px-6 py-2 bg-muted text-muted-foreground rounded-full hover:bg-muted/80 transition font-semibold border border-border"
             >
               Browse Profiles
             </Link>
@@ -115,7 +115,7 @@ function MessagesContentInner({ onChatOpenChange, isChatOpen }: MessagesContentI
   if (!user) {
     return (
       <div className="pt-24 pb-12 px-4 h-screen flex items-center justify-center">
-        <p className="text-white/75">Please log in to view messages.</p>
+        <p className="text-muted-foreground">Please log in to view messages.</p>
       </div>
     )
   }
@@ -140,7 +140,7 @@ function MessagesContentInner({ onChatOpenChange, isChatOpen }: MessagesContentI
 
           <div className="divide-y dark:divide-slate-700 flex-1 overflow-y-auto">
             {conversations.length === 0 ? (
-              <div className="p-4 text-center text-white/75 text-sm">No conversations yet</div>
+              <div className="p-4 text-center text-muted-foreground text-sm">No conversations yet</div>
             ) : (
               conversations.map((conv) => (
                 <div
@@ -172,8 +172,8 @@ function MessagesContentInner({ onChatOpenChange, isChatOpen }: MessagesContentI
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-black dark:text-white text-sm sm:text-base lg:text-lg truncate">{conv.other_user_name || 'User'}</p>
-                      <p className="text-xs sm:text-sm lg:text-base text-black/70 dark:text-white/75 truncate">{conv.last_message}</p>
+                      <p className="font-semibold text-foreground text-sm sm:text-base lg:text-lg truncate">{conv.other_user_name || 'User'}</p>
+                      <p className="text-xs sm:text-sm lg:text-base text-muted-foreground truncate">{conv.last_message}</p>
                     </div>
                     {conv.unread_count > 0 && (
                       <span className="bg-rose-500 text-white text-xs rounded-full w-5 h-5 lg:w-6 lg:h-6 flex items-center justify-center flex-shrink-0">
