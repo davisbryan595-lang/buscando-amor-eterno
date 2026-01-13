@@ -116,7 +116,7 @@ export default function Hero() {
       </div>
 
       <div className="w-full max-w-5xl mx-auto text-center relative z-20">
-        <h1 ref={titleRef} className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-playfair font-bold mb-6 md:mb-8 leading-tight tracking-tight text-white drop-shadow-lg">
+        <h1 ref={titleRef} className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-playfair font-bold mb-6 md:mb-8 leading-tight tracking-tight" style={{textShadow: '0 4px 12px rgba(0, 0, 0, 0.8), 0 2px 4px rgba(0, 0, 0, 0.6)'}}>
           <span className="hero-title-gradient relative inline-block">
             {t('hero.title').split(' ').slice(0, 2).join(' ')}
             <svg className="absolute -bottom-2 left-0 w-full h-3 text-rose-400 dark:text-pink-300 -z-10" viewBox="0 0 100 10" preserveAspectRatio="none">
