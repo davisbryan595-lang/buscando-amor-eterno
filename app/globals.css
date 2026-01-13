@@ -225,6 +225,38 @@
     background-clip: text;
   }
 
+  /* Navbar Gradient Background */
+  .nav-gradient {
+    background: linear-gradient(to right,
+      rgba(190, 18, 60, 0.08) 0%,
+      rgba(225, 27, 106, 0.1) 25%,
+      rgba(255, 105, 180, 0.08) 50%,
+      rgba(225, 27, 106, 0.1) 75%,
+      rgba(190, 18, 60, 0.08) 100%);
+  }
+
+  .dark .nav-gradient {
+    background: linear-gradient(to right,
+      rgba(255, 105, 180, 0.12) 0%,
+      rgba(255, 133, 192, 0.14) 25%,
+      rgba(255, 182, 217, 0.12) 50%,
+      rgba(255, 133, 192, 0.14) 75%,
+      rgba(255, 105, 180, 0.12) 100%);
+  }
+
+  /* Card Gradient Background */
+  .card-gradient {
+    background: linear-gradient(135deg,
+      rgba(190, 18, 60, 0.05) 0%,
+      rgba(244, 194, 194, 0.08) 100%);
+  }
+
+  .dark .card-gradient {
+    background: linear-gradient(135deg,
+      rgba(255, 105, 180, 0.1) 0%,
+      rgba(255, 182, 217, 0.08) 100%);
+  }
+
   /* Display customization classes */
   html.compact-mode {
     --spacing-multiplier: 0.75;
