@@ -49,7 +49,7 @@ export default function ChatRoomPage() {
   }, [])
 
   return (
-    <main className="h-screen w-screen bg-background text-foreground relative overflow-hidden flex flex-col">
+    <main className="h-screen w-screen bg-background text-foreground relative overflow-hidden flex flex-col gradient-50">
       {/* Animated background elements - subtle romantic theme */}
       <div className="fixed inset-0 pointer-events-none">
         {/* Subtle floating gradient orbs - very minimal */}
