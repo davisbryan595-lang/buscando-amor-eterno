@@ -91,11 +91,11 @@ export default function Navigation() {
           <div className="relative">
             <button
               onClick={() => setLangDropdown(!langDropdown)}
-              className="p-2 hover:bg-card-subtle dark:hover:bg-card-subtle rounded-full transition flex items-center gap-1"
+              className="p-1.5 hover:bg-card-subtle dark:hover:bg-card-subtle rounded-full transition flex items-center gap-1"
               aria-label="Language"
             >
-              <Globe size={20} className="text-primary" />
-              <span className="text-sm font-semibold text-primary uppercase">{language}</span>
+              <Globe size={18} className="text-primary" />
+              <span className="text-xs font-semibold text-primary uppercase">{language}</span>
             </button>
             {langDropdown && (
               <div className="absolute right-0 mt-2 bg-card dark:bg-card border border-rose-100 dark:border-rose-900/40 rounded-lg shadow-lg z-50">
