@@ -173,10 +173,10 @@ export default function CustomizationPage() {
               {/* Compact Mode */}
               <div className="flex items-center justify-between p-4 bg-rose-50 dark:bg-rose-950 rounded-xl">
                 <div>
-                  <p className="font-semibold text-foreground dark:text-white text-sm">
+                  <p className="font-semibold text-gray-900 dark:text-white text-sm">
                     Compact Mode
                   </p>
-                  <p className="text-xs text-muted-foreground dark:text-slate-400">
+                  <p className="text-xs text-gray-600 dark:text-slate-400">
                     Reduce spacing between elements
                   </p>
                 </div>
