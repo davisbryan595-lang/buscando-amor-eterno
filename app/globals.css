@@ -180,6 +180,51 @@
 }
 
 @layer components {
+  /* Hero Section Theme-Consistent Gradients */
+  .hero-title-gradient {
+    background: linear-gradient(to right,
+      #BE123C 0%,
+      #E11B6A 25%,
+      #FF69B4 50%,
+      #E11B6A 75%,
+      #BE123C 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .dark .hero-title-gradient {
+    background: linear-gradient(to right,
+      #FF69B4 0%,
+      #FF85C0 25%,
+      #FFB6D9 50%,
+      #FF85C0 75%,
+      #FF69B4 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hero-subtitle-gradient {
+    background: linear-gradient(135deg,
+      #BE123C 0%,
+      #E84C89 50%,
+      #F4A4C0 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .dark .hero-subtitle-gradient {
+    background: linear-gradient(135deg,
+      #FF85C0 0%,
+      #FFB6D9 50%,
+      #FF69B4 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
   /* Display customization classes */
   html.compact-mode {
     --spacing-multiplier: 0.75;
