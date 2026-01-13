@@ -128,7 +128,7 @@ export default function Hero() {
           {t('hero.subtitle')}
         </h2>
 
-        <p ref={descriptionRef} className="text-base sm:text-lg md:text-xl text-white mb-8 md:mb-12 max-w-2xl mx-auto leading-relaxed font-medium" style={{textShadow: '0 2px 8px rgba(0, 0, 0, 0.7), 0 1px 2px rgba(0, 0, 0, 0.5)'}}>
+        <p ref={descriptionRef} className="text-base sm:text-lg md:text-xl text-black dark:text-white mb-8 md:mb-12 max-w-2xl mx-auto leading-relaxed font-medium">
           {t('hero.description')}
         </p>
 
@@ -149,16 +149,16 @@ export default function Hero() {
 
         <div ref={statsRef} className="mt-12 md:mt-16 grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6 text-center">
           <div>
-            <p className="text-2xl sm:text-3xl font-bold text-white mb-2" style={{textShadow: '0 2px 8px rgba(0, 0, 0, 0.7)'}}>50M+</p>
-            <p className="text-sm md:text-base text-white" style={{textShadow: '0 2px 6px rgba(0, 0, 0, 0.7)'}}>{t('hero.membersWorldwide')}</p>
+            <p className="text-2xl sm:text-3xl font-bold text-primary dark:text-white mb-2">50M+</p>
+            <p className="text-sm md:text-base text-black dark:text-white">{t('hero.membersWorldwide')}</p>
           </div>
           <div>
-            <p className="text-2xl sm:text-3xl font-bold text-white mb-2" style={{textShadow: '0 2px 8px rgba(0, 0, 0, 0.7)'}}>1M+</p>
-            <p className="text-sm md:text-base text-white" style={{textShadow: '0 2px 6px rgba(0, 0, 0, 0.7)'}}>{t('hero.matchesMade')}</p>
+            <p className="text-2xl sm:text-3xl font-bold text-primary dark:text-white mb-2">1M+</p>
+            <p className="text-sm md:text-base text-black dark:text-white">{t('hero.matchesMade')}</p>
           </div>
           <div>
-            <p className="text-2xl sm:text-3xl font-bold text-white mb-2" style={{textShadow: '0 2px 8px rgba(0, 0, 0, 0.7)'}}>100+</p>
-            <p className="text-sm md:text-base text-white" style={{textShadow: '0 2px 6px rgba(0, 0, 0, 0.7)'}}>{t('hero.countries')}</p>
+            <p className="text-2xl sm:text-3xl font-bold text-primary dark:text-white mb-2">100+</p>
+            <p className="text-sm md:text-base text-black dark:text-white">{t('hero.countries')}</p>
           </div>
         </div>
       </div>
