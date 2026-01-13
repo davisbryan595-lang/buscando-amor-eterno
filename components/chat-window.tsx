@@ -452,7 +452,7 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
             })}
             {showTypingIndicator && (
               <div className="flex justify-start">
-                <div className="px-4 sm:px-5 md:px-6 py-2 sm:py-3 md:py-4 rounded-3xl rounded-bl-none bg-gradient-to-r from-card-subtle to-card-subtle dark:from-card-subtle dark:to-card-subtle">
+                <div className="px-4 sm:px-5 md:px-6 py-2 sm:py-3 md:py-4 rounded-3xl rounded-bl-none bg-card-subtle dark:bg-card-subtle">
                   <TypingIndicator />
                 </div>
               </div>
