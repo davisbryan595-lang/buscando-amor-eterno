@@ -239,7 +239,7 @@ export default function CustomizationPage() {
                   }}
                   className="cursor-pointer"
                 />
-                <Label htmlFor="font-inter" className="flex-1 cursor-pointer text-sm font-medium dark:text-white">
+                <Label htmlFor="font-inter" className="flex-1 cursor-pointer text-sm font-medium text-gray-900 dark:text-white">
                   Modern (Inter)
                 </Label>
               </div>
@@ -256,7 +256,7 @@ export default function CustomizationPage() {
                   }}
                   className="cursor-pointer"
                 />
-                <Label htmlFor="font-playfair" className="flex-1 cursor-pointer text-sm font-medium font-playfair dark:text-white">
+                <Label htmlFor="font-playfair" className="flex-1 cursor-pointer text-sm font-medium font-playfair text-gray-900 dark:text-white">
                   Elegant (Playfair Display)
                 </Label>
               </div>
