@@ -19,6 +19,7 @@ export default function NuestraHistoriaPage() {
   const heroSubtitleRef = useRef<HTMLHeadingElement>(null)
   const heroDescriptionRef = useRef<HTMLParagraphElement>(null)
   const scrollIndicatorRef = useRef<HTMLDivElement>(null)
+  const pageRef = useRef<HTMLElement>(null)
 
   const [floatingHearts, setFloatingHearts] = useState<Array<{ id: number; delay: number; duration: number }>>([])
 
