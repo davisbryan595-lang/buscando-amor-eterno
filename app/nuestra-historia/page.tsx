@@ -117,7 +117,25 @@ export default function NuestraHistoriaPage() {
   }, [])
 
   return (
-    <main className="w-full bg-background text-foreground">
+    <main ref={pageRef} className="nuestra-historia-page w-full bg-background text-foreground">
+      <style>{`
+        /* Light theme high contrast text for Our Story page */
+        [data-theme="light"] .nuestra-historia-page body,
+        [data-theme="light"] .nuestra-historia-page p,
+        [data-theme="light"] .nuestra-historia-page span,
+        [data-theme="light"] .nuestra-historia-page div {
+          color: #222222;
+        }
+
+        [data-theme="light"] .nuestra-historia-page h1,
+        [data-theme="light"] .nuestra-historia-page h2,
+        [data-theme="light"] .nuestra-historia-page h3,
+        [data-theme="light"] .nuestra-historia-page h4,
+        [data-theme="light"] .nuestra-historia-page h5,
+        [data-theme="light"] .nuestra-historia-page h6 {
+          color: #000000;
+        }
+      `}</style>
       <Navigation />
 
       {/* Hero Section */}
