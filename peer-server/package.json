@@ -1,0 +1,19 @@
+{
+  "name": "peer-server-buscando",
+  "version": "1.0.0",
+  "description": "Self-hosted PeerJS signaling server for Buscando Amor Eterno",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "peer": "^1.1.1",
+    "cors": "^2.8.5"
+  },
+  "devDependencies": {},
+  "engines": {
+    "node": "22.x"
+  }
+}

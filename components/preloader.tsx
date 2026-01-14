@@ -11,7 +11,7 @@ export function Preloader() {
 
     const timer = setTimeout(() => {
       setIsLoading(false);
-    }, 3000);
+    }, 1200);
 
     return () => clearTimeout(timer);
   }, []);
@@ -73,7 +73,7 @@ export function Preloader() {
           align-items: center;
           justify-content: center;
           z-index: 9999;
-          animation: fadeOut 0.6s ease-in-out forwards 2.7s;
+          animation: fadeOut 0.5s ease-in-out forwards 2.0s;
         }
 
         .preloader-content {

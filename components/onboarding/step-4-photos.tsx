@@ -10,7 +10,6 @@ import Image from 'next/image'
 
 interface Step4Props {
   onNext: () => void
-  onSkip: () => void
   initialPhotos?: File[]
   onDataChange: (files: File[]) => void
   onUploadComplete?: (urls: string[]) => void
@@ -18,7 +17,6 @@ interface Step4Props {
 
 export function Step4Photos({
   onNext,
-  onSkip,
   initialPhotos = [],
   onDataChange,
   onUploadComplete,
@@ -225,16 +223,9 @@ export function Step4Photos({
 
       <div className="flex gap-4">
         <Button
-          onClick={onSkip}
-          variant="outline"
-          className="flex-1 py-3 rounded-full border-secondary text-foreground hover:bg-muted"
-        >
-          {t('onboarding.skipForNow')}
-        </Button>
-        <Button
           onClick={handleNext}
           disabled={uploading}
-          className="flex-1 py-3 rounded-full bg-primary text-white hover:bg-rose-700 font-semibold disabled:opacity-50 flex items-center justify-center gap-2"
+          className="w-full py-3 rounded-full bg-primary text-white hover:bg-rose-700 font-semibold disabled:opacity-50 flex items-center justify-center gap-2"
         >
           {uploading && <Loader size={20} className="animate-spin" />}
           {t('onboarding.nextStep')}

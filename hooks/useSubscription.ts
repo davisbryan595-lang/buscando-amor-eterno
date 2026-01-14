@@ -34,6 +34,7 @@ export function useSubscription() {
     const fetchSubscriptionData = async () => {
       try {
         setLoading(true)
+        console.log('[Subscription] Fetching subscription for user:', user.id)
 
         const { data, error: err } = await supabase
           .from('subscriptions')
@@ -43,22 +44,28 @@ export function useSubscription() {
 
         if (!isMounted) return
 
-        if (err && err.code !== 'PGRST116') {
-          throw err
+        if (err) {
+          console.error('[Subscription] Query error:', err.code, err.message)
+          if (err.code !== 'PGRST116') {
+            throw err
+          }
         }
 
         if (data) {
+          console.log('[Subscription] Subscription found:', data)
           setSubscription(data as SubscriptionData)
-          setIsPremium(true)
+          setIsPremium(data.plan === 'premium')
         } else {
+          console.log('[Subscription] No subscription found, defaulting to free')
           setSubscription(null)
-          setIsPremium(true)
+          setIsPremium(false)
         }
         setError(null)
       } catch (err: any) {
         if (isMounted) {
-          setError(err.message)
-          console.error('Error fetching subscription:', err)
+          const errorMessage = err?.message || (typeof err === 'string' ? err : 'Failed to fetch subscription')
+          console.error('[Subscription] Fatal error:', errorMessage, err)
+          setError(errorMessage)
           setSubscription(null)
           setIsPremium(false)
         }
@@ -93,15 +100,16 @@ export function useSubscription() {
 
       if (data) {
         setSubscription(data as SubscriptionData)
-        setIsPremium(true)
+        setIsPremium(data.plan === 'premium')
       } else {
         setSubscription(null)
-        setIsPremium(true)
+        setIsPremium(false)
       }
       setError(null)
     } catch (err: any) {
-      setError(err.message)
-      console.error('Error fetching subscription:', err)
+      const errorMessage = err?.message || (typeof err === 'string' ? err : 'Failed to fetch subscription')
+      setError(errorMessage)
+      console.error('Error fetching subscription:', errorMessage, err)
       setSubscription(null)
       setIsPremium(false)
     } finally {
@@ -132,7 +140,8 @@ export function useSubscription() {
         setIsPremium(true)
         return data as SubscriptionData
       } catch (err: any) {
-        setError(err.message)
+        const errorMessage = err?.message || (typeof err === 'string' ? err : 'Failed to upgrade subscription')
+        setError(errorMessage)
         throw err
       }
     },
@@ -160,7 +169,8 @@ export function useSubscription() {
         setIsPremium(false)
         return data as SubscriptionData
       } catch (err: any) {
-        setError(err.message)
+        const errorMessage = err?.message || (typeof err === 'string' ? err : 'Failed to cancel subscription')
+        setError(errorMessage)
         throw err
       }
     },

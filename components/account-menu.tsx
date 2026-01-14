@@ -1,11 +1,12 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/auth-context'
 import { useProfile } from '@/hooks/useProfile'
 import Image from 'next/image'
+import gsap from 'gsap'
 import {
   Menu,
   X,
@@ -21,6 +22,8 @@ import { toast } from 'sonner'
 export function AccountMenu() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [isMounted, setIsMounted] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
+  const buttonRef = useRef<HTMLButtonElement>(null)
   const router = useRouter()
   const { user, signOut } = useAuth()
   const { profile } = useProfile()
@@ -28,6 +31,55 @@ export function AccountMenu() {
   useEffect(() => {
     setIsMounted(true)
   }, [])
+
+  useEffect(() => {
+    if (!menuRef.current || !buttonRef.current) return
+
+    if (menuOpen) {
+      // Entrance animation
+      gsap.fromTo(
+        menuRef.current,
+        {
+          opacity: 0,
+          scale: 0.95,
+          y: -10,
+        },
+        {
+          opacity: 1,
+          scale: 1,
+          y: 0,
+          duration: 0.25,
+          ease: 'power3.out',
+        }
+      )
+
+      // Animate chevron
+      gsap.to(buttonRef.current.querySelector('svg:last-child'), {
+        rotation: 180,
+        duration: 0.3,
+        ease: 'power2.out',
+      })
+    } else {
+      // Exit animation
+      gsap.to(
+        menuRef.current,
+        {
+          opacity: 0,
+          scale: 0.95,
+          y: -10,
+          duration: 0.2,
+          ease: 'power3.in',
+        }
+      )
+
+      // Animate chevron back
+      gsap.to(buttonRef.current.querySelector('svg:last-child'), {
+        rotation: 0,
+        duration: 0.3,
+        ease: 'power2.out',
+      })
+    }
+  }, [menuOpen])
 
   // Don't render until mounted to avoid hydration issues
   if (!isMounted || !user) return null
@@ -48,8 +100,9 @@ export function AccountMenu() {
   return (
     <div className="relative">
       <button
+        ref={buttonRef}
         onClick={() => setMenuOpen(!menuOpen)}
-        className="p-2 hover:bg-rose-50 rounded-full transition flex items-center gap-2"
+        className="p-2 hover:bg-card-subtle dark:hover:bg-card-subtle rounded-full transition flex items-center gap-2"
         aria-label="Account menu"
       >
         <div className="relative w-8 h-8 rounded-full overflow-hidden flex-shrink-0">
@@ -70,8 +123,11 @@ export function AccountMenu() {
       </button>
 
       {menuOpen && (
-        <div className="absolute right-0 mt-2 w-64 bg-white border border-rose-100 rounded-xl shadow-lg z-50">
-          <div className="p-4 border-b border-rose-100">
+        <div
+          ref={menuRef}
+          className="absolute right-0 mt-2 w-64 bg-card dark:bg-card border border-rose-100 dark:border-rose-900/40 rounded-xl shadow-lg z-50"
+        >
+          <div className="p-4 border-b border-rose-100 dark:border-rose-900/40">
             <p className="text-sm font-semibold text-foreground truncate">
               {user.email}
             </p>
@@ -85,7 +141,7 @@ export function AccountMenu() {
             <Link
               href="/profile"
               onClick={() => setMenuOpen(false)}
-              className="flex items-center gap-3 px-4 py-2.5 hover:bg-rose-50 transition text-foreground text-sm"
+              className="flex items-center gap-3 px-4 py-2.5 hover:bg-card-subtle dark:hover:bg-card-subtle transition text-foreground text-sm"
             >
               <User size={18} className="text-primary" />
               Account Details
@@ -98,7 +154,7 @@ export function AccountMenu() {
             <Link
               href="/settings/security"
               onClick={() => setMenuOpen(false)}
-              className="flex items-center gap-3 px-4 py-2.5 hover:bg-rose-50 transition text-foreground text-sm"
+              className="flex items-center gap-3 px-4 py-2.5 hover:bg-card-subtle dark:hover:bg-card-subtle transition text-foreground text-sm"
             >
               <Lock size={18} className="text-primary" />
               Change Password
@@ -111,7 +167,7 @@ export function AccountMenu() {
             <Link
               href="/settings/customization"
               onClick={() => setMenuOpen(false)}
-              className="flex items-center gap-3 px-4 py-2.5 hover:bg-rose-50 transition text-foreground text-sm"
+              className="flex items-center gap-3 px-4 py-2.5 hover:bg-card-subtle dark:hover:bg-card-subtle transition text-foreground text-sm"
             >
               <Palette size={18} className="text-primary" />
               Theme & Display
@@ -124,17 +180,17 @@ export function AccountMenu() {
             <Link
               href="/settings/preferences"
               onClick={() => setMenuOpen(false)}
-              className="flex items-center gap-3 px-4 py-2.5 hover:bg-rose-50 transition text-foreground text-sm"
+              className="flex items-center gap-3 px-4 py-2.5 hover:bg-card-subtle dark:hover:bg-card-subtle transition text-foreground text-sm"
             >
               <Settings size={18} className="text-primary" />
               Preferences
             </Link>
 
             {/* Sign Out */}
-            <div className="border-t border-rose-100 mt-2 pt-2">
+            <div className="border-t border-rose-100 dark:border-rose-900/40 mt-2 pt-2">
               <button
                 onClick={handleSignOut}
-                className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-rose-50 transition text-destructive text-sm"
+                className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-card-subtle dark:hover:bg-card-subtle transition text-destructive text-sm"
               >
                 <LogOut size={18} />
                 Sign Out

@@ -1,11 +1,12 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import Navigation from '@/components/navigation'
 import Footer from '@/components/footer'
 import { useAuth } from '@/context/auth-context'
+import { useProfile } from '@/hooks/useProfile'
 import { toast } from 'sonner'
 
 export default function LoginPage() {
@@ -13,8 +14,16 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const { signIn } = useAuth()
+  const { signIn, user } = useAuth()
+  const { profile, loading: profileLoading } = useProfile()
   const router = useRouter()
+
+  // Check if user is already logged in with incomplete profile, redirect to onboarding
+  useEffect(() => {
+    if (user && profile && !profileLoading && !profile.profile_complete) {
+      router.push('/onboarding')
+    }
+  }, [user, profile, profileLoading, router])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -40,7 +49,7 @@ export default function LoginPage() {
       toast.success('Logged in successfully! Redirecting...')
       // Small delay to allow user to see success message
       setTimeout(() => {
-        router.push('/browse')
+        router.push('/')
       }, 500)
     } catch (error: any) {
       const errorMessage = error.message || 'Failed to log in'
@@ -53,23 +62,23 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="min-h-screen bg-white">
+    <main className="min-h-screen bg-background text-foreground">
       <Navigation />
-      <div className="pt-24 pb-20 px-4">
-        <div className="max-w-md mx-auto">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="text-center mb-8">
-              <h2 className="text-3xl font-playfair font-bold text-slate-900 mb-2">
+      <div className="pt-20 md:pt-24 pb-16 md:pb-20 px-4">
+        <div className="w-full max-w-md mx-auto">
+          <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
+            <div className="text-center mb-6 md:mb-8">
+              <h2 className="text-2xl sm:text-3xl font-playfair font-bold text-foreground mb-2">
                 Welcome Back
               </h2>
-              <p className="text-slate-600">
+              <p className="text-sm md:text-base text-muted-foreground">
                 Log in to your account to continue
               </p>
             </div>
 
             {error && (
-              <div className="p-4 bg-rose-50 border border-rose-200 rounded-lg">
-                <p className="text-rose-800 text-sm">{error}</p>
+              <div className="p-3 md:p-4 bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-900/50 rounded-lg">
+                <p className="text-rose-800 dark:text-rose-300 text-xs md:text-sm">{error}</p>
               </div>
             )}
 
@@ -78,7 +87,7 @@ export default function LoginPage() {
               placeholder="Email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-3 border border-rose-200 rounded-full focus:outline-none focus:ring-2 focus:ring-primary"
+              className="w-full px-4 py-3 text-sm md:text-base border border-rose-200 rounded-full focus:outline-none focus:ring-2 focus:ring-primary"
               required
             />
 
@@ -87,20 +96,20 @@ export default function LoginPage() {
               placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 border border-rose-200 rounded-full focus:outline-none focus:ring-2 focus:ring-primary"
+              className="w-full px-4 py-3 text-sm md:text-base border border-rose-200 rounded-full focus:outline-none focus:ring-2 focus:ring-primary"
               required
             />
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 bg-primary text-white rounded-full font-semibold hover:bg-rose-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full py-3 text-sm md:text-base bg-primary text-white rounded-full font-semibold hover:bg-rose-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? 'Logging in...' : 'Log In'}
             </button>
 
             <div className="text-center">
-              <p className="text-slate-600">
+              <p className="text-sm md:text-base text-muted-foreground">
                 Don't have an account?{' '}
                 <Link href="/signup" className="text-primary font-semibold hover:underline">
                   Sign up

@@ -7,6 +7,8 @@ interface AuthContextType {
   user: any | null
   session: any | null
   loading: boolean
+  isLoading: boolean
+  getSession: () => Promise<any>
   signUp: (email: string, password: string) => Promise<void>
   signIn: (email: string, password: string) => Promise<void>
   signOut: () => Promise<void>
@@ -22,9 +24,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     let isMounted = true
+    let timeoutId: NodeJS.Timeout
 
     const initializeAuth = async () => {
       try {
+        // Get existing session from localStorage (persisted across page refreshes)
         const { data: { session: sessionData }, error } = await supabase.auth.getSession()
 
         if (error) throw error
@@ -46,7 +50,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
-    initializeAuth()
+    // Set a 5-second timeout to prevent indefinite loading
+    timeoutId = setTimeout(() => {
+      if (isMounted) {
+        console.warn('Auth initialization timeout - proceeding without session')
+        setLoading(false)
+      }
+    }, 5000)
+
+    initializeAuth().then(() => {
+      if (isMounted) {
+        clearTimeout(timeoutId)
+      }
+    })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, sessionData) => {
       if (isMounted) {
@@ -90,6 +106,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     return () => {
       isMounted = false
+      clearTimeout(timeoutId)
       subscription?.unsubscribe()
     }
   }, [])
@@ -110,9 +127,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           email: email,
         })
 
-        if (userError) {
+        if (userError && userError.code !== 'PGRST103') {
           console.error('Error creating user profile:', userError.message || JSON.stringify(userError))
-          throw userError
+          // Don't throw - account is already created in auth
         }
 
         // Create free subscription with upsert to avoid conflicts
@@ -122,13 +139,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           status: 'active',
         })
 
-        if (subError) {
+        if (subError && subError.code !== 'PGRST103') {
           console.error('Error creating subscription:', subError)
-          throw subError
+          // Don't throw - account is already created in auth
         }
       } catch (err) {
         console.error('Error in user setup:', err)
-        throw err
+        // Don't throw - account is already created in auth
       }
     }
   }
@@ -143,8 +160,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = async () => {
     try {
-      const { error } = await supabase.auth.signOut({ scope: 'local' })
-      if (error) throw error
+      const signOutPromise = supabase.auth.signOut({ scope: 'local' })
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Sign out request timed out')), 5000)
+      )
+
+      const result = await Promise.race([signOutPromise, timeoutPromise]) as any
+      if (result?.error) throw result.error
+
       setSession(null)
       setUser(null)
     } catch (err) {
@@ -167,8 +190,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // This will be handled in the useEffect when auth state changes
   }
 
+  const getSession = async () => {
+    const { data: { session: currentSession } } = await supabase.auth.getSession()
+    return currentSession
+  }
+
   return (
-    <AuthContext.Provider value={{ user, session, loading, signUp, signIn, signOut, signInWithOAuth }}>
+    <AuthContext.Provider value={{ user, session, loading, isLoading: loading, getSession, signUp, signIn, signOut, signInWithOAuth }}>
       {children}
     </AuthContext.Provider>
   )

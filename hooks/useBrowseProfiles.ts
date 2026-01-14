@@ -27,7 +27,7 @@ export function useBrowseProfiles() {
 
         const { data, error: err } = await supabase
           .from('profiles')
-          .select('id,user_id,full_name,photos,main_photo_index,created_at,age,location,bio')
+          .select('id,user_id,full_name,birthday,city,country,photos,main_photo_index,created_at,prompt_1')
           .neq('user_id', user.id)
           .eq('profile_complete', true)
           .order('created_at', { ascending: false })
@@ -40,8 +40,9 @@ export function useBrowseProfiles() {
         setError(null)
       } catch (err: any) {
         if (isMounted) {
-          setError(err.message)
-          console.error('Error fetching profiles:', err)
+          const errorMessage = err?.message || (typeof err === 'string' ? err : 'Failed to fetch profiles')
+          setError(errorMessage)
+          console.error('Error fetching profiles:', errorMessage, err)
           setProfiles([])
         }
       } finally {
@@ -65,7 +66,7 @@ export function useBrowseProfiles() {
       setLoading(true)
       const { data, error: err } = await supabase
         .from('profiles')
-        .select('id,user_id,full_name,photos,main_photo_index,created_at,age,location,bio')
+        .select('id,user_id,full_name,birthday,city,country,photos,main_photo_index,created_at,prompt_1')
         .neq('user_id', user.id)
         .eq('profile_complete', true)
         .order('created_at', { ascending: false })
@@ -75,8 +76,9 @@ export function useBrowseProfiles() {
       setProfiles((data as ProfileData[]) || [])
       setError(null)
     } catch (err: any) {
-      setError(err.message)
-      console.error('Error fetching profiles:', err)
+      const errorMessage = err?.message || (typeof err === 'string' ? err : 'Failed to fetch profiles')
+      setError(errorMessage)
+      console.error('Error fetching profiles:', errorMessage, err)
       setProfiles([])
     } finally {
       setLoading(false)
@@ -88,6 +90,7 @@ export function useBrowseProfiles() {
       if (!user) throw new Error('No user logged in')
 
       try {
+        // Create or update the like record
         const { error: err } = await supabase
           .from('likes')
           .upsert({
@@ -100,16 +103,74 @@ export function useBrowseProfiles() {
 
         if (err) throw err
 
-        // Only create notification if we have the liked profile ID
-        if (likedProfileId) {
-          const { error: notifErr } = await supabase.from('notifications').insert({
-            recipient_id: likedUserId,
-            liker_id: user.id,
-            liked_profile_id: likedProfileId,
-          })
+        // Check if the other user has already liked this user (mutual like)
+        const { data: mutualLike, error: checkErr } = await supabase
+          .from('likes')
+          .select('id, status')
+          .eq('user_id', likedUserId)
+          .eq('liked_user_id', user.id)
+          .maybeSingle()
 
-          if (notifErr) {
-            console.warn('Warning: notification not created:', notifErr.message)
+        if (checkErr) {
+          console.warn('Warning: could not check for mutual like:', checkErr.message)
+        }
+
+        // If mutual like found, update both records to 'matched'
+        if (mutualLike && (mutualLike.status === 'liked' || mutualLike.status === 'matched')) {
+          // Update both records in parallel for better atomicity
+          const [updateRes1, updateRes2] = await Promise.all([
+            supabase
+              .from('likes')
+              .update({ status: 'matched' })
+              .eq('user_id', likedUserId)
+              .eq('liked_user_id', user.id),
+            supabase
+              .from('likes')
+              .update({ status: 'matched' })
+              .eq('user_id', user.id)
+              .eq('liked_user_id', likedUserId),
+          ])
+
+          const updateErr1 = updateRes1.error
+          const updateErr2 = updateRes2.error
+
+          if (updateErr1 || updateErr2) {
+            console.warn('Warning: could not fully update mutual match status:', {
+              updateErr1: updateErr1?.message,
+              updateErr2: updateErr2?.message,
+            })
+          }
+
+          // Create match notifications for both users
+          try {
+            await Promise.all([
+              supabase.from('notifications').insert({
+                recipient_id: likedUserId,
+                from_user_id: user.id,
+                type: 'match',
+              }),
+              supabase.from('notifications').insert({
+                recipient_id: user.id,
+                from_user_id: likedUserId,
+                type: 'match',
+              }),
+            ])
+          } catch (err) {
+            console.warn('Warning: match notifications not created:', err)
+          }
+        }
+
+        // Create like notification
+        if (likedProfileId) {
+          try {
+            await supabase.from('notifications').insert({
+              recipient_id: likedUserId,
+              liker_id: user.id,
+              liked_profile_id: likedProfileId,
+              type: 'like',
+            })
+          } catch (notifErr) {
+            console.warn('Warning: like notification not created:', notifErr)
           }
         }
       } catch (err: any) {
@@ -127,10 +188,12 @@ export function useBrowseProfiles() {
       try {
         const { error: err } = await supabase
           .from('likes')
-          .insert({
+          .upsert({
             user_id: user.id,
             liked_user_id: likedUserId,
             status: 'disliked',
+          }, {
+            onConflict: 'user_id,liked_user_id'
           })
 
         if (err) throw err
@@ -147,6 +210,7 @@ export function useBrowseProfiles() {
       if (!user) throw new Error('No user logged in')
 
       try {
+        // Create or update the like record
         const { error: err } = await supabase
           .from('likes')
           .upsert({
@@ -159,16 +223,74 @@ export function useBrowseProfiles() {
 
         if (err) throw err
 
-        // Only create notification if we have the liked profile ID
-        if (likedProfileId) {
-          const { error: notifErr } = await supabase.from('notifications').insert({
-            recipient_id: likedUserId,
-            liker_id: user.id,
-            liked_profile_id: likedProfileId,
-          })
+        // Check if the other user has already liked this user (mutual like)
+        const { data: mutualLike, error: checkErr } = await supabase
+          .from('likes')
+          .select('id, status')
+          .eq('user_id', likedUserId)
+          .eq('liked_user_id', user.id)
+          .maybeSingle()
 
-          if (notifErr) {
-            console.warn('Warning: notification not created:', notifErr.message)
+        if (checkErr) {
+          console.warn('Warning: could not check for mutual like:', checkErr.message)
+        }
+
+        // If mutual like found, update both records to 'matched'
+        if (mutualLike && (mutualLike.status === 'liked' || mutualLike.status === 'matched')) {
+          // Update both records in parallel for better atomicity
+          const [updateRes1, updateRes2] = await Promise.all([
+            supabase
+              .from('likes')
+              .update({ status: 'matched' })
+              .eq('user_id', likedUserId)
+              .eq('liked_user_id', user.id),
+            supabase
+              .from('likes')
+              .update({ status: 'matched' })
+              .eq('user_id', user.id)
+              .eq('liked_user_id', likedUserId),
+          ])
+
+          const updateErr1 = updateRes1.error
+          const updateErr2 = updateRes2.error
+
+          if (updateErr1 || updateErr2) {
+            console.warn('Warning: could not fully update mutual match status:', {
+              updateErr1: updateErr1?.message,
+              updateErr2: updateErr2?.message,
+            })
+          }
+
+          // Create match notifications for both users
+          try {
+            await Promise.all([
+              supabase.from('notifications').insert({
+                recipient_id: likedUserId,
+                from_user_id: user.id,
+                type: 'match',
+              }),
+              supabase.from('notifications').insert({
+                recipient_id: user.id,
+                from_user_id: likedUserId,
+                type: 'match',
+              }),
+            ])
+          } catch (err) {
+            console.warn('Warning: match notifications not created:', err)
+          }
+        }
+
+        // Create like notification
+        if (likedProfileId) {
+          try {
+            await supabase.from('notifications').insert({
+              recipient_id: likedUserId,
+              liker_id: user.id,
+              liked_profile_id: likedProfileId,
+              type: 'like',
+            })
+          } catch (notifErr) {
+            console.warn('Warning: like notification not created:', notifErr)
           }
         }
       } catch (err: any) {

@@ -8,11 +8,13 @@ import Footer from '@/components/footer'
 import { useAuth } from '@/context/auth-context'
 import { Check } from 'lucide-react'
 import { toast } from 'sonner'
+import { useIsMobile } from '@/hooks/use-mobile'
 
 type SignUpStep = 'email' | 'profile' | 'success'
 
 export default function SignupPage() {
   const [step, setStep] = useState<SignUpStep>('email')
+  const isMobile = useIsMobile()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [formData, setFormData] = useState({
@@ -83,12 +85,12 @@ export default function SignupPage() {
   }
 
   return (
-    <main className="min-h-screen bg-white">
+    <main className="min-h-screen bg-background text-foreground">
       <Navigation />
-      <div className="pt-24 pb-20 px-4">
-        <div className="max-w-md mx-auto">
+      <div className="pt-20 md:pt-24 pb-16 md:pb-20 px-4">
+        <div className="w-full max-w-md mx-auto">
           {/* Progress */}
-          <div className="flex gap-2 mb-12">
+          <div className="flex gap-2 mb-8 md:mb-12">
             {(['email', 'profile', 'success'] as const).map((s, i) => (
               <div
                 key={s}
@@ -105,17 +107,17 @@ export default function SignupPage() {
 
           {/* Step 1: Email */}
           {step === 'email' && (
-            <form onSubmit={handleEmailSubmit} className="space-y-6">
+            <form onSubmit={handleEmailSubmit} className="space-y-4 md:space-y-6">
               <div>
-                <h2 className="text-3xl font-playfair font-bold text-slate-900 mb-2">
+                <h2 className="text-2xl sm:text-3xl font-playfair font-bold text-foreground mb-2">
                   Create Account
                 </h2>
-                <p className="text-slate-600">Join thousands finding love</p>
+                <p className="text-sm md:text-base text-muted-foreground">Join thousands finding love</p>
               </div>
 
               {error && (
-                <div className="p-4 bg-rose-50 border border-rose-200 rounded-lg">
-                  <p className="text-rose-800 text-sm">{error}</p>
+                <div className="p-3 md:p-4 bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-900/50 rounded-lg">
+                  <p className="text-rose-800 dark:text-rose-300 text-xs md:text-sm">{error}</p>
                 </div>
               )}
 
@@ -126,7 +128,7 @@ export default function SignupPage() {
                 onChange={(e) =>
                   setFormData({ ...formData, email: e.target.value })
                 }
-                className="w-full px-4 py-3 border border-rose-200 rounded-full focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full px-4 py-3 text-sm md:text-base border border-rose-200 rounded-full focus:outline-none focus:ring-2 focus:ring-primary"
                 required
               />
 
@@ -137,14 +139,14 @@ export default function SignupPage() {
                 onChange={(e) =>
                   setFormData({ ...formData, password: e.target.value })
                 }
-                className="w-full px-4 py-3 border border-rose-200 rounded-full focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full px-4 py-3 text-sm md:text-base border border-rose-200 rounded-full focus:outline-none focus:ring-2 focus:ring-primary"
                 required
               />
 
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3 bg-primary text-white rounded-full font-semibold hover:bg-rose-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full py-3 text-sm md:text-base bg-primary text-white rounded-full font-semibold hover:bg-rose-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? 'Creating account...' : 'Continue'}
               </button>
@@ -153,12 +155,12 @@ export default function SignupPage() {
 
           {/* Step 2: Profile */}
           {step === 'profile' && (
-            <form onSubmit={handleProfileSubmit} className="space-y-6">
+            <form onSubmit={handleProfileSubmit} className="space-y-4 md:space-y-6">
               <div>
-                <h2 className="text-3xl font-playfair font-bold text-slate-900 mb-2">
+                <h2 className="text-2xl sm:text-3xl font-playfair font-bold text-foreground mb-2">
                   Your Profile
                 </h2>
-                <p className="text-slate-600">Tell us about yourself</p>
+                <p className="text-sm md:text-base text-muted-foreground">Tell us about yourself</p>
               </div>
 
               <input
@@ -168,7 +170,7 @@ export default function SignupPage() {
                 onChange={(e) =>
                   setFormData({ ...formData, name: e.target.value })
                 }
-                className="w-full px-4 py-3 border border-rose-200 rounded-full focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full px-4 py-3 text-sm md:text-base border border-rose-200 rounded-full focus:outline-none focus:ring-2 focus:ring-primary"
                 required
               />
 
@@ -178,7 +180,7 @@ export default function SignupPage() {
                 onChange={(e) =>
                   setFormData({ ...formData, bio: e.target.value })
                 }
-                className="w-full px-4 py-3 border border-rose-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+                className="w-full px-4 py-3 text-sm md:text-base border border-rose-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary resize-none"
                 rows={4}
                 required
               />
@@ -186,7 +188,7 @@ export default function SignupPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3 bg-primary text-white rounded-full font-semibold hover:bg-rose-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full py-3 text-sm md:text-base bg-primary text-white rounded-full font-semibold hover:bg-rose-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? 'Saving...' : 'Continue'}
               </button>
@@ -195,26 +197,26 @@ export default function SignupPage() {
 
           {/* Step 3: Success */}
           {step === 'success' && (
-            <div className="space-y-6 text-center">
-              <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center mx-auto">
-                <Check size={32} className="text-white" />
+            <div className="space-y-4 md:space-y-6 text-center">
+              <div className="w-12 md:w-16 h-12 md:h-16 bg-primary rounded-full flex items-center justify-center mx-auto">
+                <Check size={isMobile ? 24 : 32} className="text-white" />
               </div>
 
               <div>
-                <h2 className="text-3xl font-playfair font-bold text-slate-900 mb-2">
+                <h2 className="text-2xl sm:text-3xl font-playfair font-bold text-foreground mb-2">
                   Welcome! 🎉
                 </h2>
-                <p className="text-slate-600">
+                <p className="text-sm md:text-base text-muted-foreground">
                   Account created successfully. Complete your profile to start browsing!
                 </p>
               </div>
 
-              <div className="bg-rose-50 border border-rose-200 rounded-lg p-4 text-sm text-slate-700">
+              <div className="bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 rounded-lg p-3 md:p-4 text-xs md:text-sm text-foreground">
                 <p className="font-semibold mb-2">You're in! ✨</p>
                 <p>Create your profile to connect with other members. Messaging and likes require a subscription.</p>
               </div>
 
-              <p className="text-slate-600 text-sm">
+              <p className="text-muted-foreground text-xs md:text-sm">
                 Redirecting to profile setup...
               </p>
             </div>

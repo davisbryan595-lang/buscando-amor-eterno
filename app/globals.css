@@ -1,7 +1,6 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
-
-@custom-variant dark (&:is(.dark *));
+@import '../styles/livekit-custom.css';
 
 :root {
   /* Updated color scheme for Buscando Amor Eterno dating website - deep red, rose gold, white, soft pink */
@@ -9,14 +8,18 @@
   --foreground: #1a1a1a;
   --card: #FFFFFF;
   --card-foreground: #1a1a1a;
+  --card-subtle: #FFF5F7;
+  --card-hover: #FFF0F6;
   --popover: #FFFFFF;
   --popover-foreground: #1a1a1a;
+  --surface: #FFF0F6;
+  --surface-subtle: #FFF5F7;
   --primary: #BE123C;
   --primary-foreground: #FFFFFF;
   --secondary: #F4C2C2;
   --secondary-foreground: #1a1a1a;
   --muted: #FFF0F6;
-  --muted-foreground: #666666;
+  --muted-foreground: #000000;
   --accent: #F4C2C2;
   --accent-foreground: #BE123C;
   --destructive: #BE123C;
@@ -45,8 +48,12 @@
   --foreground: #FFFFFF;
   --card: #1a1a1a;
   --card-foreground: #FFFFFF;
+  --card-subtle: #2a2a2a;
+  --card-hover: #262626;
   --popover: #1a1a1a;
   --popover-foreground: #FFFFFF;
+  --surface: #1a1a1a;
+  --surface-subtle: #2a2a2a;
   --primary: #FF69B4;
   --primary-foreground: #0a0a0a;
   --secondary: #8B4A5C;
@@ -83,6 +90,10 @@
   --color-foreground: var(--foreground);
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
+  --color-card-subtle: var(--card-subtle);
+  --color-card-hover: var(--card-hover);
+  --color-surface: var(--surface);
+  --color-surface-subtle: var(--surface-subtle);
   --color-popover: var(--popover);
   --color-popover-foreground: var(--popover-foreground);
   --color-primary: var(--primary);
@@ -124,31 +135,322 @@
   body {
     @apply bg-background text-foreground;
   }
-  
+
   /* Removed invalid @import and manual font classes. Using Next.js font loader instead. */
-  
-  /* Added floating hearts animation */
-  @keyframes float-hearts {
-    0% {
-      transform: translateY(0px) translateX(0px);
-      opacity: 1;
-    }
-    100% {
-      transform: translateY(-100vh) translateX(20px);
-      opacity: 0;
-    }
-  }
-  
-  .animate-float-hearts {
-    animation: float-hearts 6s ease-in infinite;
-  }
-  
+
+
   /* Added soft glow effect */
   .soft-glow {
     box-shadow: 0 0 30px rgba(190, 18, 60, 0.1);
   }
-  
+
   .soft-glow-lg {
     box-shadow: 0 0 60px rgba(190, 18, 60, 0.15);
+  }
+}
+
+/* THEME-SPECIFIC TEXT COLOR RULES - Applied only to body to avoid overriding component-specific colors */
+
+/* Light theme: body inherits dark text color from CSS variables */
+[data-theme="light"] body {
+  color: var(--foreground);
+}
+
+/* Dark theme: body inherits light text color from CSS variables */
+[data-theme="dark"] body {
+  color: var(--foreground);
+}
+
+@layer components {
+  /* Hero Section Theme-Consistent Gradients */
+  .hero-title-gradient {
+    background: linear-gradient(to right,
+      #BE123C 0%,
+      #E11B6A 25%,
+      #FF69B4 50%,
+      #E11B6A 75%,
+      #BE123C 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .dark .hero-title-gradient {
+    background: linear-gradient(to right,
+      #FF69B4 0%,
+      #FF85C0 25%,
+      #FFB6D9 50%,
+      #FF85C0 75%,
+      #FF69B4 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hero-subtitle-gradient {
+    background: linear-gradient(135deg,
+      #BE123C 0%,
+      #E84C89 50%,
+      #F4A4C0 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .dark .hero-subtitle-gradient {
+    background: linear-gradient(135deg,
+      #FF85C0 0%,
+      #FFB6D9 50%,
+      #FF69B4 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Navbar Gradient Background - same colors as hero title (90% opacity) */
+  .nav-gradient {
+    background: linear-gradient(to right,
+      rgba(190, 18, 60, 0.9) 0%,
+      rgba(225, 27, 106, 0.9) 25%,
+      rgba(255, 105, 180, 0.9) 50%,
+      rgba(225, 27, 106, 0.9) 75%,
+      rgba(190, 18, 60, 0.9) 100%) !important;
+  }
+
+  .dark .nav-gradient {
+    background: linear-gradient(to right,
+      rgba(255, 105, 180, 0.9) 0%,
+      rgba(255, 133, 192, 0.9) 25%,
+      rgba(255, 182, 217, 0.9) 50%,
+      rgba(255, 133, 192, 0.9) 75%,
+      rgba(255, 105, 180, 0.9) 100%) !important;
+  }
+
+  /* Gradient with 50% opacity for messages and lounge pages */
+  .gradient-50 {
+    background: linear-gradient(to right,
+      rgba(190, 18, 60, 0.5) 0%,
+      rgba(225, 27, 106, 0.5) 25%,
+      rgba(255, 105, 180, 0.5) 50%,
+      rgba(225, 27, 106, 0.5) 75%,
+      rgba(190, 18, 60, 0.5) 100%) !important;
+  }
+
+  .dark .gradient-50 {
+    background: linear-gradient(to right,
+      rgba(255, 105, 180, 0.5) 0%,
+      rgba(255, 133, 192, 0.5) 25%,
+      rgba(255, 182, 217, 0.5) 50%,
+      rgba(255, 133, 192, 0.5) 75%,
+      rgba(255, 105, 180, 0.5) 100%) !important;
+  }
+
+  /* Gradient with 40% opacity for chat window */
+  .gradient-40 {
+    background: linear-gradient(to right,
+      rgba(190, 18, 60, 0.4) 0%,
+      rgba(225, 27, 106, 0.4) 25%,
+      rgba(255, 105, 180, 0.4) 50%,
+      rgba(225, 27, 106, 0.4) 75%,
+      rgba(190, 18, 60, 0.4) 100%) !important;
+  }
+
+  .dark .gradient-40 {
+    background: linear-gradient(to right,
+      rgba(255, 105, 180, 0.4) 0%,
+      rgba(255, 133, 192, 0.4) 25%,
+      rgba(255, 182, 217, 0.4) 50%,
+      rgba(255, 133, 192, 0.4) 75%,
+      rgba(255, 105, 180, 0.4) 100%) !important;
+  }
+
+  /* Card Gradient Background - same colors as hero title */
+  .card-gradient {
+    background: linear-gradient(to right,
+      rgba(190, 18, 60, 0.9) 0%,
+      rgba(225, 27, 106, 0.9) 25%,
+      rgba(255, 105, 180, 0.9) 50%,
+      rgba(225, 27, 106, 0.9) 75%,
+      rgba(190, 18, 60, 0.9) 100%) !important;
+  }
+
+  .dark .card-gradient {
+    background: linear-gradient(to right,
+      rgba(255, 105, 180, 0.9) 0%,
+      rgba(255, 133, 192, 0.9) 25%,
+      rgba(255, 182, 217, 0.9) 50%,
+      rgba(255, 133, 192, 0.9) 75%,
+      rgba(255, 105, 180, 0.9) 100%) !important;
+  }
+
+  /* Display customization classes */
+  html.compact-mode {
+    --spacing-multiplier: 0.75;
+  }
+
+  html.larger-text {
+    font-size: 18px;
+  }
+
+  /* Toast Notification Responsiveness */
+  .toaster {
+    position: fixed;
+    z-index: 50;
+  }
+
+  /* Desktop - default position (top right) */
+  .toaster {
+    top: 0;
+    right: 0;
+    display: flex;
+    flex-direction: column-reverse;
+    gap: 0.5rem;
+    padding: 1rem;
+    max-width: 420px;
+  }
+
+  /* Tablet and smaller */
+  @media (max-width: 768px) {
+    .toaster {
+      max-width: calc(100vw - 2rem);
+      width: auto;
+      top: auto;
+      bottom: 0;
+      left: 50%;
+      right: auto;
+      transform: translateX(-50%);
+      padding: 0.75rem;
+      gap: 0.5rem;
+    }
+  }
+
+  /* Mobile - full width with safe area */
+  @media (max-width: 480px) {
+    .toaster {
+      bottom: 0;
+      left: 0.5rem;
+      right: 0.5rem;
+      width: calc(100% - 1rem);
+      max-width: none;
+      padding: 0.5rem;
+      transform: none;
+    }
+  }
+
+  /* Toast item responsiveness */
+  .toast {
+    padding: 1rem;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+  }
+
+  @media (max-width: 480px) {
+    .toast {
+      padding: 0.875rem;
+      font-size: 0.75rem;
+    }
+  }
+
+  /* Real-time Message Animations */
+  @keyframes slideInUp {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes slideInDown {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .message-enter-animation {
+    animation: slideInUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .message-enter-animation-received {
+    animation: slideInDown 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  /* Call UI Enhancements */
+  .call-button-active {
+    @apply shadow-lg transition-all duration-200;
+  }
+
+  .call-button-active:hover {
+    @apply transform scale-110;
+  }
+
+  .call-button-active:active {
+    @apply transform scale-95;
+  }
+
+  .call-connection-pulse {
+    animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  @keyframes pulse-ring {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.5;
+    }
+  }
+
+  .call-ringing {
+    animation: ring 2s ease-in-out infinite;
+  }
+
+  @keyframes ring {
+    0%, 100% {
+      transform: rotate(0deg);
+    }
+    25% {
+      transform: rotate(-15deg);
+    }
+    75% {
+      transform: rotate(15deg);
+    }
+  }
+
+  .video-pip {
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    border: 4px solid rgba(255, 255, 255, 0.9);
+  }
+
+  .connection-stats-badge {
+    backdrop-filter: blur(12px);
+    @apply bg-slate-900/80 border border-slate-700;
+  }
+
+  .call-status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+  }
+
+  .call-status-good {
+    @apply text-green-300;
+  }
+
+  .call-status-poor {
+    @apply text-yellow-300;
+  }
+
+  .call-status-unknown {
+    @apply text-gray-300;
   }
 }

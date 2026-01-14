@@ -2,18 +2,24 @@
 
 import React, { useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import Navigation from '@/components/navigation'
 import Footer from '@/components/footer'
+import { useAuth } from '@/context/auth-context'
 import { useProfileProtection } from '@/hooks/useProfileProtection'
 import { useBrowseProfiles } from '@/hooks/useBrowseProfiles'
 import { useSubscription } from '@/hooks/useSubscription'
 import { useProfile } from '@/hooks/useProfile'
 import { useNotifications } from '@/hooks/useNotifications'
-import { Heart, X, Star, Info, Loader, AlertCircle } from 'lucide-react'
+import { useUserProfile } from '@/hooks/useUserProfile'
+import { MutualPreferencesBadges } from '@/components/mutual-preferences-badges'
+import { Heart, X, Star, Info, Loader, AlertCircle, ExternalLink } from 'lucide-react'
 import Image from 'next/image'
 import { toast } from 'sonner'
 
 export default function BrowsePage() {
+  const router = useRouter()
+  const { user, loading: authLoading } = useAuth()
   // Protect this route - require complete profile
   const { isLoading } = useProfileProtection(true, '/onboarding')
   const { profiles, loading: profilesLoading, error: profilesError, likeProfile, dislikeProfile, superLikeProfile } = useBrowseProfiles()
@@ -29,25 +35,65 @@ export default function BrowsePage() {
   const [isDragging, setIsDragging] = useState(false)
   const [isActing, setIsActing] = useState(false)
 
-  if (isLoading || profilesLoading) {
+  const currentProfile = profiles[currentIndex]
+  const { mutualPreferences, loading: profileLoading } = useUserProfile(
+    currentProfile?.user_id || null
+  )
+
+  if (authLoading || isLoading || profilesLoading) {
     return (
-      <main className="min-h-screen flex items-center justify-center">
+      <main className="h-screen bg-background text-foreground flex items-center justify-center">
         <Loader className="animate-spin" size={40} />
+      </main>
+    )
+  }
+
+  // Check if user is logged in
+  if (!user) {
+    return (
+      <main className="h-screen bg-background text-foreground flex flex-col">
+        <Navigation />
+        <div className="flex-1 flex items-center justify-center px-4">
+          <div className="text-center max-w-md">
+            <Heart className="w-20 h-20 text-rose-300 mx-auto mb-6" />
+            <h1 className="text-3xl font-playfair font-bold text-foreground mb-4">
+              Sign In to Browse
+            </h1>
+            <p className="text-muted-foreground mb-8">
+              Log in to start discovering amazing profiles and find your soulmate.
+            </p>
+            <div className="flex flex-col gap-3">
+              <Link
+                href="/login"
+                className="px-8 py-3 bg-rose-700 text-white rounded-full font-semibold hover:bg-rose-800 transition-colors"
+              >
+                Log In
+              </Link>
+              <Link
+                href="/signup"
+                className="px-8 py-3 bg-card text-rose-700 border-2 border-rose-700 rounded-full font-semibold hover:bg-card-hover transition-colors"
+              >
+                Sign Up
+              </Link>
+            </div>
+          </div>
+        </div>
+        <Footer />
       </main>
     )
   }
 
   if (profilesError) {
     return (
-      <main className="min-h-screen bg-gradient-to-br from-rose-50 to-pink-50">
+      <main className="min-h-screen bg-background text-foreground">
         <Navigation />
         <div className="pt-24 pb-12 px-4 flex items-center justify-center min-h-[80vh]">
           <div className="text-center max-w-md">
             <AlertCircle className="w-16 h-16 text-rose-400 mx-auto mb-6" />
-            <h1 className="text-2xl font-playfair font-bold text-slate-900 mb-2">
+            <h1 className="text-2xl font-playfair font-bold text-foreground mb-2">
               Unable to Load Profiles
             </h1>
-            <p className="text-slate-600 mb-6">{profilesError}</p>
+            <p className="text-muted-foreground mb-6">{profilesError}</p>
             <button
               onClick={() => window.location.reload()}
               className="px-8 py-3 bg-rose-700 text-white rounded-full hover:bg-rose-800 transition-colors"
@@ -61,7 +107,6 @@ export default function BrowsePage() {
     )
   }
 
-  const currentProfile = profiles[currentIndex]
   const hasMoreProfiles = currentIndex < profiles.length - 1
 
   const handleSwipe = async (direction: 'left' | 'right' | 'super') => {
@@ -121,23 +166,23 @@ export default function BrowsePage() {
 
   if (!currentProfile) {
     return (
-      <main className="min-h-screen bg-gradient-to-br from-rose-50 to-pink-50">
+      <main className="h-screen bg-background text-foreground flex flex-col">
         <Navigation />
-        <div className="pt-24 pb-12 px-4 flex items-center justify-center min-h-[80vh]">
-          <div className="text-center">
+        <div className="flex-1 flex items-center justify-center px-4">
+          <div className="text-center max-w-md">
             <Heart className="w-20 h-20 text-rose-300 mx-auto mb-6" />
-            <h1 className="text-3xl font-playfair font-bold text-slate-900 mb-2">
-              No More Profiles
+            <h1 className="text-3xl font-playfair font-bold text-foreground mb-4">
+              No New Profiles Yet
             </h1>
-            <p className="text-slate-600 mb-6">
-              Check back later for new members
+            <p className="text-muted-foreground mb-8">
+              You've reviewed all available profiles that match your preferences. We'll notify you when someone suitable appears!
             </p>
-            <button
-              onClick={() => setCurrentIndex(0)}
-              className="px-8 py-3 bg-rose-700 text-white rounded-full hover:bg-rose-800 transition-colors"
+            <Link
+              href="/messages"
+              className="inline-block px-8 py-3 bg-rose-700 text-white rounded-full font-semibold hover:bg-rose-800 transition-colors"
             >
-              Start Over
-            </button>
+              View Messages
+            </Link>
           </div>
         </div>
         <Footer />
@@ -150,7 +195,7 @@ export default function BrowsePage() {
   const opacity = isDragging ? Math.max(0.5, 1 - Math.abs(dragOffset) / 200) : swipeDirection ? 0 : 1
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-rose-50 to-pink-50 overflow-hidden">
+    <main className="min-h-screen bg-gradient-to-br from-rose-50 dark:from-background to-pink-50 dark:to-background overflow-hidden">
       <Navigation />
 
       {/* Profile Incomplete Warning Banner */}
@@ -224,7 +269,7 @@ export default function BrowsePage() {
                 />
                 
                 {/* Gradient Overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
                 
                 {/* NOPE/LIKE Overlays */}
                 {dragOffset < -50 && (
@@ -243,48 +288,60 @@ export default function BrowsePage() {
                 )}
 
                 {/* Profile Info */}
-                <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
+                <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-4 md:p-6 text-white">
                   {!showInfo ? (
                     <>
-                      <div className="flex items-center justify-between mb-2">
-                        <div>
-                          <h2 className="text-4xl font-playfair font-bold mb-1">
-                            {currentProfile.full_name || 'User'}, {currentProfile.age || '?'}
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="min-w-0 flex-1">
+                          <h2 className="text-2xl sm:text-3xl md:text-4xl font-playfair font-bold mb-1 line-clamp-1 text-white">
+                            {currentProfile.full_name || 'User'}, {currentProfile.birthday ? new Date().getFullYear() - new Date(currentProfile.birthday).getFullYear() : '?'}
                           </h2>
-                          <p className="text-white/90 text-lg">{currentProfile.city || 'Location not set'}</p>
+                          <p className="text-white text-base sm:text-lg line-clamp-1">{currentProfile.city || 'Location not set'}</p>
                         </div>
                         <button
                           onClick={() => setShowInfo(true)}
-                          className="w-12 h-12 bg-rose-700/80 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-rose-700 transition-colors"
+                          className="w-10 h-10 sm:w-12 sm:h-12 bg-rose-700/80 hover:bg-rose-700 backdrop-blur-sm rounded-full flex items-center justify-center transition-colors flex-shrink-0"
                         >
-                          <Info className="w-6 h-6" />
+                          <Info className="w-5 h-5 sm:w-6 sm:h-6" />
                         </button>
                       </div>
                     </>
                   ) : (
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <h2 className="text-3xl font-playfair font-bold">
-                          {currentProfile.full_name || 'User'}, {currentProfile.age || '?'}
+                    <div className="space-y-3 sm:space-y-4 max-h-[calc(100vh-400px)] overflow-y-auto px-0 sm:px-1 text-white">
+                      <div className="flex items-center justify-between gap-2">
+                        <h2 className="text-2xl sm:text-3xl font-playfair font-bold line-clamp-2 text-white">
+                          {currentProfile.full_name || 'User'}, {currentProfile.birthday ? new Date().getFullYear() - new Date(currentProfile.birthday).getFullYear() : '?'}
                         </h2>
                         <button
                           onClick={() => setShowInfo(false)}
-                          className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center"
+                          className="w-9 h-9 sm:w-10 sm:h-10 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full flex items-center justify-center flex-shrink-0 transition-colors"
                         >
-                          <X className="w-5 h-5" />
+                          <X className="w-4 h-4 sm:w-5 sm:h-5" />
                         </button>
                       </div>
-                      <p className="text-white/90 text-lg">{currentProfile.city || 'Location not set'}</p>
-                      <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4">
-                        <p className="text-sm text-white/80 mb-2">About</p>
-                        <p>{currentProfile.bio || 'No bio yet'}</p>
-                      </div>
+                      <p className="text-white text-base sm:text-lg line-clamp-1">{currentProfile.city || 'Location not set'}</p>
                       {currentProfile.prompt_1 && (
-                        <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4">
-                          <p className="text-sm text-white/80 mb-2">Interests</p>
-                          <p>{currentProfile.prompt_1}</p>
+                        <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-3 sm:p-4">
+                          <p className="text-xs sm:text-sm text-white mb-2">About</p>
+                          <p className="text-sm sm:text-base text-white line-clamp-4">{currentProfile.prompt_1}</p>
                         </div>
                       )}
+                      {mutualPreferences.length > 0 && (
+                        <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-3 sm:p-4 text-sm">
+                          <MutualPreferencesBadges
+                            mutualPreferences={mutualPreferences}
+                            showLabel={true}
+                            maxBadges={4}
+                          />
+                        </div>
+                      )}
+                      <button
+                        onClick={() => router.push(`/profile/${currentProfile.user_id}`)}
+                        className="w-full bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-2xl p-2 sm:p-3 text-white font-semibold flex items-center justify-center gap-2 transition-colors text-sm sm:text-base"
+                      >
+                        <ExternalLink className="w-4 h-4" />
+                        View Full Profile
+                      </button>
                     </div>
                   )}
                 </div>
@@ -336,7 +393,7 @@ export default function BrowsePage() {
           </div>
 
           {/* Progress Indicator */}
-          <div className="mt-6 text-center text-slate-600">
+          <div className="mt-6 text-center text-muted-foreground">
             {currentIndex + 1} / {profiles.length}
           </div>
         </div>
