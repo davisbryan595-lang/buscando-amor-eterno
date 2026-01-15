@@ -221,7 +221,7 @@ export default function NuestraHistoriaPage() {
           <div className="flex flex-col md:flex-row gap-8 md:gap-12 items-center">
             {/* Image - IMAGE 2 */}
             <div
-              className="w-full md:w-1/2 relative h-80 sm:h-96 md:h-full rounded-lg overflow-hidden shadow-lg"
+              className="w-full md:w-1/2 relative h-80 sm:h-96 md:h-[450px] rounded-lg overflow-hidden shadow-lg"
               data-scroll-animate="fade-in-left"
             >
               <Image
