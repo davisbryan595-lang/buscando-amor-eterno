@@ -81,7 +81,7 @@ export default function Navigation() {
             >
               <Bell size={18} className="text-primary" />
               {notifications.length > 0 && (
-                <span className="absolute top-1 right-1 bg-rose-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-semibold">
+                <span className="absolute -top-1 -right-1 bg-rose-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-semibold z-10">
                   {notifications.length > 9 ? '9+' : notifications.length}
                 </span>
               )}
@@ -141,7 +141,7 @@ export default function Navigation() {
           >
             <Bell size={18} className="text-primary" />
             {notifications.length > 0 && (
-              <span className="absolute top-1 right-1 bg-rose-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-semibold">
+              <span className="absolute -top-1 -right-1 bg-rose-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-semibold z-10">
                 {notifications.length > 9 ? '9+' : notifications.length}
               </span>
             )}
