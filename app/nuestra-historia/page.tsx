@@ -208,19 +208,6 @@ export default function NuestraHistoriaPage() {
               {t('ourStory.intro.text')}
             </p>
           </div>
-
-          {/* Founder Portrait - IMAGE 1 */}
-          <div className="flex justify-center mb-8 md:mb-0">
-            <div className="relative w-60 h-60 md:w-72 md:h-72 rounded-full overflow-hidden shadow-lg border-4 border-rose-200">
-              <Image
-                src="https://cdn.builder.io/api/v1/image/assets%2F5c758e804cba4fa3a488e9088887877b%2Fffe4bf817a3ff4681b0376c5ff18c733e?format=webp&width=800"
-                alt="Founder portrait"
-                fill
-                className="object-cover hover:scale-110 transition-transform duration-700"
-                sizes="300px"
-              />
-            </div>
-          </div>
         </div>
       </section>
 
@@ -234,14 +221,14 @@ export default function NuestraHistoriaPage() {
           <div className="flex flex-col md:flex-row gap-8 md:gap-12 items-center">
             {/* Image - IMAGE 2 */}
             <div
-              className="w-full md:w-1/2 relative h-64 sm:h-80 md:h-96 rounded-lg overflow-hidden shadow-lg"
+              className="w-full md:w-1/2 relative h-80 sm:h-96 md:h-[450px] rounded-lg overflow-hidden shadow-lg"
               data-scroll-animate="fade-in-left"
             >
               <Image
                 src="https://cdn.builder.io/api/v1/image/assets%2F5c758e804cba4fa3a488e9088887877b%2F9b1c248404c849b1a671490fda170ba5?format=webp&width=800"
                 alt="Founder with children"
                 fill
-                className="object-cover hover:scale-105 transition-transform duration-700"
+                className="object-cover object-top hover:scale-105 transition-transform duration-700"
                 sizes="(max-width: 768px) 100vw, 50vw"
               />
             </div>
