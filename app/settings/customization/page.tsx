@@ -69,12 +69,6 @@ export default function CustomizationPage() {
     }
   }
 
-  const themeOptions = [
-    { value: 'light', label: 'Light', icon: Sun },
-    { value: 'dark', label: 'Dark', icon: Moon },
-    { value: 'system', label: 'System', icon: Palette },
-  ]
-
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Navigation />
