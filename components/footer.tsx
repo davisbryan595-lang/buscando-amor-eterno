@@ -51,10 +51,17 @@ export default function Footer() {
               if (el) columnsRef.current[0] = el
             }}
           >
-            <h3 className="text-lg md:text-xl font-playfair font-bold mb-2 flex items-center gap-2 text-white">
-              <Heart className="text-rose-400 flex-shrink-0" size={20} /> Buscando Amor Eterno
-            </h3>
-            <p className="text-xs md:text-sm text-gray-400">{t('footer.tagline')}</p>
+            <div className="flex items-center gap-2 mb-3">
+              <img
+                src="https://cdn.builder.io/api/v1/image/assets%2F5517f718aa7348e88214250292563028%2F09ca0588ac3741678f0d49e142dede0b?format=webp&width=800"
+                alt="Buscando Amor Eterno Logo"
+                className="h-8 w-8 md:h-10 md:w-10 object-contain flex-shrink-0"
+              />
+              <h3 className="text-lg md:text-xl font-playfair font-bold text-rose-300">
+                Buscando Amor Eterno
+              </h3>
+            </div>
+            <p className="text-xs md:text-sm text-slate-200">{t('footer.tagline')}</p>
           </div>
 
           <div
