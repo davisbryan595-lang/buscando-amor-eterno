@@ -96,55 +96,6 @@ export default function CustomizationPage() {
             </p>
           </div>
 
-          {/* Theme Section */}
-          <div className="bg-white dark:bg-slate-900 border border-rose-100 dark:border-rose-900 rounded-2xl p-8 space-y-6">
-            <div>
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                Theme
-              </h2>
-              <p className="text-sm text-gray-600 dark:text-slate-400">
-                Choose your preferred display theme
-              </p>
-            </div>
-
-            <div className="grid grid-cols-3 gap-4">
-              {themeOptions.map(({ value, label, icon: Icon }) => (
-                <button
-                  key={value}
-                  onClick={() => {
-                    const newTheme = value as typeof localTheme
-                    setLocalThemeState(newTheme)
-                    localStorage.setItem('app-theme', newTheme)
-
-                    // Apply theme immediately
-                    const htmlElement = document.documentElement
-                    let isDark = newTheme === 'dark'
-                    if (newTheme === 'system') {
-                      isDark = window.matchMedia('(prefers-color-scheme: dark)').matches
-                    }
-
-                    htmlElement.classList.remove('dark')
-                    htmlElement.setAttribute('data-theme', isDark ? 'dark' : 'light')
-                    if (isDark) {
-                      htmlElement.classList.add('dark')
-                    }
-
-                    toast.success(`Theme changed to ${label}`)
-                  }}
-                  className={`flex flex-col items-center justify-center py-6 px-4 rounded-xl border-2 transition ${
-                    localTheme === value
-                      ? 'border-primary bg-rose-50 dark:bg-rose-900'
-                      : 'border-rose-100 dark:border-rose-800 hover:border-primary'
-                  }`}
-                >
-                  <Icon size={32} className={localTheme === value ? 'text-primary' : 'text-muted-foreground'} />
-                  <p className="text-sm font-semibold text-foreground dark:text-white mt-2">
-                    {label}
-                  </p>
-                </button>
-              ))}
-            </div>
-          </div>
 
           {/* Display Options */}
           <div className="bg-white dark:bg-slate-900 border border-rose-100 dark:border-rose-900 rounded-2xl p-8 space-y-6 mt-8">
