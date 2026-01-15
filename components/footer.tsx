@@ -94,7 +94,7 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="border-t border-slate-700 pt-4 text-center text-xs md:text-sm text-gray-400">
+        <div className="border-t border-slate-700 pt-4 text-center text-xs md:text-sm text-slate-200">
           <p>{t('footer.copyright')}</p>
         </div>
       </div>
