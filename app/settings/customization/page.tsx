@@ -8,7 +8,7 @@ import Navigation from '@/components/navigation'
 import Footer from '@/components/footer'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
-import { ChevronLeft, Palette, Moon, Sun } from 'lucide-react'
+import { ChevronLeft, Palette } from 'lucide-react'
 import { toast } from 'sonner'
 
 export default function CustomizationPage() {
@@ -24,12 +24,6 @@ export default function CustomizationPage() {
     mounted,
   } = useCustomizationSettings()
   const [loading, setLoading] = useState(false)
-  const [localTheme, setLocalThemeState] = useState<'light' | 'dark' | 'system'>('light')
-
-  React.useEffect(() => {
-    const savedTheme = (localStorage.getItem('app-theme') as 'light' | 'dark' | 'system') || 'light'
-    setLocalThemeState(savedTheme)
-  }, [])
 
   if (!user) {
     return (
