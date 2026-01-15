@@ -221,14 +221,14 @@ export default function NuestraHistoriaPage() {
           <div className="flex flex-col md:flex-row gap-8 md:gap-12 items-center">
             {/* Image - IMAGE 2 */}
             <div
-              className="w-full md:w-1/2 relative h-64 sm:h-80 md:h-96 rounded-lg overflow-hidden shadow-lg"
+              className="w-full md:w-1/2 relative h-80 sm:h-96 md:h-full rounded-lg overflow-hidden shadow-lg"
               data-scroll-animate="fade-in-left"
             >
               <Image
                 src="https://cdn.builder.io/api/v1/image/assets%2F5c758e804cba4fa3a488e9088887877b%2F9b1c248404c849b1a671490fda170ba5?format=webp&width=800"
                 alt="Founder with children"
                 fill
-                className="object-cover hover:scale-105 transition-transform duration-700"
+                className="object-cover object-top hover:scale-105 transition-transform duration-700"
                 sizes="(max-width: 768px) 100vw, 50vw"
               />
             </div>
