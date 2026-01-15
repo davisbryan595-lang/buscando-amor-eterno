@@ -69,13 +69,13 @@ export default function Footer() {
               if (el) columnsRef.current[1] = el
             }}
           >
-            <h4 className="font-bold mb-2 text-sm md:text-base text-white">{t('footer.platform')}</h4>
-            <ul className="space-y-1 text-xs md:text-sm text-gray-400">
-              <li><Link href="/" className="hover:text-white transition">{t('common.home')}</Link></li>
-              <li><Link href="/browse" className="hover:text-white transition">{t('common.browse')}</Link></li>
-              <li><Link href="/pricing" className="hover:text-white transition">{t('common.pricing')}</Link></li>
-              <li><Link href="/messages" className="hover:text-white transition">{t('common.messages')}</Link></li>
-              <li><Link href="/chat-room" className="hover:text-white transition">{t('common.lounge')}</Link></li>
+            <h4 className="font-bold mb-2 text-sm md:text-base text-rose-300">{t('footer.platform')}</h4>
+            <ul className="space-y-1 text-xs md:text-sm text-slate-200">
+              <li><Link href="/" className="hover:text-rose-300 transition">{t('common.home')}</Link></li>
+              <li><Link href="/browse" className="hover:text-rose-300 transition">{t('common.browse')}</Link></li>
+              <li><Link href="/pricing" className="hover:text-rose-300 transition">{t('common.pricing')}</Link></li>
+              <li><Link href="/messages" className="hover:text-rose-300 transition">{t('common.messages')}</Link></li>
+              <li><Link href="/chat-room" className="hover:text-rose-300 transition">{t('common.lounge')}</Link></li>
             </ul>
           </div>
 
@@ -84,12 +84,12 @@ export default function Footer() {
               if (el) columnsRef.current[2] = el
             }}
           >
-            <h4 className="font-bold mb-2 text-sm md:text-base text-white">{t('footer.legal')}</h4>
-            <ul className="space-y-1 text-xs md:text-sm text-gray-400">
-              <li><a href="#" className="hover:text-white transition">{t('footer.privacy')}</a></li>
-              <li><a href="#" className="hover:text-white transition">{t('footer.terms')}</a></li>
-              <li><a href="#" className="hover:text-white transition">{t('footer.safety')}</a></li>
-              <li><a href="#" className="hover:text-white transition">{t('footer.contact')}</a></li>
+            <h4 className="font-bold mb-2 text-sm md:text-base text-rose-300">{t('footer.legal')}</h4>
+            <ul className="space-y-1 text-xs md:text-sm text-slate-200">
+              <li><a href="#" className="hover:text-rose-300 transition">{t('footer.privacy')}</a></li>
+              <li><a href="#" className="hover:text-rose-300 transition">{t('footer.terms')}</a></li>
+              <li><a href="#" className="hover:text-rose-300 transition">{t('footer.safety')}</a></li>
+              <li><a href="#" className="hover:text-rose-300 transition">{t('footer.contact')}</a></li>
             </ul>
           </div>
         </div>
