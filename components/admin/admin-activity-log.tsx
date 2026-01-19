@@ -21,12 +21,10 @@ interface ActivityLog {
   details: Record<string, any> | null
   created_at: string
   admin?: {
-    display_name: string
-    email: string
+    full_name: string
   }
   target_user?: {
-    display_name: string
-    email: string
+    full_name: string
   }
 }
 
@@ -59,8 +57,8 @@ export function AdminActivityLog() {
         .select(
           `
           *,
-          admin:admin_id(display_name, email),
-          target_user:target_user_id(display_name, email)
+          admin:admin_id(full_name),
+          target_user:target_user_id(full_name)
           `
         )
         .order('created_at', { ascending: false })
@@ -145,12 +143,11 @@ export function AdminActivityLog() {
                 </div>
                 <div className="mt-3 space-y-1 text-sm">
                   <p className="text-foreground">
-                    <span className="font-medium">Admin:</span> {log.admin?.display_name} ({log.admin?.email})
+                    <span className="font-medium">Admin:</span> {log.admin?.full_name}
                   </p>
                   {log.target_user && (
                     <p className="text-foreground">
-                      <span className="font-medium">Target:</span> {log.target_user.display_name} (
-                      {log.target_user.email})
+                      <span className="font-medium">Target:</span> {log.target_user.full_name}
                     </p>
                   )}
                   {log.details && (
