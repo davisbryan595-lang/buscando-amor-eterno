@@ -25,8 +25,13 @@ export function useAdminStats() {
       const today = new Date()
       today.setHours(0, 0, 0, 0)
 
-      // Get total users count
-      const { count: totalUsersCount } = await supabase
+      // Get total signups (from users table)
+      const { count: totalSignupsCount } = await supabase
+        .from('users')
+        .select('*', { count: 'exact', head: true })
+
+      // Get total profiles (completed onboarding)
+      const { count: totalProfilesCount } = await supabase
         .from('profiles')
         .select('*', { count: 'exact', head: true })
 
@@ -35,6 +40,12 @@ export function useAdminStats() {
         .from('profiles')
         .select('*', { count: 'exact', head: true })
         .gte('created_at', today.toISOString())
+
+      // Get incomplete profiles
+      const { count: incompleteCount } = await supabase
+        .from('profiles')
+        .select('*', { count: 'exact', head: true })
+        .eq('profile_complete', false)
 
       // Get active chats (messages sent/received today)
       const { count: activeChatsCount } = await supabase
@@ -60,12 +71,14 @@ export function useAdminStats() {
         .eq('banned', true)
 
       setStats({
-        totalUsers: totalUsersCount || 0,
+        totalSignups: totalSignupsCount || 0,
+        totalProfiles: totalProfilesCount || 0,
         newUsersToday: newUsersTodayCount || 0,
         activeChats: activeChatsCount || 0,
         totalCalls: totalCallsCount || 0,
         reportedProfiles: reportedCount || 0,
         bannedUsers: bannedCount || 0,
+        incompleteProfiles: incompleteCount || 0,
       })
     } catch (err: any) {
       const errorMessage = err?.message || 'Failed to fetch admin stats'
