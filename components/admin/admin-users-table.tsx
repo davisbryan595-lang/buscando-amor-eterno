@@ -20,8 +20,7 @@ import { formatDistanceToNow } from 'date-fns'
 export interface UserProfile {
   user_id: string
   id: string
-  display_name: string
-  email: string
+  full_name: string
   photos: string[]
   banned: boolean
   verified: boolean
@@ -42,7 +41,7 @@ export function AdminUsersTable() {
       setLoading(true)
       const { data, error } = await supabase
         .from('profiles')
-        .select('user_id, id, display_name, email, photos, banned, verified, created_at, updated_at')
+        .select('user_id, id, full_name, photos, banned, verified, created_at, updated_at')
         .order('created_at', { ascending: false })
 
       if (error) throw error
