@@ -62,8 +62,9 @@ export default function AdminPage() {
 
           {/* Tabs for different sections */}
           <Tabs defaultValue="users" className="space-y-6">
-            <TabsList className="grid w-full max-w-md grid-cols-3">
+            <TabsList className="grid w-full max-w-2xl grid-cols-4">
               <TabsTrigger value="users">Users</TabsTrigger>
+              <TabsTrigger value="incomplete">Incomplete Profiles</TabsTrigger>
               <TabsTrigger value="reports">Reports</TabsTrigger>
               <TabsTrigger value="activity">Activity Log</TabsTrigger>
             </TabsList>
