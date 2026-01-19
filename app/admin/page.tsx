@@ -74,6 +74,11 @@ export default function AdminPage() {
               <AdminUsersTable />
             </TabsContent>
 
+            {/* Incomplete Profiles Tab */}
+            <TabsContent value="incomplete" className="space-y-6">
+              <AdminIncompleteProfiles />
+            </TabsContent>
+
             {/* Reports Tab */}
             <TabsContent value="reports" className="space-y-6">
               <AdminReportedProfiles />
