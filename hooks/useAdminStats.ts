@@ -71,16 +71,14 @@ export function useAdminStats() {
 
       // Get incomplete profiles (including null values)
       try {
-        // First try: get profiles where profile_complete is false or null
-        const { data: incompleteData, error: err } = await supabase
+        const { count, error: err } = await supabase
           .from('profiles')
-          .select('id', { count: 'exact', head: true })
+          .select('*', { count: 'exact', head: true })
           .neq('profile_complete', true)
-
         if (err) throw err
-        incompleteCount = incompleteData ? incompleteData.length : 0
+        incompleteCount = count || 0
       } catch (err: any) {
-        console.warn('Failed to fetch incomplete profiles:', err?.message)
+        console.warn('Failed to fetch incomplete profiles with neq:', err?.message)
         // Fallback: try simple false check
         try {
           const { count: countFalse, error: errFalse } = await supabase
