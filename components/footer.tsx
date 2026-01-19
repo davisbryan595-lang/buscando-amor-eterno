@@ -57,11 +57,11 @@ export default function Footer() {
                 alt="Buscando Amor Eterno Logo"
                 className="h-8 w-8 md:h-10 md:w-10 object-contain flex-shrink-0"
               />
-              <h3 className="text-lg md:text-xl font-playfair font-bold text-rose-200">
+              <h3 className="text-lg md:text-xl font-playfair font-bold text-white">
                 Buscando Amor Eterno
               </h3>
             </div>
-            <p className="text-xs md:text-sm text-slate-100">{t('footer.tagline')}</p>
+            <p className="text-xs md:text-sm text-white">{t('footer.tagline')}</p>
           </div>
 
           <div
