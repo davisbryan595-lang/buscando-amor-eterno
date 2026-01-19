@@ -67,12 +67,18 @@ export function Step3Location({
               },
             }
           )
+
+          if (!response.ok) {
+            throw new Error(`Nominatim API returned status ${response.status}`)
+          }
+
           const data = await response.json()
 
           setCity(data.address?.city || data.address?.town || '')
           setCountry(data.address?.country || '')
           toast.success(t('onboarding.step3.locationDetected'))
         } catch (err) {
+          console.error('Location detection error:', err)
           toast.error(t('onboarding.step3.locationError'))
           setUseManual(true)
         } finally {
