@@ -128,7 +128,7 @@ export function AdminUsersTable() {
                     {user.photos && user.photos[0] ? (
                       <img
                         src={user.photos[0]}
-                        alt={user.display_name}
+                        alt={user.full_name}
                         className="h-10 w-10 rounded-full object-cover"
                       />
                     ) : (
