@@ -69,24 +69,23 @@ export function useAdminStats() {
         console.warn('Failed to fetch new users today:', err?.message)
       }
 
-      // Get incomplete profiles (including null values)
+      // Get incomplete profiles: users without complete profiles
+      // This includes users who signed up but don't have a profile row yet,
+      // and users with profile_complete = false
       try {
-        const { count, error: err } = await supabase
-          .from('profiles')
-          .select('*', { count: 'exact', head: true })
-          .neq('profile_complete', true)
-        if (err) throw err
-        incompleteCount = count || 0
+        // Get count of users who DON'T have a complete profile
+        // Strategy: Total signups - completed profiles
+        incompleteCount = Math.max(0, totalSignupsCount - totalProfilesCount)
       } catch (err: any) {
-        console.warn('Failed to fetch incomplete profiles with neq:', err?.message)
-        // Fallback: try simple false check
+        console.warn('Failed to calculate incomplete profiles:', err?.message)
+        // Fallback: try to query incomplete profiles from profiles table
         try {
-          const { count: countFalse, error: errFalse } = await supabase
+          const { count, error: err } = await supabase
             .from('profiles')
             .select('*', { count: 'exact', head: true })
             .eq('profile_complete', false)
-          if (errFalse) throw errFalse
-          incompleteCount = countFalse || 0
+          if (err) throw err
+          incompleteCount = count || 0
         } catch (fallbackErr: any) {
           console.warn('Fallback incomplete profiles query also failed:', fallbackErr?.message)
         }
