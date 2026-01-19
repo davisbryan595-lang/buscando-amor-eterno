@@ -76,6 +76,11 @@ export type Database = {
           interested_in: string
           photos: string[]
           verified: boolean
+          is_admin: boolean
+          banned: boolean
+          ban_reason: string | null
+          ban_duration: string | null
+          ban_date: string | null
           updated_at: string
         }
         Insert: Omit<any, 'id' | 'created_at'>
@@ -137,6 +142,36 @@ export type Database = {
           updated_at: string
         }
         Insert: Omit<any, 'id' | 'created_at' | 'updated_at'>
+        Update: Partial<any>
+      }
+      reports: {
+        Row: {
+          id: string
+          reported_user_id: string
+          reported_by_user_id: string
+          reason: string
+          description: string | null
+          status: 'pending' | 'reviewed' | 'dismissed' | 'action_taken'
+          action_taken: string | null
+          reported_at: string
+          reviewed_at: string | null
+          reviewed_by_admin_id: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: Omit<any, 'id' | 'created_at' | 'updated_at'>
+        Update: Partial<any>
+      }
+      admin_activity_logs: {
+        Row: {
+          id: string
+          admin_id: string
+          action_type: 'ban_user' | 'unban_user' | 'verify_user' | 'dismiss_report' | 'view_profile'
+          target_user_id: string | null
+          details: Record<string, any> | null
+          created_at: string
+        }
+        Insert: Omit<any, 'id' | 'created_at'>
         Update: Partial<any>
       }
     }
