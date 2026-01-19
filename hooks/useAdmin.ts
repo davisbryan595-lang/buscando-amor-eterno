@@ -107,14 +107,14 @@ export function useAdmin() {
       }
     }
 
-    // Set a 5-second timeout to prevent indefinite loading
+    // Set a 10-second timeout to prevent indefinite loading
     timeoutId = setTimeout(() => {
       if (isMounted) {
-        console.warn('Admin status fetch timeout')
+        console.warn('Admin status fetch timeout after 10 seconds')
         setLoading(false)
         setIsAdmin(false)
       }
-    }, 5000)
+    }, 10000)
 
     fetchData().then(() => {
       if (isMounted) {
