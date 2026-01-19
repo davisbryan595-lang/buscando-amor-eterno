@@ -2,12 +2,14 @@ import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 
 export interface AdminStats {
-  totalUsers: number
+  totalSignups: number
+  totalProfiles: number
   newUsersToday: number
   activeChats: number
   totalCalls: number
   reportedProfiles: number
   bannedUsers: number
+  incompleteProfiles: number
 }
 
 export function useAdminStats() {
