@@ -32,14 +32,7 @@ export default function SignupPage() {
     setError(null)
 
     try {
-      // Create a timeout promise (30 seconds)
-      const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Signup request timed out - please try again')), 30000)
-      )
-
-      const signUpPromise = signUp(formData.email, formData.password)
-
-      await Promise.race([signUpPromise, timeoutPromise])
+      await signUp(formData.email, formData.password)
 
       // Track signup event
       if (typeof window !== 'undefined' && window.gtag) {
@@ -50,7 +43,7 @@ export default function SignupPage() {
       toast.success('Account created! Setting up your profile...')
       setStep('profile')
     } catch (error: any) {
-      const errorMessage = error.message || 'Failed to create account'
+      const errorMessage = error?.message || 'Failed to create account. Please try again.'
       console.error('Signup error:', error)
       setError(errorMessage)
       toast.error(errorMessage)
