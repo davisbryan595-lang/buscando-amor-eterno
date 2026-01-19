@@ -112,41 +112,52 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const signUp = async (email: string, password: string) => {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-    })
-    if (error) throw error
+    try {
+      // Wrap auth request with timeout to prevent hanging
+      const signUpPromise = supabase.auth.signUp({
+        email,
+        password,
+      })
 
-    // Create user record and free subscription in database
-    if (data.user) {
-      try {
-        // Create user record with upsert to avoid conflicts
-        const { error: userError } = await supabase.from('users').upsert({
-          id: data.user.id,
-          email: email,
-        })
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Sign up request timed out - please try again')), 15000)
+      )
 
-        if (userError && userError.code !== 'PGRST103') {
-          console.error('Error creating user profile:', userError.message || JSON.stringify(userError))
+      const { data, error } = await Promise.race([signUpPromise, timeoutPromise]) as any
+      if (error) throw error
+
+      // Create user record and free subscription in database
+      if (data.user) {
+        try {
+          // Create user record with upsert to avoid conflicts
+          const { error: userError } = await supabase.from('users').upsert({
+            id: data.user.id,
+            email: email,
+          })
+
+          if (userError && userError.code !== 'PGRST103') {
+            console.error('Error creating user profile:', userError.message || JSON.stringify(userError))
+            // Don't throw - account is already created in auth
+          }
+
+          // Create free subscription with upsert to avoid conflicts
+          const { error: subError } = await supabase.from('subscriptions').upsert({
+            user_id: data.user.id,
+            plan: 'free',
+            status: 'active',
+          })
+
+          if (subError && subError.code !== 'PGRST103') {
+            console.error('Error creating subscription:', subError)
+            // Don't throw - account is already created in auth
+          }
+        } catch (err) {
+          console.error('Error in user setup:', err)
           // Don't throw - account is already created in auth
         }
-
-        // Create free subscription with upsert to avoid conflicts
-        const { error: subError } = await supabase.from('subscriptions').upsert({
-          user_id: data.user.id,
-          plan: 'free',
-          status: 'active',
-        })
-
-        if (subError && subError.code !== 'PGRST103') {
-          console.error('Error creating subscription:', subError)
-          // Don't throw - account is already created in auth
-        }
-      } catch (err) {
-        console.error('Error in user setup:', err)
-        // Don't throw - account is already created in auth
       }
+    } catch (err: any) {
+      throw err
     }
   }
 
