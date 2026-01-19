@@ -26,7 +26,7 @@ export function useAdmin() {
       setLoading(true)
       const { data, error: err } = await supabase
         .from('profiles')
-        .select('id, is_admin, email, display_name')
+        .select('id, is_admin, full_name')
         .eq('user_id', user.id)
         .single()
 
@@ -75,7 +75,7 @@ export function useAdmin() {
 
         const { data, error: err } = await supabase
           .from('profiles')
-          .select('id, is_admin, email, display_name')
+          .select('id, is_admin, full_name')
           .eq('user_id', user.id)
           .single()
 
