@@ -84,8 +84,8 @@ export default function Footer() {
               if (el) columnsRef.current[2] = el
             }}
           >
-            <h4 className="font-bold mb-2 text-sm md:text-base text-rose-200">{t('footer.legal')}</h4>
-            <ul className="space-y-1 text-xs md:text-sm text-slate-100">
+            <h4 className="font-bold mb-2 text-sm md:text-base text-white">{t('footer.legal')}</h4>
+            <ul className="space-y-1 text-xs md:text-sm text-white">
               <li><a href="#" className="hover:text-rose-300 transition">{t('footer.privacy')}</a></li>
               <li><a href="#" className="hover:text-rose-300 transition">{t('footer.terms')}</a></li>
               <li><a href="#" className="hover:text-rose-300 transition">{t('footer.safety')}</a></li>
