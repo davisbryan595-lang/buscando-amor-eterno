@@ -2,59 +2,44 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 
-type Theme = 'light' | 'dark' | 'system'
+type Theme = 'light'
 
 interface ThemeContextType {
   theme: Theme
   setTheme: (theme: Theme) => void
-  effectiveTheme: 'light' | 'dark'
+  effectiveTheme: 'light'
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined)
 
 // Helper function to apply theme to document
-const applyTheme = (selectedTheme: Theme): 'light' | 'dark' => {
+const applyTheme = (selectedTheme: Theme): 'light' => {
   if (typeof document === 'undefined') return 'light'
 
   const htmlElement = document.documentElement
-  let isDark = selectedTheme === 'dark'
 
-  if (selectedTheme === 'system') {
-    if (typeof window !== 'undefined') {
-      isDark = window.matchMedia('(prefers-color-scheme: dark)').matches
-    }
-  }
-
-  // Always remove dark first to ensure clean state
+  // Always remove dark class to ensure light mode only
   htmlElement.classList.remove('dark')
 
   // Set data-theme attribute for CSS selectors
-  if (isDark) {
-    htmlElement.setAttribute('data-theme', 'dark')
-    htmlElement.classList.add('dark')
-    console.log('[Theme] Applied dark mode globally')
-  } else {
-    htmlElement.setAttribute('data-theme', 'light')
-    console.log('[Theme] Applied light mode globally')
-  }
+  htmlElement.setAttribute('data-theme', 'light')
+  console.log('[Theme] Applied light mode globally')
 
-  return isDark ? 'dark' : 'light'
+  return 'light'
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<Theme>('light')
-  const [effectiveTheme, setEffectiveTheme] = useState<'light' | 'dark'>('light')
+  const [effectiveTheme, setEffectiveTheme] = useState<'light'>('light')
   const [mounted, setMounted] = useState(false)
 
-  // Initialize theme from localStorage on mount
+  // Initialize theme on mount
   useEffect(() => {
     try {
-      // Get saved theme from localStorage, default to 'light'
-      const savedTheme = (localStorage.getItem('app-theme') as Theme) || 'light'
-      console.log('[ThemeProvider] Initializing with:', savedTheme)
+      console.log('[ThemeProvider] Initializing with light mode')
 
-      setThemeState(savedTheme)
-      const effective = applyTheme(savedTheme)
+      setThemeState('light')
+      const effective = applyTheme('light')
       setEffectiveTheme(effective)
     } catch (e) {
       console.error('[ThemeProvider] Error initializing:', e)
@@ -64,15 +49,15 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const setTheme = (newTheme: Theme) => {
+    // Light mode only - always light
     try {
-      console.log('[ThemeProvider] Changing theme to:', newTheme)
-      setThemeState(newTheme)
-      localStorage.setItem('app-theme', newTheme)
-      const effective = applyTheme(newTheme)
+      console.log('[ThemeProvider] Theme is set to light mode (no switching available)')
+      setThemeState('light')
+      localStorage.setItem('app-theme', 'light')
+      const effective = applyTheme('light')
       setEffectiveTheme(effective)
-      console.log('[ThemeProvider] Theme changed to:', newTheme, '- Effective:', effective)
     } catch (e) {
-      console.error('[ThemeProvider] Error changing theme:', e)
+      console.error('[ThemeProvider] Error setting theme:', e)
     }
   }
 

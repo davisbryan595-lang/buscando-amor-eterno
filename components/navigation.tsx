@@ -53,35 +53,35 @@ export default function Navigation() {
   }
 
   return (
-    <nav ref={navRef} className="fixed top-0 left-0 right-0 z-50 bg-background/90 dark:bg-background/95 md:bg-background/95 dark:md:bg-background/95 backdrop-blur-md border-b border-rose-100/50 dark:border-rose-900/40 md:border-rose-100 dark:md:border-rose-900/40 nav-gradient">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 md:py-4 flex justify-between items-center">
-        <Link href="/" className="flex items-center gap-2">
+    <nav ref={navRef} className="fixed top-0 left-0 right-0 z-50 bg-background/90 dark:bg-background/95 md:bg-background/95 dark:md:bg-background/95 backdrop-blur-md border-b border-rose-100/50 dark:border-rose-900/40 md:border-rose-100 dark:md:border-rose-900/40">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-1 md:py-2 flex justify-between items-center">
+        <Link href="/" className="flex items-center gap-1 md:gap-2 flex-shrink-0">
           <img
             src="https://cdn.builder.io/api/v1/image/assets%2F5517f718aa7348e88214250292563028%2F09ca0588ac3741678f0d49e142dede0b?format=webp&width=800"
             alt="Buscando Amor Eterno Logo"
-            className="h-10 w-10 md:h-16 md:w-16 object-contain"
+            className="h-10 w-10 md:h-12 md:w-12 object-contain"
           />
-          <span className="hidden sm:inline text-lg md:text-lg font-playfair font-bold text-rose-600">Buscando Amor Eterno</span>
+          <span className="hidden sm:inline text-sm md:text-base font-playfair font-bold text-rose-600 whitespace-nowrap">Buscando Amor Eterno</span>
         </Link>
 
         {/* Desktop Menu */}
-        <div className="hidden md:flex gap-8 items-center">
+        <div className="hidden md:flex gap-6 items-center text-sm ml-8">
           <Link href="/" className="text-foreground hover:text-primary transition">{t('common.home')}</Link>
           <Link href="/browse" className="text-foreground hover:text-primary transition">{t('common.browse')}</Link>
           <Link href="/pricing" className="text-foreground hover:text-primary transition">{t('common.pricing')}</Link>
           <Link href="/messages" className="text-foreground hover:text-primary transition">{t('common.messages')}</Link>
           <Link href="/lounge" className="text-foreground hover:text-primary transition">{t('common.lounge')}</Link>
-          <Link href="/nuestra-historia" className="text-foreground hover:text-primary transition">{t('common.ourStory')}</Link>
+          <Link href="/nuestra-historia" className="text-foreground hover:text-primary transition whitespace-nowrap">{t('common.ourStory')}</Link>
 
           <div className="relative">
             <button
               onClick={() => setNotificationsOpen(!notificationsOpen)}
-              className="p-2 hover:bg-card-subtle dark:hover:bg-card-subtle rounded-full transition relative"
+              className="p-1.5 hover:bg-card-subtle dark:hover:bg-card-subtle rounded-full transition relative"
               aria-label="Notifications"
             >
-              <Bell size={20} className="text-primary" />
+              <Bell size={18} className="text-primary" />
               {notifications.length > 0 && (
-                <span className="absolute top-1 right-1 bg-rose-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-semibold">
+                <span className="absolute -top-1 -right-1 bg-rose-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-semibold z-10">
                   {notifications.length > 9 ? '9+' : notifications.length}
                 </span>
               )}
@@ -91,11 +91,11 @@ export default function Navigation() {
           <div className="relative">
             <button
               onClick={() => setLangDropdown(!langDropdown)}
-              className="p-2 hover:bg-card-subtle dark:hover:bg-card-subtle rounded-full transition flex items-center gap-1"
+              className="p-1.5 hover:bg-card-subtle dark:hover:bg-card-subtle rounded-full transition flex items-center gap-1"
               aria-label="Language"
             >
-              <Globe size={20} className="text-primary" />
-              <span className="text-sm font-semibold text-primary uppercase">{language}</span>
+              <Globe size={18} className="text-primary" />
+              <span className="text-xs font-semibold text-primary uppercase">{language}</span>
             </button>
             {langDropdown && (
               <div className="absolute right-0 mt-2 bg-card dark:bg-card border border-rose-100 dark:border-rose-900/40 rounded-lg shadow-lg z-50">
@@ -119,12 +119,12 @@ export default function Navigation() {
             <AccountMenu />
           ) : isMounted ? (
             <>
-              <Link href="/login" className="px-4 py-2 text-foreground hover:text-primary transition">
+              <Link href="/login" className="px-3 py-1 text-foreground hover:text-primary transition text-sm whitespace-nowrap">
                 {t('common.logIn')}
               </Link>
               <Link
                 href="/signup"
-                className="px-6 py-2 bg-primary text-white rounded-full hover:bg-rose-700 transition font-semibold"
+                className="px-5 py-1.5 bg-primary text-white rounded-full hover:bg-rose-700 transition font-semibold text-sm whitespace-nowrap"
               >
                 {t('common.joinForPrice')}
               </Link>
@@ -133,15 +133,15 @@ export default function Navigation() {
         </div>
 
         {/* Mobile Menu Button */}
-        <div className="md:hidden flex items-center gap-2">
+        <div className="md:hidden flex items-center gap-1.5">
           <button
             onClick={() => setNotificationsOpen(!notificationsOpen)}
-            className="p-2 hover:bg-card-subtle dark:hover:bg-card-subtle rounded-full transition relative"
+            className="p-1.5 hover:bg-card-subtle dark:hover:bg-card-subtle rounded-full transition relative"
             aria-label="Notifications"
           >
-            <Bell size={20} className="text-primary" />
+            <Bell size={18} className="text-primary" />
             {notifications.length > 0 && (
-              <span className="absolute top-1 right-1 bg-rose-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-semibold">
+              <span className="absolute -top-1 -right-1 bg-rose-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-semibold z-10">
                 {notifications.length > 9 ? '9+' : notifications.length}
               </span>
             )}
@@ -150,18 +150,18 @@ export default function Navigation() {
             <>
               <button
                 onClick={() => setMenuOpen(!menuOpen)}
-                className="p-2 hover:bg-card-subtle dark:hover:bg-card-subtle rounded-lg transition"
+                className="p-1.5 hover:bg-card-subtle dark:hover:bg-card-subtle rounded-lg transition"
               >
-                {menuOpen ? <X size={24} /> : <Menu size={24} />}
+                {menuOpen ? <X size={20} /> : <Menu size={20} />}
               </button>
               <AccountMenu />
             </>
           ) : isMounted ? (
             <button
               onClick={() => setMenuOpen(!menuOpen)}
-              className="p-2 hover:bg-card-subtle dark:hover:bg-card-subtle rounded-lg transition"
+              className="p-1.5 hover:bg-card-subtle dark:hover:bg-card-subtle rounded-lg transition"
             >
-              {menuOpen ? <X size={24} /> : <Menu size={24} />}
+              {menuOpen ? <X size={20} /> : <Menu size={20} />}
             </button>
           ) : null}
         </div>
@@ -180,7 +180,7 @@ export default function Navigation() {
               stiffness: 300,
               opacity: { duration: 0.2 },
             }}
-            className="md:hidden bg-background dark:bg-background border-t border-rose-100 dark:border-rose-900/40 py-4 px-4 space-y-3 overflow-hidden nav-gradient"
+            className="md:hidden bg-background dark:bg-background border-t border-rose-100 dark:border-rose-900/40 py-4 px-4 space-y-3 overflow-hidden"
           >
           <motion.div
             initial={{ opacity: 0, x: -20 }}

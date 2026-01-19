@@ -19,6 +19,7 @@ export default function NuestraHistoriaPage() {
   const heroSubtitleRef = useRef<HTMLHeadingElement>(null)
   const heroDescriptionRef = useRef<HTMLParagraphElement>(null)
   const scrollIndicatorRef = useRef<HTMLDivElement>(null)
+  const pageRef = useRef<HTMLElement>(null)
 
   const [floatingHearts, setFloatingHearts] = useState<Array<{ id: number; delay: number; duration: number }>>([])
 
@@ -116,7 +117,25 @@ export default function NuestraHistoriaPage() {
   }, [])
 
   return (
-    <main className="w-full bg-background text-foreground">
+    <main ref={pageRef} className="nuestra-historia-page w-full bg-background text-foreground">
+      <style>{`
+        /* Light theme high contrast text for Our Story page */
+        [data-theme="light"] .nuestra-historia-page body,
+        [data-theme="light"] .nuestra-historia-page p,
+        [data-theme="light"] .nuestra-historia-page span,
+        [data-theme="light"] .nuestra-historia-page div {
+          color: #222222;
+        }
+
+        [data-theme="light"] .nuestra-historia-page h1,
+        [data-theme="light"] .nuestra-historia-page h2,
+        [data-theme="light"] .nuestra-historia-page h3,
+        [data-theme="light"] .nuestra-historia-page h4,
+        [data-theme="light"] .nuestra-historia-page h5,
+        [data-theme="light"] .nuestra-historia-page h6 {
+          color: #000000;
+        }
+      `}</style>
       <Navigation />
 
       {/* Hero Section */}
@@ -145,21 +164,21 @@ export default function NuestraHistoriaPage() {
         <div className="relative z-10 w-full max-w-4xl mx-auto text-center px-4 md:px-6">
           <h1
             ref={heroTitleRef}
-            className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-playfair font-bold mb-4 md:mb-6 text-white drop-shadow-lg"
+            className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-playfair font-bold mb-4 md:mb-6 hero-title-gradient drop-shadow-lg"
           >
             {t('ourStory.heroTitle')}
           </h1>
 
           <h2
             ref={heroSubtitleRef}
-            className="text-2xl sm:text-3xl md:text-4xl font-playfair font-semibold mb-6 md:mb-8 text-rose-100"
+            className="text-2xl sm:text-3xl md:text-4xl font-playfair font-semibold mb-6 md:mb-8 hero-subtitle-gradient"
           >
             {t('ourStory.heroSubtitle')}
           </h2>
 
           <p
             ref={heroDescriptionRef}
-            className="text-base sm:text-lg md:text-xl text-white drop-shadow-md leading-relaxed max-w-2xl mx-auto"
+            className="text-base sm:text-lg md:text-xl text-black dark:text-slate-200 drop-shadow-md leading-relaxed max-w-2xl mx-auto"
           >
             {t('ourStory.heroDescription')}
           </p>
@@ -189,19 +208,6 @@ export default function NuestraHistoriaPage() {
               {t('ourStory.intro.text')}
             </p>
           </div>
-
-          {/* Founder Portrait - IMAGE 1 */}
-          <div className="flex justify-center mb-8 md:mb-0">
-            <div className="relative w-60 h-60 md:w-72 md:h-72 rounded-full overflow-hidden shadow-lg border-4 border-rose-200">
-              <Image
-                src="https://cdn.builder.io/api/v1/image/assets%2F5c758e804cba4fa3a488e9088887877b%2Fffe4bf817a3ff4681b0376c5ff18c733e?format=webp&width=800"
-                alt="Founder portrait"
-                fill
-                className="object-cover hover:scale-110 transition-transform duration-700"
-                sizes="300px"
-              />
-            </div>
-          </div>
         </div>
       </section>
 
@@ -215,14 +221,14 @@ export default function NuestraHistoriaPage() {
           <div className="flex flex-col md:flex-row gap-8 md:gap-12 items-center">
             {/* Image - IMAGE 2 */}
             <div
-              className="w-full md:w-1/2 relative h-64 sm:h-80 md:h-96 rounded-lg overflow-hidden shadow-lg"
+              className="w-full md:w-1/2 relative h-80 sm:h-96 md:h-[450px] rounded-lg overflow-hidden shadow-lg"
               data-scroll-animate="fade-in-left"
             >
               <Image
                 src="https://cdn.builder.io/api/v1/image/assets%2F5c758e804cba4fa3a488e9088887877b%2F9b1c248404c849b1a671490fda170ba5?format=webp&width=800"
                 alt="Founder with children"
                 fill
-                className="object-cover hover:scale-105 transition-transform duration-700"
+                className="object-cover object-top hover:scale-105 transition-transform duration-700"
                 sizes="(max-width: 768px) 100vw, 50vw"
               />
             </div>
@@ -343,7 +349,7 @@ export default function NuestraHistoriaPage() {
         <div className="w-full max-w-2xl mx-auto text-center" data-scroll-animate="fade-in">
           {/* Large Quote */}
           <div className="mb-12 md:mb-16">
-            <p className="text-3xl sm:text-4xl md:text-5xl font-playfair italic text-black dark:text-white leading-relaxed">
+            <p className="text-3xl sm:text-4xl md:text-5xl font-playfair italic text-black dark:text-slate-200 leading-relaxed">
               "{t('ourStory.closing.quote')}"
             </p>
           </div>

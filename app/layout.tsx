@@ -40,45 +40,12 @@ export default function RootLayout({
         <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
         <script dangerouslySetInnerHTML={{
           __html: `
-            // Ensure light mode is default at the very start
+            // Force light mode only
             try {
               document.documentElement.classList.remove('dark');
+              document.documentElement.setAttribute('data-theme', 'light');
+              localStorage.setItem('app-theme', 'light');
             } catch (e) {}
-          `,
-        }} />
-        <script dangerouslySetInnerHTML={{
-          __html: `
-            (function() {
-              try {
-                // Default to light mode
-                const theme = localStorage.getItem('app-theme') || 'light';
-                console.log('[Theme Init] Stored theme:', theme);
-
-                let isDark = false;
-                if (theme === 'dark') {
-                  isDark = true;
-                } else if (theme === 'system') {
-                  isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-                } else {
-                  isDark = false;
-                }
-
-                console.log('[Theme Init] isDark:', isDark);
-
-                // Remove dark class first to ensure clean state
-                document.documentElement.classList.remove('dark');
-
-                // Set data-theme attribute
-                if (isDark) {
-                  document.documentElement.setAttribute('data-theme', 'dark');
-                  document.documentElement.classList.add('dark');
-                } else {
-                  document.documentElement.setAttribute('data-theme', 'light');
-                }
-              } catch (e) {
-                console.error('[Theme Init Error]', e);
-              }
-            })();
           `,
         }} />
         <script async src="https://cdn.onesignal.com/sdks/onesignal.js"></script>

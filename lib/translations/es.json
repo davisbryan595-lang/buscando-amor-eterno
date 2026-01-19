@@ -267,7 +267,7 @@
   },
   "ourStory": {
     "heroTitle": "Nuestra Historia",
-    "heroSubtitle": "Nuestra Historia",
+    "heroSubtitle": "",
     "heroDescription": "El viaje de fe, amor y servicio que dio vida a Buscando Amor Eterno",
     "intro": {
       "heading": "De Niño a Padre: El Comienzo",
@@ -294,7 +294,7 @@
     "closing": {
       "quote": "Todos merecen tener a esa persona especial que es amor eterno perdurable.",
       "subtext1": "Únete a nosotros en la búsqueda del amor eterno.",
-      "subtext2": "Únete a nosotros en la búsqueda del amor eterno.",
+      "subtext2": "",
       "ctaButton": "Encontrar Mi Alma Gemela"
     }
   }

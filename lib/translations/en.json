@@ -267,7 +267,7 @@
   },
   "ourStory": {
     "heroTitle": "Our Story",
-    "heroSubtitle": "Our Story",
+    "heroSubtitle": "",
     "heroDescription": "The journey of faith, love and service that brought Buscando Amor Eterno to life",
     "intro": {
       "heading": "From Child to Father: The Beginning",
@@ -294,7 +294,7 @@
     "closing": {
       "quote": "Everyone deserves to have that special someone that is undying eternal love.",
       "subtext1": "Join us in the search for eternal love.",
-      "subtext2": "Join us in the search for eternal love.",
+      "subtext2": "",
       "ctaButton": "Find My Soulmate"
     }
   }
