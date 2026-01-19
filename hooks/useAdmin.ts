@@ -5,8 +5,7 @@ import { supabase } from '@/lib/supabase'
 interface AdminUser {
   id: string
   is_admin: boolean
-  email: string
-  display_name: string
+  full_name: string
 }
 
 export function useAdmin() {
