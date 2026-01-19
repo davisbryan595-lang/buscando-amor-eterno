@@ -25,60 +25,118 @@ export function useAdminStats() {
       const today = new Date()
       today.setHours(0, 0, 0, 0)
 
+      // Initialize default values
+      let totalSignupsCount = 0
+      let totalProfilesCount = 0
+      let newUsersTodayCount = 0
+      let incompleteCount = 0
+      let activeChatsCount = 0
+      let totalCallsCount = 0
+      let reportedCount = 0
+      let bannedCount = 0
+
       // Get total signups (from users table)
-      const { count: totalSignupsCount } = await supabase
-        .from('users')
-        .select('*', { count: 'exact', head: true })
+      try {
+        const { count, error: err } = await supabase
+          .from('users')
+          .select('*', { count: 'exact', head: true })
+        if (err) throw err
+        totalSignupsCount = count || 0
+      } catch (err: any) {
+        console.warn('Failed to fetch total signups:', err?.message)
+      }
 
       // Get total profiles (completed onboarding)
-      const { count: totalProfilesCount } = await supabase
-        .from('profiles')
-        .select('*', { count: 'exact', head: true })
+      try {
+        const { count, error: err } = await supabase
+          .from('profiles')
+          .select('*', { count: 'exact', head: true })
+        if (err) throw err
+        totalProfilesCount = count || 0
+      } catch (err: any) {
+        console.warn('Failed to fetch total profiles:', err?.message)
+      }
 
       // Get new users today
-      const { count: newUsersTodayCount } = await supabase
-        .from('profiles')
-        .select('*', { count: 'exact', head: true })
-        .gte('created_at', today.toISOString())
+      try {
+        const { count, error: err } = await supabase
+          .from('profiles')
+          .select('*', { count: 'exact', head: true })
+          .gte('created_at', today.toISOString())
+        if (err) throw err
+        newUsersTodayCount = count || 0
+      } catch (err: any) {
+        console.warn('Failed to fetch new users today:', err?.message)
+      }
 
       // Get incomplete profiles
-      const { count: incompleteCount } = await supabase
-        .from('profiles')
-        .select('*', { count: 'exact', head: true })
-        .eq('profile_complete', false)
+      try {
+        const { count, error: err } = await supabase
+          .from('profiles')
+          .select('*', { count: 'exact', head: true })
+          .eq('profile_complete', false)
+        if (err) throw err
+        incompleteCount = count || 0
+      } catch (err: any) {
+        console.warn('Failed to fetch incomplete profiles:', err?.message)
+      }
 
       // Get active chats (messages sent/received today)
-      const { count: activeChatsCount } = await supabase
-        .from('messages')
-        .select('*', { count: 'exact', head: true })
-        .gte('created_at', today.toISOString())
+      try {
+        const { count, error: err } = await supabase
+          .from('messages')
+          .select('*', { count: 'exact', head: true })
+          .gte('created_at', today.toISOString())
+        if (err) throw err
+        activeChatsCount = count || 0
+      } catch (err: any) {
+        console.warn('Failed to fetch active chats:', err?.message)
+      }
 
       // Get total calls
-      const { count: totalCallsCount } = await supabase
-        .from('call_logs')
-        .select('*', { count: 'exact', head: true })
+      try {
+        const { count, error: err } = await supabase
+          .from('call_logs')
+          .select('*', { count: 'exact', head: true })
+        if (err) throw err
+        totalCallsCount = count || 0
+      } catch (err: any) {
+        console.warn('Failed to fetch total calls:', err?.message)
+      }
 
       // Get reported profiles count
-      const { count: reportedCount } = await supabase
-        .from('reports')
-        .select('*', { count: 'exact', head: true })
-        .eq('status', 'pending')
+      try {
+        const { count, error: err } = await supabase
+          .from('reports')
+          .select('*', { count: 'exact', head: true })
+          .eq('status', 'pending')
+        if (err) throw err
+        reportedCount = count || 0
+      } catch (err: any) {
+        console.warn('Failed to fetch reported profiles:', err?.message)
+      }
 
       // Get banned users count
-      const { count: bannedCount } = await supabase
-        .from('profiles')
-        .select('*', { count: 'exact', head: true })
-        .eq('banned', true)
+      try {
+        const { count, error: err } = await supabase
+          .from('profiles')
+          .select('*', { count: 'exact', head: true })
+          .eq('banned', true)
+        if (err) throw err
+        bannedCount = count || 0
+      } catch (err: any) {
+        console.warn('Failed to fetch banned users:', err?.message)
+      }
 
       setStats({
-        totalSignups: totalSignupsCount || 0,
-        totalProfiles: totalProfilesCount || 0,
-        newUsersToday: newUsersTodayCount || 0,
-        activeChats: activeChatsCount || 0,
-        totalCalls: totalCallsCount || 0,
-        reportedProfiles: reportedCount || 0,
-        bannedUsers: bannedCount || 0,
-        incompleteProfiles: incompleteCount || 0,
+        totalSignups: totalSignupsCount,
+        totalProfiles: totalProfilesCount,
+        newUsersToday: newUsersTodayCount,
+        activeChats: activeChatsCount,
+        totalCalls: totalCallsCount,
+        reportedProfiles: reportedCount,
+        bannedUsers: bannedCount,
+        incompleteProfiles: incompleteCount,
       })
     } catch (err: any) {
       const errorMessage = err?.message || 'Failed to fetch admin stats'
