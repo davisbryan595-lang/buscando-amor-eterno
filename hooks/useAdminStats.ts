@@ -69,16 +69,27 @@ export function useAdminStats() {
         console.warn('Failed to fetch new users today:', err?.message)
       }
 
-      // Get incomplete profiles
+      // Get incomplete profiles (including null values)
       try {
         const { count, error: err } = await supabase
           .from('profiles')
           .select('*', { count: 'exact', head: true })
-          .eq('profile_complete', false)
+          .or('profile_complete.is.false,profile_complete.is.null')
         if (err) throw err
         incompleteCount = count || 0
       } catch (err: any) {
         console.warn('Failed to fetch incomplete profiles:', err?.message)
+        // Fallback: try simple false check
+        try {
+          const { count: countFalse, error: errFalse } = await supabase
+            .from('profiles')
+            .select('*', { count: 'exact', head: true })
+            .eq('profile_complete', false)
+          if (errFalse) throw errFalse
+          incompleteCount = countFalse || 0
+        } catch (fallbackErr: any) {
+          console.warn('Fallback incomplete profiles query also failed:', fallbackErr?.message)
+        }
       }
 
       // Get active chats (messages sent/received today)
