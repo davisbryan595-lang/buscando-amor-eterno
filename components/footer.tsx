@@ -69,8 +69,8 @@ export default function Footer() {
               if (el) columnsRef.current[1] = el
             }}
           >
-            <h4 className="font-bold mb-2 text-sm md:text-base text-rose-300">{t('footer.platform')}</h4>
-            <ul className="space-y-1 text-xs md:text-sm text-slate-200">
+            <h4 className="font-bold mb-2 text-sm md:text-base text-rose-200">{t('footer.platform')}</h4>
+            <ul className="space-y-1 text-xs md:text-sm text-slate-100">
               <li><Link href="/" className="hover:text-rose-300 transition">{t('common.home')}</Link></li>
               <li><Link href="/browse" className="hover:text-rose-300 transition">{t('common.browse')}</Link></li>
               <li><Link href="/pricing" className="hover:text-rose-300 transition">{t('common.pricing')}</Link></li>
