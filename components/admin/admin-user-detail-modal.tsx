@@ -96,6 +96,7 @@ export function AdminUserDetailModal({
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-2xl max-h-96 overflow-y-auto">
+          <DialogTitle className="sr-only">Loading user profile</DialogTitle>
           <div className="flex items-center justify-center py-8">
             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
           </div>
@@ -112,7 +113,7 @@ export function AdminUserDetailModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>User Profile - {detailedUser.display_name}</DialogTitle>
+          <DialogTitle>User Profile - {detailedUser.full_name}</DialogTitle>
           <DialogDescription>ID: {user.user_id}</DialogDescription>
         </DialogHeader>
 
@@ -139,8 +140,8 @@ export function AdminUserDetailModal({
             <h3 className="font-semibold text-foreground mb-4">Profile Information</h3>
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
-                <p className="text-muted-foreground">Email</p>
-                <p className="text-foreground font-medium">{detailedUser.email}</p>
+                <p className="text-muted-foreground">Name</p>
+                <p className="text-foreground font-medium">{detailedUser.full_name}</p>
               </div>
               <div>
                 <p className="text-muted-foreground">Join Date</p>

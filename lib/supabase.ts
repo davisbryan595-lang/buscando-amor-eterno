@@ -27,6 +27,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   },
 })
 
+
 // Configure realtime with extended timeouts and heartbeat
 if (typeof window !== 'undefined') {
   // Auto-reconnect on visibility change

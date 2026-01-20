@@ -31,14 +31,7 @@ export default function LoginPage() {
     setError(null)
 
     try {
-      // Create a timeout promise (30 seconds)
-      const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Login request timed out - please try again')), 30000)
-      )
-
-      const signInPromise = signIn(email, password)
-
-      await Promise.race([signInPromise, timeoutPromise])
+      await signIn(email, password)
 
       // Track login event
       if (typeof window !== 'undefined' && window.gtag) {
@@ -52,7 +45,7 @@ export default function LoginPage() {
         router.push('/')
       }, 500)
     } catch (error: any) {
-      const errorMessage = error.message || 'Failed to log in'
+      const errorMessage = error?.message || 'Failed to log in. Please check your email and password.'
       console.error('Login error:', error)
       setError(errorMessage)
       toast.error(errorMessage)

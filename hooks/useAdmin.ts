@@ -5,8 +5,7 @@ import { supabase } from '@/lib/supabase'
 interface AdminUser {
   id: string
   is_admin: boolean
-  email: string
-  display_name: string
+  full_name: string
 }
 
 export function useAdmin() {
@@ -27,7 +26,7 @@ export function useAdmin() {
       setLoading(true)
       const { data, error: err } = await supabase
         .from('profiles')
-        .select('id, is_admin, email, display_name')
+        .select('id, is_admin, full_name')
         .eq('user_id', user.id)
         .single()
 
@@ -76,7 +75,7 @@ export function useAdmin() {
 
         const { data, error: err } = await supabase
           .from('profiles')
-          .select('id, is_admin, email, display_name')
+          .select('id, is_admin, full_name')
           .eq('user_id', user.id)
           .single()
 
@@ -108,14 +107,14 @@ export function useAdmin() {
       }
     }
 
-    // Set a 5-second timeout to prevent indefinite loading
+    // Set a 10-second timeout to prevent indefinite loading
     timeoutId = setTimeout(() => {
       if (isMounted) {
-        console.warn('Admin status fetch timeout')
+        console.warn('Admin status fetch timeout after 10 seconds')
         setLoading(false)
         setIsAdmin(false)
       }
-    }, 5000)
+    }, 10000)
 
     fetchData().then(() => {
       if (isMounted) {

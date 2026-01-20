@@ -9,11 +9,25 @@ export function AdminStatsCards() {
 
   const statItems = [
     {
-      label: 'Total Users',
-      value: stats?.totalUsers ?? 0,
+      label: 'Total Signups',
+      value: stats?.totalSignups ?? 0,
       icon: Users,
       color: 'text-blue-500',
       bgColor: 'bg-blue-50',
+    },
+    {
+      label: 'Complete Profiles',
+      value: stats?.totalProfiles ?? 0,
+      icon: Users,
+      color: 'text-cyan-500',
+      bgColor: 'bg-cyan-50',
+    },
+    {
+      label: 'Incomplete Profiles',
+      value: stats?.incompleteProfiles ?? 0,
+      icon: AlertCircle,
+      color: 'text-amber-500',
+      bgColor: 'bg-amber-50',
     },
     {
       label: 'New Today',

@@ -20,8 +20,7 @@ import { formatDistanceToNow } from 'date-fns'
 export interface UserProfile {
   user_id: string
   id: string
-  display_name: string
-  email: string
+  full_name: string
   photos: string[]
   banned: boolean
   verified: boolean
@@ -42,7 +41,7 @@ export function AdminUsersTable() {
       setLoading(true)
       const { data, error } = await supabase
         .from('profiles')
-        .select('user_id, id, display_name, email, photos, banned, verified, created_at, updated_at')
+        .select('user_id, id, full_name, photos, banned, verified, created_at, updated_at')
         .order('created_at', { ascending: false })
 
       if (error) throw error
@@ -67,8 +66,7 @@ export function AdminUsersTable() {
       const query = searchQuery.toLowerCase()
       const filtered = users.filter(
         (user) =>
-          user.display_name.toLowerCase().includes(query) ||
-          user.email.toLowerCase().includes(query) ||
+          user.full_name.toLowerCase().includes(query) ||
           user.user_id.toLowerCase().includes(query)
       )
       setFilteredUsers(filtered)
@@ -105,7 +103,6 @@ export function AdminUsersTable() {
             <TableRow>
               <TableHead>Photo</TableHead>
               <TableHead>Name</TableHead>
-              <TableHead>Email</TableHead>
               <TableHead>Join Date</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Action</TableHead>
@@ -114,13 +111,13 @@ export function AdminUsersTable() {
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-8">
+                <TableCell colSpan={5} className="text-center py-8">
                   <Loader2 className="h-6 w-6 animate-spin mx-auto text-muted-foreground" />
                 </TableCell>
               </TableRow>
             ) : filteredUsers.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
                   No users found
                 </TableCell>
               </TableRow>
@@ -131,24 +128,23 @@ export function AdminUsersTable() {
                     {user.photos && user.photos[0] ? (
                       <img
                         src={user.photos[0]}
-                        alt={user.display_name}
+                        alt={user.full_name}
                         className="h-10 w-10 rounded-full object-cover"
                       />
                     ) : (
                       <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center text-xs text-muted-foreground">
-                        {user.display_name.charAt(0).toUpperCase()}
+                        {user.full_name.charAt(0).toUpperCase()}
                       </div>
                     )}
                   </TableCell>
                   <TableCell>
                     <div>
-                      <p className="font-medium text-foreground">{user.display_name}</p>
+                      <p className="font-medium text-foreground">{user.full_name}</p>
                       {user.verified && (
                         <p className="text-xs text-green-600">Verified</p>
                       )}
                     </div>
                   </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">{user.email}</TableCell>
                   <TableCell className="text-sm text-muted-foreground">
                     {formatDistanceToNow(new Date(user.created_at), { addSuffix: true })}
                   </TableCell>

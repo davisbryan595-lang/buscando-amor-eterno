@@ -17,14 +17,12 @@ export interface Report {
   updated_at: string
   reported_user?: {
     id: string
-    display_name: string
-    email: string
+    full_name: string
     photos: string[]
   }
   reported_by?: {
     id: string
-    display_name: string
-    email: string
+    full_name: string
   }
 }
 
@@ -44,8 +42,8 @@ export function useAdminReports() {
         .select(
           `
           *,
-          reported_user:reported_user_id(id, display_name, email, photos),
-          reported_by:reported_by_user_id(id, display_name, email)
+          reported_user:reported_user_id(id, full_name, photos),
+          reported_by:reported_by_user_id(id, full_name)
           `
         )
         .order('created_at', { ascending: false })

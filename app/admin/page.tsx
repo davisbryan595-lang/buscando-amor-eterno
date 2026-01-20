@@ -5,6 +5,7 @@ import { AdminStatsCards } from '@/components/admin/admin-stats-cards'
 import { AdminUsersTable } from '@/components/admin/admin-users-table'
 import { AdminReportedProfiles } from '@/components/admin/admin-reported-profiles'
 import { AdminActivityLog } from '@/components/admin/admin-activity-log'
+import { AdminIncompleteProfiles } from '@/components/admin/admin-incomplete-profiles'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Separator } from '@/components/ui/separator'
 import { LogOut } from 'lucide-react'
@@ -61,8 +62,9 @@ export default function AdminPage() {
 
           {/* Tabs for different sections */}
           <Tabs defaultValue="users" className="space-y-6">
-            <TabsList className="grid w-full max-w-md grid-cols-3">
+            <TabsList className="grid w-full max-w-2xl grid-cols-4">
               <TabsTrigger value="users">Users</TabsTrigger>
+              <TabsTrigger value="incomplete">Incomplete Profiles</TabsTrigger>
               <TabsTrigger value="reports">Reports</TabsTrigger>
               <TabsTrigger value="activity">Activity Log</TabsTrigger>
             </TabsList>
@@ -70,6 +72,11 @@ export default function AdminPage() {
             {/* Users Tab */}
             <TabsContent value="users" className="space-y-6">
               <AdminUsersTable />
+            </TabsContent>
+
+            {/* Incomplete Profiles Tab */}
+            <TabsContent value="incomplete" className="space-y-6">
+              <AdminIncompleteProfiles />
             </TabsContent>
 
             {/* Reports Tab */}

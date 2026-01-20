@@ -37,8 +37,7 @@ export function AdminReportedProfiles() {
     const userData: UserProfile = {
       user_id: report.reported_user.id,
       id: report.reported_user.id,
-      display_name: report.reported_user.display_name,
-      email: report.reported_user.email,
+      full_name: report.reported_user.full_name,
       photos: report.reported_user.photos || [],
       banned: false,
       verified: false,
@@ -90,16 +89,13 @@ export function AdminReportedProfiles() {
                 <TableRow key={report.id}>
                   <TableCell>
                     <div>
-                      <p className="font-medium text-foreground">
-                        {report.reported_user?.display_name}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {report.reported_user?.email}
-                      </p>
-                    </div>
+                    <p className="font-medium text-foreground">
+                      {report.reported_user?.full_name}
+                    </p>
+                  </div>
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
-                    {report.reported_by?.display_name}
+                    {report.reported_by?.full_name}
                   </TableCell>
                   <TableCell className="text-sm text-foreground max-w-48">
                     <p className="truncate" title={report.description || report.reason}>

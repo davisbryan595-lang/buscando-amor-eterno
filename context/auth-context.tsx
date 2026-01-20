@@ -31,7 +31,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Get existing session from localStorage (persisted across page refreshes)
         const { data: { session: sessionData }, error } = await supabase.auth.getSession()
 
-        if (error) throw error
+        if (error) {
+          // If refresh token is invalid/missing, clear session from storage
+          if (error.message?.includes('Refresh Token') || error.message?.includes('session')) {
+            console.warn('Session expired or refresh token invalid, clearing auth state')
+            await supabase.auth.signOut({ scope: 'local' })
+            if (isMounted) {
+              setSession(null)
+              setUser(null)
+            }
+            return
+          }
+          throw error
+        }
 
         if (isMounted) {
           setSession(sessionData)
@@ -66,6 +78,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, sessionData) => {
       if (isMounted) {
+        // If auth state has changed to null/undefined, clear session
+        if (!sessionData) {
+          setSession(null)
+          setUser(null)
+          return
+        }
+
         setSession(sessionData)
         setUser(sessionData?.user ?? null)
 
@@ -112,50 +131,72 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const signUp = async (email: string, password: string) => {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-    })
-    if (error) throw error
+    try {
+      // Wrap auth request with timeout to prevent hanging
+      const signUpPromise = supabase.auth.signUp({
+        email,
+        password,
+      })
 
-    // Create user record and free subscription in database
-    if (data.user) {
-      try {
-        // Create user record with upsert to avoid conflicts
-        const { error: userError } = await supabase.from('users').upsert({
-          id: data.user.id,
-          email: email,
-        })
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Sign up request timed out - please try again')), 15000)
+      )
 
-        if (userError && userError.code !== 'PGRST103') {
-          console.error('Error creating user profile:', userError.message || JSON.stringify(userError))
+      const { data, error } = await Promise.race([signUpPromise, timeoutPromise]) as any
+      if (error) throw error
+
+      // Create user record and free subscription in database
+      if (data.user) {
+        try {
+          // Create user record with upsert to avoid conflicts
+          const { error: userError } = await supabase.from('users').upsert({
+            id: data.user.id,
+            email: email,
+          })
+
+          if (userError && userError.code !== 'PGRST103') {
+            console.error('Error creating user profile:', userError.message || JSON.stringify(userError))
+            // Don't throw - account is already created in auth
+          }
+
+          // Create free subscription with upsert to avoid conflicts
+          const { error: subError } = await supabase.from('subscriptions').upsert({
+            user_id: data.user.id,
+            plan: 'free',
+            status: 'active',
+          })
+
+          if (subError && subError.code !== 'PGRST103') {
+            console.error('Error creating subscription:', subError)
+            // Don't throw - account is already created in auth
+          }
+        } catch (err) {
+          console.error('Error in user setup:', err)
           // Don't throw - account is already created in auth
         }
-
-        // Create free subscription with upsert to avoid conflicts
-        const { error: subError } = await supabase.from('subscriptions').upsert({
-          user_id: data.user.id,
-          plan: 'free',
-          status: 'active',
-        })
-
-        if (subError && subError.code !== 'PGRST103') {
-          console.error('Error creating subscription:', subError)
-          // Don't throw - account is already created in auth
-        }
-      } catch (err) {
-        console.error('Error in user setup:', err)
-        // Don't throw - account is already created in auth
       }
+    } catch (err: any) {
+      throw err
     }
   }
 
   const signIn = async (email: string, password: string) => {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
-    if (error) throw error
+    try {
+      // Wrap auth request with timeout to prevent hanging
+      const signInPromise = supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
+
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Login request timed out - please try again')), 15000)
+      )
+
+      const { data, error } = await Promise.race([signInPromise, timeoutPromise]) as any
+      if (error) throw error
+    } catch (err: any) {
+      throw err
+    }
   }
 
   const signOut = async () => {
@@ -191,8 +232,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const getSession = async () => {
-    const { data: { session: currentSession } } = await supabase.auth.getSession()
-    return currentSession
+    try {
+      const { data: { session: currentSession }, error } = await supabase.auth.getSession()
+
+      if (error) {
+        // If refresh token is invalid, sign out
+        if (error.message?.includes('Refresh Token')) {
+          console.warn('Invalid refresh token, signing out')
+          await supabase.auth.signOut({ scope: 'local' })
+          setSession(null)
+          setUser(null)
+          return null
+        }
+        throw error
+      }
+
+      return currentSession
+    } catch (err) {
+      console.error('Error getting session:', err)
+      setSession(null)
+      setUser(null)
+      return null
+    }
   }
 
   return (
