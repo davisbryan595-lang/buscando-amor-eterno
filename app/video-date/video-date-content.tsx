@@ -52,7 +52,7 @@ export default function VideoDateContent() {
           .from('profiles')
           .select('full_name, photos, main_photo_index')
           .eq('user_id', partnerId)
-          .single()
+          .maybeSingle()
 
         if (fetchError || !data) {
           setError('Could not load partner information')
@@ -65,7 +65,7 @@ export default function VideoDateContent() {
           setPartnerImage(mainPhoto)
         }
       } catch (err: any) {
-        console.error('Error fetching partner:', err)
+        console.error('Error fetching partner:', err?.message || JSON.stringify(err))
         setError('Failed to load partner information')
       } finally {
         setLoadingPartner(false)

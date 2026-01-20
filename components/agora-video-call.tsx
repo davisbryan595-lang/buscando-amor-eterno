@@ -270,11 +270,16 @@ export default function AgoraVideoCall({
   useEffect(() => {
     const fetchOtherUserProfile = async () => {
       try {
-        const { data } = await supabase
+        const { data, error } = await supabase
           .from('profiles')
           .select('photos, main_photo_index')
           .eq('user_id', partnerId)
-          .single()
+          .maybeSingle()
+
+        if (error) {
+          console.warn('Error fetching other user profile:', error?.message || JSON.stringify(error))
+          return
+        }
 
         if (data?.photos && data.photos.length > 0) {
           const mainIndex = data.main_photo_index || 0

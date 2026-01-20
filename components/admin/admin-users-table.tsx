@@ -48,8 +48,8 @@ export function AdminUsersTable() {
 
       setUsers(data as UserProfile[])
       setFilteredUsers(data as UserProfile[])
-    } catch (error) {
-      console.error('Error fetching users:', error)
+    } catch (error: any) {
+      console.error('Error fetching users:', error?.message || JSON.stringify(error))
     } finally {
       setLoading(false)
     }

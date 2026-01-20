@@ -7,6 +7,7 @@ import { Heart, MapPin, Calendar, Loader, ChevronLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { MutualPreferencesBadges } from '@/components/mutual-preferences-badges'
+import { ReportUserButton } from '@/components/report-user-button'
 import { useAuth } from '@/context/auth-context'
 import { useUserProfile } from '@/hooks/useUserProfile'
 import { useBrowseProfiles } from '@/hooks/useBrowseProfiles'
@@ -97,7 +98,11 @@ export function UserProfileDetail({ userId, onBack, compact = false }: UserProfi
             <div className="w-8 sm:w-10" />
           )}
           <h2 className="text-base sm:text-lg font-semibold text-foreground">Profile</h2>
-          <div className="w-8 sm:w-10" />
+          <ReportUserButton
+            userId={userId}
+            userName={userProfile?.full_name || 'User'}
+            subtle={true}
+          />
         </div>
       )}
 

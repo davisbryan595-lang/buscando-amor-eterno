@@ -180,11 +180,15 @@ export function useIncomingCalls() {
                 }
 
                 // Fetch caller profile info
-                const { data: callerProfile } = await supabase
+                const { data: callerProfile, error: profileError } = await supabase
                   .from('profiles')
                   .select('full_name, photos, main_photo_index')
                   .eq('user_id', callInvitation.caller_id)
-                  .single()
+                  .maybeSingle()
+
+                if (profileError) {
+                  console.error('Error fetching caller profile:', profileError?.message || JSON.stringify(profileError))
+                }
 
                 const processedCall: IncomingCall = {
                   id: callInvitation.id,
@@ -229,8 +233,8 @@ export function useIncomingCalls() {
                     }
                   }, 300000)
                 }
-              } catch (err) {
-                console.error('Error processing incoming call:', err)
+              } catch (err: any) {
+                console.error('Error processing incoming call:', err?.message || JSON.stringify(err))
               }
             }
           }

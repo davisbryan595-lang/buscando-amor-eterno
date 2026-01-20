@@ -62,13 +62,13 @@ export function AdminUserDetailModal({
         .from('profiles')
         .select('*')
         .eq('user_id', user.user_id)
-        .single()
+        .maybeSingle()
 
       if (error) throw error
 
       setDetailedUser(data as DetailedUserProfile)
-    } catch (error) {
-      console.error('Error fetching user details:', error)
+    } catch (error: any) {
+      console.error('Error fetching user details:', error?.message || JSON.stringify(error))
       toast.error('Failed to load user details')
     } finally {
       setLoading(false)

@@ -13,6 +13,7 @@ import MessageContextMenu from '@/components/message-context-menu'
 import TypingIndicator from '@/components/typing-indicator'
 import { AnimatedMessage } from '@/components/animated-message'
 import CallLogMessage from '@/components/call-log-message'
+import { ReportUserButton } from '@/components/report-user-button'
 
 const getLastSeenText = (timestamp?: string): string => {
   if (!timestamp) return 'Offline'
@@ -210,20 +211,21 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
       if (!conversation.other_user_name || !conversation.other_user_image) {
         const fetchUserDetails = async () => {
           try {
-            const { data } = await supabase
+            const { data, error } = await supabase
               .from('profiles')
               .select('full_name, photos, main_photo_index')
               .eq('user_id', conversation.other_user_id)
-              .single()
+              .maybeSingle()
 
+            if (error) throw error
             if (data) {
               setOtherUserDetails({
                 name: data.full_name,
                 image: data.photos?.[data.main_photo_index || 0] || null,
               })
             }
-          } catch (err) {
-            console.error('Error fetching user details:', err)
+          } catch (err: any) {
+            console.error('Error fetching user details:', err?.message || JSON.stringify(err))
           }
         }
         fetchUserDetails()
@@ -388,7 +390,7 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
           </button>
         </div>
 
-        <div className="flex gap-1 sm:gap-2 lg:gap-3 flex-shrink-0">
+        <div className="flex gap-1 sm:gap-2 lg:gap-3 flex-shrink-0 items-center">
           <button
             onClick={handleStartAudioCall}
             disabled={callingState === 'calling'}
@@ -405,6 +407,12 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
           >
             <Video size={16} className="sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-primary" />
           </button>
+          <div className="w-px h-6 bg-border opacity-30" />
+          <ReportUserButton
+            userId={conversation.other_user_id}
+            userName={otherUserDetails?.name || conversation.other_user_name || 'User'}
+            subtle={true}
+          />
         </div>
       </div>
 

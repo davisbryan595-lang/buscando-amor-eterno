@@ -40,15 +40,13 @@ export function useSubscription() {
           .from('subscriptions')
           .select('*')
           .eq('user_id', user.id)
-          .single()
+          .maybeSingle()
 
         if (!isMounted) return
 
         if (err) {
           console.error('[Subscription] Query error:', err.code, err.message)
-          if (err.code !== 'PGRST116') {
-            throw err
-          }
+          throw err
         }
 
         if (data) {
@@ -92,9 +90,9 @@ export function useSubscription() {
         .from('subscriptions')
         .select('*')
         .eq('user_id', user.id)
-        .single()
+        .maybeSingle()
 
-      if (err && err.code !== 'PGRST116') {
+      if (err) {
         throw err
       }
 
