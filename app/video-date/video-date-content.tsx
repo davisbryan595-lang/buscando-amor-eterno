@@ -65,7 +65,7 @@ export default function VideoDateContent() {
           setPartnerImage(mainPhoto)
         }
       } catch (err: any) {
-        console.error('Error fetching partner:', err)
+        console.error('Error fetching partner:', err?.message || JSON.stringify(err))
         setError('Failed to load partner information')
       } finally {
         setLoadingPartner(false)
