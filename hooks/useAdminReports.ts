@@ -42,8 +42,8 @@ export function useAdminReports() {
         .select(
           `
           *,
-          reported_user:reported_user_id(id, full_name, photos),
-          reported_by:reported_by_user_id(id, full_name)
+          reported_user:reported_user_id(user_id, full_name, photos),
+          reported_by:reported_by_user_id(user_id, full_name)
           `
         )
         .order('created_at', { ascending: false })
