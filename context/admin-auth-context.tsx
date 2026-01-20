@@ -45,11 +45,19 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
       const adminEmails = process.env.NEXT_PUBLIC_ADMIN_EMAILS?.split(',').map(e => e.trim()) || []
       const adminAccessCode = process.env.NEXT_PUBLIC_ADMIN_ACCESS_CODE || ''
 
+      // Debug logging
+      console.log('[Admin Auth] Email input:', email)
+      console.log('[Admin Auth] Access code input:', accessCode ? '***' : '(empty)')
+      console.log('[Admin Auth] Valid admin emails:', adminEmails.length > 0 ? adminEmails : '(NOT SET - check env vars)')
+      console.log('[Admin Auth] Access code configured:', adminAccessCode ? 'yes' : 'NO (check env vars)')
+
       // Validate email and access code
       const isValidEmail = adminEmails.includes(email)
       const isValidCode = accessCode === adminAccessCode
 
       if (!isValidEmail || !isValidCode) {
+        if (!isValidEmail) console.log('[Admin Auth] Invalid email. Valid emails:', adminEmails)
+        if (!isValidCode) console.log('[Admin Auth] Invalid access code.')
         throw new Error('Invalid email or access code')
       }
 
