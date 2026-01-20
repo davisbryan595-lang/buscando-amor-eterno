@@ -28,19 +28,17 @@ export function useAdmin() {
         .from('profiles')
         .select('id, is_admin, full_name')
         .eq('user_id', user.id)
-        .single()
+        .maybeSingle()
 
       if (err) {
-        if (err.code === 'PGRST116') {
-          // No profile found
-          setIsAdmin(false)
-          setAdminUser(null)
-        } else {
-          throw err
-        }
+        throw err
       } else if (data) {
         setAdminUser(data as AdminUser)
         setIsAdmin(data.is_admin || false)
+      } else {
+        // No profile found
+        setIsAdmin(false)
+        setAdminUser(null)
       }
       setError(null)
     } catch (err: any) {
