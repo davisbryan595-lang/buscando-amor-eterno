@@ -13,6 +13,7 @@ import MessageContextMenu from '@/components/message-context-menu'
 import TypingIndicator from '@/components/typing-indicator'
 import { AnimatedMessage } from '@/components/animated-message'
 import CallLogMessage from '@/components/call-log-message'
+import { ReportUserButton } from '@/components/report-user-button'
 
 const getLastSeenText = (timestamp?: string): string => {
   if (!timestamp) return 'Offline'
