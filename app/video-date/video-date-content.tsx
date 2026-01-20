@@ -52,7 +52,7 @@ export default function VideoDateContent() {
           .from('profiles')
           .select('full_name, photos, main_photo_index')
           .eq('user_id', partnerId)
-          .single()
+          .maybeSingle()
 
         if (fetchError || !data) {
           setError('Could not load partner information')

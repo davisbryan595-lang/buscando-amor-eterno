@@ -184,7 +184,7 @@ export function useIncomingCalls() {
                   .from('profiles')
                   .select('full_name, photos, main_photo_index')
                   .eq('user_id', callInvitation.caller_id)
-                  .single()
+                  .maybeSingle()
 
                 if (profileError) {
                   console.error('Error fetching caller profile:', profileError?.message || JSON.stringify(profileError))

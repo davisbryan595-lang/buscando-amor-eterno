@@ -274,7 +274,7 @@ export default function AgoraVideoCall({
           .from('profiles')
           .select('photos, main_photo_index')
           .eq('user_id', partnerId)
-          .single()
+          .maybeSingle()
 
         if (error) {
           console.warn('Error fetching other user profile:', error?.message || JSON.stringify(error))
