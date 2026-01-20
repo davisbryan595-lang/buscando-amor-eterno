@@ -189,9 +189,9 @@ export function useUserProfile(userId: string | null) {
         .from('profiles')
         .select('*')
         .eq('user_id', userId)
-        .single()
+        .maybeSingle()
 
-      if (err && err.code !== 'PGRST116') {
+      if (err) {
         throw err
       }
 
