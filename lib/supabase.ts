@@ -27,21 +27,28 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   },
 })
 
-// Handle auth errors globally, especially refresh token errors
+// Handle auth token cleanup on sign out to prevent refresh token errors
 if (typeof window !== 'undefined') {
-  supabase.auth.onAuthStateChange((event, session) => {
-    // If session is null and event is TOKEN_REFRESHED or INITIAL_SESSION,
-    // it means the token refresh failed
-    if (event === 'SIGNED_OUT' || (!session && event !== 'INITIAL_SESSION')) {
-      // Clear any persisted session data
-      try {
-        localStorage.removeItem('supabase.auth.token')
-        localStorage.removeItem('supabase.auth.refresh_token')
-      } catch (err) {
-        console.warn('Failed to clear auth tokens from storage:', err)
+  let authListenerAttached = false
+
+  if (!authListenerAttached) {
+    authListenerAttached = true
+    supabase.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_OUT') {
+        // Clear any persisted session/token data from localStorage
+        try {
+          const keys = Object.keys(localStorage)
+          keys.forEach(key => {
+            if (key.includes('supabase') || key.includes('auth')) {
+              localStorage.removeItem(key)
+            }
+          })
+        } catch (err) {
+          console.warn('Failed to clear auth tokens from storage:', err)
+        }
       }
-    }
-  })
+    })
+  }
 }
 
 // Configure realtime with extended timeouts and heartbeat
