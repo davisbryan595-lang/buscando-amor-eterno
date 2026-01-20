@@ -47,6 +47,7 @@ export function AdminUserDetailModal({
   const [detailedUser, setDetailedUser] = useState<DetailedUserProfile | null>(null)
   const [loading, setLoading] = useState(false)
   const [showBanForm, setShowBanForm] = useState(false)
+  const [fetchError, setFetchError] = useState<string | null>(null)
   const { verifyUser } = useAdminActions()
 
   useEffect(() => {
