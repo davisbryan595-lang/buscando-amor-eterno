@@ -31,7 +31,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Get existing session from localStorage (persisted across page refreshes)
         const { data: { session: sessionData }, error } = await supabase.auth.getSession()
 
-        if (error) throw error
+        if (error) {
+          // If refresh token is invalid/missing, clear session from storage
+          if (error.message?.includes('Refresh Token') || error.message?.includes('session')) {
+            console.warn('Session expired or refresh token invalid, clearing auth state')
+            await supabase.auth.signOut({ scope: 'local' })
+            if (isMounted) {
+              setSession(null)
+              setUser(null)
+            }
+            return
+          }
+          throw error
+        }
 
         if (isMounted) {
           setSession(sessionData)
