@@ -109,7 +109,7 @@ CREATE POLICY "Users can view active profiles" ON profiles
 FOR SELECT
 USING (
   banned = false
-  OR auth.uid() = id
+  OR auth.uid() = user_id
 );
 
 -- Policy: Admins can read all profiles
@@ -118,7 +118,7 @@ FOR SELECT
 USING (
   EXISTS (
     SELECT 1 FROM profiles p
-    WHERE p.id = auth.uid()
+    WHERE p.user_id = auth.uid()
     AND p.is_admin = true
   )
 );
@@ -129,7 +129,7 @@ FOR UPDATE
 USING (
   EXISTS (
     SELECT 1 FROM profiles p
-    WHERE p.id = auth.uid()
+    WHERE p.user_id = auth.uid()
     AND p.is_admin = true
   )
 );
