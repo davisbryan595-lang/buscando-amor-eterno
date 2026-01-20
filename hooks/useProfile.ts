@@ -88,19 +88,15 @@ export function useProfile() {
           .from('profiles')
           .select('*')
           .eq('user_id', user.id)
-          .single()
+          .maybeSingle()
 
         if (!isMounted) return
 
-        if (err && err.code !== 'PGRST116') {
+        if (err) {
           throw err
         }
 
-        if (data) {
-          setProfile(data as ProfileData)
-        } else {
-          setProfile(null)
-        }
+        setProfile(data as ProfileData | null)
         setError(null)
       } catch (err: any) {
         if (isMounted) {
