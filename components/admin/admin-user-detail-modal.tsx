@@ -59,6 +59,7 @@ export function AdminUserDetailModal({
   const fetchDetailedUser = useCallback(async () => {
     try {
       setLoading(true)
+      setFetchError(null)
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -67,10 +68,16 @@ export function AdminUserDetailModal({
 
       if (error) throw error
 
+      if (!data) {
+        throw new Error('User profile not found')
+      }
+
       setDetailedUser(data as DetailedUserProfile)
     } catch (error: any) {
-      console.error('Error fetching user details:', error?.message || JSON.stringify(error))
-      toast.error('Failed to load user details')
+      const errorMessage = error?.message || 'Failed to load user details'
+      console.error('Error fetching user details:', errorMessage)
+      setFetchError(errorMessage)
+      toast.error(errorMessage)
     } finally {
       setLoading(false)
     }
