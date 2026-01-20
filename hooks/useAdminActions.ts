@@ -20,30 +20,30 @@ export function useAdminActions() {
       if (!user) throw new Error('Not authenticated')
 
       try {
-        const now = new Date().toISOString()
+        const { data: { session } } = await supabase.auth.getSession()
 
-        const { error: err } = await supabase
-          .from('profiles')
-          .update({
-            banned: true,
-            ban_reason: options.reason,
-            ban_duration: options.duration || 'permanent',
-            ban_date: now,
-          })
-          .eq('user_id', options.userId)
+        if (!session?.access_token) {
+          throw new Error('Not authenticated')
+        }
 
-        if (err) throw err
-
-        // Log admin activity
-        await supabase.from('admin_activity_logs').insert({
-          admin_id: user.id,
-          action_type: 'ban_user',
-          target_user_id: options.userId,
-          details: {
+        const response = await fetch('/api/admin/actions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({
+            action: 'ban_user',
+            userId: options.userId,
+            adminId: user.id,
             reason: options.reason,
             duration: options.duration || 'permanent',
-          },
+          }),
         })
+
+        if (!response.ok) {
+          throw new Error(`Failed to ban user: ${response.statusText}`)
+        }
 
         return true
       } catch (err: any) {
@@ -59,24 +59,28 @@ export function useAdminActions() {
       if (!user) throw new Error('Not authenticated')
 
       try {
-        const { error: err } = await supabase
-          .from('profiles')
-          .update({
-            banned: false,
-            ban_reason: null,
-            ban_duration: null,
-            ban_date: null,
-          })
-          .eq('user_id', userId)
+        const { data: { session } } = await supabase.auth.getSession()
 
-        if (err) throw err
+        if (!session?.access_token) {
+          throw new Error('Not authenticated')
+        }
 
-        // Log admin activity
-        await supabase.from('admin_activity_logs').insert({
-          admin_id: user.id,
-          action_type: 'unban_user',
-          target_user_id: userId,
+        const response = await fetch('/api/admin/actions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({
+            action: 'unban_user',
+            userId,
+            adminId: user.id,
+          }),
         })
+
+        if (!response.ok) {
+          throw new Error(`Failed to unban user: ${response.statusText}`)
+        }
 
         return true
       } catch (err: any) {
@@ -92,21 +96,28 @@ export function useAdminActions() {
       if (!user) throw new Error('Not authenticated')
 
       try {
-        const { error: err } = await supabase
-          .from('profiles')
-          .update({
-            verified: true,
-          })
-          .eq('user_id', userId)
+        const { data: { session } } = await supabase.auth.getSession()
 
-        if (err) throw err
+        if (!session?.access_token) {
+          throw new Error('Not authenticated')
+        }
 
-        // Log admin activity
-        await supabase.from('admin_activity_logs').insert({
-          admin_id: user.id,
-          action_type: 'verify_user',
-          target_user_id: userId,
+        const response = await fetch('/api/admin/actions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({
+            action: 'verify_user',
+            userId,
+            adminId: user.id,
+          }),
         })
+
+        if (!response.ok) {
+          throw new Error(`Failed to verify user: ${response.statusText}`)
+        }
 
         return true
       } catch (err: any) {
