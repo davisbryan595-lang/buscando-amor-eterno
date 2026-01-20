@@ -37,20 +37,27 @@ export function useAdminReports() {
       setLoading(true)
       setError(null)
 
-      const { data, error: err } = await supabase
-        .from('reports')
-        .select(
-          `
-          *,
-          reported_user:reported_user_id(user_id, full_name, photos),
-          reported_by:reported_by_user_id(user_id, full_name)
-          `
-        )
-        .order('created_at', { ascending: false })
+      // Get auth session to include in request header
+      const { data: { session } } = await supabase.auth.getSession()
 
-      if (err) throw err
+      if (!session?.access_token) {
+        throw new Error('Not authenticated')
+      }
 
-      setReports(data as Report[])
+      const response = await fetch('/api/admin/reports', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+      })
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch reports: ${response.statusText}`)
+      }
+
+      const data = await response.json()
+      setReports(data.reports || [])
     } catch (err: any) {
       const errorMessage = err?.message || 'Failed to fetch reports'
       setError(errorMessage)
@@ -69,23 +76,28 @@ export function useAdminReports() {
       if (!user) throw new Error('Not authenticated')
 
       try {
-        const { error: err } = await supabase
-          .from('reports')
-          .update({
+        const { data: { session } } = await supabase.auth.getSession()
+
+        if (!session?.access_token) {
+          throw new Error('Not authenticated')
+        }
+
+        const response = await fetch('/api/admin/reports', {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({
+            reportId,
             status: 'dismissed',
-            reviewed_at: new Date().toISOString(),
-            reviewed_by_admin_id: user.id,
-          })
-          .eq('id', reportId)
-
-        if (err) throw err
-
-        // Log admin activity
-        await supabase.from('admin_activity_logs').insert({
-          admin_id: user.id,
-          action_type: 'dismiss_report',
-          details: { report_id: reportId },
+            reviewedByAdminId: user.id,
+          }),
         })
+
+        if (!response.ok) {
+          throw new Error(`Failed to dismiss report: ${response.statusText}`)
+        }
 
         await fetchReports()
       } catch (err: any) {
@@ -101,17 +113,29 @@ export function useAdminReports() {
       if (!user) throw new Error('Not authenticated')
 
       try {
-        const { error: err } = await supabase
-          .from('reports')
-          .update({
-            status: 'action_taken',
-            action_taken: actionTaken,
-            reviewed_at: new Date().toISOString(),
-            reviewed_by_admin_id: user.id,
-          })
-          .eq('id', reportId)
+        const { data: { session } } = await supabase.auth.getSession()
 
-        if (err) throw err
+        if (!session?.access_token) {
+          throw new Error('Not authenticated')
+        }
+
+        const response = await fetch('/api/admin/reports', {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({
+            reportId,
+            status: 'action_taken',
+            actionTaken,
+            reviewedByAdminId: user.id,
+          }),
+        })
+
+        if (!response.ok) {
+          throw new Error(`Failed to update report: ${response.statusText}`)
+        }
 
         await fetchReports()
       } catch (err: any) {
