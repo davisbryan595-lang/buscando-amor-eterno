@@ -98,7 +98,11 @@ export function UserProfileDetail({ userId, onBack, compact = false }: UserProfi
             <div className="w-8 sm:w-10" />
           )}
           <h2 className="text-base sm:text-lg font-semibold text-foreground">Profile</h2>
-          <div className="w-8 sm:w-10" />
+          <ReportUserButton
+            userId={userId}
+            userName={userProfile?.full_name || 'User'}
+            subtle={true}
+          />
         </div>
       )}
 
