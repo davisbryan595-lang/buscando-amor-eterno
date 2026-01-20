@@ -232,8 +232,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const getSession = async () => {
-    const { data: { session: currentSession } } = await supabase.auth.getSession()
-    return currentSession
+    try {
+      const { data: { session: currentSession }, error } = await supabase.auth.getSession()
+
+      if (error) {
+        // If refresh token is invalid, sign out
+        if (error.message?.includes('Refresh Token')) {
+          console.warn('Invalid refresh token, signing out')
+          await supabase.auth.signOut({ scope: 'local' })
+          setSession(null)
+          setUser(null)
+          return null
+        }
+        throw error
+      }
+
+      return currentSession
+    } catch (err) {
+      console.error('Error getting session:', err)
+      setSession(null)
+      setUser(null)
+      return null
+    }
   }
 
   return (
