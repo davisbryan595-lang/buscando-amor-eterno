@@ -16,12 +16,12 @@ export interface Report {
   created_at: string
   updated_at: string
   reported_user?: {
-    id: string
+    user_id: string
     full_name: string
     photos: string[]
   }
   reported_by?: {
-    id: string
+    user_id: string
     full_name: string
   }
 }
