@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { useAdmin } from '@/hooks/useAdmin'
+import { useAdminAuth } from '@/context/admin-auth-context'
 import { Loader2 } from 'lucide-react'
 
 interface AdminProtectedRouteProps {
@@ -11,13 +11,13 @@ interface AdminProtectedRouteProps {
 
 export function AdminProtectedRoute({ children }: AdminProtectedRouteProps) {
   const router = useRouter()
-  const { isAdmin, loading } = useAdmin()
+  const { isAdminAuthenticated, loading } = useAdminAuth()
 
   useEffect(() => {
-    if (!loading && !isAdmin) {
-      router.push('/login')
+    if (!loading && !isAdminAuthenticated) {
+      router.push('/admin-login')
     }
-  }, [loading, isAdmin, router])
+  }, [loading, isAdminAuthenticated, router])
 
   if (loading) {
     return (
@@ -27,7 +27,7 @@ export function AdminProtectedRoute({ children }: AdminProtectedRouteProps) {
     )
   }
 
-  if (!isAdmin) {
+  if (!isAdminAuthenticated) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
         <div className="text-center">
