@@ -35,8 +35,8 @@ export function AdminReportedProfiles() {
 
   const handleViewProfile = (report: any) => {
     const userData: UserProfile = {
-      user_id: report.reported_user.id,
-      id: report.reported_user.id,
+      user_id: report.reported_user.user_id,
+      id: report.reported_user.user_id,
       full_name: report.reported_user.full_name,
       photos: report.reported_user.photos || [],
       banned: false,
