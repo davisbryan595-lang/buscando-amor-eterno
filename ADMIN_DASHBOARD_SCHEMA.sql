@@ -87,7 +87,7 @@ FOR SELECT
 USING (
   EXISTS (
     SELECT 1 FROM profiles
-    WHERE profiles.id = auth.uid()
+    WHERE profiles.user_id = auth.uid()
     AND profiles.is_admin = true
   )
 );
@@ -98,7 +98,7 @@ FOR INSERT
 WITH CHECK (
   EXISTS (
     SELECT 1 FROM profiles
-    WHERE profiles.id = auth.uid()
+    WHERE profiles.user_id = auth.uid()
     AND profiles.is_admin = true
   )
 );
