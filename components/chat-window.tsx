@@ -222,8 +222,8 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
                 image: data.photos?.[data.main_photo_index || 0] || null,
               })
             }
-          } catch (err) {
-            console.error('Error fetching user details:', err)
+          } catch (err: any) {
+            console.error('Error fetching user details:', err?.message || JSON.stringify(err))
           }
         }
         fetchUserDetails()
