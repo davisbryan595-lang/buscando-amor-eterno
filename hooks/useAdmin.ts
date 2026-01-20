@@ -75,19 +75,18 @@ export function useAdmin() {
           .from('profiles')
           .select('id, is_admin, full_name')
           .eq('user_id', user.id)
-          .single()
+          .maybeSingle()
 
         if (!isMounted) return
 
         if (err) {
-          if (err.code !== 'PGRST116') {
-            throw err
-          }
-          setIsAdmin(false)
-          setAdminUser(null)
+          throw err
         } else if (data) {
           setAdminUser(data as AdminUser)
           setIsAdmin(data.is_admin || false)
+        } else {
+          setIsAdmin(false)
+          setAdminUser(null)
         }
         setError(null)
       } catch (err: any) {
