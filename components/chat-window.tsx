@@ -390,7 +390,7 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
           </button>
         </div>
 
-        <div className="flex gap-1 sm:gap-2 lg:gap-3 flex-shrink-0">
+        <div className="flex gap-1 sm:gap-2 lg:gap-3 flex-shrink-0 items-center">
           <button
             onClick={handleStartAudioCall}
             disabled={callingState === 'calling'}
@@ -407,6 +407,12 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
           >
             <Video size={16} className="sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-primary" />
           </button>
+          <div className="w-px h-6 bg-border opacity-30" />
+          <ReportUserButton
+            userId={conversation.other_user_id}
+            userName={otherUserDetails?.name || conversation.other_user_name || 'User'}
+            subtle={true}
+          />
         </div>
       </div>
 
