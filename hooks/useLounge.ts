@@ -199,7 +199,7 @@ export function useLounge() {
           .from('profiles')
           .select('full_name, photos, main_photo_index')
           .eq('user_id', user.id)
-          .single()
+          .maybeSingle()
 
         const channelName = 'global_singles_lounge_presence'
 
@@ -318,7 +318,7 @@ export function useLounge() {
           .from('profiles')
           .select('full_name, photos, main_photo_index')
           .eq('user_id', user.id)
-          .single()
+          .maybeSingle()
 
         // Create enriched message for broadcast
         const enrichedMessage = {
