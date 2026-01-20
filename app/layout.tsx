@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Geist, Geist_Mono, Inter, Playfair_Display } from 'next/font/google'
 import './globals.css'
 import { AuthProvider } from '@/context/auth-context'
+import { AdminAuthProvider } from '@/context/admin-auth-context'
 import { I18nProvider } from '@/lib/i18n-context'
 import { Preloader } from '@/components/preloader'
 import CallManager from '@/components/call-manager'
@@ -69,15 +70,17 @@ export default function RootLayout({
       <body className={`${inter.variable} ${playfair.variable} font-sans antialiased bg-background text-foreground`}>
         <Preloader />
         <ReconnectHandler />
-        <I18nProvider>
-          <AuthProvider>
-            <SessionManager />
-            <CallManager>
-              {children}
-            </CallManager>
-            <Toaster />
-          </AuthProvider>
-        </I18nProvider>
+        <AdminAuthProvider>
+          <I18nProvider>
+            <AuthProvider>
+              <SessionManager />
+              <CallManager>
+                {children}
+              </CallManager>
+              <Toaster />
+            </AuthProvider>
+          </I18nProvider>
+        </AdminAuthProvider>
       </body>
     </html>
   )
