@@ -10,20 +10,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Separator } from '@/components/ui/separator'
 import { LogOut } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { useAuth } from '@/context/auth-context'
+import { useAdminAuth } from '@/context/admin-auth-context'
 import { useRouter } from 'next/navigation'
 
 export default function AdminPage() {
-  const { signOut } = useAuth()
+  const { adminLogout } = useAdminAuth()
   const router = useRouter()
 
-  const handleLogout = async () => {
-    try {
-      await signOut()
-      router.push('/login')
-    } catch (error) {
-      console.error('Error logging out:', error)
-    }
+  const handleLogout = () => {
+    adminLogout()
+    router.push('/admin-login')
   }
 
   return (
