@@ -50,8 +50,8 @@ export function AdminIncompleteProfiles() {
 
       setUsers(data as IncompleteProfile[])
       setFilteredUsers(data as IncompleteProfile[])
-    } catch (error) {
-      console.error('Error fetching incomplete profiles:', error)
+    } catch (error: any) {
+      console.error('Error fetching incomplete profiles:', error?.message || JSON.stringify(error))
     } finally {
       setLoading(false)
     }
