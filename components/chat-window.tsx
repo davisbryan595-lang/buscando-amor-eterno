@@ -210,12 +210,13 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
       if (!conversation.other_user_name || !conversation.other_user_image) {
         const fetchUserDetails = async () => {
           try {
-            const { data } = await supabase
+            const { data, error } = await supabase
               .from('profiles')
               .select('full_name, photos, main_photo_index')
               .eq('user_id', conversation.other_user_id)
               .single()
 
+            if (error) throw error
             if (data) {
               setOtherUserDetails({
                 name: data.full_name,
