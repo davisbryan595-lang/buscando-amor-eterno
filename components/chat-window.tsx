@@ -214,7 +214,7 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
               .from('profiles')
               .select('full_name, photos, main_photo_index')
               .eq('user_id', conversation.other_user_id)
-              .single()
+              .maybeSingle()
 
             if (error) throw error
             if (data) {

@@ -62,7 +62,7 @@ export function AdminUserDetailModal({
         .from('profiles')
         .select('*')
         .eq('user_id', user.user_id)
-        .single()
+        .maybeSingle()
 
       if (error) throw error
 
