@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/context/auth-context'
+import { useAdminAuth } from '@/context/admin-auth-context'
 
 export interface Report {
   id: string
@@ -28,6 +29,7 @@ export interface Report {
 
 export function useAdminReports() {
   const { user } = useAuth()
+  const { isAdminAuthenticated } = useAdminAuth()
   const [reports, setReports] = useState<Report[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -37,18 +39,19 @@ export function useAdminReports() {
       setLoading(true)
       setError(null)
 
-      // Get auth session to include in request header
-      const { data: { session } } = await supabase.auth.getSession()
-
-      if (!session?.access_token) {
+      // Check if authenticated (either regular user or admin)
+      if (!user && !isAdminAuthenticated) {
         throw new Error('Not authenticated')
       }
+
+      // Get auth session if available, fallback to admin access
+      const { data: { session } } = await supabase.auth.getSession()
 
       const response = await fetch('/api/admin/reports', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
+          'Authorization': `Bearer ${session?.access_token || 'admin'}`,
         },
       })
 
