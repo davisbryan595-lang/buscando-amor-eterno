@@ -76,25 +76,21 @@ export function useAdminReports() {
 
   const dismissReport = useCallback(
     async (reportId: string) => {
-      if (!user) throw new Error('Not authenticated')
+      if (!user && !isAdminAuthenticated) throw new Error('Not authenticated')
 
       try {
         const { data: { session } } = await supabase.auth.getSession()
-
-        if (!session?.access_token) {
-          throw new Error('Not authenticated')
-        }
 
         const response = await fetch('/api/admin/reports', {
           method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session.access_token}`,
+            'Authorization': `Bearer ${session?.access_token || 'admin'}`,
           },
           body: JSON.stringify({
             reportId,
             status: 'dismissed',
-            reviewedByAdminId: user.id,
+            reviewedByAdminId: user?.id || 'admin',
           }),
         })
 
@@ -108,31 +104,27 @@ export function useAdminReports() {
         throw err
       }
     },
-    [user, fetchReports]
+    [user, isAdminAuthenticated, fetchReports]
   )
 
   const markReportAsReviewed = useCallback(
     async (reportId: string, actionTaken: string) => {
-      if (!user) throw new Error('Not authenticated')
+      if (!user && !isAdminAuthenticated) throw new Error('Not authenticated')
 
       try {
         const { data: { session } } = await supabase.auth.getSession()
-
-        if (!session?.access_token) {
-          throw new Error('Not authenticated')
-        }
 
         const response = await fetch('/api/admin/reports', {
           method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session.access_token}`,
+            'Authorization': `Bearer ${session?.access_token || 'admin'}`,
           },
           body: JSON.stringify({
             reportId,
             status: 'action_taken',
             actionTaken,
-            reviewedByAdminId: user.id,
+            reviewedByAdminId: user?.id || 'admin',
           }),
         })
 
@@ -146,7 +138,7 @@ export function useAdminReports() {
         throw err
       }
     },
-    [user, fetchReports]
+    [user, isAdminAuthenticated, fetchReports]
   )
 
   return {
