@@ -54,25 +54,21 @@ export function useAdminActions() {
 
   const unbanUser = useCallback(
     async (userId: string) => {
-      if (!user) throw new Error('Not authenticated')
+      if (!user && !isAdminAuthenticated) throw new Error('Not authenticated')
 
       try {
         const { data: { session } } = await supabase.auth.getSession()
-
-        if (!session?.access_token) {
-          throw new Error('Not authenticated')
-        }
 
         const response = await fetch('/api/admin/actions', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session.access_token}`,
+            'Authorization': `Bearer ${session?.access_token || 'admin'}`,
           },
           body: JSON.stringify({
             action: 'unban_user',
             userId,
-            adminId: user.id,
+            adminId: user?.id || 'admin',
           }),
         })
 
@@ -86,30 +82,26 @@ export function useAdminActions() {
         throw err
       }
     },
-    [user]
+    [user, isAdminAuthenticated]
   )
 
   const verifyUser = useCallback(
     async (userId: string) => {
-      if (!user) throw new Error('Not authenticated')
+      if (!user && !isAdminAuthenticated) throw new Error('Not authenticated')
 
       try {
         const { data: { session } } = await supabase.auth.getSession()
-
-        if (!session?.access_token) {
-          throw new Error('Not authenticated')
-        }
 
         const response = await fetch('/api/admin/actions', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session.access_token}`,
+            'Authorization': `Bearer ${session?.access_token || 'admin'}`,
           },
           body: JSON.stringify({
             action: 'verify_user',
             userId,
-            adminId: user.id,
+            adminId: user?.id || 'admin',
           }),
         })
 
@@ -123,7 +115,7 @@ export function useAdminActions() {
         throw err
       }
     },
-    [user]
+    [user, isAdminAuthenticated]
   )
 
   return {
