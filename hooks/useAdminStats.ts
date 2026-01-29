@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
+import { useAdminAuth } from '@/context/admin-auth-context'
 
 export interface AdminStats {
   totalSignups: number
@@ -16,24 +17,26 @@ export function useAdminStats() {
   const [stats, setStats] = useState<AdminStats | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const { isAdminAuthenticated } = useAdminAuth()
 
   const fetchStats = useCallback(async () => {
     try {
       setLoading(true)
       setError(null)
 
-      // Get auth session to include in request header
-      const { data: { session } } = await supabase.auth.getSession()
-
-      if (!session?.access_token) {
+      // Check if admin is authenticated via admin auth context
+      if (!isAdminAuthenticated) {
         throw new Error('Not authenticated')
       }
+
+      // Try to get Supabase session, but it's optional for admin-only access
+      const { data: { session } } = await supabase.auth.getSession()
 
       const response = await fetch('/api/admin/stats', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
+          'Authorization': `Bearer ${session?.access_token || 'admin'}`,
         },
       })
 
