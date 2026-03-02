@@ -13,7 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { Loader2, Search } from 'lucide-react'
+import { Loader2, Search, Filter } from 'lucide-react'
 import { AdminUserDetailModal } from './admin-user-detail-modal'
 import { formatDistanceToNow } from 'date-fns'
 
@@ -26,6 +26,8 @@ export interface UserProfile {
   verified: boolean
   created_at: string
   updated_at: string
+  subscription_plan?: 'free' | 'premium'
+  subscription_status?: 'active' | 'cancelled' | 'expired'
 }
 
 export function AdminUsersTable() {
@@ -33,21 +35,41 @@ export function AdminUsersTable() {
   const [filteredUsers, setFilteredUsers] = useState<UserProfile[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
+  const [subscriptionFilter, setSubscriptionFilter] = useState<'all' | 'free' | 'premium'>('all')
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null)
   const [showDetailModal, setShowDetailModal] = useState(false)
 
   const fetchUsers = useCallback(async () => {
     try {
       setLoading(true)
-      const { data, error } = await supabase
+      const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('user_id, id, full_name, photos, banned, verified, created_at, updated_at')
         .order('created_at', { ascending: false })
 
-      if (error) throw error
+      if (profileError) throw profileError
 
-      setUsers(data as UserProfile[])
-      setFilteredUsers(data as UserProfile[])
+      // Fetch subscription data
+      const { data: subscriptionData, error: subError } = await supabase
+        .from('subscriptions')
+        .select('user_id, plan, status')
+
+      if (subError) {
+        console.warn('Warning: Could not fetch subscription data')
+      }
+
+      // Combine user and subscription data
+      const usersWithSubscriptions = (profileData || []).map((user) => {
+        const subscription = subscriptionData?.find((s) => s.user_id === user.user_id)
+        return {
+          ...user,
+          subscription_plan: (subscription?.plan as 'free' | 'premium') || 'free',
+          subscription_status: (subscription?.status as 'active' | 'cancelled' | 'expired') || undefined,
+        }
+      })
+
+      setUsers(usersWithSubscriptions as UserProfile[])
+      setFilteredUsers(usersWithSubscriptions as UserProfile[])
     } catch (error: any) {
       console.error('Error fetching users:', error?.message || JSON.stringify(error))
     } finally {
@@ -60,18 +82,25 @@ export function AdminUsersTable() {
   }, [fetchUsers])
 
   useEffect(() => {
-    if (!searchQuery.trim()) {
-      setFilteredUsers(users)
-    } else {
+    let filtered = users
+
+    // Filter by search query
+    if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase()
-      const filtered = users.filter(
+      filtered = filtered.filter(
         (user) =>
           user.full_name.toLowerCase().includes(query) ||
           user.user_id.toLowerCase().includes(query)
       )
-      setFilteredUsers(filtered)
     }
-  }, [searchQuery, users])
+
+    // Filter by subscription type
+    if (subscriptionFilter !== 'all') {
+      filtered = filtered.filter((user) => user.subscription_plan === subscriptionFilter)
+    }
+
+    setFilteredUsers(filtered)
+  }, [searchQuery, users, subscriptionFilter])
 
   const handleUserClick = (user: UserProfile) => {
     setSelectedUser(user)
@@ -84,16 +113,37 @@ export function AdminUsersTable() {
 
   return (
     <Card className="p-6">
-      <div className="mb-6">
-        <h2 className="text-2xl font-bold text-foreground mb-4">Users Management</h2>
+      <div className="space-y-4 mb-6">
+        <h2 className="text-2xl font-bold text-foreground">Users Management</h2>
         <div className="relative">
           <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search by name, email, or user ID..."
+            placeholder="Search by name or user ID..."
             className="pl-10"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
+        </div>
+        <div className="flex items-center gap-2">
+          <Filter size={16} className="text-muted-foreground" />
+          <select
+            value={subscriptionFilter}
+            onChange={(e) => setSubscriptionFilter(e.target.value as 'all' | 'free' | 'premium')}
+            className="px-3 py-1 rounded border border-border bg-background text-foreground text-sm"
+          >
+            <option value="all">All Users</option>
+            <option value="premium">Premium Only</option>
+            <option value="free">Free Only</option>
+          </select>
+          {subscriptionFilter !== 'all' && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setSubscriptionFilter('all')}
+            >
+              Clear Filter
+            </Button>
+          )}
         </div>
       </div>
 
@@ -103,6 +153,8 @@ export function AdminUsersTable() {
             <TableRow>
               <TableHead>Photo</TableHead>
               <TableHead>Name</TableHead>
+              <TableHead>Plan</TableHead>
+              <TableHead>Subscription</TableHead>
               <TableHead>Join Date</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Action</TableHead>
@@ -111,13 +163,13 @@ export function AdminUsersTable() {
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-8">
+                <TableCell colSpan={7} className="text-center py-8">
                   <Loader2 className="h-6 w-6 animate-spin mx-auto text-muted-foreground" />
                 </TableCell>
               </TableRow>
             ) : filteredUsers.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                   No users found
                 </TableCell>
               </TableRow>
@@ -144,6 +196,30 @@ export function AdminUsersTable() {
                         <p className="text-xs text-green-600">Verified</p>
                       )}
                     </div>
+                  </TableCell>
+                  <TableCell>
+                    <span
+                      className={`inline-block px-2 py-1 text-xs font-semibold rounded-full ${
+                        user.subscription_plan === 'premium'
+                          ? 'bg-emerald-100 text-emerald-800'
+                          : 'bg-slate-100 text-slate-800'
+                      }`}
+                    >
+                      {user.subscription_plan?.charAt(0).toUpperCase() || 'F'}{user.subscription_plan?.slice(1) || 'ree'}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <span
+                      className={`inline-block px-2 py-1 text-xs font-semibold rounded-full ${
+                        user.subscription_status === 'active'
+                          ? 'bg-green-100 text-green-800'
+                          : user.subscription_status === 'cancelled'
+                          ? 'bg-red-100 text-red-800'
+                          : 'bg-amber-100 text-amber-800'
+                      }`}
+                    >
+                      {user.subscription_status ? user.subscription_status.charAt(0).toUpperCase() + user.subscription_status.slice(1) : 'N/A'}
+                    </span>
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
                     {formatDistanceToNow(new Date(user.created_at), { addSuffix: true })}

@@ -11,6 +11,11 @@ export interface AdminStats {
   reportedProfiles: number
   bannedUsers: number
   incompleteProfiles: number
+  totalPremiumUsers: number
+  totalFreeUsers: number
+  monthlyRecurringRevenue: number
+  activeSubscriptions: number
+  cancelledSubscriptions: number
 }
 
 export function useAdminStats() {

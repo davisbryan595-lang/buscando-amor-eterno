@@ -7,9 +7,11 @@ import { Menu, X, Bell, Globe } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useLanguage } from '@/lib/i18n-context'
 import { useAuth } from '@/context/auth-context'
+import { useSubscription } from '@/hooks/useSubscription'
 import { useNotifications } from '@/hooks/useNotifications'
 import { AccountMenu } from '@/components/account-menu'
 import { ResponsiveNotificationsPanel } from '@/components/responsive-notifications-panel'
+import { PremiumBadge } from '@/components/premium-badge'
 
 export default function Navigation() {
   const [menuOpen, setMenuOpen] = useState(false)
@@ -19,6 +21,7 @@ export default function Navigation() {
   const navRef = useRef<HTMLDivElement>(null)
   const { language, setLanguage, t } = useLanguage()
   const { user } = useAuth()
+  const { isPremium, loading: subLoading } = useSubscription()
   const { notifications, dismissNotification } = useNotifications()
 
   React.useEffect(() => {
@@ -67,10 +70,19 @@ export default function Navigation() {
         {/* Desktop Menu */}
         <div className="hidden md:flex gap-6 items-center text-sm ml-8">
           <Link href="/" className="text-foreground hover:text-primary transition">{t('common.home')}</Link>
-          <Link href="/browse" className="text-foreground hover:text-primary transition">{t('common.browse')}</Link>
+          <div className="flex items-center gap-1.5">
+            <Link href="/browse" className="text-foreground hover:text-primary transition">{t('common.browse')}</Link>
+            {isMounted && user && !subLoading && !isPremium && <PremiumBadge variant="label" />}
+          </div>
           <Link href="/pricing" className="text-foreground hover:text-primary transition">{t('common.pricing')}</Link>
-          <Link href="/messages" className="text-foreground hover:text-primary transition">{t('common.messages')}</Link>
-          <Link href="/lounge" className="text-foreground hover:text-primary transition">{t('common.lounge')}</Link>
+          <div className="flex items-center gap-1.5">
+            <Link href="/messages" className="text-foreground hover:text-primary transition">{t('common.messages')}</Link>
+            {isMounted && user && !subLoading && !isPremium && <PremiumBadge variant="label" />}
+          </div>
+          <div className="flex items-center gap-1.5">
+            <Link href="/lounge" className="text-foreground hover:text-primary transition">{t('common.lounge')}</Link>
+            {isMounted && user && !subLoading && !isPremium && <PremiumBadge variant="label" />}
+          </div>
           <Link href="/nuestra-historia" className="text-foreground hover:text-primary transition whitespace-nowrap">{t('common.ourStory')}</Link>
 
           <div className="relative">
@@ -198,9 +210,12 @@ export default function Navigation() {
             exit={{ opacity: 0, x: -20 }}
             transition={{ delay: 0.15, duration: 0.3 }}
           >
-            <Link href="/browse" className="block text-foreground hover:text-primary transition py-2" onClick={() => setMenuOpen(false)}>
-              {t('common.browse')}
-            </Link>
+            <div className="flex items-center gap-2">
+              <Link href="/browse" className="block text-foreground hover:text-primary transition py-2" onClick={() => setMenuOpen(false)}>
+                {t('common.browse')}
+              </Link>
+              {isMounted && user && !subLoading && !isPremium && <PremiumBadge variant="label" />}
+            </div>
           </motion.div>
           <motion.div
             initial={{ opacity: 0, x: -20 }}
@@ -218,9 +233,12 @@ export default function Navigation() {
             exit={{ opacity: 0, x: -20 }}
             transition={{ delay: 0.25, duration: 0.3 }}
           >
-            <Link href="/messages" className="block text-foreground hover:text-primary transition py-2" onClick={() => setMenuOpen(false)}>
-              {t('common.messages')}
-            </Link>
+            <div className="flex items-center gap-2">
+              <Link href="/messages" className="block text-foreground hover:text-primary transition py-2" onClick={() => setMenuOpen(false)}>
+                {t('common.messages')}
+              </Link>
+              {isMounted && user && !subLoading && !isPremium && <PremiumBadge variant="label" />}
+            </div>
           </motion.div>
           <motion.div
             initial={{ opacity: 0, x: -20 }}
@@ -228,9 +246,12 @@ export default function Navigation() {
             exit={{ opacity: 0, x: -20 }}
             transition={{ delay: 0.3, duration: 0.3 }}
           >
-            <Link href="/lounge" className="block text-foreground hover:text-primary transition py-2" onClick={() => setMenuOpen(false)}>
-              {t('common.lounge')}
-            </Link>
+            <div className="flex items-center gap-2">
+              <Link href="/lounge" className="block text-foreground hover:text-primary transition py-2" onClick={() => setMenuOpen(false)}>
+                {t('common.lounge')}
+              </Link>
+              {isMounted && user && !subLoading && !isPremium && <PremiumBadge variant="label" />}
+            </div>
           </motion.div>
           <motion.div
             initial={{ opacity: 0, x: -20 }}

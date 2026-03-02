@@ -3,22 +3,26 @@
 import React, { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/context/auth-context'
+import { useSubscription } from '@/hooks/useSubscription'
 import { supabase } from '@/lib/supabase'
 import Navigation from '@/components/navigation'
 import Footer from '@/components/footer'
 import AgoraVideoCall from '@/components/agora-video-call'
+import { PaywallModal } from '@/components/paywall-modal'
 import { Lock, ArrowLeft, Phone } from 'lucide-react'
 
 export default function VideoDateContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { user, loading: authLoading } = useAuth()
+  const { isPremium, loading: subLoading } = useSubscription()
   const [partnerName, setPartnerName] = useState<string | null>(null)
   const [partnerImage, setPartnerImage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loadingPartner, setLoadingPartner] = useState(true)
   const [callAccepted, setCallAccepted] = useState(false)
   const [callRejected, setCallRejected] = useState(false)
+  const [showPaywall, setShowPaywall] = useState(false)
 
   const partnerId = searchParams.get('partner')
   const callType = (searchParams.get('type') as 'audio' | 'video') || 'video'
@@ -145,6 +149,43 @@ export default function VideoDateContent() {
       }
     }
   }, [mode, callId, user])
+
+  // Show paywall if not premium
+  if (!subLoading && user && !isPremium) {
+    return (
+      <main className="min-h-screen bg-background text-foreground">
+        <Navigation />
+        <div className="pt-24 pb-12 px-4 h-screen flex flex-col">
+          <div className="max-w-4xl mx-auto w-full flex-1 flex flex-col items-center justify-center">
+            <div className="bg-card p-8 rounded-2xl text-center soft-glow-lg max-w-md">
+              <div className="w-16 h-16 bg-gradient-to-br from-rose-500 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Phone className="w-8 h-8 text-white" />
+              </div>
+              <h2 className="text-2xl font-bold text-foreground mb-2">
+                Unlock Video Dates
+              </h2>
+              <p className="text-muted-foreground mb-6">
+                Connect face-to-face with your matches with premium access.
+              </p>
+              <button
+                onClick={() => setShowPaywall(true)}
+                className="px-6 py-2 bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 text-white rounded-full font-semibold transition-all hover:scale-105"
+              >
+                Upgrade to Premium
+              </button>
+            </div>
+          </div>
+        </div>
+        <Footer />
+        <PaywallModal
+          isOpen={showPaywall}
+          onClose={() => setShowPaywall(false)}
+          featureName="Video Dates"
+          description="Start video calls with your matches and have face-to-face conversations with premium access."
+        />
+      </main>
+    )
+  }
 
   // Show error if no partner or authentication issues
     if (error || !user) {
