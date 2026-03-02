@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import { useAuth } from '@/context/auth-context'
 import { useRouter } from 'next/navigation'
-import { loadStripe } from '@stripe/js'
 
 interface StripeCheckoutButtonProps {
   className?: string
@@ -52,11 +51,7 @@ export function StripeCheckoutButton({
       if (data.url) {
         window.location.href = data.url
       } else {
-        // Fallback: use stripe.js to redirect
-        const stripe = await loadStripe(
-          process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || ''
-        )
-        await stripe?.redirectToCheckout({ sessionId: data.sessionId })
+        throw new Error('No checkout URL provided')
       }
     } catch (err) {
       const errorMessage =
