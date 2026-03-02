@@ -5,6 +5,7 @@ import Link from 'next/link'
 import Navigation from '@/components/navigation'
 import Footer from '@/components/footer'
 import { Check } from 'lucide-react'
+import { StripeCheckoutButton } from '@/components/stripe-checkout-button'
 
 const features = [
   'Unlimited messaging',
@@ -18,10 +19,6 @@ const features = [
 ]
 
 export default function PricingPage() {
-  const handleCheckout = () => {
-    alert('🎉 Taking you to payment... (Mock checkout)\n\nIn a real app, this would integrate Stripe for $12/month subscription.')
-  }
-
   return (
     <main className="min-h-screen bg-background text-foreground">
       <Navigation />
@@ -54,12 +51,7 @@ export default function PricingPage() {
               ))}
             </ul>
 
-            <button
-              onClick={handleCheckout}
-              className="w-full py-3 md:py-4 bg-primary text-white rounded-full text-base md:text-lg font-semibold hover:bg-rose-700 transition transform hover:scale-105 soft-glow"
-            >
-              Start Your Premium Membership
-            </button>
+            <StripeCheckoutButton className="w-full" />
 
             <p className="text-center text-muted-foreground text-xs md:text-sm mt-6">
               Secure payment with SSL encryption. No hidden fees.
