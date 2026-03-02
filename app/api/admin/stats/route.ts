@@ -129,6 +129,62 @@ export async function GET(request: NextRequest) {
       console.warn('Failed to fetch banned users:', err?.message)
     }
 
+    // Get total premium users (active premium subscriptions)
+    let totalPremiumUsersCount = 0
+    try {
+      const { count, error: err } = await supabaseAdmin
+        .from('subscriptions')
+        .select('*', { count: 'exact', head: true })
+        .eq('plan', 'premium')
+        .eq('status', 'active')
+      if (err) throw err
+      totalPremiumUsersCount = count || 0
+    } catch (err: any) {
+      console.warn('Failed to fetch premium users:', err?.message)
+    }
+
+    // Get total free users
+    let totalFreeUsersCount = 0
+    try {
+      const { count, error: err } = await supabaseAdmin
+        .from('subscriptions')
+        .select('*', { count: 'exact', head: true })
+        .eq('plan', 'free')
+      if (err) throw err
+      totalFreeUsersCount = count || 0
+    } catch (err: any) {
+      console.warn('Failed to fetch free users:', err?.message)
+    }
+
+    // Get active subscriptions (excluding expired)
+    let activeSubscriptionsCount = 0
+    try {
+      const { count, error: err } = await supabaseAdmin
+        .from('subscriptions')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'active')
+      if (err) throw err
+      activeSubscriptionsCount = count || 0
+    } catch (err: any) {
+      console.warn('Failed to fetch active subscriptions:', err?.message)
+    }
+
+    // Get cancelled subscriptions
+    let cancelledSubscriptionsCount = 0
+    try {
+      const { count, error: err } = await supabaseAdmin
+        .from('subscriptions')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'cancelled')
+      if (err) throw err
+      cancelledSubscriptionsCount = count || 0
+    } catch (err: any) {
+      console.warn('Failed to fetch cancelled subscriptions:', err?.message)
+    }
+
+    // Calculate monthly recurring revenue (assume $12/month per premium user)
+    const monthlyRecurringRevenueAmount = totalPremiumUsersCount * 12
+
     return NextResponse.json({
       totalSignups: totalSignupsCount,
       totalProfiles: totalProfilesCount,
@@ -138,6 +194,11 @@ export async function GET(request: NextRequest) {
       reportedProfiles: reportedCount,
       bannedUsers: bannedCount,
       incompleteProfiles: incompleteCount,
+      totalPremiumUsers: totalPremiumUsersCount,
+      totalFreeUsers: totalFreeUsersCount,
+      monthlyRecurringRevenue: monthlyRecurringRevenueAmount,
+      activeSubscriptions: activeSubscriptionsCount,
+      cancelledSubscriptions: cancelledSubscriptionsCount,
     })
   } catch (error: any) {
     console.error('Error fetching admin stats:', error)
