@@ -3,18 +3,22 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/auth-context'
+import { useSubscription } from '@/hooks/useSubscription'
 import { useLounge } from '@/hooks/useLounge'
 import { ErrorBoundary } from './error-boundary'
+import { PaywallModal } from './paywall-modal'
 import { Send, Flag, Users, ArrowLeft, Heart } from 'lucide-react'
 import { toast } from 'sonner'
 
 function LoungeChatContent() {
   const router = useRouter()
   const { user } = useAuth()
+  const { isPremium, loading: subLoading } = useSubscription()
   const { messages, onlineUsers, loading, sendMessage, reportMessage } = useLounge()
   const [inputValue, setInputValue] = useState('')
   const [reportingMessageId, setReportingMessageId] = useState<string | null>(null)
   const [reportReason, setReportReason] = useState('')
+  const [showPaywall, setShowPaywall] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   // Auto-scroll to bottom on new messages
@@ -69,6 +73,37 @@ function LoungeChatContent() {
             </button>
           </div>
         </div>
+      </div>
+    )
+  }
+
+  // Show paywall for non-premium users
+  if (!subLoading && !isPremium) {
+    return (
+      <div className="h-screen flex flex-col items-center justify-center bg-gradient-to-br from-rose-50 dark:from-rose-950/30 to-pink-50 dark:to-pink-950/30">
+        <div className="text-center max-w-md">
+          <div className="w-16 h-16 bg-gradient-to-br from-rose-500 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-6">
+            <Users className="w-8 h-8 text-white" />
+          </div>
+          <h1 className="text-3xl font-playfair font-bold text-foreground mb-4">
+            Unlock the Lounge
+          </h1>
+          <p className="text-muted-foreground mb-8">
+            Join exclusive group conversations and connect with our community with premium access.
+          </p>
+          <button
+            onClick={() => setShowPaywall(true)}
+            className="w-full px-8 py-3 bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 text-white rounded-full font-semibold transition-all hover:scale-105"
+          >
+            Upgrade to Premium
+          </button>
+        </div>
+        <PaywallModal
+          isOpen={showPaywall}
+          onClose={() => setShowPaywall(false)}
+          featureName="Exclusive Lounge"
+          description="Join our exclusive group chat and connect with singles in the lounge with premium access."
+        />
       </div>
     )
   }
