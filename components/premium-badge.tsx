@@ -18,8 +18,8 @@ export function PremiumBadge({ variant = 'inline' }: PremiumBadgeProps) {
 
   if (variant === 'label') {
     return (
-      <div className="inline-flex items-center gap-1 text-xs font-semibold text-rose-600 dark:text-rose-400">
-        <Lock size={12} />
+      <div className="inline-flex items-center gap-0.5 text-xs font-semibold text-rose-600 dark:text-rose-400">
+        <Lock size={10} />
         Premium Only
       </div>
     )

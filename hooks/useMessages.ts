@@ -35,6 +35,8 @@ export interface Conversation {
   unread_count: number
 }
 
+const MESSAGES_PAGE_SIZE = 50
+
 export function useMessages() {
   const { user } = useAuth()
   const { isPremium } = useSubscription()
@@ -42,6 +44,7 @@ export function useMessages() {
   const [messages, setMessages] = useState<Message[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [hasMoreMessages, setHasMoreMessages] = useState(true)
 
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const pollAttemptsRef = useRef(0)
@@ -50,6 +53,7 @@ export function useMessages() {
   const isTypingRef = useRef(false)
   const heartbeatIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const onlineTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const messageOffsetRef = useRef(0)
 
   // Define broadcastOnlineStatus early so it can be used in setupHeartbeat
   // Online status is handled via presence in individual conversation channels
@@ -95,10 +99,8 @@ export function useMessages() {
       // Handle page visibility changes
       const handleVisibilityChange = () => {
         if (document.hidden) {
-          console.log('[Heartbeat] Page hidden')
           broadcastOnlineStatus(false)
         } else {
-          console.log('[Heartbeat] Page visible')
           broadcastOnlineStatus(true)
         }
       }
@@ -256,7 +258,6 @@ export function useMessages() {
         .channel(`messages:${user.id}`)
         .on('broadcast', { event: 'new_message' }, (payload) => {
           if (isMounted) {
-            console.log('[Messages] New message via broadcast:', payload.payload)
             const newMessage = payload.payload as Message
 
             setMessages((prev) => {
@@ -292,7 +293,6 @@ export function useMessages() {
         })
         .on('broadcast', { event: 'user_status' }, (payload) => {
           if (isMounted) {
-            console.log('[Messages] User status update:', payload.payload)
             const userStatus = payload.payload
 
             // Update conversation online status
@@ -306,10 +306,7 @@ export function useMessages() {
           }
         })
         .subscribe((status) => {
-          console.log('[Messages] Broadcast subscription status:', status)
-          if (status === 'SUBSCRIBED') {
-            console.log('[Messages] Real-time broadcast subscription active')
-          }
+          // Silently handle subscription status
         })
 
       return () => {
@@ -333,22 +330,18 @@ export function useMessages() {
         const channel = supabase
           .channel(`messages:${user.id}:${otherUserId}`)
           .on('broadcast', { event: 'new_message' }, (payload) => {
-            console.log('[Conversation] New message via broadcast:', payload.payload)
             if (isMounted) {
               const newMessage = payload.payload as Message
               setMessages((prevMessages) => {
                 if (prevMessages.some(msg => msg.id === newMessage.id)) {
-                  console.log('[Conversation] Duplicate message prevented:', newMessage.id)
                   return prevMessages
                 }
-                console.log('[Conversation] Adding new message to state:', newMessage.id)
                 return [...prevMessages, newMessage]
               })
             }
           })
           .on('broadcast', { event: 'user_status' }, (payload) => {
             if (isMounted) {
-              console.log('[Conversation] User status update for conversation:', payload.payload)
               const userStatus = payload.payload
 
               // Update conversation online status
@@ -362,10 +355,7 @@ export function useMessages() {
             }
           })
           .subscribe((status) => {
-            console.log(`[Conversation] Broadcast subscription status for ${otherUserId}:`, status)
-            if (status === 'SUBSCRIBED') {
-              console.log(`[Conversation] Real-time broadcast updates active for ${otherUserId}`)
-            }
+            // Silently handle subscription status
           })
 
         return () => {
@@ -382,11 +372,12 @@ export function useMessages() {
   )
 
   const fetchMessages = useCallback(
-    async (otherUserId: string) => {
+    async (otherUserId: string, offset = 0) => {
       if (!user?.id) return
 
       try {
-        // Add timeout for individual message fetch (30 seconds)
+        messageOffsetRef.current = offset
+
         const timeoutPromise = new Promise((_, reject) =>
           setTimeout(() => reject(new Error('Message fetch timed out')), 30000)
         )
@@ -397,13 +388,22 @@ export function useMessages() {
           .or(
             `and(sender_id.eq.${user.id},recipient_id.eq.${otherUserId}),and(sender_id.eq.${otherUserId},recipient_id.eq.${user.id})`
           )
-          .order('created_at', { ascending: true })
+          .order('created_at', { ascending: false })
+          .range(offset, offset + MESSAGES_PAGE_SIZE - 1)
 
         const result = await Promise.race([queryPromise, timeoutPromise])
         const { data, error: err } = result as any
 
         if (err) throw err
-        setMessages((data as Message[]) || [])
+
+        const fetchedMessages = (data as Message[]) || []
+        setHasMoreMessages(fetchedMessages.length === MESSAGES_PAGE_SIZE)
+
+        if (offset === 0) {
+          setMessages(fetchedMessages.reverse())
+        } else {
+          setMessages((prev) => [...fetchedMessages.reverse(), ...prev])
+        }
         setError(null)
       } catch (err: any) {
         const errorMessage = err?.message || (typeof err === 'string' ? err : 'Failed to fetch messages')
@@ -412,6 +412,14 @@ export function useMessages() {
       }
     },
     [user]
+  )
+
+  const loadMoreMessages = useCallback(
+    async (otherUserId: string) => {
+      if (!hasMoreMessages) return
+      await fetchMessages(otherUserId, messageOffsetRef.current + MESSAGES_PAGE_SIZE)
+    },
+    [fetchMessages, hasMoreMessages]
   )
 
   const sendMessage = useCallback(
@@ -475,6 +483,7 @@ export function useMessages() {
           event: 'new_message',
           payload: realMessage,
         })
+        supabase.removeChannel(conversationChannel)
 
         const userChannel = supabase.channel(`messages:${user.id}`)
         await userChannel.send({
@@ -482,6 +491,7 @@ export function useMessages() {
           event: 'new_message',
           payload: realMessage,
         })
+        supabase.removeChannel(userChannel)
 
         return realMessage
       } catch (err: any) {
@@ -536,6 +546,7 @@ export function useMessages() {
               event: 'message_read',
               payload: readReceipt,
             })
+            supabase.removeChannel(conversationChannel)
 
             const userChannel = supabase.channel(`messages:${user.id}`)
             await userChannel.send({
@@ -543,6 +554,7 @@ export function useMessages() {
               event: 'message_read',
               payload: readReceipt,
             })
+            supabase.removeChannel(userChannel)
           } catch (broadcastErr) {
             console.warn('Failed to broadcast read receipt:', broadcastErr)
           }
@@ -709,6 +721,7 @@ export function useMessages() {
             event: 'new_message',
             payload: callMessage,
           })
+          supabase.removeChannel(conversationChannel)
 
           const userChannel = supabase.channel(`messages:${user.id}`)
           await userChannel.send({
@@ -716,6 +729,7 @@ export function useMessages() {
             event: 'new_message',
             payload: callMessage,
           })
+          supabase.removeChannel(userChannel)
 
           // Set up 30-second timeout for missed call
           const missedCallTimeout = setTimeout(async () => {
@@ -793,6 +807,8 @@ export function useMessages() {
             event: 'call_ended',
             payload: { callId, callType, duration: durationSeconds },
           })
+          supabase.removeChannel(conversationChannel)
+          supabase.removeChannel(userChannel)
         } else if (callStatus === 'missed' && callId) {
           // For missed calls, update the existing record
           const { data, error: err } = await supabase
@@ -864,6 +880,8 @@ export function useMessages() {
             event: 'call_missed',
             payload: { callId, callType },
           })
+          supabase.removeChannel(conversationChannel)
+          supabase.removeChannel(userChannel)
         } else if (callStatus === 'rejected' && callId) {
           // For rejected calls, update the existing record
           const { data, error: err } = await supabase
@@ -898,6 +916,7 @@ export function useMessages() {
             event: 'new_message',
             payload: callMessage,
           })
+          supabase.removeChannel(conversationChannel)
 
           const userChannel = supabase.channel(`messages:${user.id}`)
           await userChannel.send({
@@ -905,6 +924,7 @@ export function useMessages() {
             event: 'new_message',
             payload: callMessage,
           })
+          supabase.removeChannel(userChannel)
         }
       } catch (err: any) {
         console.error('Error logging call message:', err)
@@ -919,8 +939,10 @@ export function useMessages() {
     messages,
     loading,
     error,
+    hasMoreMessages,
     fetchConversations,
     fetchMessages,
+    loadMoreMessages,
     sendMessage,
     markAsRead,
     initiateConversation,
