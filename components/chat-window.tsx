@@ -81,7 +81,7 @@ interface CombinedMessage {
 export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
   const router = useRouter()
   const { user } = useAuth()
-  const { messages, sendMessage, markAsRead, fetchMessages, fetchConversations, subscribeToConversation, handleTyping, stopTyping } = useMessages()
+  const { messages, sendMessage, markAsRead, fetchMessages, loadMoreMessages, hasMoreMessages, fetchConversations, subscribeToConversation, handleTyping, stopTyping } = useMessages()
   const { startCall } = useStartCall()
   const [newMessage, setNewMessage] = useState('')
   const [loading, setLoading] = useState(false)
@@ -117,12 +117,12 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
     if (!conversation?.other_user_id || !user) return
 
     try {
-      // Fetch call logs from call_logs table
       const { data: callLogsData } = await supabase
         .from('call_logs')
         .select('*')
         .or(`and(caller_id.eq.${user.id},receiver_id.eq.${conversation.other_user_id}),and(caller_id.eq.${conversation.other_user_id},receiver_id.eq.${user.id})`)
         .order('started_at', { ascending: true })
+        .limit(100)
 
       if (callLogsData) {
         setCallLogs(callLogsData)
@@ -156,6 +156,21 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
     setCombinedMessages(merged)
   }, [messages, callLogs])
 
+  // Handle scroll to load older messages
+  useEffect(() => {
+    const container = messagesContainerRef.current
+    if (!container) return
+
+    const handleScroll = () => {
+      if (container.scrollTop === 0 && hasMoreMessages && conversation?.other_user_id) {
+        loadMoreMessages(conversation.other_user_id)
+      }
+    }
+
+    container.addEventListener('scroll', handleScroll)
+    return () => container.removeEventListener('scroll', handleScroll)
+  }, [hasMoreMessages, conversation?.other_user_id, loadMoreMessages])
+
   useEffect(() => {
     if (conversation?.other_user_id) {
       setPreviousMessageCount(0)
@@ -170,7 +185,6 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
       typingChannelRef.current = supabase
         .channel(`messages:${user?.id}:${conversation.other_user_id}`)
         .on('broadcast', { event: 'typing_indicator' }, (payload) => {
-          console.log('[ChatWindow] Typing indicator received:', payload.payload)
           const typingStatus = payload.payload
 
           // Show typing indicator if other user is typing
@@ -194,17 +208,15 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
           }
         })
         .on('broadcast', { event: 'message_read' }, (payload) => {
-          console.log('[ChatWindow] Read receipt received:', payload.payload)
           const readReceipt = payload.payload
 
           // Update message to show it was read by marking it as read
           if (readReceipt.reader_id === conversation.other_user_id) {
-            // Note: This updates the visual state, actual database update happens when other user marks it as read
-            console.log(`[ChatWindow] Message ${readReceipt.message_id} marked as read by other user`)
+            // Silently handle read receipts
           }
         })
         .subscribe((status) => {
-          console.log(`[ChatWindow] Broadcast subscription status:`, status)
+          // Silently handle subscription status
         })
 
       // Fetch full user details if not available in conversation
