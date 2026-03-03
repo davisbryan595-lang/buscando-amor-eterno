@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { useRouter } from 'next/navigation'
+import { useAuth } from '@/context/auth-context'
 import { Zap } from 'lucide-react'
 
 interface PaywallModalProps {
@@ -26,34 +27,19 @@ export function PaywallModal({
   description = 'Upgrade to premium to unlock this feature.',
 }: PaywallModalProps) {
   const router = useRouter()
+  const { user } = useAuth()
   const [loading, setLoading] = useState(false)
 
-  const handleUpgrade = async () => {
-    try {
-      setLoading(true)
-      // Call checkout endpoint
-      const response = await fetch('/api/stripe/checkout', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to create checkout session')
-      }
-
-      // Redirect to Stripe Checkout
-      if (data.url) {
-        window.location.href = data.url
-      }
-    } catch (err) {
-      console.error('Checkout error:', err)
-    } finally {
-      setLoading(false)
+  const handleUpgrade = () => {
+    if (!user) {
+      // Redirect to signup if not logged in
+      router.push('/signup')
+      return
     }
+
+    // Redirect to pricing page where they can learn more and proceed to checkout
+    router.push('/pricing')
+    onClose()
   }
 
   return (
