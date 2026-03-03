@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { useRouter } from 'next/navigation'
+import { useAuth } from '@/context/auth-context'
 import { Zap } from 'lucide-react'
 
 interface PaywallModalProps {
@@ -26,9 +27,16 @@ export function PaywallModal({
   description = 'Upgrade to premium to unlock this feature.',
 }: PaywallModalProps) {
   const router = useRouter()
+  const { user } = useAuth()
   const [loading, setLoading] = useState(false)
 
   const handleUpgrade = async () => {
+    if (!user) {
+      // Redirect to signup if not logged in
+      router.push('/signup')
+      return
+    }
+
     try {
       setLoading(true)
       // Call checkout endpoint
@@ -37,6 +45,10 @@ export function PaywallModal({
         headers: {
           'Content-Type': 'application/json',
         },
+        body: JSON.stringify({
+          userId: user.id,
+          email: user.email,
+        }),
       })
 
       const data = await response.json()
