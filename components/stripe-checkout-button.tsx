@@ -31,6 +31,10 @@ export function StripeCheckoutButton({
         headers: {
           'Content-Type': 'application/json',
         },
+        body: JSON.stringify({
+          userId: user.id,
+          email: user.email,
+        }),
       })
 
       if (!response.ok) {
