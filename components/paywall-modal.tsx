@@ -30,42 +30,16 @@ export function PaywallModal({
   const { user } = useAuth()
   const [loading, setLoading] = useState(false)
 
-  const handleUpgrade = async () => {
+  const handleUpgrade = () => {
     if (!user) {
       // Redirect to signup if not logged in
       router.push('/signup')
       return
     }
 
-    try {
-      setLoading(true)
-      // Call checkout endpoint
-      const response = await fetch('/api/stripe/checkout', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          userId: user.id,
-          email: user.email,
-        }),
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to create checkout session')
-      }
-
-      // Redirect to Stripe Checkout
-      if (data.url) {
-        window.location.href = data.url
-      }
-    } catch (err) {
-      console.error('Checkout error:', err)
-    } finally {
-      setLoading(false)
-    }
+    // Redirect to pricing page where they can learn more and proceed to checkout
+    router.push('/pricing')
+    onClose()
   }
 
   return (
