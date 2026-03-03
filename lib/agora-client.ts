@@ -1,6 +1,7 @@
-import { RtcTokenBuilder, RtcRole } from 'agora-access-token'
-
-const appCertificate = process.env.AGORA_APP_CERTIFICATE || ''
+/**
+ * Client-safe Agora utilities
+ * These helpers do NOT import server-only dependencies like 'agora-access-token'
+ */
 
 export interface AgoraTokenResponse {
   token: string
@@ -18,47 +19,6 @@ export function generateChannelName(userId1: string, userId2: string): string {
   const id1 = sorted[0].replace(/-/g, '').slice(0, 8)
   const id2 = sorted[1].replace(/-/g, '').slice(0, 8)
   return `match${id1}${id2}`
-}
-
-/**
- * Generates an Agora RTC token using the official Agora SDK
- */
-export function generateAgoraToken(
-  appId: string,
-  channelName: string,
-  uid: number,
-  expirationTimeInSeconds: number = 3600
-): string {
-  if (!appId) {
-    throw new Error('Agora App ID is required')
-  }
-  if (!appCertificate) {
-    throw new Error('Agora certificate is not configured')
-  }
-  if (!channelName) {
-    throw new Error('Channel name is required')
-  }
-  if (uid < 0) {
-    throw new Error('Invalid UID value')
-  }
-
-  const currentTimestamp = Math.floor(Date.now() / 1000)
-  const expiration = currentTimestamp + expirationTimeInSeconds
-
-  const token = RtcTokenBuilder.buildTokenWithUid(
-    appId,
-    appCertificate,
-    channelName,
-    uid,
-    RtcRole.PUBLISHER,
-    expiration
-  )
-
-  if (!token) {
-    throw new Error('Failed to build Agora token')
-  }
-
-  return token
 }
 
 /**
