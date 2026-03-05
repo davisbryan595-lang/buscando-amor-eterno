@@ -7,11 +7,13 @@ import { useState } from 'react'
 interface StripeCheckoutButtonProps {
   className?: string
   children?: React.ReactNode
+  disabled?: boolean
 }
 
 export function StripeCheckoutButton({
   className = '',
   children = 'Start Your Premium Membership',
+  disabled = false,
 }: StripeCheckoutButtonProps) {
   const { user } = useAuth()
   const router = useRouter()
@@ -54,10 +56,10 @@ export function StripeCheckoutButton({
   return (
     <button
       onClick={handleCheckout}
-      disabled={isLoading}
+      disabled={isLoading || disabled}
       className={`py-3 md:py-4 bg-primary text-white rounded-full text-base md:text-lg font-semibold hover:bg-rose-700 transition transform hover:scale-105 soft-glow disabled:opacity-50 disabled:cursor-not-allowed ${className}`}
     >
-      {isLoading ? 'Loading...' : children}
+      {isLoading ? 'Loading...' : disabled && !isLoading ? 'Already Premium' : children}
     </button>
   )
 }
