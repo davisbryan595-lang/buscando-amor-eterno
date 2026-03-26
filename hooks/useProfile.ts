@@ -114,24 +114,27 @@ export function useProfile() {
       }
     }
 
-    // Set a 10-second timeout to prevent indefinite loading
+    // Set a 30-second timeout to prevent indefinite loading
+    // This is increased from 10s to accommodate slower reconnections
     timeoutId = setTimeout(() => {
       if (isMounted) {
         console.warn('Profile fetch timeout - proceeding without profile data')
         setLoading(false)
         // Don't set profile to null, keep any existing data
       }
-    }, 10000)
+    }, 30000)
 
-    fetchProfileData().then(() => {
-      if (isMounted) {
-        clearTimeout(timeoutId)
-      }
-    }).catch(() => {
-      if (isMounted) {
-        clearTimeout(timeoutId)
-      }
-    })
+    fetchProfileData()
+      .then(() => {
+        if (isMounted) {
+          clearTimeout(timeoutId)
+        }
+      })
+      .catch(() => {
+        if (isMounted) {
+          clearTimeout(timeoutId)
+        }
+      })
 
     return () => {
       isMounted = false

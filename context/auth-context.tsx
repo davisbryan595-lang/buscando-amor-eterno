@@ -62,13 +62,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
-    // Set a 10-second timeout to prevent indefinite loading
+    // Set a 30-second timeout to prevent indefinite loading
+    // This is increased from 10s to accommodate slower reconnections
     timeoutId = setTimeout(() => {
       if (isMounted) {
         console.warn('Auth initialization timeout - proceeding without session')
         setLoading(false)
       }
-    }, 10000)
+    }, 30000)
 
     initializeAuth().then(() => {
       if (isMounted) {
@@ -139,7 +140,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       })
 
       const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Sign up request timed out - please try again')), 15000)
+        setTimeout(() => reject(new Error('Sign up request timed out - please try again')), 30000)
       )
 
       const { data, error } = await Promise.race([signUpPromise, timeoutPromise]) as any
@@ -189,7 +190,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       })
 
       const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Login request timed out - please try again')), 15000)
+        setTimeout(() => reject(new Error('Login request timed out - please try again')), 30000)
       )
 
       const { data, error } = await Promise.race([signInPromise, timeoutPromise]) as any
