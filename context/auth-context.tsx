@@ -62,13 +62,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
-    // Set a 5-second timeout to prevent indefinite loading
+    // Set a 10-second timeout to prevent indefinite loading
     timeoutId = setTimeout(() => {
       if (isMounted) {
         console.warn('Auth initialization timeout - proceeding without session')
         setLoading(false)
       }
-    }, 5000)
+    }, 10000)
 
     initializeAuth().then(() => {
       if (isMounted) {
