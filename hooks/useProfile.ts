@@ -114,15 +114,15 @@ export function useProfile() {
       }
     }
 
-    // Set a 30-second timeout to prevent indefinite loading
-    // This is increased from 10s to accommodate slower reconnections
+    // Set a 60-second timeout to prevent indefinite loading
+    // This is increased to accommodate slower reconnections and Supabase response times
     timeoutId = setTimeout(() => {
       if (isMounted) {
         console.warn('Profile fetch timeout - proceeding without profile data')
         setLoading(false)
         // Don't set profile to null, keep any existing data
       }
-    }, 30000)
+    }, 60000)
 
     fetchProfileData()
       .then(() => {
