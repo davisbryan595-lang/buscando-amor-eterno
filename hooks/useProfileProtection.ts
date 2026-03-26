@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/auth-context'
 import { useProfile } from '@/hooks/useProfile'
@@ -15,6 +15,7 @@ export function useProfileProtection(
   const router = useRouter()
   const { user, loading: authLoading } = useAuth()
   const { profile, loading: profileLoading, error: profileError } = useProfile()
+  const hasRedirected = useRef(false)
 
   useEffect(() => {
     // Still loading auth or profile data
@@ -33,16 +34,25 @@ export function useProfileProtection(
       return
     }
 
+    // Only redirect once per mount
+    if (hasRedirected.current) {
+      return
+    }
+
     // If profile protection is required and profile is not complete, redirect
     if (requireProfile && profile && !profile.profile_complete) {
+      hasRedirected.current = true
       router.push(redirectTo)
+      return
     }
 
     // If profile protection is NOT required and profile IS complete, redirect to browse
     if (!requireProfile && profile && profile.profile_complete) {
+      hasRedirected.current = true
       router.push('/browse')
+      return
     }
-  }, [user, profile, authLoading, profileLoading, router, requireProfile, redirectTo])
+  }, [user, profile, authLoading, profileLoading, requireProfile, redirectTo, router])
 
   return {
     isLoading: authLoading || profileLoading,
