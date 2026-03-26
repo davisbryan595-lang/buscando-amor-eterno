@@ -21,7 +21,7 @@ export default function HomePage() {
         console.warn('Home page loading took too long - forcing render')
         setLoadingTimeout(true)
       }
-    }, 6000)
+    }, 12000)
 
     return () => clearTimeout(timeoutId)
   }, [authLoading, protectionLoading])

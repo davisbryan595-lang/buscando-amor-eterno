@@ -83,6 +83,7 @@ export function useProfile() {
     const fetchProfileData = async () => {
       try {
         setLoading(true)
+        console.log(`Fetching profile for user: ${user.id}`)
 
         const { data, error: err } = await supabase
           .from('profiles')
@@ -93,9 +94,11 @@ export function useProfile() {
         if (!isMounted) return
 
         if (err) {
+          console.error('Supabase error fetching profile:', err)
           throw err
         }
 
+        console.log('Profile fetch successful:', data ? 'profile exists' : 'no profile found')
         setProfile(data as ProfileData | null)
         setError(null)
       } catch (err: any) {
@@ -111,16 +114,20 @@ export function useProfile() {
       }
     }
 
-    // Set a 5-second timeout to prevent indefinite loading
+    // Set a 10-second timeout to prevent indefinite loading
     timeoutId = setTimeout(() => {
       if (isMounted) {
         console.warn('Profile fetch timeout - proceeding without profile data')
         setLoading(false)
-        setProfile(null)
+        // Don't set profile to null, keep any existing data
       }
-    }, 5000)
+    }, 10000)
 
     fetchProfileData().then(() => {
+      if (isMounted) {
+        clearTimeout(timeoutId)
+      }
+    }).catch(() => {
       if (isMounted) {
         clearTimeout(timeoutId)
       }
