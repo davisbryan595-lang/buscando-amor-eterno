@@ -333,31 +333,73 @@ export default function AgoraVideoCall({
         const channelName = generateChannelName(user.id, partnerId)
         const uid = userIdToAgoraUid(user.id)
 
-        // Fetch Agora token from server
+        // Fetch Agora token from server with timeout
         console.log('Fetching Agora token:', { channelName, uid })
-        const tokenResponse = await fetch(
-          `/api/agora/token?channel=${encodeURIComponent(channelName)}&uid=${uid}`
-        )
 
-        if (!tokenResponse.ok) {
-          let errorMsg = `Token request failed with status ${tokenResponse.status}`
-          try {
-            const errorData = await tokenResponse.json()
-            errorMsg = errorData.error || errorMsg
-          } catch (err) {
-            console.error('Failed to parse error response:', err)
+        let token: string
+        try {
+          const controller = new AbortController()
+          const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 second timeout
+
+          const tokenResponse = await fetch(
+            `/api/agora/token?channel=${encodeURIComponent(channelName)}&uid=${uid}`,
+            { signal: controller.signal }
+          )
+
+          clearTimeout(timeoutId)
+
+          if (!tokenResponse.ok) {
+            let errorMsg = `Token request failed with status ${tokenResponse.status}`
+            try {
+              const errorData = await tokenResponse.json()
+              errorMsg = errorData.error || errorMsg
+            } catch (err) {
+              console.error('Failed to parse error response:', err)
+            }
+
+            console.error('Token fetch failed:', {
+              status: tokenResponse.status,
+              error: errorMsg,
+              channelName,
+              uid,
+            })
+
+            setError(errorMsg || 'Failed to get video call token. Please try again.')
+            return
           }
 
-          console.error('Token fetch failed:', {
-            status: tokenResponse.status,
-            error: errorMsg,
+          const responseData = await tokenResponse.json()
+          token = responseData.token
+
+          if (!token || typeof token !== 'string') {
+            console.error('Invalid token response:', { token, type: typeof token })
+            setError('Received invalid token from server. Please try again.')
+            return
+          }
+
+          console.log('Agora token received successfully:', {
+            tokenLength: token.length,
+            tokenPrefix: token.substring(0, 20) + '...',
+          })
+        } catch (fetchErr: any) {
+          let errorMsg = 'Failed to fetch token'
+          if (fetchErr.name === 'AbortError') {
+            errorMsg = 'Token request timed out. Please check your connection.'
+          } else {
+            errorMsg = fetchErr.message || 'Network error fetching token'
+          }
+
+          console.error('Token fetch error:', {
+            message: errorMsg,
+            name: fetchErr.name,
+            stack: fetchErr.stack,
+            channelName,
+            uid,
           })
 
-          setError(errorMsg || 'Failed to connect call. Please try again.')
+          setError(errorMsg)
           return
         }
-
-        const { token } = await tokenResponse.json()
 
         // Initialize Agora client
         const agoraClient = agoraSDK.createClient({ mode: 'rtc', codec: 'vp8' })
