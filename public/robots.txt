@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /admin-login
+Disallow: /api/
+Disallow: /onboarding
+Disallow: /settings
+
+# Sitemap location
+Sitemap: https://www.buscandoamoreterno.com/sitemap.xml
