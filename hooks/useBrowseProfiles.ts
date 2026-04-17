@@ -4,12 +4,33 @@ import { supabase } from '@/lib/supabase'
 import { useSubscription } from './useSubscription'
 import { useProfile } from './useProfile'
 import type { ProfileData } from './useProfile'
+import { calculateCompatibilityPercentage, isOrientationCompatible } from '@/utils/matching'
+
+export type BrowseProfileData = ProfileData & { compatibility: number }
+
+const BROWSE_FIELDS = [
+  'id', 'user_id', 'full_name', 'birthday', 'gender', 'looking_for',
+  'city', 'country', 'latitude', 'longitude',
+  'photos', 'main_photo_index', 'created_at',
+  'prompt_1', 'prompt_2', 'prompt_3', 'prompt_4',
+  'religion', 'wants_kids', 'age_range_min', 'age_range_max', 'distance_radius',
+].join(',')
+
+function rankProfiles(candidates: ProfileData[], currentProfile: ProfileData | null): BrowseProfileData[] {
+  return candidates
+    .filter((p) => !currentProfile || isOrientationCompatible(currentProfile, p))
+    .map((p) => ({
+      ...p,
+      compatibility: currentProfile ? calculateCompatibilityPercentage(currentProfile, p) : 0,
+    }))
+    .sort((a, b) => b.compatibility - a.compatibility)
+}
 
 export function useBrowseProfiles() {
   const { user } = useAuth()
   const { isPremium } = useSubscription()
   const { profile: currentProfile } = useProfile()
-  const [profiles, setProfiles] = useState<ProfileData[]>([])
+  const [profiles, setProfiles] = useState<BrowseProfileData[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -27,16 +48,16 @@ export function useBrowseProfiles() {
 
         const { data, error: err } = await supabase
           .from('profiles')
-          .select('id,user_id,full_name,birthday,city,country,photos,main_photo_index,created_at,prompt_1')
+          .select(BROWSE_FIELDS)
           .neq('user_id', user.id)
           .eq('profile_complete', true)
-          .order('created_at', { ascending: false })
-          .limit(100)
+          .limit(200)
 
         if (!isMounted) return
 
         if (err) throw err
-        setProfiles((data as ProfileData[]) || [])
+        const ranked = rankProfiles((data as ProfileData[]) || [], currentProfile)
+        setProfiles(ranked)
         setError(null)
       } catch (err: any) {
         if (isMounted) {
@@ -57,7 +78,7 @@ export function useBrowseProfiles() {
     return () => {
       isMounted = false
     }
-  }, [user])
+  }, [user, currentProfile])
 
   const fetchProfiles = async () => {
     if (!user) return
@@ -66,14 +87,14 @@ export function useBrowseProfiles() {
       setLoading(true)
       const { data, error: err } = await supabase
         .from('profiles')
-        .select('id,user_id,full_name,birthday,city,country,photos,main_photo_index,created_at,prompt_1')
+        .select(BROWSE_FIELDS)
         .neq('user_id', user.id)
         .eq('profile_complete', true)
-        .order('created_at', { ascending: false })
-        .limit(100)
+        .limit(200)
 
       if (err) throw err
-      setProfiles((data as ProfileData[]) || [])
+      const ranked = rankProfiles((data as ProfileData[]) || [], currentProfile)
+      setProfiles(ranked)
       setError(null)
     } catch (err: any) {
       const errorMessage = err?.message || (typeof err === 'string' ? err : 'Failed to fetch profiles')

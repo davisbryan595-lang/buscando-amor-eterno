@@ -293,7 +293,27 @@ export default function BrowsePage() {
                 
                 {/* Gradient Overlay */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
-                
+
+                {/* Compatibility Badge */}
+                {currentProfile.compatibility > 0 && (
+                  <div className="absolute top-4 right-4 z-10">
+                    <div
+                      className="px-3 py-1.5 rounded-full text-white text-sm font-bold shadow-lg backdrop-blur-sm flex items-center gap-1"
+                      style={{
+                        background:
+                          currentProfile.compatibility >= 80
+                            ? 'rgba(22,163,74,0.85)'
+                            : currentProfile.compatibility >= 60
+                            ? 'rgba(234,179,8,0.85)'
+                            : 'rgba(239,68,68,0.75)',
+                      }}
+                    >
+                      <Heart className="w-3 h-3 fill-white" />
+                      {currentProfile.compatibility}% Match
+                    </div>
+                  </div>
+                )}
+
                 {/* NOPE/LIKE Overlays */}
                 {dragOffset < -50 && (
                   <div className="absolute top-12 right-12 transform rotate-12">
