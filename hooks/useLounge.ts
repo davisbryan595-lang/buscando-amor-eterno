@@ -96,7 +96,8 @@ export function useLounge() {
     }
   }, [user])
 
-  // Subscribe to real-time message updates using broadcast (faster and more reliable for group chat)
+  // Subscribe to real-time message updates using postgres changes so any platform
+  // (website or app) inserting into lounge_messages is picked up by everyone.
   const subscribeToMessages = useCallback(() => {
     if (!user) return
 
@@ -109,60 +110,73 @@ export function useLounge() {
       if (!isMounted) return
 
       try {
-        const channelName = 'global_singles_lounge'
+        const channelName = 'global_singles_lounge_db'
 
-        // Remove old subscription if it exists
         if (subscriptionRef.current) {
           supabase.removeChannel(subscriptionRef.current)
         }
 
         subscriptionRef.current = supabase
           .channel(channelName)
-          .on('broadcast', { event: 'new_message' }, (payload) => {
-            if (!isMounted) return
+          .on(
+            'postgres_changes',
+            { event: 'INSERT', schema: 'public', table: 'lounge_messages' },
+            async (payload) => {
+              if (!isMounted) return
 
-            const enrichedMessage = payload.payload
-            setMessages((prev) => {
-              // Prevent duplicates
-              const isDuplicate = prev.some(m => m.id === enrichedMessage.id)
-              return isDuplicate ? prev : [...prev, enrichedMessage]
-            })
-          })
+              const newRow = payload.new as any
+
+              // Fetch the sender's profile to enrich the message
+              const { data: profile } = await supabase
+                .from('profiles')
+                .select('full_name, photos, main_photo_index')
+                .eq('user_id', newRow.sender_id)
+                .maybeSingle()
+
+              const enrichedMessage: LoungeMessage = {
+                id: newRow.id,
+                user_id: newRow.sender_id,
+                message: newRow.content,
+                message_type: 'text',
+                reported_count: 0,
+                created_at: newRow.created_at,
+                sender_name: profile?.full_name || 'Anonymous',
+                sender_image: profile?.photos?.[profile?.main_photo_index || 0] || null,
+              }
+
+              setMessages((prev) => {
+                const isDuplicate = prev.some((m) => m.id === enrichedMessage.id)
+                return isDuplicate ? prev : [...prev, enrichedMessage]
+              })
+            }
+          )
           .subscribe((status, err) => {
             if (err) {
-              const errorMsg = err?.message || JSON.stringify(err)
-              console.log('[Lounge] Subscription error:', errorMsg, err)
+              console.log('[Lounge] Subscription error:', err?.message || JSON.stringify(err))
             } else {
-              console.log('[Lounge] Broadcast subscription status:', status)
+              console.log('[Lounge] Postgres changes subscription status:', status)
             }
 
             if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
-              console.log('[Lounge] Subscription closed/error - attempting retry...')
               if (isMounted && retryCount < maxRetries) {
                 retryCount += 1
                 const delay = Math.min(1000 * Math.pow(2, retryCount - 1), 10000)
-                console.log(`[Lounge] Retry ${retryCount}/${maxRetries} in ${delay}ms`)
                 retryTimeout = setTimeout(() => {
-                  if (isMounted) {
-                    setupSubscription()
-                  }
+                  if (isMounted) setupSubscription()
                 }, delay)
               }
             } else if (status === 'SUBSCRIBED') {
               retryCount = 0
-              console.log('[Lounge] Broadcast subscription active')
+              console.log('[Lounge] Postgres changes subscription active')
             }
           })
       } catch (err: any) {
-        const errorMsg = err?.message || JSON.stringify(err) || 'Unknown error'
-        console.error('Error subscribing to lounge messages:', errorMsg, err)
+        console.error('Error subscribing to lounge messages:', err?.message || JSON.stringify(err))
         if (isMounted && retryCount < maxRetries) {
           retryCount += 1
           const delay = Math.min(1000 * Math.pow(2, retryCount - 1), 10000)
           retryTimeout = setTimeout(() => {
-            if (isMounted) {
-              setupSubscription()
-            }
+            if (isMounted) setupSubscription()
           }, delay)
         }
       }
@@ -172,9 +186,7 @@ export function useLounge() {
 
     return () => {
       isMounted = false
-      if (retryTimeout) {
-        clearTimeout(retryTimeout)
-      }
+      if (retryTimeout) clearTimeout(retryTimeout)
       if (subscriptionRef.current) {
         subscriptionRef.current.unsubscribe()
         supabase.removeChannel(subscriptionRef.current)
@@ -329,16 +341,12 @@ export function useLounge() {
           sender_image: profile?.photos?.[profile?.main_photo_index || 0] || null,
         }
 
-        // Broadcast message immediately so other users see it instantly
-        const channel = supabase.channel('global_singles_lounge')
-        await channel.send({
-          type: 'broadcast',
-          event: 'new_message',
-          payload: enrichedMessage,
+        // Add to local state optimistically — the postgres subscription will
+        // deduplicate if the DB event also arrives.
+        setMessages((prev) => {
+          const isDuplicate = prev.some((m) => m.id === enrichedMessage.id)
+          return isDuplicate ? prev : [...prev, enrichedMessage]
         })
-
-        // Add to local state
-        setMessages((prev) => [...prev, enrichedMessage])
         setError(null)
       } catch (err: any) {
         const errorMessage = err?.message || err?.error_description || 'Failed to send message'
