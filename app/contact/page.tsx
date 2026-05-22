@@ -3,7 +3,8 @@
 import React, { useState } from 'react'
 import Navigation from '@/components/navigation'
 import Footer from '@/components/footer'
-import { Mail, MessageSquare } from 'lucide-react'
+import { Mail, MessageSquare, Loader } from 'lucide-react'
+import { toast } from 'sonner'
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
@@ -12,11 +13,28 @@ export default function ContactPage() {
     subject: '',
     message: '',
   })
+  const [submitting, setSubmitting] = useState(false)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    alert('📧 Message sent! We\'ll get back to you soon.')
-    setFormData({ name: '', email: '', subject: '', message: '' })
+    setSubmitting(true)
+    try {
+      const res = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      })
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.error || 'Failed to send message')
+      }
+      toast.success('Message sent! We\'ll get back to you soon.')
+      setFormData({ name: '', email: '', subject: '', message: '' })
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to send message. Please try again.')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -100,9 +118,11 @@ export default function ContactPage() {
 
             <button
               type="submit"
-              className="w-full py-3 bg-primary text-white rounded-full text-sm md:text-base font-semibold hover:bg-rose-700 transition"
+              disabled={submitting}
+              className="w-full py-3 bg-primary text-white rounded-full text-sm md:text-base font-semibold hover:bg-rose-700 transition disabled:opacity-60 flex items-center justify-center gap-2"
             >
-              Send Message
+              {submitting && <Loader size={16} className="animate-spin" />}
+              {submitting ? 'Sending...' : 'Send Message'}
             </button>
           </form>
         </div>
