@@ -180,7 +180,7 @@ export function AdminSubscriptionsTable() {
                 <TableHead>Status</TableHead>
                 <TableHead>Started</TableHead>
                 <TableHead>Expires</TableHead>
-                <TableHead>Stripe ID</TableHead>
+                <TableHead>Subscription ID</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

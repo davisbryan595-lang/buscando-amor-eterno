@@ -49,7 +49,7 @@ export default function PrivacyPolicyPage() {
           <ul>
             <li><strong>OAuth Providers:</strong> Google and Apple provide email, name, and profile picture if you sign up via social login</li>
             <li><strong>Reverse Geocoding:</strong> We use OpenStreetMap Nominatim to convert coordinates to city/country names</li>
-            <li><strong>Stripe:</strong> Subscription and payment status information</li>
+            <li><strong>NMI:</strong> Subscription and payment status information</li>
             <li><strong>Reports from Other Users:</strong> Users may submit reports about your account, profile, or conduct</li>
           </ul>
         </section>
@@ -66,7 +66,7 @@ export default function PrivacyPolicyPage() {
             <li><strong>Marketing:</strong> Sending promotional emails and push notifications (you can opt-out)</li>
             <li><strong>Legal Compliance:</strong> Complying with laws, court orders, and regulatory requirements</li>
             <li><strong>Age Verification:</strong> Using date of birth to ensure users are 18+ (we do not perform third-party age verification)</li>
-            <li><strong>Payment Processing:</strong> Managing subscriptions and billing through Stripe</li>
+            <li><strong>Payment Processing:</strong> Managing subscriptions and billing through NMI</li>
           </ul>
         </section>
 
@@ -92,7 +92,7 @@ export default function PrivacyPolicyPage() {
           <p>We share information with third-party service providers who assist in operating the Service:</p>
           <ul>
             <li><strong>Supabase:</strong> Cloud hosting, authentication, and database services</li>
-            <li><strong>Stripe:</strong> Payment processing and subscription management</li>
+            <li><strong>NMI:</strong> Payment processing and subscription management</li>
             <li><strong>Agora &amp; LiveKit:</strong> Video and audio calling infrastructure</li>
             <li><strong>OpenStreetMap:</strong> Reverse geocoding for location names</li>
             <li><strong>Google Analytics:</strong> Usage analytics and engagement tracking</li>
