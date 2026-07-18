@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { Check, AlertCircle, CheckCircle } from 'lucide-react'
-import { StripeCheckoutButton } from '@/components/stripe-checkout-button'
+import { NmiCheckoutButton } from '@/components/nmi-checkout-button'
 import { useSubscription } from '@/hooks/useSubscription'
 
 const features = [
@@ -21,11 +21,9 @@ export function PricingContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const { fetchSubscription, isPremium } = useSubscription()
-  const [verifyingSession, setVerifyingSession] = useState(false)
   const [sessionStatus, setSessionStatus] = useState<'success' | 'error' | null>(null)
   const [statusMessage, setStatusMessage] = useState('')
 
-  // Auto-redirect if user becomes premium
   useEffect(() => {
     if (isPremium && sessionStatus === 'success') {
       const redirectTimer = setTimeout(() => {
@@ -36,62 +34,33 @@ export function PricingContent() {
   }, [isPremium, sessionStatus, router])
 
   useEffect(() => {
-    const sessionId = searchParams.get('session_id')
+    const payment = searchParams.get('payment')
+    const error = searchParams.get('error')
 
-    if (sessionId) {
-      verifyAndUpdateSubscription(sessionId)
+    if (payment === 'success') {
+      setSessionStatus('success')
+      setStatusMessage('Payment successful! Your premium membership is being activated.')
+      setTimeout(() => fetchSubscription(), 2000)
+    } else if (error) {
+      setSessionStatus('error')
+      setStatusMessage(decodeURIComponent(error))
     }
   }, [searchParams])
 
-  const verifyAndUpdateSubscription = async (sessionId: string) => {
-    setVerifyingSession(true)
+  const handlePaymentSuccess = () => {
+    setSessionStatus('success')
+    setStatusMessage('Payment successful! Your premium membership is being activated.')
+    setTimeout(() => fetchSubscription(), 2000)
+  }
 
-    try {
-      // Verify the session with our API
-      const response = await fetch(`/api/stripe/verify-session?session_id=${sessionId}`)
-
-      if (!response.ok) {
-        throw new Error('Failed to verify session')
-      }
-
-      const sessionData = await response.json()
-
-      // Check if payment was successful
-      if (sessionData.status === 'paid') {
-        setSessionStatus('success')
-        setStatusMessage('Payment successful! Your premium membership is being activated.')
-
-        // Refresh subscription data to reflect the new status
-        // Small delay to ensure webhook has processed
-        setTimeout(() => {
-          fetchSubscription()
-        }, 2000)
-      } else if (sessionData.status === 'unpaid') {
-        setSessionStatus('error')
-        setStatusMessage('Payment was not completed. Please try again.')
-
-        // Refresh subscription to reset state
-        fetchSubscription()
-      } else {
-        // For other statuses, just refresh the subscription
-        fetchSubscription()
-      }
-    } catch (error) {
-      console.error('Error verifying session:', error)
-      setSessionStatus('error')
-      setStatusMessage('An error occurred while verifying your payment. Please contact support if needed.')
-
-      // Still refresh subscription to ensure state is consistent
-      fetchSubscription()
-    } finally {
-      setVerifyingSession(false)
-    }
+  const handlePaymentError = (message: string) => {
+    setSessionStatus('error')
+    setStatusMessage(message)
   }
 
   return (
     <div className="pt-20 md:pt-24 pb-16 md:pb-20 px-4">
       <div className="w-full max-w-2xl mx-auto">
-        {/* Status Messages */}
         {sessionStatus === 'success' && (
           <div className="mb-6 p-4 bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded-lg flex items-start gap-3">
             <CheckCircle className="text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" size={20} />
@@ -138,7 +107,12 @@ export function PricingContent() {
             ))}
           </ul>
 
-          <StripeCheckoutButton className="w-full" disabled={verifyingSession || isPremium} />
+          <NmiCheckoutButton
+            className="w-full"
+            disabled={isPremium}
+            onSuccess={handlePaymentSuccess}
+            onError={handlePaymentError}
+          />
 
           <p className="text-center text-muted-foreground text-xs md:text-sm mt-6">
             Secure payment with SSL encryption. No hidden fees.
