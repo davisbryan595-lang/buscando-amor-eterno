@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { Check, AlertCircle, CheckCircle } from 'lucide-react'
-import { KurvCheckoutButton } from '@/components/kurv-checkout-button'
+import { NmiCheckoutButton } from '@/components/nmi-checkout-button'
 import { useSubscription } from '@/hooks/useSubscription'
 
 const features = [
@@ -107,7 +107,7 @@ export function PricingContent() {
             ))}
           </ul>
 
-          <KurvCheckoutButton
+          <NmiCheckoutButton
             className="w-full"
             disabled={isPremium}
             onSuccess={handlePaymentSuccess}

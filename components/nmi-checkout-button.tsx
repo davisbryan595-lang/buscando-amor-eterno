@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 
-interface KurvCheckoutButtonProps {
+interface NmiCheckoutButtonProps {
   className?: string
   children?: React.ReactNode
   disabled?: boolean
@@ -15,44 +15,42 @@ interface KurvCheckoutButtonProps {
 
 declare global {
   interface Window {
-    Kurv?: {
-      openPaymentModal: (opts: Record<string, unknown>) => void
-      openCheckout: (opts: Record<string, unknown>) => void
+    CollectJS?: {
+      configure: (opts: Record<string, unknown>) => void
+      startPaymentRequest: () => void
     }
   }
 }
 
-export function KurvCheckoutButton({
+export function NmiCheckoutButton({
   className = '',
   children = 'Start Your Premium Membership',
   disabled = false,
   onSuccess,
   onError,
-}: KurvCheckoutButtonProps) {
+}: NmiCheckoutButtonProps) {
   const { user } = useAuth()
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [scriptReady, setScriptReady] = useState(false)
   const userRef = useRef(user)
   const scriptRef = useRef<HTMLScriptElement | null>(null)
+  const configured = useRef(false)
 
-  const kurvPublicKey = process.env.NEXT_PUBLIC_KURV_KEY
+  const tokenizationKey = process.env.NEXT_PUBLIC_NMI_TOKENIZATION_KEY
 
   useEffect(() => {
     userRef.current = user
   }, [user])
 
   useEffect(() => {
-    if (!kurvPublicKey || scriptRef.current) return
+    if (!tokenizationKey || scriptRef.current) return
 
     const script = document.createElement('script')
-    script.src = 'https://sdk.kurv.app/kurv-checkout.js'
+    script.src = 'https://secure.networkmerchants.com/token/Collect.js'
+    script.setAttribute('data-tokenization-key', tokenizationKey)
     script.async = true
     script.onload = () => setScriptReady(true)
-    script.onerror = () => {
-      console.error('Failed to load Kurv script')
-      onError?.('Payment system unavailable. Please try again.')
-    }
     document.head.appendChild(script)
     scriptRef.current = script
 
@@ -60,11 +58,22 @@ export function KurvCheckoutButton({
       if (scriptRef.current) {
         document.head.removeChild(scriptRef.current)
         scriptRef.current = null
+        configured.current = false
       }
     }
-  }, [kurvPublicKey, onError])
+  }, [tokenizationKey])
 
-  const handlePaymentSuccess = async (transactionId: string) => {
+  useEffect(() => {
+    if (!scriptReady || configured.current || !window.CollectJS) return
+
+    window.CollectJS.configure({
+      variant: 'lightbox',
+      callback: handleToken,
+    })
+    configured.current = true
+  }, [scriptReady])
+
+  const handleToken = async (response: { payment_token: string }) => {
     const currentUser = userRef.current
     if (!currentUser) {
       router.push('/signup')
@@ -77,13 +86,13 @@ export function KurvCheckoutButton({
       const { data: sessionData } = await supabase.auth.getSession()
       const accessToken = sessionData?.session?.access_token
 
-      const res = await fetch('/api/kurv/subscribe', {
+      const res = await fetch('/api/nmi/subscribe', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
         },
-        body: JSON.stringify({ transactionId }),
+        body: JSON.stringify({ paymentToken: response.payment_token }),
       })
 
       const data = await res.json()
@@ -96,7 +105,7 @@ export function KurvCheckoutButton({
       router.push('/pricing?payment=success')
     } catch (error) {
       const msg = error instanceof Error ? error.message : 'Payment failed'
-      console.error('Kurv payment error:', error)
+      console.error('NMI payment error:', error)
       onError?.(msg)
     } finally {
       setIsLoading(false)
@@ -109,29 +118,9 @@ export function KurvCheckoutButton({
       return
     }
 
-    if (!window.Kurv) {
-      onError?.('Payment system not ready. Please refresh the page.')
-      return
+    if (window.CollectJS) {
+      window.CollectJS.startPaymentRequest()
     }
-
-    window.Kurv.openCheckout({
-      publicKey: kurvPublicKey,
-      amount: 1200,
-      currency: 'USD',
-      description: 'Premium Membership - $12/month',
-      customerEmail: user.email,
-      customerId: user.id,
-      onSuccess: (response: any) => {
-        handlePaymentSuccess(response.transactionId || response.id)
-      },
-      onError: (error: any) => {
-        const errorMsg = error?.message || 'Payment failed. Please try again.'
-        onError?.(errorMsg)
-      },
-      onClose: () => {
-        console.log('Checkout closed')
-      },
-    })
   }
 
   const isButtonDisabled = isLoading || disabled || !scriptReady
