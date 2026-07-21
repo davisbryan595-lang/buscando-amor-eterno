@@ -39,7 +39,6 @@ export function NmiCheckoutButton({
 
   const tokenizationKey = process.env.NEXT_PUBLIC_NMI_TOKENIZATION_KEY
 
-  // Keep userRef in sync so the token callback always sees the latest user
   useEffect(() => {
     userRef.current = user
   }, [user])
