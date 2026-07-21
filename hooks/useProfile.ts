@@ -147,7 +147,8 @@ export function useProfile() {
       if (!user) throw new Error('No user logged in')
 
       try {
-        const { data: newProfile, error: err } = await supabase
+        // Try insert first (faster for new profiles)
+        const { data: newProfile, error: insertErr } = await supabase
           .from('profiles')
           .insert({
             user_id: user.id,
@@ -156,7 +157,21 @@ export function useProfile() {
           .select()
           .single()
 
-        if (err) throw err
+        // If insert fails with duplicate key, update instead
+        if (insertErr?.code === '23505') {
+          const { data: updatedProfile, error: updateErr } = await supabase
+            .from('profiles')
+            .update(data)
+            .eq('user_id', user.id)
+            .select()
+            .single()
+
+          if (updateErr) throw updateErr
+          setProfile(updatedProfile as ProfileData)
+          return updatedProfile as ProfileData
+        }
+
+        if (insertErr) throw insertErr
         setProfile(newProfile as ProfileData)
         return newProfile as ProfileData
       } catch (err: any) {
@@ -198,7 +213,7 @@ export function useProfile() {
 
       try {
         const fileName = `${user.id}/${Date.now()}-${file.name}`
-        const { data, error: uploadErr } = await supabase.storage
+        const { error: uploadErr } = await supabase.storage
           .from('profile-photos')
           .upload(fileName, file, { upsert: true })
 
@@ -224,6 +239,32 @@ export function useProfile() {
       }
     },
     [user, profile, updateProfile]
+  )
+
+  const uploadPhotoOnly = useCallback(
+    async (file: File) => {
+      if (!user) throw new Error('No user logged in')
+
+      try {
+        const fileName = `${user.id}/${Date.now()}-${file.name}`
+        const { error: uploadErr } = await supabase.storage
+          .from('profile-photos')
+          .upload(fileName, file, { upsert: true })
+
+        if (uploadErr) throw uploadErr
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('profile-photos')
+          .getPublicUrl(fileName)
+
+        return publicUrl
+      } catch (err: any) {
+        const errorMessage = err?.message || (typeof err === 'string' ? err : 'Failed to upload photo')
+        setError(errorMessage)
+        throw err
+      }
+    },
+    [user]
   )
 
   const deletePhoto = useCallback(
@@ -268,6 +309,7 @@ export function useProfile() {
     createProfile,
     updateProfile,
     uploadPhoto,
+    uploadPhotoOnly,
     deletePhoto,
     reorderPhotos,
     setMainPhoto,

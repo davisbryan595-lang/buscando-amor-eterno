@@ -64,7 +64,7 @@ export default function OnboardingPage() {
   const router = useRouter()
   const { user, loading: authLoading } = useAuth()
   const { t, language, setLanguage } = useLanguage()
-  const { createProfile, profile, loading: profileLoading, uploadPhoto } = useProfile()
+  const { createProfile, profile, loading: profileLoading, uploadPhotoOnly } = useProfile()
 
   const [currentStep, setCurrentStep] = useState<OnboardingStep>(2)
   const [loading, setLoading] = useState(false)
@@ -162,53 +162,62 @@ export default function OnboardingPage() {
   const handleComplete = async () => {
     setLoading(true)
     try {
-      // First upload photos if any
-      const photoUrls: string[] = []
-      if (data.photos && data.photos.length > 0) {
-        for (let i = 0; i < data.photos.length; i++) {
-          try {
-            const url = await uploadPhoto(data.photos[i], i)
-            photoUrls.push(url)
-          } catch (error) {
-            console.error('Failed to upload photo', error)
-          }
-        }
-      }
+      // Add timeout to prevent indefinite loading
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Profile save timed out. Please try again.')), 30000)
+      )
 
-      await createProfile({
-        full_name: data.fullName,
-        birthday: data.birthday,
-        gender: data.gender,
-        looking_for: data.lookingFor,
-        personality: data.personality,
-        relationship_goal: data.relationshipGoal,
-        interests: data.interests,
-        values: data.values,
-        city: data.city,
-        country: data.country,
-        latitude: data.latitude || 0,
-        longitude: data.longitude || 0,
-        photos: photoUrls.length > 0 ? photoUrls : null,
-        main_photo_index: photoUrls.length > 0 ? 0 : null,
-        prompt_1: data.prompt1,
-        prompt_2: data.prompt2,
-        prompt_3: data.prompt3,
-        prompt_4: data.prompt4,
-        love_language: data.loveLanguage,
-        prompt_5: data.prompt5,
-        prompt_6: data.prompt6,
-        relationship_type: data.relationshipType,
-        age_range_min: data.ageMin,
-        age_range_max: data.ageMax,
-        distance_radius: data.distanceRadius,
-        height_cm: data.height,
-        religion: data.religion,
-        wants_kids: data.wantsKids,
-        smoking: data.smoking,
-        drinking: data.drinking,
-        dealbreakers: data.dealbreakers,
-        profile_complete: true,
-      })
+      const savePromise = (async () => {
+        // Upload all photos in parallel
+        const photoUrls: string[] = []
+        if (data.photos && data.photos.length > 0) {
+          const uploadPromises = data.photos.map((photo) =>
+            uploadPhotoOnly(photo).catch((error) => {
+              console.error('Failed to upload photo', error)
+              return null
+            })
+          )
+          const results = await Promise.all(uploadPromises)
+          photoUrls.push(...results.filter((url) => url !== null))
+        }
+
+        await createProfile({
+          full_name: data.fullName,
+          birthday: data.birthday,
+          gender: data.gender,
+          looking_for: data.lookingFor,
+          personality: data.personality,
+          relationship_goal: data.relationshipGoal,
+          interests: data.interests,
+          values: data.values,
+          city: data.city,
+          country: data.country,
+          latitude: data.latitude || 0,
+          longitude: data.longitude || 0,
+          photos: photoUrls.length > 0 ? photoUrls : null,
+          main_photo_index: photoUrls.length > 0 ? 0 : null,
+          prompt_1: data.prompt1,
+          prompt_2: data.prompt2,
+          prompt_3: data.prompt3,
+          prompt_4: data.prompt4,
+          love_language: data.loveLanguage,
+          prompt_5: data.prompt5,
+          prompt_6: data.prompt6,
+          relationship_type: data.relationshipType,
+          age_range_min: data.ageMin,
+          age_range_max: data.ageMax,
+          distance_radius: data.distanceRadius,
+          height_cm: data.height,
+          religion: data.religion,
+          wants_kids: data.wantsKids,
+          smoking: data.smoking,
+          drinking: data.drinking,
+          dealbreakers: data.dealbreakers,
+          profile_complete: true,
+        })
+      })()
+
+      await Promise.race([savePromise, timeoutPromise])
 
       setCurrentStep('complete')
       confetti({
@@ -217,6 +226,7 @@ export default function OnboardingPage() {
         origin: { y: 0.6 },
       })
     } catch (error: any) {
+      console.error('Profile save error:', error)
       toast.error(error.message || 'Failed to save profile')
     } finally {
       setLoading(false)
