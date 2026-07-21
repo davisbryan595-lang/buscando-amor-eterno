@@ -21,9 +21,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { cardNumber, expiration, cvv } = await request.json()
+    const { cardNumber, expiration, cvv, zipcode } = await request.json()
 
-    if (!cardNumber || !expiration || !cvv) {
+    if (!cardNumber || !expiration || !cvv || !zipcode) {
       return NextResponse.json({ error: 'Missing payment fields' }, { status: 400 })
     }
 
@@ -48,6 +48,7 @@ export async function POST(request: NextRequest) {
       ccnumber: cardNumber,
       ccexp: `${month}${expirationYear}`,
       cvv: cvv,
+      zip: zipcode,
       amount: '12.00',
       currency: 'USD',
       recurring: 'add_subscription',

@@ -29,6 +29,7 @@ export function NmiCheckoutButton({
     cardNumber: '',
     expiration: '',
     cvv: '',
+    zipcode: '',
   })
 
   if (!user) {
@@ -45,7 +46,7 @@ export function NmiCheckoutButton({
   const handlePayment = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!formData.cardNumber || !formData.expiration || !formData.cvv) {
+    if (!formData.cardNumber || !formData.expiration || !formData.cvv || !formData.zipcode) {
       toast.error('Please fill in all payment fields')
       return
     }
@@ -70,6 +71,7 @@ export function NmiCheckoutButton({
           cardNumber: formData.cardNumber.replace(/\s/g, ''),
           expiration: formData.expiration,
           cvv: formData.cvv,
+          zipcode: formData.zipcode,
         }),
       })
 
@@ -82,7 +84,7 @@ export function NmiCheckoutButton({
       toast.success('Payment successful!')
       onSuccess?.()
       setShowForm(false)
-      setFormData({ cardNumber: '', expiration: '', cvv: '' })
+      setFormData({ cardNumber: '', expiration: '', cvv: '', zipcode: '' })
       router.push('/pricing?payment=success')
     } catch (error) {
       const msg = error instanceof Error ? error.message : 'Payment failed'
@@ -142,7 +144,7 @@ export function NmiCheckoutButton({
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Expiration (MM/YY)
@@ -167,6 +169,18 @@ export function NmiCheckoutButton({
                 value={formData.cvv}
                 onChange={(e) => setFormData({ ...formData, cvv: e.target.value.slice(0, 4) })}
                 maxLength={4}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                disabled={isLoading}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Zipcode</label>
+              <input
+                type="text"
+                placeholder="12345"
+                value={formData.zipcode}
+                onChange={(e) => setFormData({ ...formData, zipcode: e.target.value.slice(0, 10) })}
+                maxLength={10}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                 disabled={isLoading}
               />
