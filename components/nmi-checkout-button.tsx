@@ -17,7 +17,7 @@ declare global {
   interface Window {
     CollectJS?: {
       configure: (opts: Record<string, any>) => void
-      requestToken: () => void
+      addHandler: (event: string, handler: () => void) => void
     }
   }
 }
@@ -35,6 +35,7 @@ export function NmiCheckoutButton({
   const [scriptReady, setScriptReady] = useState(false)
   const scriptRef = useRef<HTMLScriptElement | null>(null)
   const configuredRef = useRef(false)
+  const formRef = useRef<HTMLFormElement>(null)
 
   const tokenizationKey = process.env.NEXT_PUBLIC_NMI_TOKENIZATION_KEY
 
@@ -52,13 +53,13 @@ export function NmiCheckoutButton({
     script.async = true
 
     script.onload = () => {
-      console.log('NMI CollectJS script loaded')
+      console.log('NMI CollectJS loaded')
       setScriptReady(true)
     }
 
     script.onerror = () => {
       console.error('Failed to load NMI CollectJS')
-      setScriptReady(false)
+      onError?.('Payment system unavailable. Please try again later.')
     }
 
     document.head.appendChild(script)
@@ -92,16 +93,21 @@ export function NmiCheckoutButton({
           },
         },
         callback: handlePaymentToken,
-        disablePaymentRequest: true,
       })
+
+      // Add submit handler
+      window.CollectJS.addHandler('success', handleTokenSuccess)
+      window.CollectJS.addHandler('error', handleTokenError)
+
       configuredRef.current = true
       console.log('NMI CollectJS configured')
     } catch (error) {
       console.error('Failed to configure NMI:', error)
+      onError?.('Failed to initialize payment system')
     }
   }, [scriptReady])
 
-  const handlePaymentToken = async (response: any) => {
+  const handleTokenSuccess = async (token: string) => {
     if (!user) {
       router.push('/signup')
       return
@@ -116,18 +122,13 @@ export function NmiCheckoutButton({
         throw new Error('Not authenticated')
       }
 
-      const paymentToken = response.token
-      if (!paymentToken) {
-        throw new Error('Failed to tokenize card')
-      }
-
       const res = await fetch('/api/nmi/subscribe', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${accessToken}`,
         },
-        body: JSON.stringify({ paymentToken }),
+        body: JSON.stringify({ paymentToken: token }),
       })
 
       const data = await res.json()
@@ -147,76 +148,85 @@ export function NmiCheckoutButton({
     }
   }
 
-  const handleClick = () => {
+  const handleTokenError = (error: string) => {
+    console.error('Token error:', error)
+    onError?.(error || 'Payment failed. Please try again.')
+    setIsLoading(false)
+  }
+
+  const handlePaymentToken = (token: string) => {
+    console.log('Token received:', token)
+    handleTokenSuccess(token)
+  }
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
     if (!user) {
       router.push('/signup')
       return
     }
 
-    try {
-      if (!window.CollectJS) {
-        onError?.('Payment system not ready. Please refresh.')
-        return
-      }
-
-      // Request token from CollectJS
-      window.CollectJS.requestToken()
-    } catch (error) {
-      console.error('Error requesting token:', error)
-      onError?.(error instanceof Error ? error.message : 'Payment error')
-    }
+    setIsLoading(true)
+    // Let CollectJS handle the form submission
+    formRef.current?.submit()
   }
 
   return (
     <>
-      <button
-        onClick={handleClick}
-        disabled={isLoading || disabled || !scriptReady}
-        className={`py-3 md:py-4 bg-primary text-white rounded-full text-base md:text-lg font-semibold hover:bg-rose-700 transition transform hover:scale-105 soft-glow disabled:opacity-50 disabled:cursor-not-allowed ${className}`}
-      >
-        {isLoading
-          ? 'Processing...'
-          : disabled
-            ? 'Already Premium'
-            : !scriptReady
-              ? 'Loading...'
-              : children}
-      </button>
+      <form ref={formRef} onSubmit={handleSubmit} id="nmi-payment-form">
+        {scriptReady && (
+          <div className="space-y-4 p-6 border border-gray-200 rounded-lg bg-gray-50 mb-6">
+            <h3 className="font-semibold text-gray-900">Payment Information</h3>
 
-      {scriptReady && (
-        <div className="mt-6 space-y-4 p-6 border border-gray-200 rounded-lg bg-gray-50">
-          <h3 className="font-semibold text-gray-900">Payment Information</h3>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Card Number</label>
-            <div
-              id="nmi-card-number"
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900"
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Expiration</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Card Number
+              </label>
               <div
-                id="nmi-exp"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900"
+                id="nmi-card-number"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white"
               />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">CVV</label>
-              <div
-                id="nmi-cvv"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900"
-              />
-            </div>
-          </div>
 
-          <p className="text-xs text-gray-500">
-            Your payment information is securely processed by Network Merchants.
-          </p>
-        </div>
-      )}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Expiration
+                </label>
+                <div
+                  id="nmi-exp"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">CVV</label>
+                <div
+                  id="nmi-cvv"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white"
+                />
+              </div>
+            </div>
+
+            <p className="text-xs text-gray-500">
+              Your payment information is securely processed by Network Merchants.
+            </p>
+          </div>
+        )}
+
+        <button
+          type="submit"
+          disabled={isLoading || disabled || !scriptReady}
+          className={`py-3 md:py-4 bg-primary text-white rounded-full text-base md:text-lg font-semibold hover:bg-rose-700 transition transform hover:scale-105 soft-glow disabled:opacity-50 disabled:cursor-not-allowed w-full ${className}`}
+        >
+          {isLoading
+            ? 'Processing...'
+            : disabled
+              ? 'Already Premium'
+              : !scriptReady
+                ? 'Loading...'
+                : children}
+        </button>
+      </form>
     </>
   )
 }
