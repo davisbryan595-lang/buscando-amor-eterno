@@ -92,3 +92,47 @@ export async function POST(request: NextRequest) {
     )
   }
 }
+
+export async function GET(request: NextRequest) {
+  try {
+    const transactionId = request.nextUrl.searchParams.get('transaction_id')
+    const merchantDefinedField1 = request.nextUrl.searchParams.get('merchant_defined_field_1')
+
+    if (!transactionId || !merchantDefinedField1) {
+      return NextResponse.json(
+        { error: 'Missing transaction details' },
+        { status: 400 }
+      )
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseServiceKey)
+    const expiresAt = new Date()
+    expiresAt.setMonth(expiresAt.getMonth() + 1)
+
+    const { error: subscriptionError } = await supabase
+      .from('subscriptions')
+      .upsert(
+        {
+          user_id: merchantDefinedField1,
+          stripe_subscription_id: transactionId,
+          plan: 'premium',
+          status: 'active',
+          expires_at: expiresAt.toISOString(),
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'user_id' }
+      )
+
+    if (subscriptionError) {
+      throw subscriptionError
+    }
+
+    return NextResponse.json({ success: true, transactionId })
+  } catch (error) {
+    console.error('NMI payment verification error:', error)
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Payment verification failed' },
+      { status: 500 }
+    )
+  }
+}
