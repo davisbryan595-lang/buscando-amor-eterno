@@ -147,18 +147,44 @@ export function useProfile() {
       if (!user) throw new Error('No user logged in')
 
       try {
-        const { data: newProfile, error: err } = await supabase
+        // Check if profile already exists
+        const { data: existingProfile, error: checkErr } = await supabase
           .from('profiles')
-          .insert({
-            user_id: user.id,
-            ...data,
-          })
-          .select()
-          .single()
+          .select('id')
+          .eq('user_id', user.id)
+          .maybeSingle()
 
-        if (err) throw err
-        setProfile(newProfile as ProfileData)
-        return newProfile as ProfileData
+        if (checkErr) throw checkErr
+
+        let result
+        if (existingProfile) {
+          // Update existing profile
+          const { data: updatedProfile, error: updateErr } = await supabase
+            .from('profiles')
+            .update(data)
+            .eq('user_id', user.id)
+            .select()
+            .single()
+
+          if (updateErr) throw updateErr
+          result = updatedProfile
+        } else {
+          // Insert new profile
+          const { data: newProfile, error: insertErr } = await supabase
+            .from('profiles')
+            .insert({
+              user_id: user.id,
+              ...data,
+            })
+            .select()
+            .single()
+
+          if (insertErr) throw insertErr
+          result = newProfile
+        }
+
+        setProfile(result as ProfileData)
+        return result as ProfileData
       } catch (err: any) {
         const errorMessage = err?.message || (typeof err === 'string' ? err : 'Failed to create profile')
         setError(errorMessage)
