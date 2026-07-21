@@ -17,7 +17,7 @@ declare global {
   interface Window {
     CollectJS?: {
       configure: (opts: Record<string, any>) => void
-      startTokenization: () => void
+      requestToken: () => void
     }
   }
 }
@@ -79,31 +79,29 @@ export function NmiCheckoutButton({
       window.CollectJS.configure({
         fields: {
           ccnumber: {
-            selector: '#nmi-ccnumber',
-            title: 'Card Number',
+            selector: '#nmi-card-number',
             placeholder: '4111 1111 1111 1111',
           },
           cvv: {
             selector: '#nmi-cvv',
-            title: 'CVV',
             placeholder: '123',
           },
           exp: {
             selector: '#nmi-exp',
-            title: 'Expiration',
             placeholder: 'MM/YY',
           },
         },
-        callback: handleToken,
+        callback: handlePaymentToken,
+        disablePaymentRequest: true,
       })
       configuredRef.current = true
-      console.log('NMI CollectJS configured successfully')
+      console.log('NMI CollectJS configured')
     } catch (error) {
-      console.error('Failed to configure NMI CollectJS:', error)
+      console.error('Failed to configure NMI:', error)
     }
   }, [scriptReady])
 
-  const handleToken = async (response: any) => {
+  const handlePaymentToken = async (response: any) => {
     if (!user) {
       router.push('/signup')
       return
@@ -111,17 +109,16 @@ export function NmiCheckoutButton({
 
     try {
       setIsLoading(true)
-
       const { data: sessionData } = await supabase.auth.getSession()
       const accessToken = sessionData?.session?.access_token
 
       if (!accessToken) {
-        throw new Error('Not authenticated. Please log in again.')
+        throw new Error('Not authenticated')
       }
 
-      const paymentToken = response.token || response.payment_token
+      const paymentToken = response.token
       if (!paymentToken) {
-        throw new Error('Failed to tokenize payment method')
+        throw new Error('Failed to tokenize card')
       }
 
       const res = await fetch('/api/nmi/subscribe', {
@@ -143,7 +140,7 @@ export function NmiCheckoutButton({
       router.push('/pricing?payment=success')
     } catch (error) {
       const msg = error instanceof Error ? error.message : 'Payment failed'
-      console.error('NMI payment error:', error)
+      console.error('Payment error:', error)
       onError?.(msg)
     } finally {
       setIsLoading(false)
@@ -156,20 +153,17 @@ export function NmiCheckoutButton({
       return
     }
 
-    if (!window.CollectJS) {
-      onError?.('Payment system is not ready. Please refresh and try again.')
-      return
-    }
-
     try {
-      window.CollectJS.startTokenization()
+      if (!window.CollectJS) {
+        onError?.('Payment system not ready. Please refresh.')
+        return
+      }
+
+      // Request token from CollectJS
+      window.CollectJS.requestToken()
     } catch (error) {
-      console.error('Error starting tokenization:', error)
-      onError?.(
-        error instanceof Error
-          ? error.message
-          : 'Failed to start payment. Please try again.'
-      )
+      console.error('Error requesting token:', error)
+      onError?.(error instanceof Error ? error.message : 'Payment error')
     }
   }
 
@@ -182,7 +176,7 @@ export function NmiCheckoutButton({
       >
         {isLoading
           ? 'Processing...'
-          : disabled && !isLoading
+          : disabled
             ? 'Already Premium'
             : !scriptReady
               ? 'Loading...'
@@ -190,27 +184,37 @@ export function NmiCheckoutButton({
       </button>
 
       {scriptReady && (
-        <div className="mt-6 space-y-4 hidden" id="nmi-payment-form">
+        <div className="mt-6 space-y-4 p-6 border border-gray-200 rounded-lg bg-gray-50">
+          <h3 className="font-semibold text-gray-900">Payment Information</h3>
+
           <div>
-            <label htmlFor="nmi-ccnumber" className="block text-sm font-medium mb-2">
-              Card Number
-            </label>
-            <div id="nmi-ccnumber" className="w-full px-4 py-3 border border-gray-300 rounded-lg" />
+            <label className="block text-sm font-medium text-gray-700 mb-2">Card Number</label>
+            <div
+              id="nmi-card-number"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900"
+            />
           </div>
+
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label htmlFor="nmi-exp" className="block text-sm font-medium mb-2">
-                Expiration
-              </label>
-              <div id="nmi-exp" className="w-full px-4 py-3 border border-gray-300 rounded-lg" />
+              <label className="block text-sm font-medium text-gray-700 mb-2">Expiration</label>
+              <div
+                id="nmi-exp"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900"
+              />
             </div>
             <div>
-              <label htmlFor="nmi-cvv" className="block text-sm font-medium mb-2">
-                CVV
-              </label>
-              <div id="nmi-cvv" className="w-full px-4 py-3 border border-gray-300 rounded-lg" />
+              <label className="block text-sm font-medium text-gray-700 mb-2">CVV</label>
+              <div
+                id="nmi-cvv"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900"
+              />
             </div>
           </div>
+
+          <p className="text-xs text-gray-500">
+            Your payment information is securely processed by Network Merchants.
+          </p>
         </div>
       )}
     </>
