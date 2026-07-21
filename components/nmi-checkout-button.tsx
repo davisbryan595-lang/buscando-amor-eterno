@@ -2,8 +2,9 @@
 
 import { useAuth } from '@/context/auth-context'
 import { useRouter } from 'next/navigation'
-import { useEffect, useRef, useState } from 'react'
+import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
+import { toast } from 'sonner'
 
 interface NmiCheckoutButtonProps {
   className?: string
@@ -11,15 +12,6 @@ interface NmiCheckoutButtonProps {
   disabled?: boolean
   onSuccess?: () => void
   onError?: (message: string) => void
-}
-
-declare global {
-  interface Window {
-    CollectJS?: {
-      configure: (opts: Record<string, any>) => void
-      addHandler: (event: string, handler: () => void) => void
-    }
-  }
 }
 
 export function NmiCheckoutButton({
@@ -32,89 +24,35 @@ export function NmiCheckoutButton({
   const { user } = useAuth()
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
-  const [scriptReady, setScriptReady] = useState(false)
-  const scriptRef = useRef<HTMLScriptElement | null>(null)
-  const configuredRef = useRef(false)
-  const formRef = useRef<HTMLFormElement>(null)
+  const [showForm, setShowForm] = useState(false)
+  const [formData, setFormData] = useState({
+    cardNumber: '',
+    expiration: '',
+    cvv: '',
+  })
 
-  const tokenizationKey = process.env.NEXT_PUBLIC_NMI_TOKENIZATION_KEY
+  if (!user) {
+    return (
+      <button
+        onClick={() => router.push('/signup')}
+        className={`py-3 md:py-4 bg-primary text-white rounded-full text-base md:text-lg font-semibold hover:bg-rose-700 transition transform hover:scale-105 soft-glow disabled:opacity-50 disabled:cursor-not-allowed w-full ${className}`}
+      >
+        {children}
+      </button>
+    )
+  }
 
-  useEffect(() => {
-    if (!tokenizationKey || scriptRef.current) {
-      if (!tokenizationKey) {
-        console.error('NMI tokenization key is not configured')
-      }
-      return
-    }
+  const handlePayment = async (e: React.FormEvent) => {
+    e.preventDefault()
 
-    const script = document.createElement('script')
-    script.src = 'https://secure.networkmerchants.com/token/Collect.js'
-    script.setAttribute('data-tokenization-key', tokenizationKey)
-    script.async = true
-
-    script.onload = () => {
-      console.log('NMI CollectJS loaded')
-      setScriptReady(true)
-    }
-
-    script.onerror = () => {
-      console.error('Failed to load NMI CollectJS')
-      onError?.('Payment system unavailable. Please try again later.')
-    }
-
-    document.head.appendChild(script)
-    scriptRef.current = script
-
-    return () => {
-      if (scriptRef.current && document.head.contains(scriptRef.current)) {
-        document.head.removeChild(scriptRef.current)
-        scriptRef.current = null
-      }
-    }
-  }, [tokenizationKey])
-
-  useEffect(() => {
-    if (!scriptReady || configuredRef.current || !window.CollectJS) return
-
-    try {
-      window.CollectJS.configure({
-        fields: {
-          ccnumber: {
-            selector: '#nmi-card-number',
-            placeholder: '4111 1111 1111 1111',
-          },
-          cvv: {
-            selector: '#nmi-cvv',
-            placeholder: '123',
-          },
-          exp: {
-            selector: '#nmi-exp',
-            placeholder: 'MM/YY',
-          },
-        },
-        callback: handlePaymentToken,
-      })
-
-      // Add submit handler
-      window.CollectJS.addHandler('success', handleTokenSuccess)
-      window.CollectJS.addHandler('error', handleTokenError)
-
-      configuredRef.current = true
-      console.log('NMI CollectJS configured')
-    } catch (error) {
-      console.error('Failed to configure NMI:', error)
-      onError?.('Failed to initialize payment system')
-    }
-  }, [scriptReady])
-
-  const handleTokenSuccess = async (token: string) => {
-    if (!user) {
-      router.push('/signup')
+    if (!formData.cardNumber || !formData.expiration || !formData.cvv) {
+      toast.error('Please fill in all payment fields')
       return
     }
 
     try {
       setIsLoading(true)
+
       const { data: sessionData } = await supabase.auth.getSession()
       const accessToken = sessionData?.session?.access_token
 
@@ -122,13 +60,17 @@ export function NmiCheckoutButton({
         throw new Error('Not authenticated')
       }
 
-      const res = await fetch('/api/nmi/subscribe', {
+      const res = await fetch('/api/nmi/payment', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${accessToken}`,
         },
-        body: JSON.stringify({ paymentToken: token }),
+        body: JSON.stringify({
+          cardNumber: formData.cardNumber.replace(/\s/g, ''),
+          expiration: formData.expiration,
+          cvv: formData.cvv,
+        }),
       })
 
       const data = await res.json()
@@ -137,96 +79,123 @@ export function NmiCheckoutButton({
         throw new Error(data.error || 'Payment processing failed')
       }
 
+      toast.success('Payment successful!')
       onSuccess?.()
+      setShowForm(false)
+      setFormData({ cardNumber: '', expiration: '', cvv: '' })
       router.push('/pricing?payment=success')
     } catch (error) {
       const msg = error instanceof Error ? error.message : 'Payment failed'
       console.error('Payment error:', error)
+      toast.error(msg)
       onError?.(msg)
     } finally {
       setIsLoading(false)
     }
   }
 
-  const handleTokenError = (error: string) => {
-    console.error('Token error:', error)
-    onError?.(error || 'Payment failed. Please try again.')
-    setIsLoading(false)
-  }
-
-  const handlePaymentToken = (token: string) => {
-    console.log('Token received:', token)
-    handleTokenSuccess(token)
-  }
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!user) {
-      router.push('/signup')
-      return
+  const formatCardNumber = (value: string) => {
+    const v = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '')
+    const matches = v.match(/\d{4,16}/g)
+    const match = (matches && matches[0]) || ''
+    const parts = []
+    for (let i = 0, len = match.length; i < len; i += 4) {
+      parts.push(match.substring(i, i + 4))
     }
+    return parts.length ? parts.join(' ') : value
+  }
 
-    setIsLoading(true)
-    // Let CollectJS handle the form submission
-    formRef.current?.submit()
+  const formatExpiration = (value: string) => {
+    const v = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '')
+    if (v.length >= 2) {
+      return v.slice(0, 2) + '/' + v.slice(2, 4)
+    }
+    return v
   }
 
   return (
     <>
-      <form ref={formRef} onSubmit={handleSubmit} id="nmi-payment-form">
-        {scriptReady && (
-          <div className="space-y-4 p-6 border border-gray-200 rounded-lg bg-gray-50 mb-6">
-            <h3 className="font-semibold text-gray-900">Payment Information</h3>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Card Number
-              </label>
-              <div
-                id="nmi-card-number"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Expiration
-                </label>
-                <div
-                  id="nmi-exp"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">CVV</label>
-                <div
-                  id="nmi-cvv"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white"
-                />
-              </div>
-            </div>
-
-            <p className="text-xs text-gray-500">
-              Your payment information is securely processed by Network Merchants.
-            </p>
-          </div>
-        )}
-
+      {!showForm ? (
         <button
-          type="submit"
-          disabled={isLoading || disabled || !scriptReady}
+          onClick={() => setShowForm(true)}
+          disabled={disabled}
           className={`py-3 md:py-4 bg-primary text-white rounded-full text-base md:text-lg font-semibold hover:bg-rose-700 transition transform hover:scale-105 soft-glow disabled:opacity-50 disabled:cursor-not-allowed w-full ${className}`}
         >
-          {isLoading
-            ? 'Processing...'
-            : disabled
-              ? 'Already Premium'
-              : !scriptReady
-                ? 'Loading...'
-                : children}
+          {disabled ? 'Already Premium' : children}
         </button>
-      </form>
+      ) : (
+        <form onSubmit={handlePayment} className="space-y-4 p-6 border border-gray-200 rounded-lg bg-gray-50">
+          <h3 className="font-semibold text-gray-900">Payment Information</h3>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Card Number</label>
+            <input
+              type="text"
+              placeholder="4111 1111 1111 1111"
+              value={formData.cardNumber}
+              onChange={(e) =>
+                setFormData({ ...formData, cardNumber: formatCardNumber(e.target.value) })
+              }
+              maxLength={19}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+              disabled={isLoading}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Expiration (MM/YY)
+              </label>
+              <input
+                type="text"
+                placeholder="MM/YY"
+                value={formData.expiration}
+                onChange={(e) =>
+                  setFormData({ ...formData, expiration: formatExpiration(e.target.value) })
+                }
+                maxLength={5}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                disabled={isLoading}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">CVV</label>
+              <input
+                type="text"
+                placeholder="123"
+                value={formData.cvv}
+                onChange={(e) => setFormData({ ...formData, cvv: e.target.value.slice(0, 4) })}
+                maxLength={4}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                disabled={isLoading}
+              />
+            </div>
+          </div>
+
+          <p className="text-xs text-gray-500">
+            Your payment information is securely processed by Network Merchants.
+          </p>
+
+          <div className="flex gap-3 pt-4">
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="flex-1 py-3 bg-primary text-white rounded-full font-semibold hover:bg-rose-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isLoading ? 'Processing...' : 'Complete Payment'}
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowForm(false)}
+              disabled={isLoading}
+              className="flex-1 py-3 border border-gray-300 text-gray-700 rounded-full font-semibold hover:bg-gray-100 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
+      )}
     </>
   )
 }
