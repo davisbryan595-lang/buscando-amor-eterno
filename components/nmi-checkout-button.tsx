@@ -44,18 +44,29 @@ export function NmiCheckoutButton({
   }, [user])
 
   useEffect(() => {
-    if (!tokenizationKey || scriptRef.current) return
+    if (!tokenizationKey || scriptRef.current) {
+      if (!tokenizationKey) {
+        console.error('NMI tokenization key is not configured')
+      }
+      return
+    }
 
     const script = document.createElement('script')
     script.src = 'https://secure.networkmerchants.com/token/Collect.js'
     script.setAttribute('data-tokenization-key', tokenizationKey)
     script.async = true
-    script.onload = () => setScriptReady(true)
+    script.onload = () => {
+      console.log('NMI CollectJS loaded successfully')
+      setScriptReady(true)
+    }
+    script.onerror = () => {
+      console.error('Failed to load NMI CollectJS script')
+    }
     document.head.appendChild(script)
     scriptRef.current = script
 
     return () => {
-      if (scriptRef.current) {
+      if (scriptRef.current && document.head.contains(scriptRef.current)) {
         document.head.removeChild(scriptRef.current)
         scriptRef.current = null
         configured.current = false
@@ -66,11 +77,15 @@ export function NmiCheckoutButton({
   useEffect(() => {
     if (!scriptReady || configured.current || !window.CollectJS) return
 
-    window.CollectJS.configure({
-      variant: 'lightbox',
-      callback: handleToken,
-    })
-    configured.current = true
+    try {
+      window.CollectJS.configure({
+        callback: handleToken,
+      })
+      configured.current = true
+    } catch (error) {
+      console.error('Failed to configure CollectJS:', error)
+      configured.current = true
+    }
   }, [scriptReady])
 
   const handleToken = async (response: { payment_token: string }) => {
@@ -118,8 +133,51 @@ export function NmiCheckoutButton({
       return
     }
 
-    if (window.CollectJS) {
+    try {
+      if (!window.CollectJS) {
+        onError?.('Payment system is not ready. Please refresh and try again.')
+        return
+      }
+
+      // Wrap in try-catch for PaymentRequestAbstraction errors
       window.CollectJS.startPaymentRequest()
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : 'Failed to start payment'
+      console.error('Error starting payment request:', error)
+
+      // If PaymentRequest API not supported, redirect to Stripe checkout as fallback
+      if (errorMsg.includes('PaymentRequest') || errorMsg.includes('Abstraction')) {
+        handleStripeCheckout()
+      } else {
+        onError?.(errorMsg || 'Failed to start payment. Please try again.')
+      }
+    }
+  }
+
+  const handleStripeCheckout = async () => {
+    try {
+      setIsLoading(true)
+      const response = await fetch('/api/stripe/checkout', {
+        method: 'POST',
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to create checkout session')
+      }
+
+      const { url } = await response.json()
+      if (url) {
+        window.location.href = url
+      }
+    } catch (error) {
+      console.error('Stripe checkout error:', error)
+      onError?.(
+        error instanceof Error
+          ? error.message
+          : 'Payment system error. Please try again.'
+      )
+    } finally {
+      setIsLoading(false)
     }
   }
 
