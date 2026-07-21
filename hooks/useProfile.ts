@@ -147,18 +147,18 @@ export function useProfile() {
       if (!user) throw new Error('No user logged in')
 
       try {
-        // Check if profile already exists
-        const { data: existingProfile, error: checkErr } = await supabase
+        // Try insert first (faster for new profiles)
+        const { data: newProfile, error: insertErr } = await supabase
           .from('profiles')
-          .select('id')
-          .eq('user_id', user.id)
-          .maybeSingle()
+          .insert({
+            user_id: user.id,
+            ...data,
+          })
+          .select()
+          .single()
 
-        if (checkErr) throw checkErr
-
-        let result
-        if (existingProfile) {
-          // Update existing profile
+        // If insert fails with duplicate key, update instead
+        if (insertErr?.code === '23505') {
           const { data: updatedProfile, error: updateErr } = await supabase
             .from('profiles')
             .update(data)
@@ -167,24 +167,13 @@ export function useProfile() {
             .single()
 
           if (updateErr) throw updateErr
-          result = updatedProfile
-        } else {
-          // Insert new profile
-          const { data: newProfile, error: insertErr } = await supabase
-            .from('profiles')
-            .insert({
-              user_id: user.id,
-              ...data,
-            })
-            .select()
-            .single()
-
-          if (insertErr) throw insertErr
-          result = newProfile
+          setProfile(updatedProfile as ProfileData)
+          return updatedProfile as ProfileData
         }
 
-        setProfile(result as ProfileData)
-        return result as ProfileData
+        if (insertErr) throw insertErr
+        setProfile(newProfile as ProfileData)
+        return newProfile as ProfileData
       } catch (err: any) {
         const errorMessage = err?.message || (typeof err === 'string' ? err : 'Failed to create profile')
         setError(errorMessage)
@@ -224,7 +213,7 @@ export function useProfile() {
 
       try {
         const fileName = `${user.id}/${Date.now()}-${file.name}`
-        const { data, error: uploadErr } = await supabase.storage
+        const { error: uploadErr } = await supabase.storage
           .from('profile-photos')
           .upload(fileName, file, { upsert: true })
 
@@ -250,6 +239,32 @@ export function useProfile() {
       }
     },
     [user, profile, updateProfile]
+  )
+
+  const uploadPhotoOnly = useCallback(
+    async (file: File) => {
+      if (!user) throw new Error('No user logged in')
+
+      try {
+        const fileName = `${user.id}/${Date.now()}-${file.name}`
+        const { error: uploadErr } = await supabase.storage
+          .from('profile-photos')
+          .upload(fileName, file, { upsert: true })
+
+        if (uploadErr) throw uploadErr
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('profile-photos')
+          .getPublicUrl(fileName)
+
+        return publicUrl
+      } catch (err: any) {
+        const errorMessage = err?.message || (typeof err === 'string' ? err : 'Failed to upload photo')
+        setError(errorMessage)
+        throw err
+      }
+    },
+    [user]
   )
 
   const deletePhoto = useCallback(
@@ -294,6 +309,7 @@ export function useProfile() {
     createProfile,
     updateProfile,
     uploadPhoto,
+    uploadPhotoOnly,
     deletePhoto,
     reorderPhotos,
     setMainPhoto,

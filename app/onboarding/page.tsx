@@ -64,7 +64,7 @@ export default function OnboardingPage() {
   const router = useRouter()
   const { user, loading: authLoading } = useAuth()
   const { t, language, setLanguage } = useLanguage()
-  const { createProfile, profile, loading: profileLoading, uploadPhoto } = useProfile()
+  const { createProfile, profile, loading: profileLoading, uploadPhotoOnly } = useProfile()
 
   const [currentStep, setCurrentStep] = useState<OnboardingStep>(2)
   const [loading, setLoading] = useState(false)
@@ -162,17 +162,17 @@ export default function OnboardingPage() {
   const handleComplete = async () => {
     setLoading(true)
     try {
-      // First upload photos if any
+      // Upload all photos in parallel
       const photoUrls: string[] = []
       if (data.photos && data.photos.length > 0) {
-        for (let i = 0; i < data.photos.length; i++) {
-          try {
-            const url = await uploadPhoto(data.photos[i], i)
-            photoUrls.push(url)
-          } catch (error) {
+        const uploadPromises = data.photos.map((photo) =>
+          uploadPhotoOnly(photo).catch((error) => {
             console.error('Failed to upload photo', error)
-          }
-        }
+            return null
+          })
+        )
+        const results = await Promise.all(uploadPromises)
+        photoUrls.push(...results.filter((url) => url !== null))
       }
 
       await createProfile({
