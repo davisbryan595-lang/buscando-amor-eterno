@@ -21,7 +21,6 @@ export interface SubscriptionRecord {
   user_id: string
   plan: 'free' | 'premium'
   status: 'active' | 'cancelled' | 'expired'
-  stripe_subscription_id: string | null
   started_at: string
   expires_at: string | null
   created_at: string
@@ -48,7 +47,6 @@ export function AdminSubscriptionsTable() {
           user_id,
           plan,
           status,
-          stripe_subscription_id,
           started_at,
           expires_at,
           created_at,
@@ -180,19 +178,18 @@ export function AdminSubscriptionsTable() {
                 <TableHead>Status</TableHead>
                 <TableHead>Started</TableHead>
                 <TableHead>Expires</TableHead>
-                <TableHead>Subscription ID</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8">
+                  <TableCell colSpan={6} className="text-center py-8">
                     <Loader2 className="h-6 w-6 animate-spin mx-auto text-muted-foreground" />
                   </TableCell>
                 </TableRow>
               ) : filteredSubscriptions.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                     No subscriptions found
                   </TableCell>
                 </TableRow>
@@ -234,15 +231,6 @@ export function AdminSubscriptionsTable() {
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                       {sub.expires_at ? format(new Date(sub.expires_at), 'MMM d, yyyy') : '—'}
-                    </TableCell>
-                    <TableCell>
-                      {sub.stripe_subscription_id ? (
-                        <code className="text-xs bg-muted px-2 py-1 rounded max-w-xs truncate">
-                          {sub.stripe_subscription_id.substring(0, 20)}...
-                        </code>
-                      ) : (
-                        <span className="text-muted-foreground">—</span>
-                      )}
                     </TableCell>
                   </TableRow>
                 ))

@@ -84,7 +84,6 @@ export async function POST(request: NextRequest) {
     const { error: subscriptionError } = await supabase.from('subscriptions').upsert(
       {
         user_id: userData.user.id,
-        stripe_subscription_id: subscriptionId,
         plan: 'premium',
         status: 'active',
         expires_at: expiresAt.toISOString(),
