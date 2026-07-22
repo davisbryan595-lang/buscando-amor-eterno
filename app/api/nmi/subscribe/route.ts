@@ -70,7 +70,6 @@ export async function POST(request: NextRequest) {
       .upsert(
         {
           user_id: userData.user.id,
-          stripe_subscription_id: subscriptionId,
           plan: 'premium',
           status: 'active',
           expires_at: expiresAt.toISOString(),

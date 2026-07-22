@@ -9,7 +9,6 @@ export interface SubscriptionData {
   status: 'active' | 'cancelled' | 'expired'
   started_at: string
   expires_at: string | null
-  stripe_subscription_id: string | null
   created_at: string
   updated_at: string
 }
@@ -116,7 +115,7 @@ export function useSubscription() {
   }
 
   const upgradeToPremium = useCallback(
-    async (stripeSubscriptionId: string, expiresAt?: string) => {
+    async (expiresAt?: string) => {
       if (!user) throw new Error('No user logged in')
 
       try {
@@ -125,7 +124,6 @@ export function useSubscription() {
           .update({
             plan: 'premium',
             status: 'active',
-            stripe_subscription_id: stripeSubscriptionId,
             expires_at: expiresAt || null,
             updated_at: new Date().toISOString(),
           })
