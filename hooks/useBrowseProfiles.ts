@@ -1,7 +1,6 @@
 import { useCallback, useState, useEffect } from 'react'
 import { useAuth } from '@/context/auth-context'
 import { supabase } from '@/lib/supabase'
-import { useSubscription } from './useSubscription'
 import { useProfile } from './useProfile'
 import type { ProfileData } from './useProfile'
 import { calculateCompatibilityPercentage, isOrientationCompatible } from '@/utils/matching'
@@ -28,7 +27,6 @@ function rankProfiles(candidates: ProfileData[], currentProfile: ProfileData | n
 
 export function useBrowseProfiles() {
   const { user } = useAuth()
-  const { isPremium } = useSubscription()
   const { profile: currentProfile } = useProfile()
   const [profiles, setProfiles] = useState<BrowseProfileData[]>([])
   const [loading, setLoading] = useState(true)
@@ -199,7 +197,7 @@ export function useBrowseProfiles() {
         throw err
       }
     },
-    [user, isPremium]
+    [user]
   )
 
   const dislikeProfile = useCallback(
@@ -319,7 +317,7 @@ export function useBrowseProfiles() {
         throw err
       }
     },
-    [user, isPremium]
+    [user]
   )
 
   return {
