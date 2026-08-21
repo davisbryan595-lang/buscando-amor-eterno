@@ -1,6 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
-import { supabase } from '@/lib/supabase'
-import { useAdminAuth } from '@/context/admin-auth-context'
+import { getAdminAuthHeaders, useAdminAuth } from '@/context/admin-auth-context'
 
 export interface AdminStats {
   totalSignups: number
@@ -34,14 +33,10 @@ export function useAdminStats() {
         throw new Error('Not authenticated')
       }
 
-      // Try to get Supabase session, but it's optional for admin-only access
-      const { data: { session } } = await supabase.auth.getSession()
-
       const response = await fetch('/api/admin/stats', {
-        method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session?.access_token || 'admin'}`,
+          ...getAdminAuthHeaders(),
         },
       })
 
@@ -58,7 +53,7 @@ export function useAdminStats() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [isAdminAuthenticated])
 
   useEffect(() => {
     fetchStats()

@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
-import { supabase } from '@/lib/supabase'
+import { getAdminAuthHeaders } from '@/context/admin-auth-context'
 import { useAuth } from '@/context/auth-context'
 import { useAdminAuth } from '@/context/admin-auth-context'
 
@@ -44,14 +44,10 @@ export function useAdminReports() {
         throw new Error('Not authenticated')
       }
 
-      // Get auth session if available, fallback to admin access
-      const { data: { session } } = await supabase.auth.getSession()
-
       const response = await fetch('/api/admin/reports', {
-        method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session?.access_token || 'admin'}`,
+          ...getAdminAuthHeaders(),
         },
       })
 
@@ -79,13 +75,11 @@ export function useAdminReports() {
       if (!user && !isAdminAuthenticated) throw new Error('Not authenticated')
 
       try {
-        const { data: { session } } = await supabase.auth.getSession()
-
         const response = await fetch('/api/admin/reports', {
           method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session?.access_token || 'admin'}`,
+            ...getAdminAuthHeaders(),
           },
           body: JSON.stringify({
             reportId,
@@ -112,13 +106,11 @@ export function useAdminReports() {
       if (!user && !isAdminAuthenticated) throw new Error('Not authenticated')
 
       try {
-        const { data: { session } } = await supabase.auth.getSession()
-
         const response = await fetch('/api/admin/reports', {
           method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session?.access_token || 'admin'}`,
+            ...getAdminAuthHeaders(),
           },
           body: JSON.stringify({
             reportId,

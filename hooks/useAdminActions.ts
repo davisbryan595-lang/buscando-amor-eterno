@@ -1,7 +1,6 @@
 import { useCallback } from 'react'
-import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/context/auth-context'
-import { useAdminAuth } from '@/context/admin-auth-context'
+import { getAdminAuthHeaders, useAdminAuth } from '@/context/admin-auth-context'
 
 export interface BanUserOptions {
   userId: string
@@ -22,13 +21,11 @@ export function useAdminActions() {
       if (!user && !isAdminAuthenticated) throw new Error('Not authenticated')
 
       try {
-        const { data: { session } } = await supabase.auth.getSession()
-
         const response = await fetch('/api/admin/actions', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session?.access_token || 'admin'}`,
+            ...getAdminAuthHeaders(),
           },
           body: JSON.stringify({
             action: 'ban_user',
@@ -57,13 +54,11 @@ export function useAdminActions() {
       if (!user && !isAdminAuthenticated) throw new Error('Not authenticated')
 
       try {
-        const { data: { session } } = await supabase.auth.getSession()
-
         const response = await fetch('/api/admin/actions', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session?.access_token || 'admin'}`,
+            ...getAdminAuthHeaders(),
           },
           body: JSON.stringify({
             action: 'unban_user',
@@ -90,13 +85,11 @@ export function useAdminActions() {
       if (!user && !isAdminAuthenticated) throw new Error('Not authenticated')
 
       try {
-        const { data: { session } } = await supabase.auth.getSession()
-
         const response = await fetch('/api/admin/actions', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session?.access_token || 'admin'}`,
+            ...getAdminAuthHeaders(),
           },
           body: JSON.stringify({
             action: 'verify_user',

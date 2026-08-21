@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
-import { supabase } from '@/lib/supabase'
+import { getAdminAuthHeaders } from '@/context/admin-auth-context'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -42,25 +42,22 @@ export function AdminUsersTable() {
   const fetchUsers = useCallback(async () => {
     try {
       setLoading(true)
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('user_id, id, full_name, photos, banned, verified, created_at, updated_at')
-        .order('created_at', { ascending: false })
+      const response = await fetch('/api/admin/users', {
+        headers: getAdminAuthHeaders(),
+      })
+      if (!response.ok) throw new Error('Failed to fetch users')
+      const { users: profileData } = await response.json()
 
-      if (profileError) throw profileError
-
-      // Fetch subscription data
-      const { data: subscriptionData, error: subError } = await supabase
-        .from('subscriptions')
-        .select('user_id, plan, status')
-
-      if (subError) {
-        console.warn('Warning: Could not fetch subscription data')
-      }
+      const subscriptionsResponse = await fetch('/api/admin/subscriptions', {
+        headers: getAdminAuthHeaders(),
+      })
+      const { data: subscriptionData } = subscriptionsResponse.ok
+        ? await subscriptionsResponse.json()
+        : { data: [] }
 
       // Combine user and subscription data
-      const usersWithSubscriptions = (profileData || []).map((user) => {
-        const subscription = subscriptionData?.find((s) => s.user_id === user.user_id)
+      const usersWithSubscriptions = (profileData || []).map((user: UserProfile) => {
+        const subscription = subscriptionData?.find((s: { user_id: string }) => s.user_id === user.user_id)
         return {
           ...user,
           subscription_plan: (subscription?.plan as 'free' | 'premium') || 'free',

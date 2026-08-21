@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
-import { supabase } from '@/lib/supabase'
+import { getAdminAuthHeaders } from '@/context/admin-auth-context'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -40,13 +40,11 @@ export function AdminIncompleteProfiles() {
   const fetchIncompleteProfiles = useCallback(async () => {
     try {
       setLoading(true)
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('user_id, id, full_name, photos, banned, verified, created_at, updated_at, profile_complete')
-        .eq('profile_complete', false)
-        .order('created_at', { ascending: false })
-
-      if (error) throw error
+      const response = await fetch('/api/admin/users?incomplete=true', {
+        headers: getAdminAuthHeaders(),
+      })
+      if (!response.ok) throw new Error('Failed to fetch incomplete profiles')
+      const { users: data } = await response.json()
 
       setUsers(data as IncompleteProfile[])
       setFilteredUsers(data as IncompleteProfile[])

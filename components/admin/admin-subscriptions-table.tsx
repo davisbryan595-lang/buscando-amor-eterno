@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
-import { supabase } from '@/lib/supabase'
+import { getAdminAuthHeaders } from '@/context/admin-auth-context'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -40,37 +40,12 @@ export function AdminSubscriptionsTable() {
   const fetchSubscriptions = useCallback(async () => {
     try {
       setLoading(true)
-      const { data, error } = await supabase
-        .from('subscriptions')
-        .select(`
-          id,
-          user_id,
-          plan,
-          status,
-          started_at,
-          expires_at,
-          created_at,
-          updated_at
-        `)
-        .order('created_at', { ascending: false })
-        .limit(500)
-
-      if (error) throw error
-
-      // Fetch user info for each subscription
-      const subsWithUsers = await Promise.all(
-        (data || []).map(async (sub) => {
-          try {
-            const { data: authUser } = await supabase.auth.admin.getUserById(sub.user_id)
-            return {
-              ...sub,
-              user_email: authUser?.user?.email,
-            }
-          } catch (err) {
-            return sub
-          }
-        })
-      )
+      const response = await fetch('/api/admin/subscriptions?limit=500', {
+        headers: getAdminAuthHeaders(),
+      })
+      if (!response.ok) throw new Error('Failed to fetch subscriptions')
+      const { data } = await response.json()
+      const subsWithUsers = data || []
 
       setSubscriptions(subsWithUsers as SubscriptionRecord[])
       setFilteredSubscriptions(subsWithUsers as SubscriptionRecord[])
