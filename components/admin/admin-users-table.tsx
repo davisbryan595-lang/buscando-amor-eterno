@@ -20,7 +20,7 @@ import { formatDistanceToNow } from 'date-fns'
 export interface UserProfile {
   user_id: string
   id: string
-  full_name: string
+  full_name: string | null
   photos: string[]
   banned: boolean
   verified: boolean
@@ -86,7 +86,7 @@ export function AdminUsersTable() {
       const query = searchQuery.toLowerCase()
       filtered = filtered.filter(
         (user) =>
-          user.full_name.toLowerCase().includes(query) ||
+          user.full_name?.toLowerCase().includes(query) ||
           user.user_id.toLowerCase().includes(query)
       )
     }
@@ -171,24 +171,26 @@ export function AdminUsersTable() {
                 </TableCell>
               </TableRow>
             ) : (
-              filteredUsers.map((user) => (
+              filteredUsers.map((user) => {
+                const displayName = user.full_name?.trim() || 'Unknown user'
+                return (
                 <TableRow key={user.user_id} className="hover:bg-accent cursor-pointer">
                   <TableCell>
                     {user.photos && user.photos[0] ? (
                       <img
                         src={user.photos[0]}
-                        alt={user.full_name}
+                        alt={displayName}
                         className="h-10 w-10 rounded-full object-cover"
                       />
                     ) : (
                       <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center text-xs text-muted-foreground">
-                        {user.full_name.charAt(0).toUpperCase()}
+                        {displayName.charAt(0).toUpperCase()}
                       </div>
                     )}
                   </TableCell>
                   <TableCell>
                     <div>
-                      <p className="font-medium text-foreground">{user.full_name}</p>
+                      <p className="font-medium text-foreground">{displayName}</p>
                       {user.verified && (
                         <p className="text-xs text-green-600">Verified</p>
                       )}
@@ -242,7 +244,8 @@ export function AdminUsersTable() {
                     </Button>
                   </TableCell>
                 </TableRow>
-              ))
+                )
+              })
             )}
           </TableBody>
         </Table>

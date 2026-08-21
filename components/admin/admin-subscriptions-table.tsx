@@ -185,7 +185,7 @@ export function AdminSubscriptionsTable() {
                             : 'bg-slate-100 text-slate-800'
                         }`}
                       >
-                        {sub.plan.charAt(0).toUpperCase() + sub.plan.slice(1)}
+                        {sub.plan?.charAt(0).toUpperCase() || 'F'}{sub.plan?.slice(1) || 'ree'}
                       </span>
                     </TableCell>
                     <TableCell>
@@ -198,7 +198,7 @@ export function AdminSubscriptionsTable() {
                             : 'bg-amber-100 text-amber-800'
                         }`}
                       >
-                        {sub.status.charAt(0).toUpperCase() + sub.status.slice(1)}
+                        {sub.status ? sub.status.charAt(0).toUpperCase() + sub.status.slice(1) : 'N/A'}
                       </span>
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">

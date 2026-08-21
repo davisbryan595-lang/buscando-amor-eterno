@@ -20,7 +20,7 @@ import { formatDistanceToNow } from 'date-fns'
 export interface IncompleteProfile {
   user_id: string
   id: string
-  full_name: string
+  full_name: string | null
   photos: string[]
   banned: boolean
   verified: boolean
@@ -66,7 +66,7 @@ export function AdminIncompleteProfiles() {
       const query = searchQuery.toLowerCase()
       const filtered = users.filter(
         (user) =>
-          user.full_name.toLowerCase().includes(query) ||
+          user.full_name?.toLowerCase().includes(query) ||
           user.user_id.toLowerCase().includes(query)
       )
       setFilteredUsers(filtered)
@@ -130,6 +130,7 @@ export function AdminIncompleteProfiles() {
               </TableRow>
             ) : (
               filteredUsers.map((user) => {
+                const displayName = user.full_name?.trim() || 'Unknown user'
                 const signupDate = new Date(user.created_at)
                 const daysAgo = Math.floor((Date.now() - signupDate.getTime()) / (1000 * 60 * 60 * 24))
                 return (
@@ -138,18 +139,18 @@ export function AdminIncompleteProfiles() {
                       {user.photos && user.photos[0] ? (
                         <img
                           src={user.photos[0]}
-                          alt={user.full_name}
+                          alt={displayName}
                           className="h-10 w-10 rounded-full object-cover"
                         />
                       ) : (
                         <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center text-xs text-muted-foreground">
-                          {user.full_name.charAt(0).toUpperCase()}
+                          {displayName.charAt(0).toUpperCase()}
                         </div>
                       )}
                     </TableCell>
                     <TableCell>
                       <div>
-                        <p className="font-medium text-foreground">{user.full_name || '(No name)'}</p>
+                        <p className="font-medium text-foreground">{displayName}</p>
                         {user.verified && <p className="text-xs text-green-600">Verified</p>}
                       </div>
                     </TableCell>
