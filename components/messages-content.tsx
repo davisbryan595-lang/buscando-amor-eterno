@@ -8,7 +8,6 @@ import ChatWindow from '@/components/chat-window'
 import Image from 'next/image'
 import { useMessages } from '@/hooks/useMessages'
 import { useAuth } from '@/context/auth-context'
-import { useSubscription } from '@/hooks/useSubscription'
 import { X, ArrowLeft, Menu } from 'lucide-react'
 
 interface MessagesContentInnerProps {
@@ -19,7 +18,6 @@ interface MessagesContentInnerProps {
 function MessagesContentInner({ onChatOpenChange, isChatOpen }: MessagesContentInnerProps) {
   const router = useRouter()
   const { user } = useAuth()
-  const { isPremium, loading: subLoading } = useSubscription()
   const { conversations, loading, error } = useMessages()
   const searchParams = useSearchParams()
   const userIdParam = searchParams.get('user')

@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-import { useSubscription } from './useSubscription'
 
 interface FeatureAccessState {
   isPaywallOpen: boolean
@@ -10,7 +9,6 @@ interface FeatureAccessState {
 }
 
 export function useFeatureAccess() {
-  const { isPremium, loading } = useSubscription()
   const [paywallState, setPaywallState] = useState<FeatureAccessState>({
     isPaywallOpen: false,
     featureName: '',
@@ -19,26 +17,9 @@ export function useFeatureAccess() {
 
   const checkAccess = useCallback(
     (featureName: string, description?: string) => {
-      if (loading) {
-        return { hasAccess: false, loading: true }
-      }
-
-      if (isPremium) {
-        return { hasAccess: true, loading: false }
-      }
-
-      // Free user - show paywall
-      setPaywallState({
-        isPaywallOpen: true,
-        featureName,
-        description:
-          description ||
-          `Upgrade to premium to access ${featureName}.`,
-      })
-
-      return { hasAccess: false, loading: false }
+      return { hasAccess: true, loading: false }
     },
-    [isPremium, loading]
+    []
   )
 
   const closePaywall = useCallback(() => {
@@ -49,8 +30,8 @@ export function useFeatureAccess() {
   }, [])
 
   return {
-    isPremium,
-    loading,
+    isPremium: true,
+    loading: false,
     checkAccess,
     closePaywall,
     paywallState,

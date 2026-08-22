@@ -7,11 +7,9 @@ import { Menu, X, Bell, Globe } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useLanguage } from '@/lib/i18n-context'
 import { useAuth } from '@/context/auth-context'
-import { useSubscription } from '@/hooks/useSubscription'
 import { useNotifications } from '@/hooks/useNotifications'
 import { AccountMenu } from '@/components/account-menu'
 import { ResponsiveNotificationsPanel } from '@/components/responsive-notifications-panel'
-import { PremiumBadge } from '@/components/premium-badge'
 
 export default function Navigation() {
   const [menuOpen, setMenuOpen] = useState(false)
@@ -21,7 +19,6 @@ export default function Navigation() {
   const navRef = useRef<HTMLDivElement>(null)
   const { language, setLanguage, t } = useLanguage()
   const { user } = useAuth()
-  const { isPremium, loading: subLoading } = useSubscription()
   const { notifications, dismissNotification } = useNotifications()
 
   React.useEffect(() => {
@@ -72,16 +69,16 @@ export default function Navigation() {
           <Link href="/" className="text-foreground hover:text-primary transition">{t('common.home')}</Link>
           <div className="flex items-center gap-1.5">
             <Link href="/browse" className="text-foreground hover:text-primary transition">{t('common.browse')}</Link>
-            {isMounted && user && !subLoading && !isPremium && <PremiumBadge variant="label" />}
+
           </div>
           <Link href="/pricing" className="text-foreground hover:text-primary transition">{t('common.pricing')}</Link>
           <div className="flex items-center gap-1.5">
             <Link href="/messages" className="text-foreground hover:text-primary transition">{t('common.messages')}</Link>
-            {isMounted && user && !subLoading && !isPremium && <PremiumBadge variant="label" />}
+
           </div>
           <div className="flex items-center gap-1.5">
             <Link href="/lounge" className="text-foreground hover:text-primary transition">{t('common.lounge')}</Link>
-            {isMounted && user && !subLoading && !isPremium && <PremiumBadge variant="label" />}
+
           </div>
           <Link href="/nuestra-historia" className="text-foreground hover:text-primary transition whitespace-nowrap">{t('common.ourStory')}</Link>
 
@@ -214,7 +211,7 @@ export default function Navigation() {
               <Link href="/browse" className="block text-foreground hover:text-primary transition py-2" onClick={() => setMenuOpen(false)}>
                 {t('common.browse')}
               </Link>
-              {isMounted && user && !subLoading && !isPremium && <PremiumBadge variant="label" />}
+  
             </div>
           </motion.div>
           <motion.div
@@ -237,7 +234,7 @@ export default function Navigation() {
               <Link href="/messages" className="block text-foreground hover:text-primary transition py-2" onClick={() => setMenuOpen(false)}>
                 {t('common.messages')}
               </Link>
-              {isMounted && user && !subLoading && !isPremium && <PremiumBadge variant="label" />}
+  
             </div>
           </motion.div>
           <motion.div
@@ -250,7 +247,7 @@ export default function Navigation() {
               <Link href="/lounge" className="block text-foreground hover:text-primary transition py-2" onClick={() => setMenuOpen(false)}>
                 {t('common.lounge')}
               </Link>
-              {isMounted && user && !subLoading && !isPremium && <PremiumBadge variant="label" />}
+  
             </div>
           </motion.div>
           <motion.div

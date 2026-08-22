@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
+import { getAdminEmailFromRequest } from '@/lib/admin-auth'
 
 // Create admin client with service role key
 const supabaseAdmin = createClient(
@@ -10,12 +11,8 @@ const supabaseAdmin = createClient(
 export async function GET(request: NextRequest) {
   try {
     // Verify the user is authenticated (check Authorization header)
-    const authHeader = request.headers.get('authorization')
-    if (!authHeader) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      )
+    if (!getAdminEmailFromRequest(request)) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const { data, error: err } = await supabaseAdmin
@@ -43,12 +40,8 @@ export async function GET(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   try {
-    const authHeader = request.headers.get('authorization')
-    if (!authHeader) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      )
+    if (!getAdminEmailFromRequest(request)) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const { reportId, status, actionTaken, reviewedByAdminId } = await request.json()

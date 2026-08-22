@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { supabase } from '@/lib/supabase'
+import { getAdminAuthHeaders } from '@/context/admin-auth-context'
 import { Card } from '@/components/ui/card'
 import { Loader2 } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
@@ -52,21 +52,13 @@ export function AdminActivityLog() {
   const fetchLogs = async () => {
     try {
       setLoading(true)
-      const { data, error } = await supabase
-        .from('admin_activity_logs')
-        .select(
-          `
-          *,
-          admin:admin_id(full_name),
-          target_user:target_user_id(full_name)
-          `
-        )
-        .order('created_at', { ascending: false })
-        .limit(50)
+      const response = await fetch('/api/admin/activity', {
+        headers: getAdminAuthHeaders(),
+      })
+      if (!response.ok) throw new Error('Failed to fetch activity')
+      const { logs } = await response.json()
 
-      if (error) throw error
-
-      setLogs(data as ActivityLog[])
+      setLogs(logs as ActivityLog[])
     } catch (error) {
       console.error('Error fetching activity logs:', error)
     } finally {

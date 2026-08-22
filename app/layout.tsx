@@ -23,8 +23,8 @@ const playfair = Playfair_Display({
 });
 
 export const metadata: Metadata = {
-  title: 'Buscando Amor Eterno | Soulmate Dating Worldwide | $12/month',
-  description: 'Nearly 50% of the world is single. You deserve eternal love. Join our premium soulmate dating platform with profiles, messaging, and video chat.',
+  title: 'Buscando Amor Eterno | Free Soulmate Dating Worldwide',
+  description: 'Nearly 50% of the world is single. You deserve eternal love. Join Buscando Amor Eterno for free profiles, messaging, and video chat.',
   generator: 'v0.app',
   icons: {
     icon: 'https://cdn.builder.io/api/v1/image/assets%2F5517f718aa7348e88214250292563028%2F09ca0588ac3741678f0d49e142dede0b?format=webp&width=800',

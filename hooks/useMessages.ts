@@ -1,7 +1,6 @@
 import { useCallback, useState, useEffect, useRef } from 'react'
 import { useAuth } from '@/context/auth-context'
 import { supabase } from '@/lib/supabase'
-import { useSubscription } from './useSubscription'
 
 export interface Message {
   id: string
@@ -39,7 +38,6 @@ const MESSAGES_PAGE_SIZE = 50
 
 export function useMessages() {
   const { user } = useAuth()
-  const { isPremium } = useSubscription()
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [messages, setMessages] = useState<Message[]>([])
   const [loading, setLoading] = useState(true)

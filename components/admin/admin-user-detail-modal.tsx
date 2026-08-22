@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useState, useEffect } from 'react'
-import { supabase } from '@/lib/supabase'
+import { getAdminAuthHeaders } from '@/context/admin-auth-context'
 import {
   Dialog,
   DialogContent,
@@ -26,7 +26,7 @@ interface AdminUserDetailModalProps {
 }
 
 interface DetailedUserProfile extends UserProfile {
-  full_name: string | null
+  full_name: string
   birthday: string | null
   gender: string | null
   location: string | null
@@ -36,6 +36,9 @@ interface DetailedUserProfile extends UserProfile {
   prompt_2: string | null
   prompt_3: string | null
   profile_complete: boolean
+  ban_reason: string | null
+  ban_duration: string | null
+  ban_date: string | null
 }
 
 export function AdminUserDetailModal({
@@ -60,17 +63,11 @@ export function AdminUserDetailModal({
     try {
       setLoading(true)
       setFetchError(null)
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('user_id', user.user_id)
-        .maybeSingle()
-
-      if (error) throw error
-
-      if (!data) {
-        throw new Error('User profile not found')
-      }
+      const response = await fetch(`/api/admin/users/${user.user_id}`, {
+        headers: getAdminAuthHeaders(),
+      })
+      const { user: data, error } = await response.json()
+      if (!response.ok) throw new Error(error || 'Failed to load user details')
 
       setDetailedUser(data as DetailedUserProfile)
     } catch (error: any) {

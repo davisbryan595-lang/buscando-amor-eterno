@@ -8,12 +8,10 @@ import Footer from '@/components/footer'
 import { useAuth } from '@/context/auth-context'
 import { useProfileProtection } from '@/hooks/useProfileProtection'
 import { useBrowseProfiles } from '@/hooks/useBrowseProfiles'
-import { useSubscription } from '@/hooks/useSubscription'
 import { useProfile } from '@/hooks/useProfile'
 import { useNotifications } from '@/hooks/useNotifications'
 import { useUserProfile } from '@/hooks/useUserProfile'
 import { MutualPreferencesBadges } from '@/components/mutual-preferences-badges'
-import { PaywallModal } from '@/components/paywall-modal'
 import { Heart, X, Star, Info, Loader, AlertCircle, ExternalLink } from 'lucide-react'
 import Image from 'next/image'
 import { toast } from 'sonner'
@@ -24,19 +22,15 @@ export default function BrowsePage() {
   // Protect this route - require complete profile
   const { isLoading } = useProfileProtection(true, '/onboarding')
   const { profiles, loading: profilesLoading, error: profilesError, likeProfile, dislikeProfile, superLikeProfile } = useBrowseProfiles()
-  const { isPremium, loading: subLoading } = useSubscription()
   const { profile } = useProfile()
   const { notifications, dismissNotification } = useNotifications()
 
   const [currentIndex, setCurrentIndex] = useState(0)
   const [showInfo, setShowInfo] = useState(false)
-  const [showPaywall, setShowPaywall] = useState(false)
-  const [paywallFeature, setPaywallFeature] = useState('')
   const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | 'super' | null>(null)
   const [dragOffset, setDragOffset] = useState(0)
   const [isDragging, setIsDragging] = useState(false)
   const [isActing, setIsActing] = useState(false)
-  const freeUserProfileLimit = 1 // Free users can view 1 profile before paywall
 
   const currentProfile = profiles[currentIndex]
   const { mutualPreferences, loading: profileLoading } = useUserProfile(
@@ -115,13 +109,6 @@ export default function BrowsePage() {
   const handleSwipe = async (direction: 'left' | 'right' | 'super') => {
     if (!currentProfile || isActing) return
 
-    // Check if free user has reached profile limit
-    if (!isPremium && currentIndex >= freeUserProfileLimit) {
-      setPaywallFeature('Browse Profiles')
-      setShowPaywall(true)
-      return
-    }
-
     setIsActing(true)
     let actionSucceeded = false
     try {
@@ -140,28 +127,15 @@ export default function BrowsePage() {
 
     // Animate and move to next profile if action succeeded
     if (actionSucceeded) {
-      // Check again if moving to next profile would exceed free limit
-      if (!isPremium && currentIndex + 1 >= freeUserProfileLimit && currentIndex + 1 < profiles.length) {
-        setSwipeDirection(direction === 'left' ? 'left' : direction === 'right' ? 'right' : 'super')
-        setTimeout(() => {
+      setSwipeDirection(direction === 'left' ? 'left' : direction === 'right' ? 'right' : 'super')
+      setTimeout(() => {
+        if (currentIndex < profiles.length - 1) {
           setCurrentIndex(currentIndex + 1)
-          setSwipeDirection(null)
-          setShowInfo(false)
-          setIsActing(false)
-          setPaywallFeature('Browse Profiles')
-          setShowPaywall(true)
-        }, 300)
-      } else {
-        setSwipeDirection(direction === 'left' ? 'left' : direction === 'right' ? 'right' : 'super')
-        setTimeout(() => {
-          if (currentIndex < profiles.length - 1) {
-            setCurrentIndex(currentIndex + 1)
-          }
-          setSwipeDirection(null)
-          setShowInfo(false)
-          setIsActing(false)
-        }, 300)
-      }
+        }
+        setSwipeDirection(null)
+        setShowInfo(false)
+        setIsActing(false)
+      }, 300)
     } else {
       setIsActing(false)
     }
@@ -444,12 +418,6 @@ export default function BrowsePage() {
 
       <Footer />
 
-      <PaywallModal
-        isOpen={showPaywall}
-        onClose={() => setShowPaywall(false)}
-        featureName={paywallFeature}
-        description="Join millions of users who have found their perfect match with premium access."
-      />
     </main>
   )
 }
