@@ -85,7 +85,7 @@ export function PaywallModal({
           </div>
 
           <div className="text-center">
-            <p className="text-sm text-gray-600">Only $12/month</p>
+            <p className="text-sm text-gray-600">All features are currently free.</p>
           </div>
         </div>
 
