@@ -1,9 +1,13 @@
+import Footer from '@/components/footer'
+import Navigation from '@/components/navigation'
 import styles from '../policy.module.css';
 
 export default function TermsOfServicePage() {
   return (
-    <div className={styles.policyContainer}>
-      <div className={styles.policyContent}>
+    <main>
+      <Navigation />
+      <div className={styles.policyContainer}>
+        <div className={styles.policyContent}>
         <h1>Terms of Service</h1>
         <p className={styles.lastUpdated}>Last updated: May 2026</p>
 
@@ -17,7 +21,14 @@ export default function TermsOfServicePage() {
         </section>
 
         <section>
-          <h2>2. Use License</h2>
+          <h2>2. Shared Web and Mobile Community</h2>
+          <p>
+            The Service operates as one community across the website and mobile applications. Your account, profile, messages, and call activity can be shared across these platforms, and you may communicate with people using the web, mobile, or both.
+          </p>
+        </section>
+
+        <section>
+          <h2>3. Use License</h2>
           <p>
             Permission is granted to temporarily download one copy of the materials (information or software) on Buscando
             Amor Eterno&apos;s Service for personal, non-commercial transitory viewing only. This is the grant of a license,
@@ -34,7 +45,7 @@ export default function TermsOfServicePage() {
         </section>
 
         <section>
-          <h2>3. Account Registration and Responsibilities</h2>
+          <h2>4. Account Registration and Responsibilities</h2>
           <p>To use the Service, you must:</p>
           <ul>
             <li>Be at least 18 years old (21 in some jurisdictions)</li>
@@ -51,7 +62,7 @@ export default function TermsOfServicePage() {
         </section>
 
         <section>
-          <h2>4. User Conduct and Community Standards</h2>
+          <h2>5. User Conduct and Community Standards</h2>
           <p>You agree not to:</p>
           <ul>
             <li>Harass, threaten, embarrass, or cause distress or discomfort to any person</li>
@@ -70,7 +81,7 @@ export default function TermsOfServicePage() {
         </section>
 
         <section>
-          <h2>5. Content and Media</h2>
+          <h2>6. Content and Media</h2>
           <p>
             By uploading photos, videos, or any other content to the Service, you grant Buscando Amor Eterno a
             non-exclusive, royalty-free, perpetual, and worldwide right to use, display, and distribute your content
@@ -87,7 +98,7 @@ export default function TermsOfServicePage() {
         </section>
 
         <section>
-          <h2>6. Age Verification and Safety</h2>
+          <h2>7. Age Verification and Safety</h2>
           <p>
             The Service is only available to users who are at least 18 years old (or the age of majority in your jurisdiction).
             By using the Service, you represent and warrant that you meet this age requirement. We do not knowingly collect
@@ -101,7 +112,7 @@ export default function TermsOfServicePage() {
         </section>
 
         <section>
-          <h2>7. Payment and Subscription Terms</h2>
+          <h2>8. Payment and Subscription Terms</h2>
           <p>Premium subscription costs $12 per month. By initiating a subscription:</p>
           <ul>
             <li>You authorize us to charge your payment method</li>
@@ -115,13 +126,13 @@ export default function TermsOfServicePage() {
         </section>
 
         <section>
-          <h2>8. Video Chat and Communication Safety</h2>
+          <h2>9. Video Chat and Communication Safety</h2>
           <p>
-            Video dates and real-time communication are provided through third-party services (Agora, LiveKit). When you
+            Video dates and real-time communication are provided through Agora. When you
             use these features:
           </p>
           <ul>
-            <li>Your audio/video may be recorded for quality and safety purposes</li>
+            <li>We do not record audio or video calls by default</li>
             <li>You consent to the collection of call logs and session metadata</li>
             <li>Do not share sensitive personal or financial information during calls</li>
             <li>Block or report users who engage in threatening, harassing, or inappropriate behavior immediately</li>
@@ -130,7 +141,7 @@ export default function TermsOfServicePage() {
         </section>
 
         <section>
-          <h2>9. User-Generated Messages and Privacy</h2>
+          <h2>10. User-Generated Messages and Privacy</h2>
           <p>
             Messages and communications between users are stored on our servers for a limited period. We may access messages
             to investigate reports of abuse, harassment, or illegal activity. By using messaging:
@@ -143,7 +154,7 @@ export default function TermsOfServicePage() {
         </section>
 
         <section>
-          <h2>10. Reporting and Moderation</h2>
+          <h2>11. Reporting and Moderation</h2>
           <p>We take violations of these terms seriously. If you encounter a user who:</p>
           <ul>
             <li>Is engaging in harassment or threatening behavior</li>
@@ -159,7 +170,7 @@ export default function TermsOfServicePage() {
         </section>
 
         <section>
-          <h2>11. Account Termination</h2>
+          <h2>12. Account Termination</h2>
           <p>Buscando Amor Eterno reserves the right to suspend or permanently terminate your account if you:</p>
           <ul>
             <li>Violate these Terms of Service</li>
@@ -174,7 +185,7 @@ export default function TermsOfServicePage() {
         </section>
 
         <section>
-          <h2>12. Limitation of Liability</h2>
+          <h2>13. Limitation of Liability</h2>
           <p>
             Buscando Amor Eterno is provided &quot;as-is&quot; without any warranties. To the fullest extent permitted by law, we
             are not liable for:
@@ -191,7 +202,7 @@ export default function TermsOfServicePage() {
         </section>
 
         <section>
-          <h2>13. Indemnification</h2>
+          <h2>14. Indemnification</h2>
           <p>
             You agree to indemnify, defend, and hold harmless Buscando Amor Eterno and its officers, directors, employees,
             and agents from any claim, damage, loss, liability, or expense (including reasonable attorneys&apos; fees) arising from:
@@ -205,16 +216,15 @@ export default function TermsOfServicePage() {
         </section>
 
         <section>
-          <h2>14. Third-Party Services</h2>
+          <h2>15. Third-Party Services</h2>
           <p>
-            The Service integrates with third-party providers including but not limited to Supabase, Stripe, Agora,
-            LiveKit, and OpenStreetMap. Your use of these services is subject to their terms and privacy policies.
+            The Service integrates with third-party providers including but not limited to Supabase, Stripe, Agora, OneSignal, and OpenStreetMap. Your use of these services is subject to their terms and privacy policies.
             Buscando Amor Eterno is not responsible for the actions, policies, or content of third-party services.
           </p>
         </section>
 
         <section>
-          <h2>15. Modifications to Terms</h2>
+          <h2>16. Modifications to Terms</h2>
           <p>
             Buscando Amor Eterno reserves the right to modify these Terms of Service at any time. Changes will be posted
             on this page with an updated &quot;Last Updated&quot; date. Your continued use of the Service following the posting of
@@ -223,23 +233,23 @@ export default function TermsOfServicePage() {
         </section>
 
         <section>
-          <h2>16. Governing Law and Jurisdiction</h2>
+          <h2>17. Governing Law and Jurisdiction</h2>
           <p>
-            These Terms of Service are governed by and construed in accordance with the laws of [YOUR JURISDICTION],
-            and you irrevocably submit to the exclusive jurisdiction of the courts in that location. If any provision
-            of these terms is found to be invalid, the remaining provisions will continue in full force and effect.
+            These Terms of Service are governed by applicable law. If any provision of these terms is found to be invalid,
+            the remaining provisions will continue in full force and effect.
           </p>
         </section>
 
         <section>
-          <h2>17. Contact Information</h2>
+          <h2>18. Contact Information</h2>
           <p>If you have questions about these Terms of Service, please contact us at:</p>
           <p>
-            Email: support@buscandoamoreterno.com<br />
-            Address: [YOUR COMPANY ADDRESS]
+            Email: support@buscandoamoreterno.com
           </p>
         </section>
+        </div>
       </div>
-    </div>
+      <Footer />
+    </main>
   );
 }

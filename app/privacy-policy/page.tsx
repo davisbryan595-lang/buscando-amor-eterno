@@ -1,9 +1,13 @@
+import Footer from '@/components/footer'
+import Navigation from '@/components/navigation'
 import styles from '../policy.module.css';
 
 export default function PrivacyPolicyPage() {
   return (
-    <div className={styles.policyContainer}>
-      <div className={styles.policyContent}>
+    <main>
+      <Navigation />
+      <div className={styles.policyContainer}>
+        <div className={styles.policyContent}>
         <h1>Privacy Policy</h1>
         <p className={styles.lastUpdated}>Last updated: May 2026</p>
 
@@ -21,7 +25,14 @@ export default function PrivacyPolicyPage() {
         </section>
 
         <section>
-          <h2>2. Information We Collect</h2>
+          <h2>2. Web and Mobile Service</h2>
+          <p>
+            The Service is available on the web and on mobile devices through the same shared account and community. You may interact with people using either platform. Messages, lounge activity, audio calls, and video calls may involve web users, mobile users, or both.
+          </p>
+        </section>
+
+        <section>
+          <h2>3. Information We Collect</h2>
 
           <h3>2.1 Information You Provide Directly</h3>
           <ul>
@@ -30,7 +41,7 @@ export default function PrivacyPolicyPage() {
             <li><strong>Preferences:</strong> Age range, distance radius, interests, values, love language, religion</li>
             <li><strong>Life Details:</strong> Height, smoking/drinking habits, relationship type, number of children desired, dealbreakers</li>
             <li><strong>Location Data:</strong> City, country, latitude, longitude (used for proximity matching)</li>
-            <li><strong>Media:</strong> Profile photos, video chat recordings (temporary), call logs</li>
+            <li><strong>Media:</strong> Profile photos and call logs</li>
             <li><strong>Communication:</strong> Messages, lounge chat messages, feedback, and support requests</li>
             <li><strong>Payment Information:</strong> Email and payment method (processed by Stripe, not stored on our servers)</li>
           </ul>
@@ -49,13 +60,13 @@ export default function PrivacyPolicyPage() {
           <ul>
             <li><strong>OAuth Providers:</strong> Google and Apple provide email, name, and profile picture if you sign up via social login</li>
             <li><strong>Reverse Geocoding:</strong> We use OpenStreetMap Nominatim to convert coordinates to city/country names</li>
-            <li><strong>NMI:</strong> Subscription and payment status information</li>
+            <li><strong>Stripe:</strong> Subscription and payment status information</li>
             <li><strong>Reports from Other Users:</strong> Users may submit reports about your account, profile, or conduct</li>
           </ul>
         </section>
 
         <section>
-          <h2>3. How We Use Your Information</h2>
+          <h2>4. How We Use Your Information</h2>
           <p>We use the information we collect for the following purposes:</p>
           <ul>
             <li><strong>Service Delivery:</strong> Creating and maintaining your account, matching you with compatible users, enabling messaging and video calls</li>
@@ -66,12 +77,12 @@ export default function PrivacyPolicyPage() {
             <li><strong>Marketing:</strong> Sending promotional emails and push notifications (you can opt-out)</li>
             <li><strong>Legal Compliance:</strong> Complying with laws, court orders, and regulatory requirements</li>
             <li><strong>Age Verification:</strong> Using date of birth to ensure users are 18+ (we do not perform third-party age verification)</li>
-            <li><strong>Payment Processing:</strong> Managing subscriptions and billing through NMI</li>
+            <li><strong>Payment Processing:</strong> Managing subscriptions and billing through Stripe</li>
           </ul>
         </section>
 
         <section>
-          <h2>4. Data Sharing and Disclosure</h2>
+          <h2>5. Data Sharing and Disclosure</h2>
 
           <h3>4.1 With Other Users</h3>
           <p>The following information is visible to other users on the Service:</p>
@@ -91,12 +102,12 @@ export default function PrivacyPolicyPage() {
           <h3>4.2 With Service Providers and Partners</h3>
           <p>We share information with third-party service providers who assist in operating the Service:</p>
           <ul>
-            <li><strong>Supabase:</strong> Cloud hosting, authentication, and database services</li>
-            <li><strong>NMI:</strong> Payment processing and subscription management</li>
-            <li><strong>Agora &amp; LiveKit:</strong> Video and audio calling infrastructure</li>
-            <li><strong>OpenStreetMap:</strong> Reverse geocoding for location names</li>
+            <li><strong>Supabase:</strong> Authentication, database, file storage, and real-time messaging infrastructure</li>
+            <li><strong>Stripe:</strong> Payment processing and subscription management</li>
+            <li><strong>Agora:</strong> Audio and video calling infrastructure</li>
+            <li><strong>OneSignal:</strong> Push-notification delivery</li>
             <li><strong>Google Analytics:</strong> Usage analytics and engagement tracking</li>
-            <li><strong>OneSignal:</strong> Push notifications</li>
+            <li><strong>OpenStreetMap:</strong> Reverse geocoding for location names</li>
           </ul>
           <p>
             These service providers are contractually bound to use your information only as necessary to provide services
@@ -128,7 +139,7 @@ export default function PrivacyPolicyPage() {
         </section>
 
         <section>
-          <h2>5. Data Storage and Retention</h2>
+          <h2>6. Data Storage and Retention</h2>
           <ul>
             <li><strong>Messages:</strong> Stored indefinitely unless you delete them; we may retain copies for safety investigations</li>
             <li><strong>Profile Data:</strong> Retained as long as your account is active; deleted upon account deletion (with some exceptions for legal or safety purposes)</li>
@@ -144,7 +155,7 @@ export default function PrivacyPolicyPage() {
         </section>
 
         <section>
-          <h2>6. Security and Data Protection</h2>
+          <h2>7. Security and Data Protection</h2>
           <p>Buscando Amor Eterno implements industry-standard security measures to protect your information:</p>
           <ul>
             <li>HTTPS/TLS encryption for all data in transit</li>
@@ -161,7 +172,7 @@ export default function PrivacyPolicyPage() {
         </section>
 
         <section>
-          <h2>7. Your Rights and Choices</h2>
+          <h2>8. Your Rights and Choices</h2>
 
           <h3>7.1 Access and Portability</h3>
           <p>
@@ -224,7 +235,7 @@ export default function PrivacyPolicyPage() {
         </section>
 
         <section>
-          <h2>8. Children&apos;s Privacy</h2>
+          <h2>9. Children&apos;s Privacy</h2>
           <p>
             The Service is not intended for users under 18 years of age (21 in some jurisdictions). We do not knowingly
             collect personal information from minors. If we become aware that a minor has registered, we will terminate
@@ -237,7 +248,7 @@ export default function PrivacyPolicyPage() {
         </section>
 
         <section>
-          <h2>9. Third-Party Links and Services</h2>
+          <h2>10. Third-Party Links and Services</h2>
           <p>
             The Service may contain links to third-party websites and services. This Privacy Policy does not apply to
             third-party services, and we are not responsible for their privacy practices. We encourage you to review
@@ -246,7 +257,7 @@ export default function PrivacyPolicyPage() {
         </section>
 
         <section>
-          <h2>10. International Data Transfers</h2>
+          <h2>11. International Data Transfers</h2>
           <p>
             Your information may be transferred to and processed in countries other than where you reside. By using the
             Service, you consent to the transfer of your information to countries outside your country of residence,
@@ -259,18 +270,18 @@ export default function PrivacyPolicyPage() {
         </section>
 
         <section>
-          <h2>11. Video Chat and Call Recording Disclosure</h2>
+          <h2>12. Video Chat and Call Recording Disclosure</h2>
           <p>When you engage in video dates or voice calls through the Service:</p>
           <ul>
-            <li>Sessions are processed by Agora and LiveKit, who may retain metadata</li>
+            <li>Sessions are processed by Agora, which may retain service metadata</li>
             <li>Call logs include participant IDs, timestamps, and duration</li>
-            <li>We do not record video/audio by default, but may do so for quality assurance and safety investigations if violations are reported</li>
+            <li>We do not record audio or video calls by default</li>
             <li>You have the right to decline video or voice communication</li>
           </ul>
         </section>
 
         <section>
-          <h2>12. Analytics and Tracking</h2>
+          <h2>13. Analytics and Tracking</h2>
           <p>We use Google Analytics to understand how users interact with the Service. Google Analytics collects:</p>
           <ul>
             <li>Pages visited</li>
@@ -286,21 +297,20 @@ export default function PrivacyPolicyPage() {
         </section>
 
         <section>
-          <h2>13. Contact Us and Data Requests</h2>
+          <h2>14. Contact Us and Data Requests</h2>
           <p>
             If you have questions about this Privacy Policy, wish to exercise your rights, or want to submit a data
             access request, please contact:
           </p>
           <p>
             <strong>Email:</strong> support@buscandoamoreterno.com<br />
-            <strong>Address:</strong> [YOUR COMPANY ADDRESS]<br />
-            <strong>Website:</strong> https://www.buscandoamoreterno.com/contact
+            <strong>Support:</strong> https://www.buscandoamoreterno.com/contact
           </p>
           <p>We will respond to your request within 30 days (or as required by applicable law).</p>
         </section>
 
         <section>
-          <h2>14. Changes to This Privacy Policy</h2>
+          <h2>15. Changes to This Privacy Policy</h2>
           <p>
             Buscando Amor Eterno may update this Privacy Policy from time to time. We will notify you of material changes
             by posting the updated policy on this page with an updated &quot;Last Updated&quot; date. Your continued use of the Service
@@ -309,14 +319,16 @@ export default function PrivacyPolicyPage() {
         </section>
 
         <section>
-          <h2>15. Dispute Resolution</h2>
+          <h2>16. Dispute Resolution</h2>
           <p>
             If you believe we have violated your privacy rights, we encourage you to contact us first to attempt resolution.
             If we are unable to resolve your concern, you may file a complaint with the relevant data protection authority
             in your jurisdiction or pursue legal remedies available under applicable law.
           </p>
         </section>
+        </div>
       </div>
-    </div>
+      <Footer />
+    </main>
   );
 }

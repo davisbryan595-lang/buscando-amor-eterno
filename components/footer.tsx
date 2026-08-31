@@ -88,6 +88,8 @@ export default function Footer() {
             <ul className="space-y-1 text-xs md:text-sm" style={{ color: '#ffffff' }}>
               <li><Link href="/privacy-policy" className="transition" style={{ color: '#ffffff' }} onMouseEnter={(e) => e.currentTarget.style.color = '#ff69b4'} onMouseLeave={(e) => e.currentTarget.style.color = '#ffffff'}>{t('footer.privacy')}</Link></li>
               <li><Link href="/terms-of-service" className="transition" style={{ color: '#ffffff' }} onMouseEnter={(e) => e.currentTarget.style.color = '#ff69b4'} onMouseLeave={(e) => e.currentTarget.style.color = '#ffffff'}>{t('footer.terms')}</Link></li>
+              <li><Link href="/community-guidelines" className="transition" style={{ color: '#ffffff' }} onMouseEnter={(e) => e.currentTarget.style.color = '#ff69b4'} onMouseLeave={(e) => e.currentTarget.style.color = '#ffffff'}>{t('footer.guidelines')}</Link></li>
+              <li><Link href="/delete-account" className="transition" style={{ color: '#ffffff' }} onMouseEnter={(e) => e.currentTarget.style.color = '#ff69b4'} onMouseLeave={(e) => e.currentTarget.style.color = '#ffffff'}>{t('footer.deleteAccount')}</Link></li>
               <li><Link href="/contact" className="transition" style={{ color: '#ffffff' }} onMouseEnter={(e) => e.currentTarget.style.color = '#ff69b4'} onMouseLeave={(e) => e.currentTarget.style.color = '#ffffff'}>{t('footer.contact')}</Link></li>
             </ul>
           </div>
