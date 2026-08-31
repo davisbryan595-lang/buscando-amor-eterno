@@ -3,14 +3,14 @@ import { createHmac, timingSafeEqual } from 'crypto'
 const SESSION_TTL_SECONDS = 60 * 60 * 12
 
 function getAdminEmails() {
-  return (process.env.ADMIN_EMAILS || '')
+  return (process.env.ADMIN_EMAILS || process.env.NEXT_PUBLIC_ADMIN_EMAILS || '')
     .split(',')
     .map((email) => email.trim().toLowerCase())
     .filter(Boolean)
 }
 
 function getAccessCode() {
-  return process.env.ADMIN_ACCESS_CODE || ''
+  return process.env.ADMIN_ACCESS_CODE || process.env.NEXT_PUBLIC_ADMIN_ACCESS_CODE || ''
 }
 
 function getSessionSecret() {
