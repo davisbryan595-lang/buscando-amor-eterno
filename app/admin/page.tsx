@@ -9,7 +9,8 @@ import { AdminActivityLog } from '@/components/admin/admin-activity-log'
 import { AdminIncompleteProfiles } from '@/components/admin/admin-incomplete-profiles'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Separator } from '@/components/ui/separator'
-import { LogOut } from 'lucide-react'
+import Link from 'next/link'
+import { LogOut, Mail } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useAdminAuth } from '@/context/admin-auth-context'
 import { useRouter } from 'next/navigation'
@@ -34,15 +35,20 @@ export default function AdminPage() {
                 <h1 className="text-3xl font-bold text-foreground">Admin Dashboard</h1>
                 <p className="text-sm text-muted-foreground mt-1">Buscando Amor Eterno - User Management</p>
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleLogout}
-                className="gap-2"
-              >
-                <LogOut className="h-4 w-4" />
-                Logout
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button asChild variant="outline" size="sm" className="gap-2">
+                  <Link href="/admin/support"><Mail className="h-4 w-4" />Support Messages</Link>
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleLogout}
+                  className="gap-2"
+                >
+                  <LogOut className="h-4 w-4" />
+                  Logout
+                </Button>
+              </div>
             </div>
           </div>
         </header>

@@ -43,21 +43,11 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Delete all user data in order (respecting foreign keys)
-    await supabaseAdmin.from('call_invitations').delete().or(`caller_id.eq.${userId},recipient_id.eq.${userId}`)
-    await supabaseAdmin.from('call_logs').delete().or(`caller_id.eq.${userId},receiver_id.eq.${userId}`)
-    await supabaseAdmin.from('notifications').delete().eq('user_id', userId)
-    await supabaseAdmin.from('lounge_messages').delete().eq('user_id', userId)
-    await supabaseAdmin.from('lounge_reports').delete().or(`reporter_id.eq.${userId},reported_user_id.eq.${userId}`)
-    await supabaseAdmin.from('reports').delete().or(`reported_by_user_id.eq.${userId},reported_user_id.eq.${userId}`)
-    await supabaseAdmin.from('messages').delete().or(`sender_id.eq.${userId},receiver_id.eq.${userId}`)
-    await supabaseAdmin.from('matches').delete().or(`user1_id.eq.${userId},user2_id.eq.${userId}`)
-    await supabaseAdmin.from('likes').delete().or(`user_id.eq.${userId},liked_user_id.eq.${userId}`)
-    await supabaseAdmin.from('subscriptions').delete().eq('user_id', userId)
-    await supabaseAdmin.from('profiles').delete().eq('user_id', userId)
-    await supabaseAdmin.from('users').delete().eq('id', userId)
+    const { error: dataDeletionError } = await supabaseAdmin.rpc('delete_account_data', {
+      target_user_id: userId,
+    })
+    if (dataDeletionError) throw dataDeletionError
 
-    // Delete the auth user last
     const { error: deleteAuthError } = await supabaseAdmin.auth.admin.deleteUser(userId)
     if (deleteAuthError) throw deleteAuthError
 
