@@ -1,4 +1,6 @@
-import { useEffect, useState, useCallback } from 'react'
+'use client'
+
+import { useCallback, useEffect, useState } from 'react'
 import { getAdminAuthHeaders, useAdminAuth } from '@/context/admin-auth-context'
 
 export interface AdminStats {
@@ -10,11 +12,7 @@ export interface AdminStats {
   reportedProfiles: number
   bannedUsers: number
   incompleteProfiles: number
-  totalPremiumUsers: number
-  totalFreeUsers: number
-  monthlyRecurringRevenue: number
-  activeSubscriptions: number
-  cancelledSubscriptions: number
+  freeAccessUsers: number
 }
 
 export function useAdminStats() {
@@ -28,7 +26,6 @@ export function useAdminStats() {
       setLoading(true)
       setError(null)
 
-      // Check if admin is authenticated via admin auth context
       if (!isAdminAuthenticated) {
         throw new Error('Not authenticated')
       }
@@ -44,8 +41,7 @@ export function useAdminStats() {
         throw new Error(`Failed to fetch stats: ${response.statusText}`)
       }
 
-      const data = await response.json()
-      setStats(data)
+      setStats(await response.json())
     } catch (err: any) {
       const errorMessage = err?.message || 'Failed to fetch admin stats'
       setError(errorMessage)
@@ -57,7 +53,6 @@ export function useAdminStats() {
 
   useEffect(() => {
     fetchStats()
-    // Refresh stats every 30 seconds
     const interval = setInterval(fetchStats, 30000)
     return () => clearInterval(interval)
   }, [fetchStats])

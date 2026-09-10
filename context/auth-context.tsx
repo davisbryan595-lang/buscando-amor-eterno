@@ -109,13 +109,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
               if (userError && userError.code !== 'PGRST103') throw userError
 
-              const { error: subError } = await supabase.from('subscriptions').insert({
-                user_id: sessionData.user.id,
-                plan: 'free',
-                status: 'active',
-              })
-
-              if (subError && subError.code !== 'PGRST103') throw subError
             }
           } catch (err) {
             console.error('Error creating user profile:', err instanceof Error ? err.message : JSON.stringify(err))
@@ -146,7 +139,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { data, error } = await Promise.race([signUpPromise, timeoutPromise]) as any
       if (error) throw error
 
-      // Create user record and free subscription in database
+      // Create the user record in the database
       if (data.user) {
         try {
           // Create user record with upsert to avoid conflicts
@@ -160,17 +153,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             // Don't throw - account is already created in auth
           }
 
-          // Create free subscription with upsert to avoid conflicts
-          const { error: subError } = await supabase.from('subscriptions').upsert({
-            user_id: data.user.id,
-            plan: 'free',
-            status: 'active',
-          })
-
-          if (subError && subError.code !== 'PGRST103') {
-            console.error('Error creating subscription:', subError)
-            // Don't throw - account is already created in auth
-          }
         } catch (err) {
           console.error('Error in user setup:', err)
           // Don't throw - account is already created in auth

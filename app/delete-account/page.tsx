@@ -40,9 +40,9 @@ export default function DeleteAccountPage() {
           </section>
 
           <section>
-            <h2 className="text-2xl font-semibold">Subscriptions</h2>
+            <h2 className="text-2xl font-semibold">Free access</h2>
             <p className="mt-3 text-muted-foreground">
-              Deleting your account does not automatically cancel a subscription purchased through Apple, Google Play, or another payment provider. Cancel recurring billing through the store or provider where you purchased it.
+              All features are currently available at no cost, and no payment is required to use your account.
             </p>
           </section>
         </div>
