@@ -112,17 +112,10 @@ export default function TermsOfServicePage() {
         </section>
 
         <section>
-          <h2>8. Payment and Subscription Terms</h2>
-          <p>Premium subscription costs $12 per month. By initiating a subscription:</p>
-          <ul>
-            <li>You authorize us to charge your payment method</li>
-            <li>Charges occur monthly on the same date until cancellation</li>
-            <li>You can cancel at any time; cancellation takes effect at the end of your current billing period</li>
-            <li>No refunds are provided for partial months</li>
-            <li>We reserve the right to change pricing with 30 days&apos; notice</li>
-            <li>Failed payments may result in account suspension</li>
-          </ul>
-          <p>All payments are processed securely through Stripe. We do not store your credit card information on our servers.</p>
+          <h2>8. Free Access</h2>
+          <p>
+            All features are currently available at no cost. We are not offering new paid memberships or collecting payment information while free access is enabled.
+          </p>
         </section>
 
         <section>

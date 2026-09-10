@@ -13,7 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { Loader2, Search, Filter } from 'lucide-react'
+import { Loader2, Search } from 'lucide-react'
 import { AdminUserDetailModal } from './admin-user-detail-modal'
 import { formatDistanceToNow } from 'date-fns'
 
@@ -26,8 +26,6 @@ export interface UserProfile {
   verified: boolean
   created_at: string
   updated_at: string
-  subscription_plan?: 'free' | 'premium'
-  subscription_status?: 'active' | 'cancelled' | 'expired'
 }
 
 export function AdminUsersTable() {
@@ -35,7 +33,6 @@ export function AdminUsersTable() {
   const [filteredUsers, setFilteredUsers] = useState<UserProfile[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
-  const [subscriptionFilter, setSubscriptionFilter] = useState<'all' | 'free' | 'premium'>('all')
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null)
   const [showDetailModal, setShowDetailModal] = useState(false)
 
@@ -48,25 +45,8 @@ export function AdminUsersTable() {
       if (!response.ok) throw new Error('Failed to fetch users')
       const { users: profileData } = await response.json()
 
-      const subscriptionsResponse = await fetch('/api/admin/subscriptions', {
-        headers: getAdminAuthHeaders(),
-      })
-      const { data: subscriptionData } = subscriptionsResponse.ok
-        ? await subscriptionsResponse.json()
-        : { data: [] }
-
-      // Combine user and subscription data
-      const usersWithSubscriptions = (profileData || []).map((user: UserProfile) => {
-        const subscription = subscriptionData?.find((s: { user_id: string }) => s.user_id === user.user_id)
-        return {
-          ...user,
-          subscription_plan: (subscription?.plan as 'free' | 'premium') || 'free',
-          subscription_status: (subscription?.status as 'active' | 'cancelled' | 'expired') || undefined,
-        }
-      })
-
-      setUsers(usersWithSubscriptions as UserProfile[])
-      setFilteredUsers(usersWithSubscriptions as UserProfile[])
+      setUsers(profileData || [])
+      setFilteredUsers(profileData || [])
     } catch (error: any) {
       console.error('Error fetching users:', error?.message || JSON.stringify(error))
     } finally {
@@ -91,13 +71,9 @@ export function AdminUsersTable() {
       )
     }
 
-    // Filter by subscription type
-    if (subscriptionFilter !== 'all') {
-      filtered = filtered.filter((user) => user.subscription_plan === subscriptionFilter)
-    }
 
     setFilteredUsers(filtered)
-  }, [searchQuery, users, subscriptionFilter])
+  }, [searchQuery, users])
 
   const handleUserClick = (user: UserProfile) => {
     setSelectedUser(user)
@@ -121,27 +97,6 @@ export function AdminUsersTable() {
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
-        <div className="flex items-center gap-2">
-          <Filter size={16} className="text-muted-foreground" />
-          <select
-            value={subscriptionFilter}
-            onChange={(e) => setSubscriptionFilter(e.target.value as 'all' | 'free' | 'premium')}
-            className="px-3 py-1 rounded border border-border bg-background text-foreground text-sm"
-          >
-            <option value="all">All Users</option>
-            <option value="premium">Premium Only</option>
-            <option value="free">Free Only</option>
-          </select>
-          {subscriptionFilter !== 'all' && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setSubscriptionFilter('all')}
-            >
-              Clear Filter
-            </Button>
-          )}
-        </div>
       </div>
 
       <div className="overflow-x-auto">
@@ -150,8 +105,6 @@ export function AdminUsersTable() {
             <TableRow>
               <TableHead>Photo</TableHead>
               <TableHead>Name</TableHead>
-              <TableHead>Plan</TableHead>
-              <TableHead>Subscription</TableHead>
               <TableHead>Join Date</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Action</TableHead>
@@ -160,13 +113,13 @@ export function AdminUsersTable() {
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-8">
+                <TableCell colSpan={5} className="text-center py-8">
                   <Loader2 className="h-6 w-6 animate-spin mx-auto text-muted-foreground" />
                 </TableCell>
               </TableRow>
             ) : filteredUsers.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
                   No users found
                 </TableCell>
               </TableRow>
@@ -195,30 +148,6 @@ export function AdminUsersTable() {
                         <p className="text-xs text-green-600">Verified</p>
                       )}
                     </div>
-                  </TableCell>
-                  <TableCell>
-                    <span
-                      className={`inline-block px-2 py-1 text-xs font-semibold rounded-full ${
-                        user.subscription_plan === 'premium'
-                          ? 'bg-emerald-100 text-emerald-800'
-                          : 'bg-slate-100 text-slate-800'
-                      }`}
-                    >
-                      {user.subscription_plan?.charAt(0).toUpperCase() || 'F'}{user.subscription_plan?.slice(1) || 'ree'}
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    <span
-                      className={`inline-block px-2 py-1 text-xs font-semibold rounded-full ${
-                        user.subscription_status === 'active'
-                          ? 'bg-green-100 text-green-800'
-                          : user.subscription_status === 'cancelled'
-                          ? 'bg-red-100 text-red-800'
-                          : 'bg-amber-100 text-amber-800'
-                      }`}
-                    >
-                      {user.subscription_status ? user.subscription_status.charAt(0).toUpperCase() + user.subscription_status.slice(1) : 'N/A'}
-                    </span>
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
                     {formatDistanceToNow(new Date(user.created_at), { addSuffix: true })}

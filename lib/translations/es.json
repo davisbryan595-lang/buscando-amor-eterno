@@ -2,18 +2,18 @@
   "common": {
     "home": "Inicio",
     "browse": "Explorar",
-    "pricing": "Precios",
+    "pricing": "Acceso gratis",
     "messages": "Mensajes",
     "lounge": "Salón",
     "ourStory": "Nuestra Historia",
     "logIn": "Inicia sesión",
-    "joinForPrice": "Únete por $12/mes",
+    "joinForPrice": "Únete gratis",
     "browseProfiles": "Explorar Perfiles"
   },
   "hero": {
     "title": "Buscando Amor Eterno",
     "subtitle": "Encuentra Tu Alma Gemela",
-    "description": "Casi el 50% del mundo es soltero. Mereces amor eterno. Únete a nuestra plataforma de citas de almas gemelas premium con perfiles, mensajería y video chat.",
+    "description": "Casi el 50% del mundo es soltero. Mereces amor eterno. Únete a nuestra plataforma de citas de almas gemelas con perfiles, mensajería y video chat, actualmente gratis para todos.",
     "membersWorldwide": "Miembros en Todo el Mundo",
     "matchesMade": "Emparejamientos Realizados",
     "countries": "Países"

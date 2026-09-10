@@ -2,18 +2,18 @@
   "common": {
     "home": "Home",
     "browse": "Browse",
-    "pricing": "Pricing",
+    "pricing": "Free Access",
     "messages": "Messages",
     "lounge": "Lounge",
     "ourStory": "Our Story",
     "logIn": "Log in",
-    "joinForPrice": "Join for $12/month",
+    "joinForPrice": "Join Free",
     "browseProfiles": "Browse Profiles"
   },
   "hero": {
     "title": "Buscando Amor Eterno",
     "subtitle": "Find Your Soulmate",
-    "description": "Nearly 50% of the world is single. You deserve eternal love. Join our premium soulmate dating platform with profiles, messaging, and video chat.",
+    "description": "Nearly 50% of the world is single. You deserve eternal love. Join our soulmate dating platform with profiles, messaging, and video chat—currently free for everyone.",
     "membersWorldwide": "Members Worldwide",
     "matchesMade": "Matches Made",
     "countries": "Countries"

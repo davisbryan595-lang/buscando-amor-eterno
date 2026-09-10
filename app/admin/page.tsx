@@ -3,7 +3,6 @@
 import { AdminProtectedRoute } from '@/components/admin/admin-protected-route'
 import { AdminStatsCards } from '@/components/admin/admin-stats-cards'
 import { AdminUsersTable } from '@/components/admin/admin-users-table'
-import { AdminSubscriptionsTable } from '@/components/admin/admin-subscriptions-table'
 import { AdminReportedProfiles } from '@/components/admin/admin-reported-profiles'
 import { AdminActivityLog } from '@/components/admin/admin-activity-log'
 import { AdminIncompleteProfiles } from '@/components/admin/admin-incomplete-profiles'
@@ -65,9 +64,8 @@ export default function AdminPage() {
 
           {/* Tabs for different sections */}
           <Tabs defaultValue="users" className="space-y-6">
-            <TabsList className="grid w-full max-w-3xl grid-cols-5">
+            <TabsList className="grid w-full max-w-3xl grid-cols-4">
               <TabsTrigger value="users">Users</TabsTrigger>
-              <TabsTrigger value="subscriptions">Subscriptions</TabsTrigger>
               <TabsTrigger value="incomplete">Incomplete Profiles</TabsTrigger>
               <TabsTrigger value="reports">Reports</TabsTrigger>
               <TabsTrigger value="activity">Activity Log</TabsTrigger>
@@ -78,10 +76,6 @@ export default function AdminPage() {
               <AdminUsersTable />
             </TabsContent>
 
-            {/* Subscriptions Tab */}
-            <TabsContent value="subscriptions" className="space-y-6">
-              <AdminSubscriptionsTable />
-            </TabsContent>
 
             {/* Incomplete Profiles Tab */}
             <TabsContent value="incomplete" className="space-y-6">
