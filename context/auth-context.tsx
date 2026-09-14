@@ -62,14 +62,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
-    // Set a 60-second timeout to prevent indefinite loading
-    // This is increased to accommodate slower reconnections and Supabase response times
+    // Fallback timeout in case getSession() hangs (e.g. network issue)
     timeoutId = setTimeout(() => {
       if (isMounted) {
         console.warn('Auth initialization timeout - proceeding without session')
         setLoading(false)
       }
-    }, 60000)
+    }, 8000)
 
     initializeAuth().then(() => {
       if (isMounted) {
