@@ -128,6 +128,10 @@ export default function Hero() {
           {t('hero.subtitle')}
         </h2>
 
+        <p className="text-base sm:text-lg md:text-xl mb-4 max-w-3xl mx-auto leading-relaxed font-semibold" style={{ color: 'rgba(14, 13, 13, 1)' }}>
+          A romantic, intimate destination perfect for couples to build lasting memories
+        </p>
+
         <p ref={descriptionRef} className="text-base sm:text-lg md:text-xl mb-8 md:mb-12 max-w-2xl mx-auto leading-relaxed font-semibold" style={{ color: 'rgba(14, 13, 13, 1)' }}>
           {t('hero.description')}
         </p>
