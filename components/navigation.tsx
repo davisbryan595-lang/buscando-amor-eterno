@@ -119,7 +119,7 @@ export default function Navigation() {
                 <button
                   onClick={() => handleLanguageChange('en')}
                   aria-pressed={language === 'en'}
-                  className="flex w-full items-center justify-between px-4 py-2 text-foreground dark:text-white"
+                  className="flex w-full items-center justify-between px-4 py-2 text-rose-600 dark:text-rose-300"
                 >
                   English
                   {language === 'en' && <Check size={16} aria-hidden="true" />}
@@ -127,7 +127,7 @@ export default function Navigation() {
                 <button
                   onClick={() => handleLanguageChange('es')}
                   aria-pressed={language === 'es'}
-                  className="flex w-full items-center justify-between px-4 py-2 text-foreground dark:text-white"
+                  className="flex w-full items-center justify-between px-4 py-2 text-rose-600 dark:text-rose-300"
                 >
                   Español
                   {language === 'es' && <Check size={16} aria-hidden="true" />}
@@ -274,7 +274,7 @@ export default function Navigation() {
             <button
               onClick={() => handleLanguageChange('en')}
               aria-pressed={language === 'en'}
-              className="flex w-full items-center justify-between px-4 py-2 rounded-lg text-foreground dark:text-white"
+              className="flex w-full items-center justify-between px-4 py-2 rounded-lg text-rose-600 dark:text-rose-300"
             >
               English
               {language === 'en' && <Check size={16} aria-hidden="true" />}
@@ -282,7 +282,7 @@ export default function Navigation() {
             <button
               onClick={() => handleLanguageChange('es')}
               aria-pressed={language === 'es'}
-              className="flex w-full items-center justify-between px-4 py-2 rounded-lg text-foreground dark:text-white"
+              className="flex w-full items-center justify-between px-4 py-2 rounded-lg text-rose-600 dark:text-rose-300"
             >
               Español
               {language === 'es' && <Check size={16} aria-hidden="true" />}
