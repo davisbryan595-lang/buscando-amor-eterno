@@ -118,13 +118,13 @@ export default function Navigation() {
               <div className="absolute right-0 mt-2 bg-card dark:bg-card border border-rose-100 dark:border-rose-900/40 rounded-lg shadow-lg z-50">
                 <button
                   onClick={() => handleLanguageChange('en')}
-                  className={`block w-full text-left px-4 py-2 transition-colors ${language === 'en' ? 'bg-rose-100 dark:bg-rose-900/40 text-rose-700 dark:text-rose-200 font-semibold' : 'text-foreground dark:text-white hover:bg-rose-100 dark:hover:bg-rose-900/40 hover:text-rose-700 dark:hover:text-rose-200'}`}
+                  className={`block w-full text-left px-4 py-2 ${language === 'en' ? 'bg-rose-100 dark:bg-rose-900/40 text-rose-700 dark:text-rose-200 font-semibold' : 'text-foreground dark:text-white'}`}
                 >
                   English
                 </button>
                 <button
                   onClick={() => handleLanguageChange('es')}
-                  className={`block w-full text-left px-4 py-2 transition-colors ${language === 'es' ? 'bg-rose-100 dark:bg-rose-900/40 text-rose-700 dark:text-rose-200 font-semibold' : 'text-foreground dark:text-white hover:bg-rose-100 dark:hover:bg-rose-900/40 hover:text-rose-700 dark:hover:text-rose-200'}`}
+                  className={`block w-full text-left px-4 py-2 ${language === 'es' ? 'bg-rose-100 dark:bg-rose-900/40 text-rose-700 dark:text-rose-200 font-semibold' : 'text-foreground dark:text-white'}`}
                 >
                   Español
                 </button>
@@ -269,13 +269,13 @@ export default function Navigation() {
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Language</p>
             <button
               onClick={() => handleLanguageChange('en')}
-              className={`block w-full text-left px-4 py-2 rounded-lg transition-colors ${language === 'en' ? 'bg-rose-100 dark:bg-rose-900/40 text-rose-700 dark:text-rose-200 font-semibold' : 'text-foreground dark:text-white hover:bg-rose-100 dark:hover:bg-rose-900/40 hover:text-rose-700 dark:hover:text-rose-200'}`}
+              className={`block w-full text-left px-4 py-2 rounded-lg ${language === 'en' ? 'bg-rose-100 dark:bg-rose-900/40 text-rose-700 dark:text-rose-200 font-semibold' : 'text-foreground dark:text-white'}`}
             >
               English
             </button>
             <button
               onClick={() => handleLanguageChange('es')}
-              className={`block w-full text-left px-4 py-2 rounded-lg transition-colors ${language === 'es' ? 'bg-rose-100 dark:bg-rose-900/40 text-rose-700 dark:text-rose-200 font-semibold' : 'text-foreground dark:text-white hover:bg-rose-100 dark:hover:bg-rose-900/40 hover:text-rose-700 dark:hover:text-rose-200'}`}
+              className={`block w-full text-left px-4 py-2 rounded-lg ${language === 'es' ? 'bg-rose-100 dark:bg-rose-900/40 text-rose-700 dark:text-rose-200 font-semibold' : 'text-foreground dark:text-white'}`}
             >
               Español
             </button>
