@@ -40,10 +40,19 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.8,
     },
     {
-      url: `${baseUrl}/community-guidelines`,
-
-      changeFrequency: 'yearly',
+      url: `${baseUrl}/safety`,
+      changeFrequency: 'monthly',
       priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/safety/community-guidelines`,
+      changeFrequency: 'yearly',
+      priority: 0.7,
+    },
+    {
+      url: `${baseUrl}/safety/safety-tips`,
+      changeFrequency: 'yearly',
+      priority: 0.7,
     },
     {
       url: `${baseUrl}/delete-account`,
