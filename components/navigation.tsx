@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import gsap from 'gsap'
-import { Menu, X, Bell, Globe } from 'lucide-react'
+import { Menu, X, Bell, Globe, Check } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useLanguage } from '@/lib/i18n-context'
 import { useAuth } from '@/context/auth-context'
@@ -115,18 +115,22 @@ export default function Navigation() {
               <span className="text-xs font-semibold text-primary uppercase">{language}</span>
             </button>
             {activePopover === 'language' && (
-              <div className="absolute right-0 mt-2 bg-card dark:bg-card border border-rose-100 dark:border-rose-900/40 rounded-lg shadow-lg z-50">
+              <div className="absolute right-0 mt-2 w-36 bg-card dark:bg-card border border-rose-100 dark:border-rose-900/40 rounded-lg shadow-lg z-50">
                 <button
                   onClick={() => handleLanguageChange('en')}
-                  className="block w-full text-left px-4 py-2 text-foreground dark:text-white"
+                  aria-pressed={language === 'en'}
+                  className="flex w-full items-center justify-between px-4 py-2 text-foreground dark:text-white"
                 >
                   English
+                  {language === 'en' && <Check size={16} aria-hidden="true" />}
                 </button>
                 <button
                   onClick={() => handleLanguageChange('es')}
-                  className="block w-full text-left px-4 py-2 text-foreground dark:text-white"
+                  aria-pressed={language === 'es'}
+                  className="flex w-full items-center justify-between px-4 py-2 text-foreground dark:text-white"
                 >
                   Español
+                  {language === 'es' && <Check size={16} aria-hidden="true" />}
                 </button>
               </div>
             )}
@@ -269,15 +273,19 @@ export default function Navigation() {
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Language</p>
             <button
               onClick={() => handleLanguageChange('en')}
-              className="block w-full text-left px-4 py-2 rounded-lg text-foreground dark:text-white"
+              aria-pressed={language === 'en'}
+              className="flex w-full items-center justify-between px-4 py-2 rounded-lg text-foreground dark:text-white"
             >
               English
+              {language === 'en' && <Check size={16} aria-hidden="true" />}
             </button>
             <button
               onClick={() => handleLanguageChange('es')}
-              className="block w-full text-left px-4 py-2 rounded-lg text-foreground dark:text-white"
+              aria-pressed={language === 'es'}
+              className="flex w-full items-center justify-between px-4 py-2 rounded-lg text-foreground dark:text-white"
             >
               Español
+              {language === 'es' && <Check size={16} aria-hidden="true" />}
             </button>
           </motion.div>
 
