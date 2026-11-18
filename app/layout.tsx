@@ -23,19 +23,26 @@ const playfair = Playfair_Display({
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://www.buscandoamoreterno.com'),
-  title: 'Buscando Amor Eterno | Find Your Soulmate',
-  description: 'Meet singles and find meaningful connections with Buscando Amor Eterno. Explore profiles, connect through messages, and enjoy video chat.',
+  title: 'Buscando Amor Eterno | Online Dating for Singles',
+  description: 'Meet singles, create a dating profile, and build meaningful connections through messaging and video chat on Buscando Amor Eterno.',
+  keywords: ['online dating', 'dating site for singles', 'meet singles online', 'meaningful connections'],
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true, 'max-image-preview': 'large', 'max-snippet': -1, 'max-video-preview': -1 },
+  },
   openGraph: {
     type: 'website',
+    url: 'https://www.buscandoamoreterno.com/',
     siteName: 'Buscando Amor Eterno',
-    title: 'Buscando Amor Eterno | Find Your Soulmate',
-    description: 'Meet singles and find meaningful connections with Buscando Amor Eterno.',
-    images: [{ url: '/romantic-couple-sunset-beach-luxury.jpg', alt: 'A couple together at sunset on the beach' }],
+    title: 'Buscando Amor Eterno | Online Dating for Singles',
+    description: 'Meet singles and build meaningful connections through dating profiles, messaging, and video chat.',
+    images: [{ url: '/romantic-couple-sunset-beach-luxury.jpg', alt: 'Couple together at sunset on a beach' }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Buscando Amor Eterno | Find Your Soulmate',
-    description: 'Meet singles and find meaningful connections with Buscando Amor Eterno.',
+    title: 'Buscando Amor Eterno | Online Dating for Singles',
+    description: 'Meet singles and build meaningful connections through dating profiles, messaging, and video chat.',
     images: ['/romantic-couple-sunset-beach-luxury.jpg'],
   },
   icons: {
@@ -46,10 +53,27 @@ export const metadata: Metadata = {
 
 const siteSchema = {
   '@context': 'https://schema.org',
-  '@type': 'WebSite',
-  name: 'Buscando Amor Eterno',
-  url: 'https://www.buscandoamoreterno.com/',
-  description: 'A dating platform for finding meaningful connections.',
+  '@graph': [
+    {
+      '@type': 'Organization',
+      '@id': 'https://www.buscandoamoreterno.com/#organization',
+      name: 'Buscando Amor Eterno',
+      url: 'https://www.buscandoamoreterno.com/',
+      logo: {
+        '@type': 'ImageObject',
+        url: 'https://www.buscandoamoreterno.com/apple-touch-icon.png',
+      },
+    },
+    {
+      '@type': 'WebSite',
+      '@id': 'https://www.buscandoamoreterno.com/#website',
+      name: 'Buscando Amor Eterno',
+      url: 'https://www.buscandoamoreterno.com/',
+      description: 'Online dating for singles seeking meaningful connections.',
+      publisher: { '@id': 'https://www.buscandoamoreterno.com/#organization' },
+      inLanguage: 'en-US',
+    },
+  ],
 }
 
 export default function RootLayout({
