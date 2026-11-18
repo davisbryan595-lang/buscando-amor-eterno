@@ -74,7 +74,6 @@ export default function Footer() {
               <li><Link href="/" className="transition" style={{ color: '#ffffff' }} onMouseEnter={(e) => e.currentTarget.style.color = '#ff69b4'} onMouseLeave={(e) => e.currentTarget.style.color = '#ffffff'}>{t('common.home')}</Link></li>
               <li><Link href="/browse" className="transition" style={{ color: '#ffffff' }} onMouseEnter={(e) => e.currentTarget.style.color = '#ff69b4'} onMouseLeave={(e) => e.currentTarget.style.color = '#ffffff'}>{t('common.browse')}</Link></li>
               <li><Link href="/dating-in-usa" className="transition" style={{ color: '#ffffff' }} onMouseEnter={(e) => e.currentTarget.style.color = '#ff69b4'} onMouseLeave={(e) => e.currentTarget.style.color = '#ffffff'}>Dating in the USA</Link></li>
-              <li><Link href="/pricing" className="transition" style={{ color: '#ffffff' }} onMouseEnter={(e) => e.currentTarget.style.color = '#ff69b4'} onMouseLeave={(e) => e.currentTarget.style.color = '#ffffff'}>{t('common.pricing')}</Link></li>
               <li><Link href="/messages" className="transition" style={{ color: '#ffffff' }} onMouseEnter={(e) => e.currentTarget.style.color = '#ff69b4'} onMouseLeave={(e) => e.currentTarget.style.color = '#ffffff'}>{t('common.messages')}</Link></li>
               <li><Link href="/chat-room" className="transition" style={{ color: '#ffffff' }} onMouseEnter={(e) => e.currentTarget.style.color = '#ff69b4'} onMouseLeave={(e) => e.currentTarget.style.color = '#ffffff'}>{t('common.lounge')}</Link></li>
             </ul>

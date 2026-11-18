@@ -71,7 +71,6 @@ export default function Navigation() {
             <Link href="/browse" className="text-foreground hover:text-primary transition">{t('common.browse')}</Link>
 
           </div>
-          <Link href="/pricing" className="text-foreground hover:text-primary transition">{t('common.pricing')}</Link>
           <div className="flex items-center gap-1.5">
             <Link href="/messages" className="text-foreground hover:text-primary transition">{t('common.messages')}</Link>
 
@@ -213,16 +212,6 @@ export default function Navigation() {
               </Link>
   
             </div>
-          </motion.div>
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ delay: 0.2, duration: 0.3 }}
-          >
-            <Link href="/pricing" className="block text-foreground hover:text-primary transition py-2" onClick={() => setMenuOpen(false)}>
-              {t('common.pricing')}
-            </Link>
           </motion.div>
           <motion.div
             initial={{ opacity: 0, x: -20 }}
