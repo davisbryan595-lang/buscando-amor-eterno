@@ -22,12 +22,58 @@ const playfair = Playfair_Display({
 });
 
 export const metadata: Metadata = {
-  title: 'Buscando Amor Eterno | Free Soulmate Dating Worldwide',
-  description: 'Nearly 50% of the world is single. You deserve eternal love. Join Buscando Amor Eterno for free profiles, messaging, and video chat.',
-  generator: 'v0.app',
-  icons: {
-    icon: 'https://cdn.builder.io/api/v1/image/assets%2F5517f718aa7348e88214250292563028%2F09ca0588ac3741678f0d49e142dede0b?format=webp&width=800',
+  metadataBase: new URL('https://www.buscandoamoreterno.com'),
+  title: 'Buscando Amor Eterno | Online Dating for Singles',
+  description: 'Meet singles, create a dating profile, and build meaningful connections through messaging and video chat on Buscando Amor Eterno.',
+  keywords: ['online dating', 'dating site for singles', 'meet singles online', 'meaningful connections'],
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true, 'max-image-preview': 'large', 'max-snippet': -1, 'max-video-preview': -1 },
   },
+  openGraph: {
+    type: 'website',
+    url: 'https://www.buscandoamoreterno.com/',
+    siteName: 'Buscando Amor Eterno',
+    title: 'Buscando Amor Eterno | Online Dating for Singles',
+    description: 'Meet singles and build meaningful connections through dating profiles, messaging, and video chat.',
+    images: [{ url: '/romantic-couple-sunset-beach-luxury.jpg', alt: 'Couple together at sunset on a beach' }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Buscando Amor Eterno | Online Dating for Singles',
+    description: 'Meet singles and build meaningful connections through dating profiles, messaging, and video chat.',
+    images: ['/romantic-couple-sunset-beach-luxury.jpg'],
+  },
+  icons: {
+    icon: [{ url: '/favicon-48.png', type: 'image/png', sizes: '48x48' }],
+    apple: [{ url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }],
+  },
+}
+
+const siteSchema = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'Organization',
+      '@id': 'https://www.buscandoamoreterno.com/#organization',
+      name: 'Buscando Amor Eterno',
+      url: 'https://www.buscandoamoreterno.com/',
+      logo: {
+        '@type': 'ImageObject',
+        url: 'https://www.buscandoamoreterno.com/apple-touch-icon.png',
+      },
+    },
+    {
+      '@type': 'WebSite',
+      '@id': 'https://www.buscandoamoreterno.com/#website',
+      name: 'Buscando Amor Eterno',
+      url: 'https://www.buscandoamoreterno.com/',
+      description: 'Online dating for singles seeking meaningful connections.',
+      publisher: { '@id': 'https://www.buscandoamoreterno.com/#organization' },
+      inLanguage: 'en-US',
+    },
+  ],
 }
 
 export default function RootLayout({
@@ -38,6 +84,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(siteSchema) }} />
         <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
         <Script async src="https://www.googletagmanager.com/gtag/js?id=G-P5YZG84X74" strategy="afterInteractive" />
         <Script id="google-analytics" strategy="afterInteractive" dangerouslySetInnerHTML={{

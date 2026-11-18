@@ -4,7 +4,7 @@ import React, { useRef, useEffect } from 'react'
 import Link from 'next/link'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
-import { Heart } from 'lucide-react'
+import { Heart, Play } from 'lucide-react'
 import { useLanguage } from '@/lib/i18n-context'
 
 gsap.registerPlugin(ScrollTrigger)
@@ -45,7 +45,7 @@ export default function Footer() {
   return (
     <footer ref={footerRef} className="py-6 md:py-8 px-4" style={{ backgroundColor: '#1a1a2e', color: '#ffffff' }}>
       <div className="w-full max-w-6xl mx-auto">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 md:gap-6 mb-6">
           <div
             ref={(el) => {
               if (el) columnsRef.current[0] = el
@@ -73,7 +73,7 @@ export default function Footer() {
             <ul className="space-y-1 text-xs md:text-sm" style={{ color: '#ffffff' }}>
               <li><Link href="/" className="transition" style={{ color: '#ffffff' }} onMouseEnter={(e) => e.currentTarget.style.color = '#ff69b4'} onMouseLeave={(e) => e.currentTarget.style.color = '#ffffff'}>{t('common.home')}</Link></li>
               <li><Link href="/browse" className="transition" style={{ color: '#ffffff' }} onMouseEnter={(e) => e.currentTarget.style.color = '#ff69b4'} onMouseLeave={(e) => e.currentTarget.style.color = '#ffffff'}>{t('common.browse')}</Link></li>
-              <li><Link href="/pricing" className="transition" style={{ color: '#ffffff' }} onMouseEnter={(e) => e.currentTarget.style.color = '#ff69b4'} onMouseLeave={(e) => e.currentTarget.style.color = '#ffffff'}>{t('common.pricing')}</Link></li>
+              <li><Link href="/dating-in-usa" className="transition" style={{ color: '#ffffff' }} onMouseEnter={(e) => e.currentTarget.style.color = '#ff69b4'} onMouseLeave={(e) => e.currentTarget.style.color = '#ffffff'}>Dating in the USA</Link></li>
               <li><Link href="/messages" className="transition" style={{ color: '#ffffff' }} onMouseEnter={(e) => e.currentTarget.style.color = '#ff69b4'} onMouseLeave={(e) => e.currentTarget.style.color = '#ffffff'}>{t('common.messages')}</Link></li>
               <li><Link href="/chat-room" className="transition" style={{ color: '#ffffff' }} onMouseEnter={(e) => e.currentTarget.style.color = '#ff69b4'} onMouseLeave={(e) => e.currentTarget.style.color = '#ffffff'}>{t('common.lounge')}</Link></li>
             </ul>
@@ -84,13 +84,40 @@ export default function Footer() {
               if (el) columnsRef.current[2] = el
             }}
           >
+            <h4 className="font-bold mb-2 text-sm md:text-base" style={{ color: '#ffffff' }}>Get the App</h4>
+            <div className="inline-flex items-center gap-2 rounded-md border border-white/40 px-3 py-2 text-xs md:text-sm text-white/80" aria-label="Google Play">
+              <Play size={16} aria-hidden="true" />
+              <span>Google Play</span>
+            </div>
+          </div>
+
+          <div
+            ref={(el) => {
+              if (el) columnsRef.current[3] = el
+            }}
+          >
+            <h4 className="font-bold mb-2 text-sm md:text-base" style={{ color: '#ffffff' }}>Company</h4>
+            <ul className="space-y-1 text-xs md:text-sm" style={{ color: '#ffffff' }}>
+              <li><Link href="/faq" className="transition" style={{ color: '#ffffff' }} onMouseEnter={(e) => e.currentTarget.style.color = '#ff69b4'} onMouseLeave={(e) => e.currentTarget.style.color = '#ffffff'}>FAQs</Link></li>
+              <li><Link href="/support" className="transition" style={{ color: '#ffffff' }} onMouseEnter={(e) => e.currentTarget.style.color = '#ff69b4'} onMouseLeave={(e) => e.currentTarget.style.color = '#ffffff'}>Support</Link></li>
+              <li><Link href="/contact" className="transition" style={{ color: '#ffffff' }} onMouseEnter={(e) => e.currentTarget.style.color = '#ff69b4'} onMouseLeave={(e) => e.currentTarget.style.color = '#ffffff'}>{t('footer.contact')}</Link></li>
+              <li><Link href="/nuestra-historia" className="transition" style={{ color: '#ffffff' }} onMouseEnter={(e) => e.currentTarget.style.color = '#ff69b4'} onMouseLeave={(e) => e.currentTarget.style.color = '#ffffff'}>{t('common.ourStory')}</Link></li>
+            </ul>
+          </div>
+
+          <div
+            ref={(el) => {
+              if (el) columnsRef.current[4] = el
+            }}
+          >
             <h4 className="font-bold mb-2 text-sm md:text-base" style={{ color: '#ffffff' }}>{t('footer.legal')}</h4>
             <ul className="space-y-1 text-xs md:text-sm" style={{ color: '#ffffff' }}>
               <li><Link href="/privacy-policy" className="transition" style={{ color: '#ffffff' }} onMouseEnter={(e) => e.currentTarget.style.color = '#ff69b4'} onMouseLeave={(e) => e.currentTarget.style.color = '#ffffff'}>{t('footer.privacy')}</Link></li>
               <li><Link href="/terms-of-service" className="transition" style={{ color: '#ffffff' }} onMouseEnter={(e) => e.currentTarget.style.color = '#ff69b4'} onMouseLeave={(e) => e.currentTarget.style.color = '#ffffff'}>{t('footer.terms')}</Link></li>
-              <li><Link href="/community-guidelines" className="transition" style={{ color: '#ffffff' }} onMouseEnter={(e) => e.currentTarget.style.color = '#ff69b4'} onMouseLeave={(e) => e.currentTarget.style.color = '#ffffff'}>{t('footer.guidelines')}</Link></li>
+              <li><Link href="/safety" className="transition" style={{ color: '#ffffff' }} onMouseEnter={(e) => e.currentTarget.style.color = '#ff69b4'} onMouseLeave={(e) => e.currentTarget.style.color = '#ffffff'}>Safety Center</Link></li>
+              <li><Link href="/safety/community-guidelines" className="transition" style={{ color: '#ffffff' }} onMouseEnter={(e) => e.currentTarget.style.color = '#ff69b4'} onMouseLeave={(e) => e.currentTarget.style.color = '#ffffff'}>{t('footer.guidelines')}</Link></li>
+              <li><Link href="/safety/safety-tips" className="transition" style={{ color: '#ffffff' }} onMouseEnter={(e) => e.currentTarget.style.color = '#ff69b4'} onMouseLeave={(e) => e.currentTarget.style.color = '#ffffff'}>Safety Tips</Link></li>
               <li><Link href="/delete-account" className="transition" style={{ color: '#ffffff' }} onMouseEnter={(e) => e.currentTarget.style.color = '#ff69b4'} onMouseLeave={(e) => e.currentTarget.style.color = '#ffffff'}>{t('footer.deleteAccount')}</Link></li>
-              <li><Link href="/contact" className="transition" style={{ color: '#ffffff' }} onMouseEnter={(e) => e.currentTarget.style.color = '#ff69b4'} onMouseLeave={(e) => e.currentTarget.style.color = '#ffffff'}>{t('footer.contact')}</Link></li>
             </ul>
           </div>
         </div>

@@ -1,334 +1,194 @@
-import Footer from '@/components/footer'
+import type { Metadata } from 'next'
 import Navigation from '@/components/navigation'
-import styles from '../policy.module.css';
+import Footer from '@/components/footer'
+import styles from '../policy.module.css'
+
+export const metadata: Metadata = {
+  title: 'Consumer Health Data Privacy Policy | Buscando Amor Eterno',
+  description: 'Learn how Buscando Amor Eterno may collect, use, disclose, and protect consumer health data under applicable privacy laws.',
+  alternates: { canonical: '/privacy-policy' },
+}
 
 export default function PrivacyPolicyPage() {
   return (
     <main>
       <Navigation />
       <div className={styles.policyContainer}>
-        <div className={styles.policyContent}>
-        <h1>Privacy Policy</h1>
-        <p className={styles.lastUpdated}>Last updated: May 2026</p>
+        <article className={styles.policyContent}>
+          <h1>Consumer Health Data Privacy Policy</h1>
+          <p><strong>Buscando Amor Eterno</strong></p>
+          <p className={styles.lastUpdated}><strong>Effective Date:</strong> [Insert Effective Date]<br /><strong>Last Updated:</strong> [Insert Last Updated Date]</p>
 
-        <section>
-          <h2>1. Introduction</h2>
-          <p>
-            Buscando Amor Eterno (&quot;we,&quot; &quot;us,&quot; &quot;our,&quot; or &quot;Company&quot;) respects your privacy and is committed to protecting
-            your personal information. This Privacy Policy explains what information we collect, how we use it, who we
-            share it with, and your rights regarding your data.
-          </p>
-          <p>
-            By using our website and mobile application (the &quot;Service&quot;), you consent to our collection and use of personal
-            information as outlined in this Privacy Policy.
-          </p>
-        </section>
+          <section>
+            <h2>1. Introduction</h2>
+            <p>At <strong>Buscando Amor Eterno</strong>, we respect the privacy of our members and understand that certain personal information shared through an online dating platform may be particularly sensitive.</p>
+            <p>This Consumer Health Data Privacy Policy explains how we collect, use, process, and disclose information that may qualify as consumer health data under applicable privacy laws.</p>
+            <p>This policy supplements our main Privacy Policy and should be read together with it.</p>
+            <p>This policy applies to individuals whose consumer health data is subject to applicable consumer health data privacy laws, including residents of Washington State and other jurisdictions where similar protections apply.</p>
+            <p>We aim to handle sensitive information responsibly, transparently, and in accordance with applicable legal requirements.</p>
+          </section>
 
-        <section>
-          <h2>2. Web and Mobile Service</h2>
-          <p>
-            The Service is available on the web and on mobile devices through the same shared account and community. You may interact with people using either platform. Messages, lounge activity, audio calls, and video calls may involve web users, mobile users, or both.
-          </p>
-        </section>
+          <section>
+            <h2>2. Consumer Health Data We Collect and Use</h2>
+            <p>Buscando Amor Eterno is a dating and relationship platform. We do not provide medical services, healthcare treatment, or medical diagnoses.</p>
+            <p>However, depending on the information members choose to provide, certain profile details, preferences, communications, or other information may potentially qualify as consumer health data under applicable privacy laws.</p>
+            <p>Depending on the platform&apos;s actual features and the information members voluntarily provide, potentially relevant categories may include:</p>
+            <ul>
+              <li>Information concerning sexual orientation or intimate personal preferences.</li>
+              <li>Information relating to reproductive or sexual health voluntarily disclosed by members.</li>
+              <li>Information concerning physical or mental health conditions voluntarily included in profile descriptions or communications.</li>
+              <li>Health-related information that may be inferred from information provided by members, where such inferences are actually made.</li>
+              <li>Other personal information that applicable law defines as consumer health data.</li>
+            </ul>
+            <p>We do not intend to collect medical records or diagnose, evaluate, or determine the health status of our members through our dating services.</p>
+            <p>The actual categories of consumer health data collected will depend on the features available on the platform and the information members choose to provide.</p>
+          </section>
 
-        <section>
-          <h2>3. Information We Collect</h2>
+          <section>
+            <h2>3. Sources of Consumer Health Data</h2>
+            <p><strong>Directly from members:</strong> Information voluntarily entered into dating profiles, personal descriptions, preferences, forms, or communications.</p>
+            <p><strong>Member interactions:</strong> Information voluntarily disclosed during conversations or other interactions available through the platform.</p>
+            <p><strong>Platform activity:</strong> Information generated through the use of website features, but only where such information qualifies as consumer health data under applicable law.</p>
+            <p><strong>Authorized third-party services:</strong> Information received from external services or integrations, if the platform uses them and the relevant information is lawfully provided.</p>
+            <p>We do not claim to obtain medical records or healthcare information from hospitals, healthcare providers, or insurance companies unless a specific lawful integration is established.</p>
+          </section>
 
-          <h3>2.1 Information You Provide Directly</h3>
-          <ul>
-            <li><strong>Account Information:</strong> Email address, password (hashed)</li>
-            <li><strong>Profile Information:</strong> Full name, date of birth, gender, sexual orientation, relationship goals</li>
-            <li><strong>Preferences:</strong> Age range, distance radius, interests, values, love language, religion</li>
-            <li><strong>Life Details:</strong> Height, smoking/drinking habits, relationship type, number of children desired, dealbreakers</li>
-            <li><strong>Location Data:</strong> City, country, latitude, longitude (used for proximity matching)</li>
-            <li><strong>Media:</strong> Profile photos and call logs</li>
-            <li><strong>Communication:</strong> Messages, lounge chat messages, feedback, and support requests</li>
-            <li><strong>Payment Information:</strong> Email and payment method (processed by Stripe, not stored on our servers)</li>
-          </ul>
+          <section>
+            <h2>4. Purposes for Collecting and Using Consumer Health Data</h2>
+            <p>Where consumer health data is collected, it may be used only for purposes that have been appropriately disclosed and are permitted under applicable law.</p>
+            <p>Depending on the information and platform functionality, these purposes may include:</p>
+            <ul>
+              <li>Providing and maintaining dating platform services.</li>
+              <li>Displaying information that members voluntarily choose to include in their profiles.</li>
+              <li>Supporting communication and interactions between members.</li>
+              <li>Allowing members to manage their personal profiles and preferences.</li>
+              <li>Responding to support inquiries and privacy requests.</li>
+              <li>Maintaining platform security and preventing misuse.</li>
+              <li>Investigating reported violations, fraudulent activities, and suspicious behavior.</li>
+              <li>Meeting applicable legal obligations.</li>
+            </ul>
+            <p>We do not use consumer health data to provide medical diagnoses, prescribe treatments, or make healthcare recommendations.</p>
+            <p>We will not introduce additional categories of consumer health data collection or new purposes for processing such information without providing the required disclosures and obtaining any legally required consent or authorization.</p>
+          </section>
 
-          <h3>2.2 Information Collected Automatically</h3>
-          <ul>
-            <li><strong>Device Information:</strong> Operating system, browser type, device model, unique identifiers</li>
-            <li><strong>Usage Data:</strong> Pages visited, features used, time spent on Service, clicks, swipes, likes, dislikes</li>
-            <li><strong>IP Address:</strong> Used for security, fraud prevention, and analytics</li>
-            <li><strong>Cookies and Tracking:</strong> Session cookies, analytics cookies (via Google Analytics)</li>
-            <li><strong>Call Metadata:</strong> Call duration, call timestamps, participant IDs (from Agora and LiveKit)</li>
-            <li><strong>Presence Data:</strong> Online/offline status, typing indicators, last seen timestamps</li>
-          </ul>
+          <section>
+            <h2>5. How We Disclose Consumer Health Data</h2>
+            <p>We do not disclose consumer health data indiscriminately.</p>
+            <p>Depending on the platform&apos;s actual operations and applicable legal requirements, information may be disclosed to the following categories of recipients:</p>
+            <h3>Other Members</h3>
+            <p>Information that members voluntarily include in visible dating profiles or intentionally share with other members may be accessible to those individuals.</p>
+            <p>Members should carefully consider the sensitive nature of information before choosing to make it visible to others.</p>
+            <h3>Service Providers</h3>
+            <p>We may use authorized service providers to support the operation and maintenance of our website.</p>
+            <p>These may include:</p>
+            <ul>
+              <li>Website hosting and infrastructure providers.</li>
+              <li>Technical maintenance and support providers.</li>
+              <li>Customer service providers.</li>
+              <li>Information security providers.</li>
+              <li>Other vendors providing necessary operational services.</li>
+            </ul>
+            <p>Such providers may process information on our behalf only for authorized business purposes and subject to applicable contractual and legal requirements.</p>
+            <h3>Payment and Transaction Providers</h3>
+            <p>Where applicable, payment service providers may receive information necessary to process transactions and subscriptions.</p>
+            <p>Consumer health data will not be provided to payment processors merely because a member makes a payment.</p>
+            <h3>Legal Authorities and Regulatory Bodies</h3>
+            <p>Information may be disclosed when required by applicable law or valid legal process, or when disclosure is otherwise legally permitted to protect individuals, investigate unlawful conduct, or establish, exercise, or defend legal claims.</p>
+            <h3>Business Transactions</h3>
+            <p>In connection with a merger, acquisition, restructuring, or other change in business ownership, relevant information may be disclosed where legally permitted and subject to applicable privacy protections.</p>
+            <p>We do not claim to share consumer health data with advertising partners or for targeted advertising unless such processing actually occurs and is separately disclosed and authorized as required by law.</p>
+          </section>
 
-          <h3>2.3 Information from Third Parties</h3>
-          <ul>
-            <li><strong>OAuth Providers:</strong> Google and Apple provide email, name, and profile picture if you sign up via social login</li>
-            <li><strong>Reverse Geocoding:</strong> We use OpenStreetMap Nominatim to convert coordinates to city/country names</li>
-            <li><strong>Stripe:</strong> Subscription and payment status information</li>
-            <li><strong>Reports from Other Users:</strong> Users may submit reports about your account, profile, or conduct</li>
-          </ul>
-        </section>
+          <section>
+            <h2>6. Sale of Consumer Health Data</h2>
+            <p>Buscando Amor Eterno does not intend to sell consumer health data as part of its ordinary dating platform operations.</p>
+            <p>We will not sell consumer health data without obtaining the specific consent or authorization required by applicable law.</p>
+            <p>If our data practices change, we will update the relevant disclosures and obtain any required authorization before engaging in such activities.</p>
+          </section>
 
-        <section>
-          <h2>4. How We Use Your Information</h2>
-          <p>We use the information we collect for the following purposes:</p>
-          <ul>
-            <li><strong>Service Delivery:</strong> Creating and maintaining your account, matching you with compatible users, enabling messaging and video calls</li>
-            <li><strong>Personalization:</strong> Tailoring recommendations, feed content, and user experience based on preferences</li>
-            <li><strong>Safety and Moderation:</strong> Investigating reports, detecting fraud, preventing harassment, and enforcing our Terms of Service</li>
-            <li><strong>Communication:</strong> Sending notifications, service updates, and support responses</li>
-            <li><strong>Analytics and Improvement:</strong> Understanding how users interact with the Service to improve features and fix bugs</li>
-            <li><strong>Marketing:</strong> Sending promotional emails and push notifications (you can opt-out)</li>
-            <li><strong>Legal Compliance:</strong> Complying with laws, court orders, and regulatory requirements</li>
-            <li><strong>Age Verification:</strong> Using date of birth to ensure users are 18+ (we do not perform third-party age verification)</li>
-            <li><strong>Payment Processing:</strong> Managing subscriptions and billing through Stripe</li>
-          </ul>
-        </section>
+          <section>
+            <h2>7. Your Consumer Health Data Privacy Rights</h2>
+            <p>Depending on your location and applicable privacy laws, you may have certain rights concerning your consumer health data.</p>
+            <p>These rights may include:</p>
+            <p><strong>Right to Know and Access:</strong> Request information about the consumer health data collected about you and obtain access to that information where required by law.</p>
+            <p><strong>Right to Withdraw Consent:</strong> Withdraw consent previously provided for the collection or processing of consumer health data, subject to applicable legal requirements.</p>
+            <p><strong>Right to Delete:</strong> Request deletion of consumer health data collected about you, subject to applicable legal exceptions.</p>
+            <p><strong>Right to Information About Sharing:</strong> Request information about the categories of third parties and specific affiliates with whom your consumer health data has been shared, where required by law.</p>
+            <p><strong>Right to Appeal:</strong> Where applicable, request a review of a decision denying your privacy request.</p>
+            <p>We will handle privacy requests in accordance with the procedures, verification requirements, and response periods established by applicable law.</p>
+          </section>
 
-        <section>
-          <h2>5. Data Sharing and Disclosure</h2>
+          <section>
+            <h2>8. How to Submit a Consumer Health Data Request</h2>
+            <p>If you would like to exercise your consumer health data privacy rights, you may contact us using the privacy contact information provided below.</p>
+            <p>Please include:</p>
+            <ul>
+              <li>Your name or account identification information.</li>
+              <li>The email address associated with your account.</li>
+              <li>The type of privacy request you wish to submit.</li>
+              <li>Any additional information reasonably necessary to help us process your request.</li>
+            </ul>
+            <p>We may take reasonable steps to verify your identity before responding to certain requests.</p>
+            <p>Where required by applicable law, you may also designate an authorized agent to submit a request on your behalf.</p>
+            <p>If your request is denied, we will provide information about any applicable appeal process and how you can pursue further review.</p>
+          </section>
 
-          <h3>4.1 With Other Users</h3>
-          <p>The following information is visible to other users on the Service:</p>
-          <ul>
-            <li>Profile photo(s)</li>
-            <li>Age (calculated from birthday)</li>
-            <li>Gender and sexual orientation</li>
-            <li>Location (city and country, or proximity based on distance radius)</li>
-            <li>Bio and prompts (written content)</li>
-            <li>Interests and values</li>
-            <li>Height, drinking/smoking habits (if disclosed)</li>
-            <li>Online/offline status</li>
-            <li>Match percentage and compatibility information</li>
-            <li>Messages sent to matched users</li>
-          </ul>
+          <section>
+            <h2>9. Data Security and Protection</h2>
+            <p>We recognize that consumer health data may be particularly sensitive.</p>
+            <p>We aim to maintain appropriate technical, organizational, and administrative safeguards to protect personal information against unauthorized access, disclosure, alteration, or destruction.</p>
+            <p>Depending on the systems and security measures implemented by our platform, these safeguards may include access restrictions, secure communications, account protection procedures, and security monitoring.</p>
+            <p>We also expect service providers that process sensitive information on our behalf to maintain appropriate privacy and security protections.</p>
+            <p>No website or electronic storage system can guarantee absolute security. However, we are committed to addressing security risks responsibly and responding to incidents in accordance with applicable legal requirements.</p>
+          </section>
 
-          <h3>4.2 With Service Providers and Partners</h3>
-          <p>We share information with third-party service providers who assist in operating the Service:</p>
-          <ul>
-            <li><strong>Supabase:</strong> Authentication, database, file storage, and real-time messaging infrastructure</li>
-            <li><strong>Stripe:</strong> Payment processing and subscription management</li>
-            <li><strong>Agora:</strong> Audio and video calling infrastructure</li>
-            <li><strong>OneSignal:</strong> Push-notification delivery</li>
-            <li><strong>Google Analytics:</strong> Usage analytics and engagement tracking</li>
-            <li><strong>OpenStreetMap:</strong> Reverse geocoding for location names</li>
-          </ul>
-          <p>
-            These service providers are contractually bound to use your information only as necessary to provide services
-            and to maintain the confidentiality of your data.
-          </p>
+          <section>
+            <h2>10. Data Retention and Deletion</h2>
+            <p>We retain consumer health data only for as long as reasonably necessary to fulfill the purposes for which it was collected, subject to applicable legal obligations.</p>
+            <p>Retention may depend on:</p>
+            <ul>
+              <li>Whether a member maintains an active account.</li>
+              <li>The purpose for which information was collected.</li>
+              <li>Whether a member requests deletion.</li>
+              <li>Applicable financial, legal, and regulatory requirements.</li>
+              <li>The need to preserve information for legitimate security or legal purposes.</li>
+            </ul>
+            <p>When information is no longer necessary and no legal retention requirement applies, we will take appropriate steps to delete or de-identify it in accordance with applicable requirements.</p>
+          </section>
 
-          <h3>4.3 Legal Requirements and Safety</h3>
-          <p>
-            We may disclose your information if required by law or if we believe in good faith that such disclosure is
-            necessary to:
-          </p>
-          <ul>
-            <li>Comply with legal obligations, court orders, or government requests</li>
-            <li>Protect and defend our rights and property</li>
-            <li>Prevent or investigate possible wrongdoing, fraud, or safety violations</li>
-            <li>Protect the personal safety of our users and the public</li>
-            <li>Report child exploitation to NCMEC (National Center for Missing &amp; Exploited Children) and law enforcement</li>
-          </ul>
+          <section>
+            <h2>11. Children&apos;s Privacy</h2>
+            <p>Buscando Amor Eterno is intended exclusively for individuals aged 18 and older.</p>
+            <p>Individuals under the age of 18 are not permitted to register for or use our dating services.</p>
+            <p>We do not knowingly intend to collect consumer health data from minors.</p>
+            <p>If we become aware that an underage individual has provided personal information through the platform, we will take appropriate steps to address the situation in accordance with applicable law.</p>
+          </section>
 
-          <h3>4.4 Business Transfers</h3>
-          <p>
-            If Buscando Amor Eterno is involved in a merger, acquisition, bankruptcy, or sale of assets, your information
-            may be transferred as part of that transaction. We will notify you of any change in ownership or control of
-            your personal information.
-          </p>
+          <section>
+            <h2>12. Changes to This Policy</h2>
+            <p>We may update this Consumer Health Data Privacy Policy from time to time to reflect changes in our website functionality, information-handling practices, or applicable privacy laws.</p>
+            <p>Any updated version will be published on our website with a revised effective date or last updated date.</p>
+            <p>Where legally required, we will provide additional notice and obtain appropriate consent before introducing new categories of consumer health data collection, additional processing purposes, or new disclosures.</p>
+            <p>We encourage members to review this policy periodically.</p>
+          </section>
 
-          <h3>4.5 With Your Consent</h3>
-          <p>We will not share your information with third parties outside the above contexts without your explicit consent.</p>
-        </section>
+          <section>
+            <h2>13. Contact Us</h2>
+            <p>If you have questions, concerns, or requests regarding this Consumer Health Data Privacy Policy, please contact us through the following channels:</p>
+            <p><strong>Website:</strong> https://buscandoamoreterno.com</p>
+            <p><strong>Platform:</strong> Buscando Amor Eterno</p>
+            <p><strong>Privacy Contact Email:</strong> [Insert Privacy Contact Email]</p>
+            <p><strong>General Support Email:</strong> [Insert Support Email]</p>
+            <p><strong>Legal Business Name:</strong> [Insert Registered Business Name]</p>
+            <p><strong>Business Address:</strong> [Insert Registered Business Address]</p>
+            <p>We are committed to addressing privacy-related inquiries in accordance with applicable laws and our published policies.</p>
+          </section>
 
-        <section>
-          <h2>6. Data Storage and Retention</h2>
-          <ul>
-            <li><strong>Messages:</strong> Stored indefinitely unless you delete them; we may retain copies for safety investigations</li>
-            <li><strong>Profile Data:</strong> Retained as long as your account is active; deleted upon account deletion (with some exceptions for legal or safety purposes)</li>
-            <li><strong>Call Logs:</strong> Stored for 90 days for quality and troubleshooting purposes</li>
-            <li><strong>Analytics Data:</strong> Aggregated and anonymized data retained for 24 months</li>
-            <li><strong>Support Tickets:</strong> Retained for 1 year for reference and dispute resolution</li>
-            <li><strong>Admin Logs:</strong> Moderation and admin activity logs retained for 2 years for auditing purposes</li>
-          </ul>
-          <p>
-            All data is stored on encrypted servers maintained by Supabase (Google Cloud infrastructure). Even if you delete
-            your account, we may retain some information for legal compliance, fraud prevention, and safety purposes.
-          </p>
-        </section>
-
-        <section>
-          <h2>7. Security and Data Protection</h2>
-          <p>Buscando Amor Eterno implements industry-standard security measures to protect your information:</p>
-          <ul>
-            <li>HTTPS/TLS encryption for all data in transit</li>
-            <li>Password hashing using secure algorithms</li>
-            <li>Database encryption at rest</li>
-            <li>Regular security audits and vulnerability testing</li>
-            <li>Access controls limiting employee access to personal data</li>
-            <li>Two-factor authentication available for account security</li>
-          </ul>
-          <p>
-            However, no security system is impenetrable. We cannot guarantee absolute security of your information.
-            You are responsible for maintaining the confidentiality of your password.
-          </p>
-        </section>
-
-        <section>
-          <h2>8. Your Rights and Choices</h2>
-
-          <h3>7.1 Access and Portability</h3>
-          <p>
-            You have the right to access your personal information and receive a copy of your data in a portable format.
-            Visit your profile settings or contact us to request this.
-          </p>
-
-          <h3>7.2 Modification</h3>
-          <p>You can update, correct, or modify your profile information at any time through the Service.</p>
-
-          <h3>7.3 Deletion</h3>
-          <p>
-            You can request deletion of your account and associated personal data. Upon verification, we will delete your
-            profile, photos, and messages (except where legally required to retain them). However, note:
-          </p>
-          <ul>
-            <li>We may retain hashed identifiers for fraud prevention</li>
-            <li>Messages you sent to other users may remain on their accounts</li>
-            <li>Backup and archival data may persist for a limited time</li>
-            <li>We may retain data to comply with legal obligations</li>
-          </ul>
-
-          <h3>7.4 Marketing Communications</h3>
-          <p>You can opt-out of promotional emails, newsletters, and push notifications by:</p>
-          <ul>
-            <li>Clicking the &quot;unsubscribe&quot; link in emails</li>
-            <li>Adjusting notification preferences in app settings</li>
-            <li>Contacting support to request removal from marketing lists</li>
-          </ul>
-
-          <h3>7.5 Cookie Management</h3>
-          <p>
-            You can disable cookies in your browser settings. However, some features of the Service may not function properly
-            if cookies are disabled.
-          </p>
-
-          <h3>7.6 GDPR Rights (European Users)</h3>
-          <p>If you are located in the European Union or United Kingdom, you have additional rights under the GDPR:</p>
-          <ul>
-            <li>Right to be forgotten (erasure)</li>
-            <li>Right to restrict processing</li>
-            <li>Right to object to processing</li>
-            <li>Right to data portability</li>
-            <li>Right to lodge a complaint with a supervisory authority</li>
-          </ul>
-          <p>To exercise these rights, contact us at the address provided in Section 13.</p>
-
-          <h3>7.7 CCPA Rights (California Users)</h3>
-          <p>If you are a California resident, you have rights under the California Consumer Privacy Act (CCPA):</p>
-          <ul>
-            <li>Right to know what personal information is collected</li>
-            <li>Right to delete personal information collected from you</li>
-            <li>Right to opt-out of the sale of your personal information</li>
-            <li>Right to non-discrimination for exercising your CCPA rights</li>
-          </ul>
-          <p>
-            Note: We do not sell personal information to third parties for monetary consideration. We do share information
-            with service providers as described in this policy, which may constitute a &quot;sale&quot; under CCPA. To opt-out, contact us.
-          </p>
-        </section>
-
-        <section>
-          <h2>9. Children&apos;s Privacy</h2>
-          <p>
-            The Service is not intended for users under 18 years of age (21 in some jurisdictions). We do not knowingly
-            collect personal information from minors. If we become aware that a minor has registered, we will terminate
-            their account and delete their information immediately.
-          </p>
-          <p>
-            If you believe a minor is using the Service, please report them immediately through the report function or
-            contact support.
-          </p>
-        </section>
-
-        <section>
-          <h2>10. Third-Party Links and Services</h2>
-          <p>
-            The Service may contain links to third-party websites and services. This Privacy Policy does not apply to
-            third-party services, and we are not responsible for their privacy practices. We encourage you to review
-            their privacy policies before sharing your information.
-          </p>
-        </section>
-
-        <section>
-          <h2>11. International Data Transfers</h2>
-          <p>
-            Your information may be transferred to and processed in countries other than where you reside. By using the
-            Service, you consent to the transfer of your information to countries outside your country of residence,
-            which may have different data protection laws than your home country.
-          </p>
-          <p>
-            For EU/UK users: We rely on Standard Contractual Clauses (SCCs) and adequacy decisions to ensure appropriate
-            safeguards for international transfers. Supabase is certified under the Data Privacy Framework (formerly Privacy Shield).
-          </p>
-        </section>
-
-        <section>
-          <h2>12. Video Chat and Call Recording Disclosure</h2>
-          <p>When you engage in video dates or voice calls through the Service:</p>
-          <ul>
-            <li>Sessions are processed by Agora, which may retain service metadata</li>
-            <li>Call logs include participant IDs, timestamps, and duration</li>
-            <li>We do not record audio or video calls by default</li>
-            <li>You have the right to decline video or voice communication</li>
-          </ul>
-        </section>
-
-        <section>
-          <h2>13. Analytics and Tracking</h2>
-          <p>We use Google Analytics to understand how users interact with the Service. Google Analytics collects:</p>
-          <ul>
-            <li>Pages visited</li>
-            <li>Time on page</li>
-            <li>Click events</li>
-            <li>Approximate location (city/country level)</li>
-            <li>Device and browser information</li>
-          </ul>
-          <p>
-            This data is used to improve the Service and is not connected to personally identifiable information.
-            You can opt-out of Google Analytics by installing the Google Analytics Opt-out Browser Add-on.
-          </p>
-        </section>
-
-        <section>
-          <h2>14. Contact Us and Data Requests</h2>
-          <p>
-            If you have questions about this Privacy Policy, wish to exercise your rights, or want to submit a data
-            access request, please contact:
-          </p>
-          <p>
-            <strong>Email:</strong> support@buscandoamoreterno.com<br />
-            <strong>Support:</strong> https://www.buscandoamoreterno.com/contact
-          </p>
-          <p>We will respond to your request within 30 days (or as required by applicable law).</p>
-        </section>
-
-        <section>
-          <h2>15. Changes to This Privacy Policy</h2>
-          <p>
-            Buscando Amor Eterno may update this Privacy Policy from time to time. We will notify you of material changes
-            by posting the updated policy on this page with an updated &quot;Last Updated&quot; date. Your continued use of the Service
-            following changes constitutes your acceptance of the updated Privacy Policy.
-          </p>
-        </section>
-
-        <section>
-          <h2>16. Dispute Resolution</h2>
-          <p>
-            If you believe we have violated your privacy rights, we encourage you to contact us first to attempt resolution.
-            If we are unable to resolve your concern, you may file a complaint with the relevant data protection authority
-            in your jurisdiction or pursue legal remedies available under applicable law.
-          </p>
-        </section>
-        </div>
+          <p><strong>Buscando Amor Eterno</strong></p>
+          <p>Your privacy deserves respect. Your information deserves protection. Your trust matters to us.</p>
+        </article>
       </div>
       <Footer />
     </main>
-  );
+  )
 }

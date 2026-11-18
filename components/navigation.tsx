@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import gsap from 'gsap'
-import { Menu, X, Bell, Globe } from 'lucide-react'
+import { Menu, X, Bell, Globe, Check } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useLanguage } from '@/lib/i18n-context'
 import { useAuth } from '@/context/auth-context'
@@ -13,8 +13,7 @@ import { ResponsiveNotificationsPanel } from '@/components/responsive-notificati
 
 export default function Navigation() {
   const [menuOpen, setMenuOpen] = useState(false)
-  const [langDropdown, setLangDropdown] = useState(false)
-  const [notificationsOpen, setNotificationsOpen] = useState(false)
+  const [activePopover, setActivePopover] = useState<'language' | 'notifications' | 'account' | null>(null)
   const [isMounted, setIsMounted] = useState(false)
   const navRef = useRef<HTMLDivElement>(null)
   const { language, setLanguage, t } = useLanguage()
@@ -47,9 +46,19 @@ export default function Navigation() {
     dismissNotification(id)
   }
 
+  const togglePopover = (popover: 'language' | 'notifications' | 'account') => {
+    setMenuOpen(false)
+    setActivePopover(current => current === popover ? null : popover)
+  }
+
+  const setPopoverOpen = (popover: 'language' | 'notifications' | 'account', open: boolean) => {
+    if (open) setMenuOpen(false)
+    setActivePopover(open ? popover : null)
+  }
+
   const handleLanguageChange = (lang: 'en' | 'es') => {
     setLanguage(lang)
-    setLangDropdown(false)
+    setActivePopover(null)
   }
 
   return (
@@ -71,7 +80,6 @@ export default function Navigation() {
             <Link href="/browse" className="text-foreground hover:text-primary transition">{t('common.browse')}</Link>
 
           </div>
-          <Link href="/pricing" className="text-foreground hover:text-primary transition">{t('common.pricing')}</Link>
           <div className="flex items-center gap-1.5">
             <Link href="/messages" className="text-foreground hover:text-primary transition">{t('common.messages')}</Link>
 
@@ -84,7 +92,7 @@ export default function Navigation() {
 
           <div className="relative">
             <button
-              onClick={() => setNotificationsOpen(!notificationsOpen)}
+              onClick={() => togglePopover('notifications')}
               className="p-1.5 hover:bg-card-subtle dark:hover:bg-card-subtle rounded-full transition relative"
               aria-label="Notifications"
             >
@@ -99,33 +107,37 @@ export default function Navigation() {
 
           <div className="relative">
             <button
-              onClick={() => setLangDropdown(!langDropdown)}
+              onClick={() => togglePopover('language')}
               className="p-1.5 hover:bg-card-subtle dark:hover:bg-card-subtle rounded-full transition flex items-center gap-1"
               aria-label="Language"
             >
               <Globe size={18} className="text-primary" />
               <span className="text-xs font-semibold text-primary uppercase">{language}</span>
             </button>
-            {langDropdown && (
-              <div className="absolute right-0 mt-2 bg-card dark:bg-card border border-rose-100 dark:border-rose-900/40 rounded-lg shadow-lg z-50">
+            {activePopover === 'language' && (
+              <div className="absolute right-0 mt-2 w-36 bg-card dark:bg-card border border-rose-100 dark:border-rose-900/40 rounded-lg shadow-lg z-50">
                 <button
                   onClick={() => handleLanguageChange('en')}
-                  className={`block w-full text-left px-4 py-2 hover:bg-card-subtle dark:hover:bg-card-subtle ${language === 'en' ? 'bg-card-subtle dark:bg-card-subtle text-primary font-semibold' : 'text-foreground dark:text-white'}`}
+                  aria-pressed={language === 'en'}
+                  className="flex w-full items-center justify-between px-4 py-2 text-rose-600 dark:text-rose-300"
                 >
                   English
+                  {language === 'en' && <Check size={16} aria-hidden="true" />}
                 </button>
                 <button
                   onClick={() => handleLanguageChange('es')}
-                  className={`block w-full text-left px-4 py-2 hover:bg-card-subtle dark:hover:bg-card-subtle ${language === 'es' ? 'bg-card-subtle dark:bg-card-subtle text-primary font-semibold' : 'text-foreground dark:text-white'}`}
+                  aria-pressed={language === 'es'}
+                  className="flex w-full items-center justify-between px-4 py-2 text-rose-600 dark:text-rose-300"
                 >
                   Español
+                  {language === 'es' && <Check size={16} aria-hidden="true" />}
                 </button>
               </div>
             )}
           </div>
 
           {isMounted && user ? (
-            <AccountMenu />
+            <AccountMenu open={activePopover === 'account'} onOpenChange={(open) => setPopoverOpen('account', open)} />
           ) : isMounted ? (
             <>
               <Link href="/login" className="px-3 py-1 text-foreground hover:text-primary transition text-sm whitespace-nowrap">
@@ -144,7 +156,7 @@ export default function Navigation() {
         {/* Mobile Menu Button */}
         <div className="md:hidden flex items-center gap-1.5">
           <button
-            onClick={() => setNotificationsOpen(!notificationsOpen)}
+            onClick={() => togglePopover('notifications')}
             className="p-1.5 hover:bg-card-subtle dark:hover:bg-card-subtle rounded-full transition relative"
             aria-label="Notifications"
           >
@@ -158,16 +170,16 @@ export default function Navigation() {
           {isMounted && user ? (
             <>
               <button
-                onClick={() => setMenuOpen(!menuOpen)}
+                onClick={() => { setMenuOpen(!menuOpen); setActivePopover(null) }}
                 className="p-1.5 hover:bg-card-subtle dark:hover:bg-card-subtle rounded-lg transition"
               >
                 {menuOpen ? <X size={20} /> : <Menu size={20} />}
               </button>
-              <AccountMenu />
+              <AccountMenu open={activePopover === 'account'} onOpenChange={(open) => setPopoverOpen('account', open)} />
             </>
           ) : isMounted ? (
             <button
-              onClick={() => setMenuOpen(!menuOpen)}
+              onClick={() => { setMenuOpen(!menuOpen); setActivePopover(null) }}
               className="p-1.5 hover:bg-card-subtle dark:hover:bg-card-subtle rounded-lg transition"
             >
               {menuOpen ? <X size={20} /> : <Menu size={20} />}
@@ -218,16 +230,6 @@ export default function Navigation() {
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
-            transition={{ delay: 0.2, duration: 0.3 }}
-          >
-            <Link href="/pricing" className="block text-foreground hover:text-primary transition py-2" onClick={() => setMenuOpen(false)}>
-              {t('common.pricing')}
-            </Link>
-          </motion.div>
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
             transition={{ delay: 0.25, duration: 0.3 }}
           >
             <div className="flex items-center gap-2">
@@ -271,15 +273,19 @@ export default function Navigation() {
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Language</p>
             <button
               onClick={() => handleLanguageChange('en')}
-              className={`block w-full text-left px-4 py-2 rounded-lg transition ${language === 'en' ? 'bg-card-subtle dark:bg-card-subtle text-primary font-semibold' : 'text-foreground dark:text-white hover:bg-card-subtle dark:hover:bg-card-subtle'}`}
+              aria-pressed={language === 'en'}
+              className="flex w-full items-center justify-between px-4 py-2 rounded-lg text-rose-600 dark:text-rose-300"
             >
               English
+              {language === 'en' && <Check size={16} aria-hidden="true" />}
             </button>
             <button
               onClick={() => handleLanguageChange('es')}
-              className={`block w-full text-left px-4 py-2 rounded-lg transition ${language === 'es' ? 'bg-card-subtle dark:bg-card-subtle text-primary font-semibold' : 'text-foreground dark:text-white hover:bg-card-subtle dark:hover:bg-card-subtle'}`}
+              aria-pressed={language === 'es'}
+              className="flex w-full items-center justify-between px-4 py-2 rounded-lg text-rose-600 dark:text-rose-300"
             >
               Español
+              {language === 'es' && <Check size={16} aria-hidden="true" />}
             </button>
           </motion.div>
 
@@ -310,8 +316,8 @@ export default function Navigation() {
 
       {/* Single Notification Panel - handles both desktop and mobile via isMobile hook */}
       <ResponsiveNotificationsPanel
-        open={notificationsOpen}
-        onOpenChange={setNotificationsOpen}
+        open={activePopover === 'notifications'}
+        onOpenChange={(open) => setPopoverOpen('notifications', open)}
         notifications={notifications}
         onDismiss={handleNotificationDismiss}
       />

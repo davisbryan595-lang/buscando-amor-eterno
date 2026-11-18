@@ -1,49 +1,51 @@
-'use client'
+import type { Metadata } from 'next'
+import HomePage from '@/components/home-page'
 
-import React, { useState, useEffect } from 'react'
-import { useAuth } from '@/context/auth-context'
-import Navigation from '@/components/navigation'
-import Hero from '@/components/hero'
-import SuccessStories from '@/components/success-stories'
-import Features from '@/components/features'
-import Footer from '@/components/footer'
-import { useProfileProtection } from '@/hooks/useProfileProtection'
-import { Loader } from 'lucide-react'
+const title = 'Online Dating for Singles | Buscando Amor Eterno'
+const description = 'Meet singles, create a dating profile, and build meaningful connections through messaging and video chat on Buscando Amor Eterno.'
 
-export default function HomePage() {
-  const { user, loading: authLoading } = useAuth()
-  const { isLoading: protectionLoading } = useProfileProtection(true, '/onboarding')
-  const [loadingTimeout, setLoadingTimeout] = useState(false)
+export const metadata: Metadata = {
+  title,
+  description,
+  keywords: ['online dating', 'dating site for singles', 'meet singles online', 'meaningful connections'],
+  alternates: { canonical: '/' },
+  openGraph: {
+    type: 'website',
+    url: '/',
+    siteName: 'Buscando Amor Eterno',
+    title,
+    description,
+    images: [{ url: '/romantic-couple-sunset-beach-luxury.jpg', alt: 'Couple together at sunset on a beach' }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title,
+    description,
+    images: ['/romantic-couple-sunset-beach-luxury.jpg'],
+  },
+}
 
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      if (authLoading || protectionLoading) {
-        console.warn('Home page loading took too long - forcing render')
-        setLoadingTimeout(true)
-      }
-    }, 12000)
+const homepageSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'WebPage',
+  '@id': 'https://www.buscandoamoreterno.com/#homepage',
+  url: 'https://www.buscandoamoreterno.com/',
+  name: title,
+  description,
+  isPartOf: { '@id': 'https://www.buscandoamoreterno.com/#website' },
+  about: { '@id': 'https://www.buscandoamoreterno.com/#organization' },
+  inLanguage: 'en-US',
+  primaryImageOfPage: {
+    '@type': 'ImageObject',
+    url: 'https://www.buscandoamoreterno.com/romantic-couple-sunset-beach-luxury.jpg',
+  },
+}
 
-    return () => clearTimeout(timeoutId)
-  }, [authLoading, protectionLoading])
-
-  // Show loading while checking auth state (but force render after 6 seconds)
-  if ((authLoading || protectionLoading) && !loadingTimeout) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader className="animate-spin" size={40} />
-      </div>
-    )
-  }
-
-  // If user is logged in and has a complete profile, or not logged in, show home
-  // If user is logged in but profile incomplete, they'll be redirected by useProfileProtection
+export default function Page() {
   return (
-    <main className="w-full bg-background text-foreground">
-      <Navigation />
-      <Hero />
-      <SuccessStories />
-      <Features />
-      <Footer />
-    </main>
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(homepageSchema) }} />
+      <HomePage />
+    </>
   )
 }
