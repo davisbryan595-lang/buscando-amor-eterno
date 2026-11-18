@@ -85,10 +85,9 @@ export default function Footer() {
             }}
           >
             <h4 className="font-bold mb-2 text-sm md:text-base" style={{ color: '#ffffff' }}>Get the App</h4>
-            <div className="inline-flex items-center gap-2 rounded-md border border-white/40 px-3 py-2 text-xs md:text-sm text-white/80" aria-label="Google Play app option, coming soon">
+            <div className="inline-flex items-center gap-2 rounded-md border border-white/40 px-3 py-2 text-xs md:text-sm text-white/80" aria-label="Google Play">
               <Play size={16} aria-hidden="true" />
               <span>Google Play</span>
-              <span className="text-[10px] uppercase tracking-wide text-white/60">Coming soon</span>
             </div>
           </div>
 
