@@ -35,6 +35,7 @@ export default function ProfilePage() {
   const [exporting, setExporting] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [activeTab, setActiveTab] = useState('photos')
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false)
 
   if (loading) {
     return (
@@ -187,7 +188,7 @@ export default function ProfilePage() {
               <p className="text-muted-foreground">{profile.full_name || user.email}</p>
             </div>
             <div className="flex items-center gap-4">
-              <AccountMenu />
+              <AccountMenu open={accountMenuOpen} onOpenChange={setAccountMenuOpen} />
               <Button
                 onClick={handleSignOut}
                 variant="outline"

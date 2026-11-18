@@ -13,8 +13,7 @@ import { ResponsiveNotificationsPanel } from '@/components/responsive-notificati
 
 export default function Navigation() {
   const [menuOpen, setMenuOpen] = useState(false)
-  const [langDropdown, setLangDropdown] = useState(false)
-  const [notificationsOpen, setNotificationsOpen] = useState(false)
+  const [activePopover, setActivePopover] = useState<'language' | 'notifications' | 'account' | null>(null)
   const [isMounted, setIsMounted] = useState(false)
   const navRef = useRef<HTMLDivElement>(null)
   const { language, setLanguage, t } = useLanguage()
@@ -47,9 +46,19 @@ export default function Navigation() {
     dismissNotification(id)
   }
 
+  const togglePopover = (popover: 'language' | 'notifications' | 'account') => {
+    setMenuOpen(false)
+    setActivePopover(current => current === popover ? null : popover)
+  }
+
+  const setPopoverOpen = (popover: 'language' | 'notifications' | 'account', open: boolean) => {
+    if (open) setMenuOpen(false)
+    setActivePopover(open ? popover : null)
+  }
+
   const handleLanguageChange = (lang: 'en' | 'es') => {
     setLanguage(lang)
-    setLangDropdown(false)
+    setActivePopover(null)
   }
 
   return (
@@ -83,7 +92,7 @@ export default function Navigation() {
 
           <div className="relative">
             <button
-              onClick={() => setNotificationsOpen(!notificationsOpen)}
+              onClick={() => togglePopover('notifications')}
               className="p-1.5 hover:bg-card-subtle dark:hover:bg-card-subtle rounded-full transition relative"
               aria-label="Notifications"
             >
@@ -98,14 +107,14 @@ export default function Navigation() {
 
           <div className="relative">
             <button
-              onClick={() => setLangDropdown(!langDropdown)}
+              onClick={() => togglePopover('language')}
               className="p-1.5 hover:bg-card-subtle dark:hover:bg-card-subtle rounded-full transition flex items-center gap-1"
               aria-label="Language"
             >
               <Globe size={18} className="text-primary" />
               <span className="text-xs font-semibold text-primary uppercase">{language}</span>
             </button>
-            {langDropdown && (
+            {activePopover === 'language' && (
               <div className="absolute right-0 mt-2 bg-card dark:bg-card border border-rose-100 dark:border-rose-900/40 rounded-lg shadow-lg z-50">
                 <button
                   onClick={() => handleLanguageChange('en')}
@@ -124,7 +133,7 @@ export default function Navigation() {
           </div>
 
           {isMounted && user ? (
-            <AccountMenu />
+            <AccountMenu open={activePopover === 'account'} onOpenChange={(open) => setPopoverOpen('account', open)} />
           ) : isMounted ? (
             <>
               <Link href="/login" className="px-3 py-1 text-foreground hover:text-primary transition text-sm whitespace-nowrap">
@@ -143,7 +152,7 @@ export default function Navigation() {
         {/* Mobile Menu Button */}
         <div className="md:hidden flex items-center gap-1.5">
           <button
-            onClick={() => setNotificationsOpen(!notificationsOpen)}
+            onClick={() => togglePopover('notifications')}
             className="p-1.5 hover:bg-card-subtle dark:hover:bg-card-subtle rounded-full transition relative"
             aria-label="Notifications"
           >
@@ -157,16 +166,16 @@ export default function Navigation() {
           {isMounted && user ? (
             <>
               <button
-                onClick={() => setMenuOpen(!menuOpen)}
+                onClick={() => { setMenuOpen(!menuOpen); setActivePopover(null) }}
                 className="p-1.5 hover:bg-card-subtle dark:hover:bg-card-subtle rounded-lg transition"
               >
                 {menuOpen ? <X size={20} /> : <Menu size={20} />}
               </button>
-              <AccountMenu />
+              <AccountMenu open={activePopover === 'account'} onOpenChange={(open) => setPopoverOpen('account', open)} />
             </>
           ) : isMounted ? (
             <button
-              onClick={() => setMenuOpen(!menuOpen)}
+              onClick={() => { setMenuOpen(!menuOpen); setActivePopover(null) }}
               className="p-1.5 hover:bg-card-subtle dark:hover:bg-card-subtle rounded-lg transition"
             >
               {menuOpen ? <X size={20} /> : <Menu size={20} />}
@@ -299,8 +308,8 @@ export default function Navigation() {
 
       {/* Single Notification Panel - handles both desktop and mobile via isMobile hook */}
       <ResponsiveNotificationsPanel
-        open={notificationsOpen}
-        onOpenChange={setNotificationsOpen}
+        open={activePopover === 'notifications'}
+        onOpenChange={(open) => setPopoverOpen('notifications', open)}
         notifications={notifications}
         onDismiss={handleNotificationDismiss}
       />

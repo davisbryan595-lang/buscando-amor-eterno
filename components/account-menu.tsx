@@ -19,8 +19,7 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 
-export function AccountMenu() {
-  const [menuOpen, setMenuOpen] = useState(false)
+export function AccountMenu({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
   const [isMounted, setIsMounted] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
   const buttonRef = useRef<HTMLButtonElement>(null)
@@ -35,7 +34,7 @@ export function AccountMenu() {
   useEffect(() => {
     if (!menuRef.current || !buttonRef.current) return
 
-    if (menuOpen) {
+    if (open) {
       // Entrance animation
       gsap.fromTo(
         menuRef.current,
@@ -79,7 +78,7 @@ export function AccountMenu() {
         ease: 'power2.out',
       })
     }
-  }, [menuOpen])
+  }, [open])
 
   // Don't render until mounted to avoid hydration issues
   if (!isMounted || !user) return null
@@ -87,7 +86,7 @@ export function AccountMenu() {
   const handleSignOut = async () => {
     try {
       await signOut()
-      setMenuOpen(false)
+      onOpenChange(false)
       // Add a small delay to ensure auth state is updated before routing
       await new Promise(resolve => setTimeout(resolve, 100))
       router.push('/login')
@@ -101,7 +100,7 @@ export function AccountMenu() {
     <div className="relative">
       <button
         ref={buttonRef}
-        onClick={() => setMenuOpen(!menuOpen)}
+        onClick={() => onOpenChange(!open)}
         className="p-2 hover:bg-card-subtle dark:hover:bg-card-subtle rounded-full transition flex items-center gap-2"
         aria-label="Account menu"
       >
@@ -122,7 +121,7 @@ export function AccountMenu() {
         <ChevronDown size={18} className="text-primary" />
       </button>
 
-      {menuOpen && (
+      {open && (
         <div
           ref={menuRef}
           className="absolute right-0 mt-2 w-64 bg-card dark:bg-card border border-rose-100 dark:border-rose-900/40 rounded-xl shadow-lg z-50"
@@ -140,7 +139,7 @@ export function AccountMenu() {
             </div>
             <Link
               href="/profile"
-              onClick={() => setMenuOpen(false)}
+              onClick={() => onOpenChange(false)}
               className="flex items-center gap-3 px-4 py-2.5 hover:bg-card-subtle dark:hover:bg-card-subtle transition text-foreground text-sm"
             >
               <User size={18} className="text-primary" />
@@ -153,7 +152,7 @@ export function AccountMenu() {
             </div>
             <Link
               href="/settings/security"
-              onClick={() => setMenuOpen(false)}
+              onClick={() => onOpenChange(false)}
               className="flex items-center gap-3 px-4 py-2.5 hover:bg-card-subtle dark:hover:bg-card-subtle transition text-foreground text-sm"
             >
               <Lock size={18} className="text-primary" />
@@ -166,7 +165,7 @@ export function AccountMenu() {
             </div>
             <Link
               href="/settings/customization"
-              onClick={() => setMenuOpen(false)}
+              onClick={() => onOpenChange(false)}
               className="flex items-center gap-3 px-4 py-2.5 hover:bg-card-subtle dark:hover:bg-card-subtle transition text-foreground text-sm"
             >
               <Palette size={18} className="text-primary" />
@@ -179,7 +178,7 @@ export function AccountMenu() {
             </div>
             <Link
               href="/settings/preferences"
-              onClick={() => setMenuOpen(false)}
+              onClick={() => onOpenChange(false)}
               className="flex items-center gap-3 px-4 py-2.5 hover:bg-card-subtle dark:hover:bg-card-subtle transition text-foreground text-sm"
             >
               <Settings size={18} className="text-primary" />
