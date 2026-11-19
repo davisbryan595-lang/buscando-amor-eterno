@@ -1,17 +1,14 @@
 import type { Metadata } from 'next'
 import Script from 'next/script'
-import { Geist, Geist_Mono, Inter, Playfair_Display } from 'next/font/google'
+import { Inter, Playfair_Display } from 'next/font/google'
 import './globals.css'
 import { AuthProvider } from '@/context/auth-context'
 import { AdminAuthProvider } from '@/context/admin-auth-context'
 import { I18nProvider } from '@/lib/i18n-context'
-import { Preloader } from '@/components/preloader'
 import CallManager from '@/components/call-manager'
 import { Toaster } from '@/components/ui/sonner'
 import { SessionManager } from '@/components/session-manager'
 
-const _geist = Geist({ subsets: ["latin"] });
-const _geistMono = Geist_Mono({ subsets: ["latin"] });
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
@@ -124,7 +121,6 @@ export default function RootLayout({
         }} />
       </head>
       <body className={`${inter.variable} ${playfair.variable} font-sans antialiased bg-background text-foreground`}>
-        <Preloader />
         <AdminAuthProvider>
           <I18nProvider>
             <AuthProvider>
