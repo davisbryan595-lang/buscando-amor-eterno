@@ -3,9 +3,11 @@
 import React, { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useLanguage } from '@/lib/i18n-context'
+import { useAuth } from '@/context/auth-context'
 
 export default function Hero() {
   const { t } = useLanguage()
+  const { user, loading } = useAuth()
   const [backgroundAttachment, setBackgroundAttachment] = useState<'fixed' | 'scroll'>('scroll')
 
   useEffect(() => {
@@ -66,12 +68,14 @@ export default function Hero() {
         </p>
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-          <Link
-            href="/signup"
-            className="w-full sm:w-auto px-6 sm:px-8 py-3 md:py-4 bg-primary text-white rounded-full text-base md:text-lg font-semibold hover:bg-rose-700 transition transform hover:scale-105 soft-glow"
-          >
-            {t('common.joinForPrice')}
-          </Link>
+          {!loading && !user && (
+            <Link
+              href="/signup"
+              className="w-full sm:w-auto px-6 sm:px-8 py-3 md:py-4 bg-primary text-white rounded-full text-base md:text-lg font-semibold hover:bg-rose-700 transition transform hover:scale-105 soft-glow"
+            >
+              {t('common.joinForPrice')}
+            </Link>
+          )}
           <Link
             href="/browse"
             className="w-full sm:w-auto px-6 sm:px-8 py-3 md:py-4 border-2 border-primary text-primary rounded-full text-base md:text-lg font-semibold hover:bg-rose-50 dark:hover:bg-rose-900/30 transition"
