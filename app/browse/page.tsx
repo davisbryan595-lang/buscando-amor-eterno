@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import Navigation from '@/components/navigation'
@@ -21,7 +21,7 @@ export default function BrowsePage() {
   const { user, loading: authLoading } = useAuth()
   // Protect this route - require complete profile
   const { isLoading } = useProfileProtection(true, '/onboarding')
-  const { profiles, loading: profilesLoading, error: profilesError, likeProfile, dislikeProfile, superLikeProfile } = useBrowseProfiles()
+  const { profiles, loading: profilesLoading, error: profilesError, likeProfile, dislikeProfile, superLikeProfile, recordProfileView, dailyViewsRemaining, freeDailyProfileLimit, isPremium } = useBrowseProfiles()
   const { profile } = useProfile()
   const { notifications, dismissNotification } = useNotifications()
 
@@ -30,12 +30,18 @@ export default function BrowsePage() {
   const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | 'super' | null>(null)
   const [dragOffset, setDragOffset] = useState(0)
   const [isDragging, setIsDragging] = useState(false)
+  const dragOffsetRef = useRef(0)
+  const isDraggingRef = useRef(false)
   const [isActing, setIsActing] = useState(false)
 
   const currentProfile = profiles[currentIndex]
   const { mutualPreferences, loading: profileLoading } = useUserProfile(
     currentProfile?.user_id || null
   )
+
+  useEffect(() => {
+    if (currentProfile) recordProfileView(currentProfile.user_id)
+  }, [currentProfile?.user_id, recordProfileView])
 
   if (authLoading || isLoading || profilesLoading) {
     return (
@@ -129,9 +135,7 @@ export default function BrowsePage() {
     if (actionSucceeded) {
       setSwipeDirection(direction === 'left' ? 'left' : direction === 'right' ? 'right' : 'super')
       setTimeout(() => {
-        if (currentIndex < profiles.length - 1) {
-          setCurrentIndex(currentIndex + 1)
-        }
+        setCurrentIndex(currentIndex + 1)
         setSwipeDirection(null)
         setShowInfo(false)
         setIsActing(false)
@@ -141,23 +145,30 @@ export default function BrowsePage() {
     }
   }
 
-  const handleDragStart = (clientX: number) => {
+  const handleDragStart = () => {
+    dragOffsetRef.current = 0
+    isDraggingRef.current = true
+    setDragOffset(0)
     setIsDragging(true)
   }
 
   const handleDragMove = (clientX: number, startX: number) => {
-    if (!isDragging) return
+    if (!isDraggingRef.current) return
     const offset = clientX - startX
+    dragOffsetRef.current = offset
     setDragOffset(offset)
   }
 
   const handleDragEnd = () => {
-    if (!isDragging) return
+    if (!isDraggingRef.current) return
+    isDraggingRef.current = false
     setIsDragging(false)
-    
-    if (Math.abs(dragOffset) > 100) {
-      handleSwipe(dragOffset > 0 ? 'right' : 'left')
+
+    const offset = dragOffsetRef.current
+    if (Math.abs(offset) > 100) {
+      handleSwipe(offset > 0 ? 'right' : 'left')
     }
+    dragOffsetRef.current = 0
     setDragOffset(0)
   }
 
@@ -169,11 +180,18 @@ export default function BrowsePage() {
           <div className="text-center max-w-md">
             <Heart className="w-20 h-20 text-rose-300 mx-auto mb-6" />
             <h1 className="text-3xl font-playfair font-bold text-foreground mb-4">
-              No New Profiles Yet
+              {!isPremium && dailyViewsRemaining === 0 ? 'You’ve reached today’s free limit' : 'No New Profiles Yet'}
             </h1>
             <p className="text-muted-foreground mb-8">
-              You've reviewed all available profiles that match your preferences. We'll notify you when someone suitable appears!
+              {!isPremium && dailyViewsRemaining === 0
+                ? 'Free members can view 10 profiles each day. Request Premium for unlimited browsing and calling.'
+                : 'You’ve reviewed all available profiles that match your preferences. Check back later for more.'}
             </p>
+            {!isPremium && dailyViewsRemaining === 0 && (
+              <Link href="/pricing" className="mb-4 inline-block rounded-full bg-primary px-8 py-3 font-semibold text-white hover:bg-rose-700">
+                View Premium options
+              </Link>
+            )}
             <Link
               href="/messages"
               className="inline-block px-8 py-3 bg-rose-700 text-white rounded-full font-semibold hover:bg-rose-800 transition-colors"
@@ -218,6 +236,12 @@ export default function BrowsePage() {
 
       <div className="pt-24 pb-12 px-4 flex items-center justify-center min-h-[90vh]">
         <div className="w-full max-w-md relative">
+          {!isPremium && (
+            <p className="mb-3 text-center text-sm text-muted-foreground">
+              {dailyViewsRemaining} of {freeDailyProfileLimit} free profile views remaining today
+              {' · '}<Link href="/pricing" className="font-semibold text-primary hover:underline">Premium options</Link>
+            </p>
+          )}
           {/* Card Container */}
           <div className="relative h-[65vh] min-h-[500px] mb-8">
             {/* Current Card */}
@@ -231,7 +255,7 @@ export default function BrowsePage() {
               }}
               onMouseDown={(e) => {
                 const startX = e.clientX
-                handleDragStart(startX)
+                handleDragStart()
                 const handleMouseMove = (e: MouseEvent) => handleDragMove(e.clientX, startX)
                 const handleMouseUp = () => {
                   handleDragEnd()
@@ -243,7 +267,7 @@ export default function BrowsePage() {
               }}
               onTouchStart={(e) => {
                 const startX = e.touches[0].clientX
-                handleDragStart(startX)
+                handleDragStart()
                 const handleTouchMove = (e: TouchEvent) => handleDragMove(e.touches[0].clientX, startX)
                 const handleTouchEnd = () => {
                   handleDragEnd()

@@ -1,5 +1,7 @@
 'use client'
 
+import { useAuth } from '@/context/auth-context'
+
 export interface SubscriptionData {
   id: string
   user_id: string
@@ -12,15 +14,16 @@ export interface SubscriptionData {
 }
 
 export function useSubscription() {
+  const { user, loading } = useAuth()
   const unavailable = async () => {
-    throw new Error('Subscriptions are temporarily unavailable because all features are free.')
+    throw new Error('Online premium checkout is not available yet. Contact support to request premium access.')
   }
 
   return {
     subscription: null,
-    loading: false,
+    loading,
     error: null,
-    isPremium: true,
+    isPremium: user?.app_metadata?.is_premium === true,
     fetchSubscription: async () => undefined,
     upgradeToPremium: unavailable,
     cancelSubscription: unavailable,

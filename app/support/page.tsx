@@ -41,7 +41,7 @@ export default function SupportPage() {
       <section className="mx-auto w-full max-w-5xl px-4 pb-16 pt-28 md:pb-20 md:pt-32">
         <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">Buscando Amor Eterno</p>
         <h1 className="mt-3 font-playfair text-4xl font-bold md:text-5xl">Support</h1>
-        <p className="mt-5 max-w-2xl text-lg leading-8 text-muted-foreground">Need help with your account, a privacy question, or a safety concern? Start with the resources below or contact our support team.</p>
+        <p className="mt-5 max-w-2xl text-lg leading-8 text-muted-foreground">Need help with your account, a privacy question, a safety concern, or a Premium subscription request? Start with the resources below or contact our support team.</p>
 
         <div className="mt-10 grid gap-5 md:grid-cols-3">
           {supportOptions.map(({ href, icon: Icon, title, description, action }) => (

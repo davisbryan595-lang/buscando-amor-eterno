@@ -1,5 +1,13 @@
-import { redirect } from 'next/navigation'
+import Navigation from '@/components/navigation'
+import Footer from '@/components/footer'
+import { PricingContent } from '@/components/pricing-content'
 
 export default function PricingPage() {
-  redirect('/')
+  return (
+    <main className="min-h-screen bg-background text-foreground">
+      <Navigation />
+      <PricingContent />
+      <Footer />
+    </main>
+  )
 }

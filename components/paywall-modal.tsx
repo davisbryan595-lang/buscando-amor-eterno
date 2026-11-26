@@ -9,7 +9,6 @@ import {
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { useRouter } from 'next/navigation'
-import { useAuth } from '@/context/auth-context'
 
 interface PaywallModalProps {
   isOpen: boolean
@@ -22,29 +21,23 @@ export function PaywallModal({
   isOpen,
   onClose,
   featureName,
-  description = 'All features are currently available at no cost.',
+  description = 'Audio and video calls are Premium features at $12/month. Online checkout is not available yet; contact support to request access.',
 }: PaywallModalProps) {
   const router = useRouter()
-  const { user } = useAuth()
-
-  const handleContinue = () => {
-    router.push(user ? '/browse' : '/signup')
-    onClose()
-  }
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-center text-xl font-bold">{featureName} is free</DialogTitle>
+          <DialogTitle className="text-center text-xl font-bold">Premium required for {featureName}</DialogTitle>
           <DialogDescription className="text-center">{description}</DialogDescription>
         </DialogHeader>
         <div className="flex gap-3 pt-2">
           <Button variant="outline" onClick={onClose} className="flex-1">
             Not Now
           </Button>
-          <Button onClick={handleContinue} className="flex-1">
-            {user ? 'Browse Profiles' : 'Join Free'}
+          <Button onClick={() => { router.push('/contact'); onClose() }} className="flex-1">
+            Contact Support
           </Button>
         </div>
       </DialogContent>

@@ -7,6 +7,8 @@ import Image from 'next/image'
 import { useMessages } from '@/hooks/useMessages'
 import { useAuth } from '@/context/auth-context'
 import { useStartCall } from '@/hooks/useStartCall'
+import { useFeatureAccess } from '@/hooks/useFeatureAccess'
+import { PaywallModal } from '@/components/paywall-modal'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
 import MessageContextMenu from '@/components/message-context-menu'
@@ -83,6 +85,7 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
   const { user } = useAuth()
   const { messages, sendMessage, markAsRead, fetchMessages, loadMoreMessages, hasMoreMessages, fetchConversations, subscribeToConversation, handleTyping, stopTyping } = useMessages()
   const { startCall } = useStartCall()
+  const { checkAccess, closePaywall, paywallState } = useFeatureAccess()
   const [newMessage, setNewMessage] = useState('')
   const [loading, setLoading] = useState(false)
   const [callingState, setCallingState] = useState<'idle' | 'calling'>('idle')
@@ -338,6 +341,7 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
   }
 
   const handleStartAudioCall = async () => {
+    if (!checkAccess('Voice calls').hasAccess) return
     setCallingState('calling')
     try {
       await startCall(
@@ -351,6 +355,7 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
   }
 
   const handleStartVideoCall = async () => {
+    if (!checkAccess('Video calls').hasAccess) return
     setCallingState('calling')
     try {
       await startCall(
@@ -407,7 +412,8 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
             onClick={handleStartAudioCall}
             disabled={callingState === 'calling'}
             className="p-1.5 sm:p-2 lg:p-3 hover:bg-card-hover dark:hover:bg-card-hover disabled:opacity-50 disabled:cursor-not-allowed rounded-full transition"
-            title="Start audio call"
+            title="Voice calls require Premium ($12/month)"
+            aria-label="Start voice call or view Premium options"
           >
             <Phone size={16} className="sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-primary" />
           </button>
@@ -415,7 +421,8 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
             onClick={handleStartVideoCall}
             disabled={callingState === 'calling'}
             className="p-1.5 sm:p-2 lg:p-3 hover:bg-card-hover dark:hover:bg-card-hover disabled:opacity-50 disabled:cursor-not-allowed rounded-full transition"
-            title="Start video call"
+            title="Video calls require Premium ($12/month)"
+            aria-label="Start video call or view Premium options"
           >
             <Video size={16} className="sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-primary" />
           </button>
@@ -518,6 +525,12 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
         />
       )}
 
+      <PaywallModal
+        isOpen={paywallState.isPaywallOpen}
+        onClose={closePaywall}
+        featureName={paywallState.featureName}
+        description={paywallState.description}
+      />
     </div>
   )
 }

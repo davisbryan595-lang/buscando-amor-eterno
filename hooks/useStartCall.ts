@@ -1,11 +1,13 @@
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/auth-context'
+import { useSubscription } from '@/hooks/useSubscription'
 import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
 
 export function useStartCall() {
   const router = useRouter()
   const { user } = useAuth()
+  const { isPremium } = useSubscription()
 
   const startCall = async (
     recipientId: string,
@@ -14,6 +16,11 @@ export function useStartCall() {
   ) => {
     if (!user) {
       toast.error('You must be logged in to make calls')
+      return
+    }
+
+    if (!isPremium) {
+      router.push('/pricing')
       return
     }
 
