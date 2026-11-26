@@ -25,18 +25,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let isMounted = true
     let timeoutId: NodeJS.Timeout
+    let authRevision = 0
 
     const initializeAuth = async () => {
+      const revision = authRevision
       try {
         // Get existing session from localStorage (persisted across page refreshes)
         const { data: { session: sessionData }, error } = await supabase.auth.getSession()
+        if (!isMounted || revision !== authRevision) return
 
         if (error) {
           // If refresh token is invalid/missing, clear session from storage
           if (error.message?.includes('Refresh Token') || error.message?.includes('session')) {
             console.warn('Session expired or refresh token invalid, clearing auth state')
             await supabase.auth.signOut({ scope: 'local' })
-            if (isMounted) {
+            if (isMounted && revision === authRevision) {
               setSession(null)
               setUser(null)
             }
@@ -45,13 +48,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           throw error
         }
 
-        if (isMounted) {
+        if (isMounted && revision === authRevision) {
           setSession(sessionData)
           setUser(sessionData?.user ?? null)
         }
       } catch (error) {
         console.error('Error initializing auth:', error)
-        if (isMounted) {
+        if (isMounted && revision === authRevision) {
           setSession(null)
           setUser(null)
         }
@@ -78,6 +81,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, sessionData) => {
       if (isMounted) {
+        authRevision++
         // If auth state has changed to null/undefined, clear session
         if (!sessionData) {
           setSession(null)

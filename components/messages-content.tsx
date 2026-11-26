@@ -110,10 +110,10 @@ function MessagesContentInner({ onChatOpenChange, isChatOpen }: MessagesContentI
           </p>
           <div className="flex gap-3 justify-center">
             <button
-              onClick={() => window.location.reload()}
+              onClick={() => void chat.fetchConversations()}
               className="px-6 py-2 bg-primary text-primary-foreground rounded-full hover:bg-rose-700 transition font-semibold"
             >
-              Reload Page
+              Try Again
             </button>
             <Link
               href="/browse"

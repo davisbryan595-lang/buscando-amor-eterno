@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef, useLayoutEffect, useMemo } from 're
 import { useRouter } from 'next/navigation'
 import { Send, Phone, Video, ArrowLeft } from 'lucide-react'
 import Image from 'next/image'
-import { useMessages } from '@/hooks/useMessages'
+import { getPrivateChatCacheEpoch, onPrivateChatCacheReset, useMessages } from '@/hooks/useMessages'
 import { useAuth } from '@/context/auth-context'
 import { useStartCall } from '@/hooks/useStartCall'
 import { useFeatureAccess } from '@/hooks/useFeatureAccess'
@@ -68,6 +68,10 @@ interface CallLog {
 const detailCache = new Map<string, { name: string; image: string | null; fetchedAt: number }>()
 const callLogCache = new Map<string, { logs: CallLog[]; fetchedAt: number }>()
 const CHAT_CACHE_TTL = 30_000
+onPrivateChatCacheReset(() => {
+  detailCache.clear()
+  callLogCache.clear()
+})
 
 interface CombinedMessage {
   id: string
@@ -88,7 +92,7 @@ interface CombinedMessage {
 export default function ChatWindow({ conversation, onBack, chat }: ChatWindowProps) {
   const router = useRouter()
   const { user } = useAuth()
-  const { messages, sendMessage, markAsRead, fetchMessages, loadMoreMessages, hasMoreMessages, typingStatus, handleTyping, stopTyping } = chat
+  const { messages, sendMessage, markAsRead, fetchMessages, closeConversation, loadMoreMessages, hasMoreMessages, typingStatus, handleTyping, stopTyping, subscribeToConversation } = chat
   const { startCall } = useStartCall()
   const { checkAccess, closePaywall, paywallState } = useFeatureAccess()
   const [newMessage, setNewMessage] = useState('')
@@ -191,6 +195,7 @@ export default function ChatWindow({ conversation, onBack, chat }: ChatWindowPro
   useEffect(() => {
     if (!conversation.other_user_id || !user?.id) return
     let current = true
+    const cacheEpoch = getPrivateChatCacheEpoch()
     initialScrollRef.current = true
     nearBottomRef.current = true
     paginationRef.current = false
@@ -199,7 +204,8 @@ export default function ChatWindow({ conversation, onBack, chat }: ChatWindowPro
     setOtherUserDetails(null)
     setShowTypingIndicator(false)
     void fetchMessages(conversation.other_user_id)
-    void fetchAndMergeMessages(() => current)
+    const unsubscribeStatus = subscribeToConversation(conversation.other_user_id)
+    void fetchAndMergeMessages(() => current && cacheEpoch === getPrivateChatCacheEpoch())
 
     if (!conversation.other_user_name || !conversation.other_user_image) {
       const key = `${user.id}:${conversation.other_user_id}`
@@ -212,7 +218,7 @@ export default function ChatWindow({ conversation, onBack, chat }: ChatWindowPro
             .select('full_name, photos, main_photo_index')
             .eq('user_id', conversation.other_user_id).maybeSingle()
           if (error) throw error
-          if (current && data) {
+          if (current && cacheEpoch === getPrivateChatCacheEpoch() && data) {
             const details = { name: data.full_name, image: data.photos?.[data.main_photo_index || 0] || null, fetchedAt: Date.now() }
             detailCache.set(key, details)
             setOtherUserDetails(details)
@@ -225,10 +231,12 @@ export default function ChatWindow({ conversation, onBack, chat }: ChatWindowPro
     }
     return () => {
       current = false
+      unsubscribeStatus()
+      closeConversation(conversation.other_user_id)
       stopTyping(conversation.other_user_id)
       if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current)
     }
-  }, [conversation.other_user_id, user?.id, fetchMessages, stopTyping])
+  }, [conversation.other_user_id, user?.id, fetchMessages, closeConversation, stopTyping, subscribeToConversation])
 
   useEffect(() => {
     if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current)

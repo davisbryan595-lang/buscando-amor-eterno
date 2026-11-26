@@ -21,7 +21,7 @@ export default function BrowsePage() {
   const { user, loading: authLoading } = useAuth()
   // Protect this route - require complete profile
   const { isLoading } = useProfileProtection(true, '/onboarding')
-  const { profiles, currentIndex, advanceProfile, beginProfileAction, endProfileAction, actionPending, loading: profilesLoading, error: profilesError, likeProfile, dislikeProfile, recordProfileView, dailyViewsRemaining, freeDailyProfileLimit, isPremium } = useBrowseProfiles()
+  const { profiles, currentIndex, advanceProfile, beginProfileAction, endProfileAction, actionPending, loading: profilesLoading, error: profilesError, fetchProfiles, likeProfile, dislikeProfile, recordProfileView, dailyViewsRemaining, freeDailyProfileLimit, isPremium } = useBrowseProfiles()
   const { profile } = useProfile()
   const { notifications, dismissNotification } = useNotifications()
 
@@ -108,7 +108,7 @@ export default function BrowsePage() {
             </h1>
             <p className="text-muted-foreground mb-6">{profilesError}</p>
             <button
-              onClick={() => window.location.reload()}
+              onClick={() => void fetchProfiles()}
               className="px-8 py-3 bg-rose-700 text-white rounded-full hover:bg-rose-800 transition-colors"
             >
               Try Again
