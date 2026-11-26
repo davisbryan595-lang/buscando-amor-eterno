@@ -38,7 +38,7 @@ const MESSAGES_PAGE_SIZE = 50
 const CACHE_TTL = 30_000
 
 type MessageCache = { messages: Message[]; cursor: Message | null; hasMore: boolean; fetchedAt: number; gapCursor?: Message }
-type UserCache = { conversations: Conversation[] | null; conversationsFetchedAt: number; messages: Map<string, MessageCache>; seenEvents: Set<string>; online: Map<string, boolean> }
+type UserCache = { conversations: Conversation[] | null; conversationsFetchedAt: number; messages: Map<string, MessageCache>; online: Map<string, boolean> }
 const caches = new Map<string, UserCache>()
 const missedCallTimers = new Map<string, ReturnType<typeof setTimeout>>()
 let cacheEpoch = 0
@@ -87,7 +87,7 @@ function installChatAuthListener() {
 const getCache = (userId: string): UserCache => {
   let cache = caches.get(userId)
   if (!cache) {
-    cache = { conversations: null, conversationsFetchedAt: 0, messages: new Map(), seenEvents: new Set(), online: new Map() }
+    cache = { conversations: null, conversationsFetchedAt: 0, messages: new Map(), online: new Map() }
     caches.set(userId, cache)
   }
   return cache
@@ -96,16 +96,96 @@ const getCache = (userId: string): UserCache => {
 // All hook consumers for an account share one receiving channel.
 type RealtimeEvent = 'new_message' | 'typing_indicator' | 'message_read' | 'user_status' | 'subscribed' | 'disconnected'
 type Listener = (event: RealtimeEvent, payload: any) => void
-const receivers = new Map<string, { listeners: Set<Listener>; channel: ReturnType<typeof supabase.channel> }>()
+type MessageEvent = 'new_message' | 'message_read'
+type PendingLookup = { events: Set<MessageEvent>; signalIds: Set<string> }
+type Receiver = { listeners: Set<Listener>; channel: ReturnType<typeof supabase.channel>; pending: Map<string, PendingLookup>; seenSignals: Set<string>; resyncTimer: ReturnType<typeof setTimeout> | null }
+const receivers = new Map<string, Receiver>()
+const MESSAGE_FIELDS = 'id,sender_id,recipient_id,content,read,created_at,type,call_type,call_status,call_duration,call_id'
+const isSignalId = (value: unknown): value is string => typeof value === 'string' && /^[a-zA-Z0-9_-]{1,128}$/.test(value)
+
+// Broadcasts are public and untrusted. Only their identifier is used; all
+// message fields come from the database under the current user's RLS session.
+function resolveMessageSignal(userId: string, receiver: Receiver, event: MessageEvent, payload: any) {
+  const id = payload?.message_id ?? payload?.id // Accept legacy senders without trusting their row.
+  if (!isSignalId(id)) return
+  const signalId = isSignalId(payload?.signal_id) ? payload.signal_id : undefined
+  if (signalId && receiver.seenSignals.has(signalId)) return
+  const existing = receiver.pending.get(id)
+  if (existing) {
+    if (signalId && existing.signalIds.has(signalId)) return
+    if (signalId && existing.signalIds.size < 64) existing.signalIds.add(signalId)
+    existing.events.add(event)
+    return
+  }
+  // Keep arbitrary public signals from starting an unbounded number of queries.
+  if (receiver.pending.size >= 64) {
+    if (!receiver.resyncTimer) {
+      const epochAtOverflow = cacheEpoch
+      receiver.listeners.forEach(fn => fn('disconnected', null))
+      receiver.resyncTimer = setTimeout(() => {
+        receiver.resyncTimer = null
+        if (receivers.get(userId) !== receiver || cacheEpoch !== epochAtOverflow) return
+        receiver.listeners.forEach(fn => fn('subscribed', null))
+      }, 500)
+    }
+    return
+  }
+  const pending: PendingLookup = { events: new Set([event]), signalIds: new Set(signalId ? [signalId] : []) }
+  receiver.pending.set(id, pending)
+  const epoch = cacheEpoch
+  const isCurrent = () => receivers.get(userId) === receiver && cacheEpoch === epoch && (observedUserId === undefined || observedUserId === userId)
+  void (async () => {
+    try {
+      while (isCurrent() && pending.events.size) {
+        const events = Array.from(pending.events)
+        pending.events.clear()
+        const controller = new AbortController()
+        const timeout = setTimeout(() => controller.abort(), 30_000)
+        let result
+        try {
+          result = await supabase.from('messages').select(MESSAGE_FIELDS).eq('id', id)
+            .or(`sender_id.eq.${userId},recipient_id.eq.${userId}`).abortSignal(controller.signal).maybeSingle()
+        } finally {
+          clearTimeout(timeout)
+        }
+        if (!isCurrent()) return
+        if (result.error) {
+          console.warn('Failed to resolve message signal:', result.error)
+          return
+        }
+        const message = result.data as Message | null
+        if (!message || message.id !== id || (message.sender_id !== userId && message.recipient_id !== userId)) return
+        for (const resolvedEvent of events) {
+          // A read receipt is only valid for a message sent by this user that
+          // the database confirms has been read by its recipient.
+          if (resolvedEvent === 'message_read' && (message.sender_id !== userId || !message.read)) continue
+          receiver.listeners.forEach(fn => fn(resolvedEvent, message))
+        }
+      }
+      if (isCurrent()) {
+        pending.signalIds.forEach(signal => receiver.seenSignals.add(signal))
+        while (receiver.seenSignals.size > 1000) receiver.seenSignals.delete(receiver.seenSignals.values().next().value!)
+      }
+    } catch (err) {
+      if (isCurrent()) console.warn('Failed to resolve message signal:', err)
+    } finally {
+      if (receiver.pending.get(id) === pending) receiver.pending.delete(id)
+    }
+  })()
+}
 function listen(userId: string, listener: Listener) {
   let receiver = receivers.get(userId)
   if (!receiver) {
     const listeners = new Set<Listener>([listener])
     const channel = supabase.channel(`messages:${userId}`)
+    receiver = { listeners, channel, pending: new Map(), seenSignals: new Set(), resyncTimer: null }
+    const created = receiver
     for (const event of ['new_message', 'typing_indicator', 'message_read', 'user_status'] as const) {
-      channel.on('broadcast', { event }, ({ payload }) => listeners.forEach(fn => fn(event, payload)))
+      channel.on('broadcast', { event }, ({ payload }) => {
+        if (event === 'new_message' || event === 'message_read') resolveMessageSignal(userId, created, event, payload)
+        else listeners.forEach(fn => fn(event, payload))
+      })
     }
-    receiver = { listeners, channel }
     receivers.set(userId, receiver)
     channel.subscribe(status => {
       if (receivers.get(userId)?.channel !== channel) return
@@ -120,6 +200,7 @@ function listen(userId: string, listener: Listener) {
     receiver!.listeners.delete(listener)
     if (receiver!.listeners.size === 0 && receivers.get(userId) === receiver) {
       receivers.delete(userId)
+      if (receiver!.resyncTimer) clearTimeout(receiver!.resyncTimer)
       void supabase.removeChannel(receiver!.channel)
     }
   }
@@ -159,6 +240,10 @@ async function broadcast(recipientId: string, event: string, payload: unknown) {
   } finally {
     await supabase.removeChannel(channel)
   }
+}
+
+function broadcastMessageSignal(recipientId: string, event: 'new_message' | 'message_read', messageId: string) {
+  return broadcast(recipientId, event, { message_id: messageId, signal_id: crypto.randomUUID() })
 }
 
 function catchUpCursor(entry: MessageCache | undefined, userId: string, other: string): Message | undefined {
@@ -421,9 +506,8 @@ export function useMessages() {
       } else if (event === 'typing_indicator') {
         if (payload?.user_id === activeConversationRef.current) setTypingStatus(payload)
       } else if (event === 'message_read') {
-        if (payload?.reader_id && payload?.message_id) {
-          updateMessages(userId, payload.reader_id, prev => prev.map(m => m.id === payload.message_id && m.sender_id === userId ? { ...m, read: true } : m))
-        }
+        const message = payload as Message
+        updateMessages(userId, message.recipient_id, prev => prev.map(m => m.id === message.id && m.sender_id === userId ? message : m))
       } else if (event === 'user_status') {
         if (typeof payload?.user_id !== 'string' || typeof payload?.is_online !== 'boolean') return
         cache.online.set(payload.user_id, payload.is_online)
@@ -431,13 +515,9 @@ export function useMessages() {
         setConversations(prev => prev.map(c => c.other_user_id === payload.user_id ? { ...c, is_online: payload.is_online } : c))
       } else if (event === 'new_message') {
         const message = payload as Message
-        if (!message?.id || (message.sender_id !== userId && message.recipient_id !== userId)) return
         const other = message.sender_id === userId ? message.recipient_id : message.sender_id
-        const entry = cache.messages.get(other)
-        const alreadyKnown = cache.seenEvents.has(message.id) || entry?.messages.some(m => m.id === message.id) || false
-        cache.seenEvents.add(message.id)
-        if (cache.seenEvents.size > 1000) cache.seenEvents.delete(cache.seenEvents.values().next().value!)
         updateMessages(userId, other, prev => mergeMessages(prev, [message]))
+        // Recompute unread counts from the database, including on replayed signals.
         // A fetch may have raced this event; invalidate it before refreshing.
         conversationRequestRef.current++
         const current = cache.conversations
@@ -447,7 +527,6 @@ export function useMessages() {
           const updated = current.map(c => c.other_user_id === other ? {
             ...c,
             ...(message.created_at >= c.last_message_time ? { last_message: message.content, last_message_time: message.created_at } : {}),
-            unread_count: c.unread_count + (!alreadyKnown && message.recipient_id === userId && !message.read ? 1 : 0),
           } : c).sort((a, b) => b.last_message_time.localeCompare(a.last_message_time))
           cache.conversations = updated
           setConversations(updated)
@@ -490,7 +569,7 @@ export function useMessages() {
       if (epoch !== cacheEpoch) return message
       updateMessages(userId, recipientId, prev => mergeMessages(prev.filter(m => m.id !== temp.id), [message]))
       void Promise.resolve(supabase.from('notifications').insert({ recipient_id: recipientId, from_user_id: userId, type: 'message', message_preview: content.substring(0, 50) })).then(({ error }) => { if (error) console.warn('Failed to create message notification:', error) }).catch(err => console.warn('Failed to create message notification:', err))
-      void broadcast(recipientId, 'new_message', message)
+      void broadcastMessageSignal(recipientId, 'new_message', message.id)
       if (activeUserRef.current === userId) void fetchConversations()
       return message
     } catch (err: any) {
@@ -521,7 +600,7 @@ export function useMessages() {
       const { error: err } = await supabase.from('messages').update({ read: true }).eq('id', messageId).eq('recipient_id', userId)
       if (err) throw err
       if (epoch !== cacheEpoch) return
-      void broadcast(senderId, 'message_read', { message_id: messageId, reader_id: userId, timestamp: Date.now() })
+      void broadcastMessageSignal(senderId, 'message_read', messageId)
       if (activeUserRef.current === userId) {
         if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current)
         refreshTimerRef.current = setTimeout(() => { void fetchConversations() }, 500)
@@ -547,7 +626,7 @@ export function useMessages() {
     const { data, error: err } = await supabase.from('messages').insert({ sender_id: userId, recipient_id: otherUserId, content: '👋 Conversation started', read: false }).select().single()
     if (err) throw err
     if (epoch === cacheEpoch) {
-      void broadcast(otherUserId, 'new_message', data)
+      void broadcastMessageSignal(otherUserId, 'new_message', data.id)
       if (activeUserRef.current === userId) await fetchConversations()
     }
     return { id: otherUserId, user_id: userId, other_user_id: otherUserId, other_user_name: null, other_user_image: null, last_message: '👋 Conversation started', last_message_time: new Date().toISOString(), is_online: false, unread_count: 0 }
@@ -596,7 +675,7 @@ export function useMessages() {
       if (err) throw err
       if (epoch !== cacheEpoch) return newCallId
       updateMessages(userId, recipientId, prev => mergeMessages(prev, [data as Message]))
-      void broadcast(recipientId, 'new_message', data)
+      void broadcastMessageSignal(recipientId, 'new_message', data.id)
       if (typeof window !== 'undefined') {
         localStorage.setItem(`call_${newCallId}_start`, Date.now().toString())
         const timeout = setTimeout(() => {
@@ -625,8 +704,9 @@ export function useMessages() {
     if (callStatus === 'missed') {
       void Promise.resolve(supabase.from('notifications').insert({ recipient_id: recipientId, from_user_id: userId, type: 'call_missed', call_type: callType, call_status: 'missed' })).then(({ error }) => { if (error) console.warn('Failed to create missed call notification:', error) }).catch(console.warn)
     }
-    void broadcast(recipientId, 'new_message', data)
-    if (callStatus === 'ended' || callStatus === 'missed') void broadcast(recipientId, `call_${callStatus}`, { callId, callType, ...(callStatus === 'ended' ? { duration } : {}) })
+    // The same opaque message signal covers call-log updates without exposing
+    // call status, type, duration or call ID in a public event.
+    void broadcastMessageSignal(recipientId, 'new_message', data.id)
   }, [userId, updateMessages])
 
   const scopedConversations = useMemo(() => conversations.filter(c => c.user_id === userId), [conversations, userId])
