@@ -206,7 +206,7 @@ export default function SignupPage() {
 
               <div className="bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 rounded-lg p-3 md:p-4 text-xs md:text-sm text-foreground">
                 <p className="font-semibold mb-2">You're in! ✨</p>
-                <p>Create your profile to connect with other members. Messaging and likes require a subscription.</p>
+                <p>Create your profile to browse up to 10 profiles daily, send unlimited messages, and join Lounge conversations for free. Voice and video calls are available with Premium for $12/month; contact support to request access.</p>
               </div>
 
               <p className="text-muted-foreground text-xs md:text-sm">

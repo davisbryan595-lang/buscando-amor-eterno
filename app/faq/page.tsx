@@ -19,8 +19,8 @@ const faqs = [
     answer: 'The dating platform is intended for adults aged 18 and older. Members should provide accurate information when registering and creating a profile.',
   },
   {
-    question: 'Is Buscando Amor Eterno free to use?',
-    answer: 'Core features are currently available at no cost. If a paid feature is introduced, its price and terms will be shown before you make a purchase.',
+    question: 'What is free and what does Premium include?',
+    answer: 'Signup, text messaging, and Lounge conversations are free. Free members can browse up to 10 profiles per day. Premium is planned at $12 per month and includes unlimited browsing plus voice and video calls. Online checkout is not available yet; contact support to request Premium access.',
   },
   {
     question: 'How do I create a dating profile?',

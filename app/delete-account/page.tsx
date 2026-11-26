@@ -126,7 +126,7 @@ export default function DeleteAccountPage() {
           <section>
             <h2 className="text-2xl font-semibold">Free access</h2>
             <p className="mt-3 text-muted-foreground">
-              All features are currently available at no cost, and no payment is required to use your account.
+              Signup, messaging, and Lounge conversations are free. Premium voice and video calls are planned at $12 per month, but checkout is not available yet and no payment is currently processed.
             </p>
           </section>
         </div>

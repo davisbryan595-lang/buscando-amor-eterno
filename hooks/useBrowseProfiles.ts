@@ -1,9 +1,12 @@
-import { useCallback, useState, useEffect } from 'react'
+import { useCallback, useState, useEffect, useRef } from 'react'
 import { useAuth } from '@/context/auth-context'
 import { supabase } from '@/lib/supabase'
 import { useProfile } from './useProfile'
 import type { ProfileData } from './useProfile'
+import { useSubscription } from '@/hooks/useSubscription'
 import { calculateCompatibilityPercentage, isOrientationCompatible } from '@/utils/matching'
+
+const FREE_DAILY_PROFILE_LIMIT = 10
 
 export type BrowseProfileData = ProfileData & { compatibility: number }
 
@@ -27,14 +30,54 @@ function rankProfiles(candidates: ProfileData[], currentProfile: ProfileData | n
 
 export function useBrowseProfiles() {
   const { user } = useAuth()
+  const { isPremium } = useSubscription()
   const { profile: currentProfile } = useProfile()
   const [profiles, setProfiles] = useState<BrowseProfileData[]>([])
+  const [dailyViewedProfileIds, setDailyViewedProfileIds] = useState<string[]>([])
+  const dailyViewedProfileIdsRef = useRef<string[]>([])
+  const [usageReady, setUsageReady] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const usageKey = user ? `browse-profile-views:${user.id}:${new Date().toISOString().slice(0, 10)}` : null
 
   useEffect(() => {
-    if (!user) {
-      setLoading(false)
+    if (!usageKey) {
+      dailyViewedProfileIdsRef.current = []
+      setDailyViewedProfileIds([])
+      setUsageReady(true)
+      return
+    }
+
+    setUsageReady(false)
+    try {
+      const stored = localStorage.getItem(usageKey)
+      const parsed = stored ? JSON.parse(stored) : []
+      const viewedIds = Array.isArray(parsed) ? parsed.filter((id): id is string => typeof id === 'string') : []
+      dailyViewedProfileIdsRef.current = viewedIds
+      setDailyViewedProfileIds(viewedIds)
+    } catch {
+      dailyViewedProfileIdsRef.current = []
+      setDailyViewedProfileIds([])
+    }
+    setUsageReady(true)
+  }, [usageKey])
+
+  const recordProfileView = useCallback((profileId: string) => {
+    if (!usageKey || isPremium || dailyViewedProfileIdsRef.current.includes(profileId)) return
+
+    const next = [...dailyViewedProfileIdsRef.current, profileId]
+    dailyViewedProfileIdsRef.current = next
+    localStorage.setItem(usageKey, JSON.stringify(next))
+    setDailyViewedProfileIds(next)
+  }, [isPremium, usageKey])
+
+  const dailyViewsRemaining = isPremium
+    ? Infinity
+    : Math.max(0, FREE_DAILY_PROFILE_LIMIT - dailyViewedProfileIds.length)
+
+  useEffect(() => {
+    if (!user || !usageReady) {
+      setLoading(!usageReady)
       return
     }
 
@@ -56,7 +99,8 @@ export function useBrowseProfiles() {
 
         if (err) throw err
         const ranked = rankProfiles((data as ProfileData[]) || [], currentProfile)
-        setProfiles(ranked)
+        const unseen = isPremium ? ranked : ranked.filter((item) => !dailyViewedProfileIdsRef.current.includes(item.user_id))
+        setProfiles(isPremium ? unseen : unseen.slice(0, dailyViewsRemaining))
         setError(null)
       } catch (err: any) {
         if (isMounted) {
@@ -77,10 +121,10 @@ export function useBrowseProfiles() {
     return () => {
       isMounted = false
     }
-  }, [user, currentProfile])
+  }, [user, currentProfile, usageReady, isPremium, usageKey])
 
   const fetchProfiles = async () => {
-    if (!user) return
+    if (!user || !usageReady) return
 
     try {
       setLoading(true)
@@ -94,7 +138,8 @@ export function useBrowseProfiles() {
 
       if (err) throw err
       const ranked = rankProfiles((data as ProfileData[]) || [], currentProfile)
-      setProfiles(ranked)
+      const unseen = isPremium ? ranked : ranked.filter((item) => !dailyViewedProfileIdsRef.current.includes(item.user_id))
+      setProfiles(isPremium ? unseen : unseen.slice(0, dailyViewsRemaining))
       setError(null)
     } catch (err: any) {
       const errorMessage = err?.message || (typeof err === 'string' ? err : 'Failed to fetch profiles')
@@ -330,5 +375,9 @@ export function useBrowseProfiles() {
     likeProfile,
     dislikeProfile,
     superLikeProfile,
+    recordProfileView,
+    dailyViewsRemaining,
+    freeDailyProfileLimit: FREE_DAILY_PROFILE_LIMIT,
+    isPremium,
   }
 }

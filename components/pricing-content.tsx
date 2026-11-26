@@ -1,55 +1,68 @@
 'use client'
 
 import React from 'react'
-import { Check } from 'lucide-react'
+import Link from 'next/link'
+import { Check, Crown } from 'lucide-react'
+import { useSubscription } from '@/hooks/useSubscription'
 
-const features = [
-  'Unlimited messaging',
+const freeFeatures = [
+  'Free signup and profile creation',
+  'Up to 10 profile views per day',
+  'Unlimited text conversations',
+  'Lounge conversations',
+]
+
+const premiumFeatures = [
+  'Unlimited profile browsing',
+  'Voice calls',
   'Video calls',
-  'Advanced filters',
-  'See who liked you',
-  'Verified profiles',
-  'Priority support',
-  'Ad-free experience',
-  'Profile boost',
+  'All free features included',
 ]
 
 export function PricingContent() {
+  const { isPremium } = useSubscription()
 
   return (
-    <div className="pt-20 md:pt-24 pb-16 md:pb-20 px-4">
-      <div className="w-full max-w-2xl mx-auto">
-        <h1 className="text-3xl sm:text-4xl md:text-5xl font-playfair font-bold text-center mb-3 md:mb-4 text-foreground">
-Free Access
-        </h1>
-        <p className="text-center text-muted-foreground mb-8 md:mb-12 text-base sm:text-lg">
-All features are currently available at no cost.
-        </p>
+    <div className="px-4 pb-16 pt-28 md:pb-20 md:pt-32">
+      <div className="mx-auto max-w-5xl">
+        <p className="text-center text-sm font-semibold uppercase tracking-[0.18em] text-primary">Membership</p>
+        <h1 className="mt-3 text-center font-playfair text-4xl font-bold text-foreground md:text-5xl">Simple plans, meaningful connections</h1>
+        <p className="mx-auto mt-4 max-w-2xl text-center text-base text-muted-foreground sm:text-lg">Keep chatting and connecting for free, or request Premium for unlimited browsing and calls.</p>
 
-        <div className="bg-gradient-to-br from-card to-card-subtle dark:from-card dark:to-card-subtle border-2 border-primary rounded-2xl p-6 sm:p-8 md:p-12 soft-glow-lg">
-          <div className="text-center mb-8">
-            <p className="text-sm md:text-base text-muted-foreground mb-2">Current membership status</p>
-            <p className="text-4xl sm:text-5xl md:text-6xl font-playfair font-bold text-primary mb-2">
-              Free
-            </p>
-            <p className="text-sm md:text-base text-muted-foreground">No payment required</p>
-          </div>
+        <div className="mt-10 grid gap-6 md:grid-cols-2">
+          <section className="rounded-3xl border border-border bg-card p-6 shadow-sm sm:p-8">
+            <h2 className="text-2xl font-bold text-foreground">Free</h2>
+            <p className="mt-3 text-4xl font-playfair font-bold text-foreground">$0 <span className="text-base font-normal text-muted-foreground">/ always</span></p>
+            <ul className="mt-7 space-y-4">
+              {freeFeatures.map((feature) => (
+                <li key={feature} className="flex items-start gap-3 text-sm text-foreground">
+                  <Check className="mt-0.5 h-5 w-5 shrink-0 text-primary" />{feature}
+                </li>
+              ))}
+            </ul>
+          </section>
 
-          <ul className="space-y-3 md:space-y-4 mb-8 md:mb-12">
-            {features.map((feature, index) => (
-              <li key={index} className="flex items-center gap-3">
-                <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center text-white flex-shrink-0">
-                  <Check size={16} />
-                </div>
-                <span className="text-sm md:text-base text-foreground">{feature}</span>
-              </li>
-            ))}
-          </ul>
-
-          <div className="w-full rounded-lg bg-primary/10 px-4 py-3 text-center text-sm font-medium text-primary">
-            Browse, message, match, and call freely while free access is enabled.
-          </div>
+          <section className="rounded-3xl border-2 border-primary bg-gradient-to-br from-rose-50 to-card p-6 shadow-lg dark:from-rose-950/30 sm:p-8">
+            <div className="flex items-center gap-2 text-primary"><Crown size={20} /><span className="text-sm font-semibold uppercase tracking-wide">Premium</span></div>
+            <p className="mt-3 text-4xl font-playfair font-bold text-foreground">$12 <span className="text-base font-normal text-muted-foreground">/ month</span></p>
+            <ul className="mt-7 space-y-4">
+              {premiumFeatures.map((feature) => (
+                <li key={feature} className="flex items-start gap-3 text-sm text-foreground">
+                  <Check className="mt-0.5 h-5 w-5 shrink-0 text-primary" />{feature}
+                </li>
+              ))}
+            </ul>
+            <div className="mt-8 rounded-2xl bg-primary/10 p-4 text-sm leading-6 text-foreground">
+              {isPremium
+                ? 'You have Premium. Contact support if you need help with your Premium subscription.'
+                : 'Online checkout is not available yet. Contact support to request Premium access.'}
+            </div>
+            <Link href="/contact" className="mt-5 inline-flex w-full items-center justify-center rounded-full bg-primary px-6 py-3 font-semibold text-white transition hover:bg-rose-700">
+              {isPremium ? 'Contact Support' : 'Request Premium through Support'}
+            </Link>
+          </section>
         </div>
+        <p className="mt-6 text-center text-xs leading-5 text-muted-foreground">Premium access is currently handled by support. No payment will be collected on this page.</p>
       </div>
     </div>
   )

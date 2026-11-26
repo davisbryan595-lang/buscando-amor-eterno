@@ -16,6 +16,7 @@ import {
   Palette,
   LogOut,
   ChevronDown,
+  Crown,
 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -144,6 +145,14 @@ export function AccountMenu({ open, onOpenChange }: { open: boolean; onOpenChang
             >
               <User size={18} className="text-primary" />
               Account Details
+            </Link>
+            <Link
+              href="/pricing"
+              onClick={() => onOpenChange(false)}
+              className="flex items-center gap-3 px-4 py-2.5 hover:bg-card-subtle dark:hover:bg-card-subtle transition text-foreground text-sm"
+            >
+              <Crown size={18} className="text-primary" />
+              Membership
             </Link>
 
             {/* Security */}

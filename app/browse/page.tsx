@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import Navigation from '@/components/navigation'
@@ -21,7 +21,7 @@ export default function BrowsePage() {
   const { user, loading: authLoading } = useAuth()
   // Protect this route - require complete profile
   const { isLoading } = useProfileProtection(true, '/onboarding')
-  const { profiles, loading: profilesLoading, error: profilesError, likeProfile, dislikeProfile, superLikeProfile } = useBrowseProfiles()
+  const { profiles, loading: profilesLoading, error: profilesError, likeProfile, dislikeProfile, superLikeProfile, recordProfileView, dailyViewsRemaining, freeDailyProfileLimit, isPremium } = useBrowseProfiles()
   const { profile } = useProfile()
   const { notifications, dismissNotification } = useNotifications()
 
@@ -38,6 +38,10 @@ export default function BrowsePage() {
   const { mutualPreferences, loading: profileLoading } = useUserProfile(
     currentProfile?.user_id || null
   )
+
+  useEffect(() => {
+    if (currentProfile) recordProfileView(currentProfile.user_id)
+  }, [currentProfile?.user_id, recordProfileView])
 
   if (authLoading || isLoading || profilesLoading) {
     return (
@@ -176,11 +180,18 @@ export default function BrowsePage() {
           <div className="text-center max-w-md">
             <Heart className="w-20 h-20 text-rose-300 mx-auto mb-6" />
             <h1 className="text-3xl font-playfair font-bold text-foreground mb-4">
-              No New Profiles Yet
+              {!isPremium && dailyViewsRemaining === 0 ? 'You’ve reached today’s free limit' : 'No New Profiles Yet'}
             </h1>
             <p className="text-muted-foreground mb-8">
-              You've reviewed all available profiles that match your preferences. We'll notify you when someone suitable appears!
+              {!isPremium && dailyViewsRemaining === 0
+                ? 'Free members can view 10 profiles each day. Request Premium for unlimited browsing and calling.'
+                : 'You’ve reviewed all available profiles that match your preferences. Check back later for more.'}
             </p>
+            {!isPremium && dailyViewsRemaining === 0 && (
+              <Link href="/pricing" className="mb-4 inline-block rounded-full bg-primary px-8 py-3 font-semibold text-white hover:bg-rose-700">
+                View Premium options
+              </Link>
+            )}
             <Link
               href="/messages"
               className="inline-block px-8 py-3 bg-rose-700 text-white rounded-full font-semibold hover:bg-rose-800 transition-colors"
@@ -225,6 +236,12 @@ export default function BrowsePage() {
 
       <div className="pt-24 pb-12 px-4 flex items-center justify-center min-h-[90vh]">
         <div className="w-full max-w-md relative">
+          {!isPremium && (
+            <p className="mb-3 text-center text-sm text-muted-foreground">
+              {dailyViewsRemaining} of {freeDailyProfileLimit} free profile views remaining today
+              {' · '}<Link href="/pricing" className="font-semibold text-primary hover:underline">Premium options</Link>
+            </p>
+          )}
           {/* Card Container */}
           <div className="relative h-[65vh] min-h-[500px] mb-8">
             {/* Current Card */}

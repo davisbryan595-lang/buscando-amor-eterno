@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/context/auth-context'
+import { useSubscription } from '@/hooks/useSubscription'
 import { supabase } from '@/lib/supabase'
 import Navigation from '@/components/navigation'
 import Footer from '@/components/footer'
@@ -13,6 +14,7 @@ export default function VideoDateContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { user, loading: authLoading } = useAuth()
+  const { isPremium } = useSubscription()
   const [partnerName, setPartnerName] = useState<string | null>(null)
   const [partnerImage, setPartnerImage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -45,6 +47,11 @@ export default function VideoDateContent() {
       return
     }
 
+    if (!isPremium) {
+      setLoadingPartner(false)
+      return
+    }
+
     // Fetch partner name and image
     const fetchPartnerName = async () => {
       try {
@@ -73,7 +80,7 @@ export default function VideoDateContent() {
     }
 
     fetchPartnerName()
-  }, [user, partnerId, router, authLoading])
+  }, [user, partnerId, router, authLoading, isPremium])
 
   // For outgoing calls, listen for acceptance via real-time subscription
   useEffect(() => {
@@ -145,6 +152,24 @@ export default function VideoDateContent() {
       }
     }
   }, [mode, callId, user])
+
+  if (!authLoading && user && !isPremium) {
+    return (
+      <main className="min-h-screen bg-background text-foreground">
+        <Navigation />
+        <div className="flex min-h-[80vh] items-center justify-center px-4 pt-24">
+          <div className="max-w-md rounded-3xl border border-border bg-card p-8 text-center shadow-lg">
+            <Lock size={48} className="mx-auto mb-4 text-primary" />
+            <h1 className="text-2xl font-bold">Calls are a Premium feature</h1>
+            <p className="mt-3 text-muted-foreground">Premium is planned at $12/month. Online checkout is not available yet; contact support to request access.</p>
+            <button onClick={() => router.push('/pricing')} className="mt-6 rounded-full bg-primary px-6 py-3 font-semibold text-white hover:bg-rose-700">View Premium options</button>
+            <button onClick={() => router.push('/messages')} className="mt-3 block w-full px-6 py-2 text-sm text-muted-foreground hover:text-foreground">Back to Messages</button>
+          </div>
+        </div>
+        <Footer />
+      </main>
+    )
+  }
 
   // Show error if no partner or authentication issues
     if (error || !user) {

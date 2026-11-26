@@ -1,9 +1,11 @@
 'use client'
 
 import React, { useEffect, useState } from 'react'
-import { Phone, PhoneOff, Video, Mic, Clock } from 'lucide-react'
+import { Phone, PhoneOff, Video, Mic, Clock, Lock } from 'lucide-react'
 import Image from 'next/image'
 import { IncomingCall } from '@/hooks/useIncomingCalls'
+import { useFeatureAccess } from '@/hooks/useFeatureAccess'
+import { PaywallModal } from '@/components/paywall-modal'
 
 interface IncomingCallModalProps {
   call: IncomingCall | null
@@ -19,6 +21,7 @@ export default function IncomingCallModal({
   const [isAccepting, setIsAccepting] = useState(false)
   const [isRejecting, setIsRejecting] = useState(false)
   const [timeLeft, setTimeLeft] = useState(60)
+  const { checkAccess, closePaywall, paywallState, isPremium } = useFeatureAccess()
 
   useEffect(() => {
     if (!call) {
@@ -42,6 +45,8 @@ export default function IncomingCallModal({
   if (!call) return null
 
   const handleAccept = async () => {
+    const featureName = call?.call_type === 'video' ? 'Video calls' : 'Voice calls'
+    if (!checkAccess(featureName).hasAccess) return
     setIsAccepting(true)
     try {
       await onAccept(call.id)
@@ -144,8 +149,8 @@ export default function IncomingCallModal({
             disabled={isAccepting || isRejecting}
             className="flex-1 py-4 px-6 bg-green-500 hover:bg-green-600 disabled:bg-green-500 disabled:opacity-50 text-white rounded-full font-semibold transition flex items-center justify-center gap-2 transform active:scale-95 shadow-lg"
           >
-            <Phone size={20} />
-            <span>Accept</span>
+            {isPremium ? <Phone size={20} /> : <Lock size={20} />}
+            <span>{isPremium ? 'Accept' : 'Premium required'}</span>
           </button>
         </div>
 
@@ -157,6 +162,12 @@ export default function IncomingCallModal({
           </div>
         </div>
       </div>
+      <PaywallModal
+        isOpen={paywallState.isPaywallOpen}
+        onClose={closePaywall}
+        featureName={paywallState.featureName}
+        description={paywallState.description}
+      />
     </div>
   )
 }
