@@ -49,6 +49,7 @@ export function useBrowseProfiles() {
           .select(BROWSE_FIELDS)
           .neq('user_id', user.id)
           .eq('profile_complete', true)
+          .or('banned.is.null,banned.eq.false')
           .limit(200)
 
         if (!isMounted) return
@@ -88,6 +89,7 @@ export function useBrowseProfiles() {
         .select(BROWSE_FIELDS)
         .neq('user_id', user.id)
         .eq('profile_complete', true)
+        .or('banned.is.null,banned.eq.false')
         .limit(200)
 
       if (err) throw err
