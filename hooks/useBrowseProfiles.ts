@@ -7,6 +7,7 @@ import { useSubscription } from '@/hooks/useSubscription'
 import { calculateCompatibilityPercentage, isOrientationCompatible } from '@/utils/matching'
 
 const FREE_DAILY_PROFILE_LIMIT = 10
+const PROFILE_FETCH_TIMEOUT_MS = 15000
 
 export type BrowseProfileData = ProfileData & { compatibility: number }
 
@@ -17,6 +18,17 @@ const BROWSE_FIELDS = [
   'prompt_1', 'prompt_2', 'prompt_3', 'prompt_4',
   'religion', 'wants_kids', 'age_range_min', 'age_range_max', 'distance_radius',
 ].join(',')
+
+function fetchBrowseProfiles(userId: string, signal: AbortSignal) {
+  return supabase
+    .from('profiles')
+    .select(BROWSE_FIELDS)
+    .neq('user_id', userId)
+    .eq('profile_complete', true)
+    .or('banned.is.null,banned.eq.false')
+    .limit(200)
+    .abortSignal(signal)
+}
 
 function rankProfiles(candidates: ProfileData[], currentProfile: ProfileData | null): BrowseProfileData[] {
   return candidates
@@ -82,18 +94,14 @@ export function useBrowseProfiles() {
     }
 
     let isMounted = true
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), PROFILE_FETCH_TIMEOUT_MS)
 
     const fetchProfilesData = async () => {
       try {
         setLoading(true)
 
-        const { data, error: err } = await supabase
-          .from('profiles')
-          .select(BROWSE_FIELDS)
-          .neq('user_id', user.id)
-          .eq('profile_complete', true)
-          .or('banned.is.null,banned.eq.false')
-          .limit(200)
+        const { data, error: err } = await fetchBrowseProfiles(user.id, controller.signal)
 
         if (!isMounted) return
 
@@ -104,12 +112,15 @@ export function useBrowseProfiles() {
         setError(null)
       } catch (err: any) {
         if (isMounted) {
-          const errorMessage = err?.message || (typeof err === 'string' ? err : 'Failed to fetch profiles')
+          const errorMessage = controller.signal.aborted
+            ? 'Loading profiles timed out. Please try again.'
+            : err?.message || (typeof err === 'string' ? err : 'Failed to fetch profiles')
           setError(errorMessage)
           console.error('Error fetching profiles:', errorMessage, err)
           setProfiles([])
         }
       } finally {
+        clearTimeout(timeoutId)
         if (isMounted) {
           setLoading(false)
         }
@@ -120,21 +131,20 @@ export function useBrowseProfiles() {
 
     return () => {
       isMounted = false
+      clearTimeout(timeoutId)
+      controller.abort()
     }
   }, [user, currentProfile, usageReady, isPremium, usageKey])
 
   const fetchProfiles = async () => {
     if (!user || !usageReady) return
 
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), PROFILE_FETCH_TIMEOUT_MS)
+
     try {
       setLoading(true)
-      const { data, error: err } = await supabase
-        .from('profiles')
-        .select(BROWSE_FIELDS)
-        .neq('user_id', user.id)
-        .eq('profile_complete', true)
-        .or('banned.is.null,banned.eq.false')
-        .limit(200)
+      const { data, error: err } = await fetchBrowseProfiles(user.id, controller.signal)
 
       if (err) throw err
       const ranked = rankProfiles((data as ProfileData[]) || [], currentProfile)
@@ -142,11 +152,14 @@ export function useBrowseProfiles() {
       setProfiles(isPremium ? unseen : unseen.slice(0, dailyViewsRemaining))
       setError(null)
     } catch (err: any) {
-      const errorMessage = err?.message || (typeof err === 'string' ? err : 'Failed to fetch profiles')
+      const errorMessage = controller.signal.aborted
+        ? 'Loading profiles timed out. Please try again.'
+        : err?.message || (typeof err === 'string' ? err : 'Failed to fetch profiles')
       setError(errorMessage)
       console.error('Error fetching profiles:', errorMessage, err)
       setProfiles([])
     } finally {
+      clearTimeout(timeoutId)
       setLoading(false)
     }
   }
