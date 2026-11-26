@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useLayoutEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { Send, Phone, Video, ArrowLeft } from 'lucide-react'
 import Image from 'next/image'
@@ -49,6 +49,7 @@ interface Conversation {
 interface ChatWindowProps {
   conversation: Conversation
   onBack?: () => void
+  chat: ReturnType<typeof useMessages>
 }
 
 interface CallLog {
@@ -63,6 +64,10 @@ interface CallLog {
   duration?: number
   type: 'call_log'
 }
+
+const detailCache = new Map<string, { name: string; image: string | null; fetchedAt: number }>()
+const callLogCache = new Map<string, { logs: CallLog[]; fetchedAt: number }>()
+const CHAT_CACHE_TTL = 30_000
 
 interface CombinedMessage {
   id: string
@@ -80,10 +85,10 @@ interface CombinedMessage {
   receiver_id?: string
 }
 
-export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
+export default function ChatWindow({ conversation, onBack, chat }: ChatWindowProps) {
   const router = useRouter()
   const { user } = useAuth()
-  const { messages, sendMessage, markAsRead, fetchMessages, loadMoreMessages, hasMoreMessages, fetchConversations, subscribeToConversation, handleTyping, stopTyping } = useMessages()
+  const { messages, sendMessage, markAsRead, fetchMessages, loadMoreMessages, hasMoreMessages, typingStatus, handleTyping, stopTyping } = chat
   const { startCall } = useStartCall()
   const { checkAccess, closePaywall, paywallState } = useFeatureAccess()
   const [newMessage, setNewMessage] = useState('')
@@ -91,7 +96,6 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
   const [callingState, setCallingState] = useState<'idle' | 'calling'>('idle')
   const [otherUserDetails, setOtherUserDetails] = useState<{ name: string; image: string | null } | null>(null)
   const [callLogs, setCallLogs] = useState<CallLog[]>([])
-  const [combinedMessages, setCombinedMessages] = useState<CombinedMessage[]>([])
   const [contextMenu, setContextMenu] = useState<{
     x: number
     y: number
@@ -100,25 +104,27 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
     isOwn: boolean
   } | null>(null)
   const [showTypingIndicator, setShowTypingIndicator] = useState(false)
-  const [previousMessageCount, setPreviousMessageCount] = useState(0)
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const paginationRef = useRef(false)
+  const scrollAnchorRef = useRef<{ element: Element; top: number } | null>(null)
+  const nearBottomRef = useRef(true)
+  const initialScrollRef = useRef(true)
+  const conversationRef = useRef(conversation.other_user_id)
+  conversationRef.current = conversation.other_user_id
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const messagesContainerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
-  const unsubscribeRef = useRef<(() => void) | null>(null)
-  const typingChannelRef = useRef<any>(null)
-
-  const scrollToBottom = () => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' })
-    }
-  }
-
   // Fetch call logs and merge with messages
-  const fetchAndMergeMessages = async () => {
+  const fetchAndMergeMessages = async (isCurrent: () => boolean) => {
     if (!conversation?.other_user_id || !user) return
 
+    const key = `${user.id}:${conversation.other_user_id}`
+    const cached = callLogCache.get(key)
+    if (cached && Date.now() - cached.fetchedAt < CHAT_CACHE_TTL) {
+      if (isCurrent()) setCallLogs(cached.logs)
+      return
+    }
     try {
       const { data: callLogsData } = await supabase
         .from('call_logs')
@@ -127,7 +133,8 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
         .order('started_at', { ascending: true })
         .limit(100)
 
-      if (callLogsData) {
+      if (isCurrent() && callLogsData) {
+        callLogCache.set(key, { logs: callLogsData, fetchedAt: Date.now() })
         setCallLogs(callLogsData)
       }
     } catch (err) {
@@ -136,9 +143,9 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
   }
 
   // Merge messages and call logs chronologically
-  useEffect(() => {
-    const merged: CombinedMessage[] = [
-      ...(messages || []).map(m => ({
+  const combinedMessages = useMemo<CombinedMessage[]>(() => {
+    return [
+      ...messages.filter(m => (m.sender_id === user?.id && m.recipient_id === conversation.other_user_id) || (m.sender_id === conversation.other_user_id && m.recipient_id === user?.id)).map(m => ({
         ...m,
         type: 'text' as const,
         created_at: m.created_at,
@@ -156,132 +163,99 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
       })),
     ].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
 
-    setCombinedMessages(merged)
-  }, [messages, callLogs])
+  }, [messages, callLogs, user?.id, conversation.other_user_id])
 
-  // Handle scroll to load older messages
   useEffect(() => {
     const container = messagesContainerRef.current
     if (!container) return
-
+    const other = conversation.other_user_id
     const handleScroll = () => {
-      if (container.scrollTop === 0 && hasMoreMessages && conversation?.other_user_id) {
-        loadMoreMessages(conversation.other_user_id)
-      }
+      nearBottomRef.current = container.scrollHeight - container.scrollTop - container.clientHeight < 100
+      if (container.scrollTop > 0 || !hasMoreMessages || paginationRef.current || initialScrollRef.current) return
+      paginationRef.current = true
+      const element = container.firstElementChild
+      if (element) scrollAnchorRef.current = { element, top: element.getBoundingClientRect().top }
+      void loadMoreMessages(other).finally(() => {
+        if (conversationRef.current !== other) return
+        paginationRef.current = false
+        // No new DOM content (empty or failed page): release the anchor as well.
+        requestAnimationFrame(() => {
+          if (conversationRef.current === other) scrollAnchorRef.current = null
+        })
+      })
     }
-
     container.addEventListener('scroll', handleScroll)
     return () => container.removeEventListener('scroll', handleScroll)
-  }, [hasMoreMessages, conversation?.other_user_id, loadMoreMessages])
+  }, [hasMoreMessages, conversation.other_user_id, loadMoreMessages])
 
   useEffect(() => {
-    if (conversation?.other_user_id) {
-      setPreviousMessageCount(0)
-      fetchMessages(conversation.other_user_id)
-      fetchAndMergeMessages()
+    if (!conversation.other_user_id || !user?.id) return
+    let current = true
+    initialScrollRef.current = true
+    nearBottomRef.current = true
+    paginationRef.current = false
+    scrollAnchorRef.current = null
+    setCallLogs([])
+    setOtherUserDetails(null)
+    setShowTypingIndicator(false)
+    void fetchMessages(conversation.other_user_id)
+    void fetchAndMergeMessages(() => current)
 
-      // Subscribe to real-time updates for this conversation
-      unsubscribeRef.current = subscribeToConversation(conversation.other_user_id) || null
-
-      // Subscribe to typing indicators and read receipts for this conversation
-      const { supabase } = require('@/lib/supabase')
-      typingChannelRef.current = supabase
-        .channel(`messages:${user?.id}:${conversation.other_user_id}`)
-        .on('broadcast', { event: 'typing_indicator' }, (payload) => {
-          const typingStatus = payload.payload
-
-          // Show typing indicator if other user is typing
-          if (typingStatus.user_id === conversation.other_user_id && typingStatus.is_typing) {
-            setShowTypingIndicator(true)
-
-            // Clear existing timeout
-            if (typingTimeoutRef.current) {
-              clearTimeout(typingTimeoutRef.current)
-            }
-
-            // Hide typing indicator after 4 seconds of no new typing events
-            typingTimeoutRef.current = setTimeout(() => {
-              setShowTypingIndicator(false)
-            }, 4000)
-          } else if (typingStatus.user_id === conversation.other_user_id && !typingStatus.is_typing) {
-            setShowTypingIndicator(false)
-            if (typingTimeoutRef.current) {
-              clearTimeout(typingTimeoutRef.current)
-            }
+    if (!conversation.other_user_name || !conversation.other_user_image) {
+      const key = `${user.id}:${conversation.other_user_id}`
+      const cached = detailCache.get(key)
+      if (cached && Date.now() - cached.fetchedAt < CHAT_CACHE_TTL) setOtherUserDetails(cached)
+      const fetchUserDetails = async () => {
+        if (cached && Date.now() - cached.fetchedAt < CHAT_CACHE_TTL) return
+        try {
+          const { data, error } = await supabase.from('profiles')
+            .select('full_name, photos, main_photo_index')
+            .eq('user_id', conversation.other_user_id).maybeSingle()
+          if (error) throw error
+          if (current && data) {
+            const details = { name: data.full_name, image: data.photos?.[data.main_photo_index || 0] || null, fetchedAt: Date.now() }
+            detailCache.set(key, details)
+            setOtherUserDetails(details)
           }
-        })
-        .on('broadcast', { event: 'message_read' }, (payload) => {
-          const readReceipt = payload.payload
-
-          // Update message to show it was read by marking it as read
-          if (readReceipt.reader_id === conversation.other_user_id) {
-            // Silently handle read receipts
-          }
-        })
-        .subscribe((status) => {
-          // Silently handle subscription status
-        })
-
-      // Fetch full user details if not available in conversation
-      if (!conversation.other_user_name || !conversation.other_user_image) {
-        const fetchUserDetails = async () => {
-          try {
-            const { data, error } = await supabase
-              .from('profiles')
-              .select('full_name, photos, main_photo_index')
-              .eq('user_id', conversation.other_user_id)
-              .maybeSingle()
-
-            if (error) throw error
-            if (data) {
-              setOtherUserDetails({
-                name: data.full_name,
-                image: data.photos?.[data.main_photo_index || 0] || null,
-              })
-            }
-          } catch (err: any) {
-            console.error('Error fetching user details:', err?.message || JSON.stringify(err))
-          }
-        }
-        fetchUserDetails()
-      }
-
-      return () => {
-        if (unsubscribeRef.current) {
-          unsubscribeRef.current()
-        }
-        // Properly unsubscribe from typing channel before removing it
-        if (typingChannelRef.current) {
-          typingChannelRef.current.unsubscribe()
-          supabase.removeChannel(typingChannelRef.current)
-        }
-        if (typingTimeoutRef.current) {
-          clearTimeout(typingTimeoutRef.current)
+        } catch (err: any) {
+          console.error('Error fetching user details:', err?.message || JSON.stringify(err))
         }
       }
+      void fetchUserDetails()
     }
-  }, [conversation?.other_user_id, user?.id, fetchMessages, subscribeToConversation])
+    return () => {
+      current = false
+      stopTyping(conversation.other_user_id)
+      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current)
+    }
+  }, [conversation.other_user_id, user?.id, fetchMessages, stopTyping])
 
-  // Mark all unread messages as read when opening the chat
   useEffect(() => {
-    if (messages.length > 0 && user?.id) {
-      const unreadMessages = messages.filter((msg) => msg.recipient_id === user.id && !msg.read)
-      if (unreadMessages.length > 0) {
-        unreadMessages.forEach((msg) => {
-          markAsRead(msg.id, msg.sender_id)
-        })
-      }
-    }
-  }, [conversation?.id, user?.id, messages, markAsRead])
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current)
+    const typing = typingStatus?.user_id === conversation.other_user_id && typingStatus.is_typing
+    setShowTypingIndicator(!!typing)
+    if (typing) typingTimeoutRef.current = setTimeout(() => setShowTypingIndicator(false), 4000)
+    return () => { if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current) }
+  }, [typingStatus, conversation.other_user_id])
 
-  // Scroll to bottom when new messages arrive
   useEffect(() => {
-    // Auto-scroll when new messages arrive
-    if (combinedMessages.length > previousMessageCount) {
-      scrollToBottom()
-      setPreviousMessageCount(combinedMessages.length)
+    if (!user?.id) return
+    messages.filter(msg => msg.sender_id === conversation.other_user_id && msg.recipient_id === user.id && !msg.read)
+      .forEach(msg => { void markAsRead(msg.id, msg.sender_id) })
+  }, [conversation.other_user_id, user?.id, messages, markAsRead])
+
+  useLayoutEffect(() => {
+    const container = messagesContainerRef.current
+    if (!container || !combinedMessages.length) return
+    if (scrollAnchorRef.current) {
+      const { element, top } = scrollAnchorRef.current
+      if (element.isConnected) container.scrollTop += element.getBoundingClientRect().top - top
+    } else if (initialScrollRef.current || nearBottomRef.current) {
+      container.scrollTop = container.scrollHeight
+      initialScrollRef.current = false
+      nearBottomRef.current = true
     }
-  }, [combinedMessages, previousMessageCount])
+  }, [combinedMessages])
 
   const handleSend = async () => {
     if (!newMessage.trim() || !user) return
@@ -484,7 +458,6 @@ export default function ChatWindow({ conversation, onBack }: ChatWindowProps) {
                 </div>
               </div>
             )}
-            <div ref={messagesEndRef} />
           </>
         )}
         <div ref={messagesEndRef} />

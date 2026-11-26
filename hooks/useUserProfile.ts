@@ -1,4 +1,5 @@
-import { useCallback, useState, useEffect } from 'react'
+import { useCallback, useState, useEffect, useMemo, useRef } from 'react'
+import { useAuth } from '@/context/auth-context'
 import { supabase } from '@/lib/supabase'
 import { useProfile } from './useProfile'
 import type { ProfileData } from './useProfile'
@@ -18,11 +19,14 @@ export interface PreferenceMatch {
 }
 
 export function useUserProfile(userId: string | null) {
-  const { profile: currentProfile } = useProfile()
-  const [userProfile, setUserProfile] = useState<ProfileData | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [mutualPreferences, setMutualPreferences] = useState<MutualPreference[]>([])
+  const { user } = useAuth()
+  const viewerId: string | null = user?.id ?? null
+  const { profile: loadedProfile } = useProfile()
+  const currentProfile = loadedProfile?.user_id === viewerId ? loadedProfile : null
+  const [result, setResult] = useState<{ key: string; profile: ProfileData | null; loading: boolean; error: string | null } | null>(null)
+  const requestId = useRef(0)
+  const lastDetail = useRef<{ key: string; profile: ProfileData | null; fetchedAt: number } | null>(null)
+  const key = JSON.stringify([viewerId, userId])
 
   // Calculate if two preferences match
   const isPreferenceMatch = (preference: string, userValue: any, viewedUserValue: any): boolean => {
@@ -177,55 +181,52 @@ export function useUserProfile(userId: string | null) {
   )
 
   const fetchUserProfile = useCallback(async () => {
+    const request = ++requestId.current
     if (!userId) {
-      setLoading(false)
+      setResult({ key, profile: null, loading: false, error: null })
       return
     }
-
+    setResult({ key, profile: null, loading: true, error: null })
     try {
-      setLoading(true)
-
       const { data, error: err } = await supabase
         .from('profiles')
         .select('*')
         .eq('user_id', userId)
         .maybeSingle()
-
-      if (err) {
-        throw err
+      if (err) throw err
+      if (request === requestId.current) {
+        const profile = data as ProfileData | null
+        lastDetail.current = { key, profile, fetchedAt: Date.now() }
+        setResult({ key, profile, loading: false, error: null })
       }
-
-      if (data) {
-        const profile = data as ProfileData
-        setUserProfile(profile)
-
-        // Calculate mutual preferences
-        if (currentProfile) {
-          const mutual = calculateMutualPreferences(currentProfile, profile)
-          setMutualPreferences(mutual)
-        }
-      } else {
-        setUserProfile(null)
-        setMutualPreferences([])
-      }
-      setError(null)
     } catch (err: any) {
-      const errorMessage = err?.message || 'Failed to fetch profile'
-      setError(errorMessage)
-      console.error('Error fetching user profile:', errorMessage, err)
-    } finally {
-      setLoading(false)
+      if (request !== requestId.current) return
+      const message = err?.message || 'Failed to fetch profile'
+      setResult({ key, profile: null, loading: false, error: message })
+      console.error('Error fetching user profile:', message, err)
     }
-  }, [userId, currentProfile, calculateMutualPreferences])
+  }, [userId, key])
 
   useEffect(() => {
-    fetchUserProfile()
-  }, [fetchUserProfile])
+    const cached = lastDetail.current
+    if (userId && cached?.key === key && Date.now() - cached.fetchedAt < 60_000) {
+      setResult({ key, profile: cached.profile, loading: false, error: null })
+    } else {
+      fetchUserProfile()
+    }
+    return () => { requestId.current++ }
+  }, [fetchUserProfile, key, userId])
 
+  // Do not expose the preceding card during the render before the effect runs.
+  const userProfile = result?.key === key ? result.profile : null
+  const mutualPreferences = useMemo(
+    () => currentProfile && userProfile ? calculateMutualPreferences(currentProfile, userProfile) : [],
+    [currentProfile, userProfile, calculateMutualPreferences]
+  )
   return {
     userProfile,
-    loading,
-    error,
+    loading: !!userId && (result?.key !== key || result.loading),
+    error: result?.key === key ? result.error : null,
     mutualPreferences,
     fetchUserProfile,
   }

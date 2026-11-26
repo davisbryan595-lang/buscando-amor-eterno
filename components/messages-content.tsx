@@ -18,17 +18,34 @@ interface MessagesContentInnerProps {
 function MessagesContentInner({ onChatOpenChange, isChatOpen }: MessagesContentInnerProps) {
   const router = useRouter()
   const { user } = useAuth()
-  const { conversations, loading, error } = useMessages()
+  const chat = useMessages()
+  const { conversations, loading, conversationError: error } = chat
   const searchParams = useSearchParams()
   const userIdParam = searchParams.get('user')
   const [selectedConversation, setSelectedConversation] = useState<any>(null)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [isClosingChat, setIsClosingChat] = useState(false)
   const chatWindowRef = useRef<HTMLDivElement>(null)
+  const appliedQueryRef = useRef<string | null>(null)
+  const selectedUserRef = useRef<string | undefined>(user?.id)
+
+  useEffect(() => {
+    if (selectedUserRef.current !== user?.id) {
+      selectedUserRef.current = user?.id
+      setSelectedConversation(null)
+      appliedQueryRef.current = null
+    }
+  }, [user?.id])
 
   // Auto-select conversation if user_id is in query params
   useEffect(() => {
-    if (userIdParam && conversations.length > 0) {
+    if (!user?.id || !userIdParam) {
+      appliedQueryRef.current = null
+      return
+    }
+    const queryKey = `${user.id}:${userIdParam}`
+    if (appliedQueryRef.current !== queryKey) {
+      appliedQueryRef.current = queryKey
       const conversation = conversations.find((c) => c.other_user_id === userIdParam)
       if (conversation) {
         setSelectedConversation(conversation)
@@ -81,7 +98,7 @@ function MessagesContentInner({ onChatOpenChange, isChatOpen }: MessagesContentI
     )
   }
 
-  if (error) {
+  if (error && conversations.length === 0) {
     return (
       <div className="pt-24 pb-12 px-4 h-screen flex items-center justify-center">
         <div className="text-center max-w-md">
@@ -185,10 +202,12 @@ function MessagesContentInner({ onChatOpenChange, isChatOpen }: MessagesContentI
           </div>
         </div>
 
-        {selectedConversation && (
+        {selectedConversation && selectedConversation.user_id === user.id && (
           <div ref={chatWindowRef} className={`w-full flex-1 md:flex-1 flex min-w-0 overflow-hidden ${selectedConversation ? 'flex' : 'hidden md:flex'}`}>
             <ChatWindow
-              conversation={selectedConversation}
+              key={`${user.id}:${selectedConversation.other_user_id}`}
+              conversation={conversations.find(c => c.other_user_id === selectedConversation.other_user_id) || selectedConversation}
+              chat={chat}
               onBack={handleBackToConversations}
             />
           </div>

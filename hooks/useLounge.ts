@@ -25,395 +25,344 @@ export interface LoungeUser {
   last_seen: string
 }
 
-const KEYWORD_FILTER_PATTERNS = [
-  /badword1/gi,
-  /inappropriate/gi,
-  /offensive/gi,
-]
+const KEYWORD_FILTER_PATTERNS = [/badword1/gi, /inappropriate/gi, /offensive/gi]
+const PAGE_SIZE = 200
+const CACHE_TTL = 5 * 60 * 1000
+// Memory only: do not persist one account's lounge data on the device.
+const messageCache = new Map<string, { messages: LoungeMessage[]; savedAt: number }>()
+
+type MessageRow = { id: string; user_id: string; content: string; created_at: string }
+type Cursor = { id: string; created_at: string }
+
+function mergeMessages(...groups: LoungeMessage[][]): LoungeMessage[] {
+  const byId = new Map<string, LoungeMessage>()
+  groups.flat().forEach((message) => byId.set(message.id, message))
+  return Array.from(byId.values()).sort((a, b) =>
+    a.created_at < b.created_at ? -1 : a.created_at > b.created_at ? 1 : a.id < b.id ? -1 : a.id > b.id ? 1 : 0
+  )
+}
+
+async function enrichMessages(rows: MessageRow[]): Promise<LoungeMessage[]> {
+  if (!rows.length) return []
+  const senderIds = Array.from(new Set(rows.map((row) => row.user_id)))
+  let profiles: any[] = []
+  try {
+    const result = await supabase
+      .from('profiles')
+      .select('user_id, full_name, photos, main_photo_index')
+      .in('user_id', senderIds)
+    profiles = result.data || []
+  } catch (err) {
+    console.error('Error loading lounge profiles:', err)
+  }
+  const profileMap = new Map(profiles.map((profile: any) => [profile.user_id, profile]))
+  return rows.map((row) => {
+    const profile: any = profileMap.get(row.user_id)
+    return {
+      id: row.id,
+      user_id: row.user_id,
+      message: row.content,
+      message_type: 'text',
+      reported_count: 0,
+      created_at: row.created_at,
+      sender_name: profile?.full_name || 'Anonymous',
+      sender_image: profile?.photos?.[profile?.main_photo_index || 0] || undefined,
+    }
+  })
+}
+
+function errorText(err: any, fallback: string) {
+  return err?.message || err?.error_description || fallback
+}
 
 export function useLounge() {
   const { user } = useAuth()
+  const userId: string | undefined = user?.id
+  const currentUserRef = useRef(userId)
+  currentUserRef.current = userId
+  const [owner, setOwner] = useState<string | undefined>(userId)
   const [messages, setMessages] = useState<LoungeMessage[]>([])
   const [onlineUsers, setOnlineUsers] = useState<LoungeUser[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadingOlder, setLoadingOlder] = useState(false)
+  const [hasOlder, setHasOlder] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const activeRef = useRef(false)
+  const sessionRef = useRef(0)
+  const cursorRef = useRef<Cursor | null>(null)
+  const pagingRef = useRef(false)
+  const liveRef = useRef<LoungeMessage[]>([])
+  const initialAppliedRef = useRef(false)
+  const fetchVersionRef = useRef(0)
 
-  const subscriptionRef = useRef<any>(null)
-  const presenceRef = useRef<any>(null)
+  const isCurrent = useCallback((id: string) => activeRef.current && currentUserRef.current === id, [])
 
-  // Fetch initial messages
-  const fetchMessages = useCallback(async () => {
-    if (!user) return
+  // Cache only the newest page, scoped by account and bounded in size and age.
+  useEffect(() => {
+    if (!userId || owner !== userId || !activeRef.current || !initialAppliedRef.current) return
+    messageCache.set(userId, { messages: messages.slice(-PAGE_SIZE), savedAt: Date.now() })
+    while (messageCache.size > 5) messageCache.delete(messageCache.keys().next().value as string)
+  }, [messages, owner, userId])
 
+  const fetchMessages = useCallback(async (id: string) => {
+    const version = ++fetchVersionRef.current
     try {
-      setLoading(true)
       const { data, error: err } = await supabase
         .from('lounge_messages')
-        .select(
-          `
-          id,
-          user_id,
-          content,
-          created_at
-        `
-        )
-        .order('created_at', { ascending: true })
-        .limit(200)
-
+        .select('id, user_id, content, created_at')
+        .order('created_at', { ascending: false })
+        .order('id', { ascending: false })
+        .limit(PAGE_SIZE)
       if (err) throw err
-
-      // Fetch user profiles for messages
-      if (data && data.length > 0) {
-        const senderIds = Array.from(new Set(data.map((m: any) => m.user_id)))
-        const { data: profiles, error: profileErr } = await supabase
-          .from('profiles')
-          .select('user_id, full_name, photos, main_photo_index')
-          .in('user_id', senderIds)
-
-        if (!profileErr && profiles) {
-          const profileMap = new Map(profiles.map((p: any) => [p.user_id, p]))
-          const enrichedMessages = data.map((msg: any) => {
-            const profile = profileMap.get(msg.user_id)
-            return {
-              ...msg,
-              user_id: msg.user_id,
-              message: msg.content,
-              sender_name: profile?.full_name || 'Anonymous',
-              sender_image: profile?.photos?.[profile?.main_photo_index || 0] || null,
-            }
-          })
-          setMessages(enrichedMessages)
-        }
+      const rows = (data || []) as MessageRow[]
+      const enriched = await enrichMessages(rows)
+      if (!isCurrent(id) || version !== fetchVersionRef.current) return
+      if (!initialAppliedRef.current) {
+        initialAppliedRef.current = true
+        cursorRef.current = rows.length ? rows[rows.length - 1] : null
+        setHasOlder(rows.length === PAGE_SIZE)
+        // Replace the provisional cache, but preserve inserts observed during fetch.
+        setMessages(mergeMessages(enriched, liveRef.current))
+      } else {
+        // Reconnect catch-up must not discard loaded history or concurrent inserts.
+        setMessages((previous) => mergeMessages(previous, enriched, liveRef.current))
       }
-
       setError(null)
     } catch (err: any) {
-      const errorMessage = err?.message || err?.error_description || JSON.stringify(err) || 'Failed to load lounge messages'
-      console.error('Error fetching lounge messages:', errorMessage, err)
-      setError(errorMessage)
+      if (isCurrent(id) && version === fetchVersionRef.current) {
+        console.error('Error fetching lounge messages:', err)
+        setError(errorText(err, 'Failed to load lounge messages'))
+      }
     } finally {
+      if (isCurrent(id) && version === fetchVersionRef.current) setLoading(false)
+    }
+  }, [isCurrent])
+
+  const loadOlder = useCallback(async (): Promise<boolean> => {
+    const id = userId
+    const cursor = cursorRef.current
+    if (!id || !isCurrent(id) || !initialAppliedRef.current || !cursor || pagingRef.current || !hasOlder) return false
+    const session = sessionRef.current
+    pagingRef.current = true
+    setLoadingOlder(true)
+    try {
+      // Composite keyset cursor avoids skipping rows with identical timestamps.
+      const { data, error: err } = await supabase
+        .from('lounge_messages')
+        .select('id, user_id, content, created_at')
+        .or(`created_at.lt.${cursor.created_at},and(created_at.eq.${cursor.created_at},id.lt.${cursor.id})`)
+        .order('created_at', { ascending: false })
+        .order('id', { ascending: false })
+        .limit(PAGE_SIZE)
+      if (err) throw err
+      const rows = (data || []) as MessageRow[]
+      const enriched = await enrichMessages(rows)
+      if (!isCurrent(id) || session !== sessionRef.current) return false
+      if (rows.length) cursorRef.current = rows[rows.length - 1]
+      setHasOlder(rows.length === PAGE_SIZE)
+      setMessages((previous) => mergeMessages(enriched, previous))
+      setError(null)
+      return rows.length > 0
+    } catch (err: any) {
+      if (isCurrent(id) && session === sessionRef.current) {
+        console.error('Error loading older lounge messages:', err)
+        setError(errorText(err, 'Failed to load older messages'))
+      }
+      return false
+    } finally {
+      if (isCurrent(id) && session === sessionRef.current) {
+        pagingRef.current = false
+        setLoadingOlder(false)
+      }
+    }
+  }, [userId, hasOlder, isCurrent])
+
+  const addLiveMessage = useCallback((message: LoungeMessage, id: string) => {
+    if (!isCurrent(id)) return
+    liveRef.current = mergeMessages(liveRef.current, [message])
+    setMessages((previous) => mergeMessages(previous, [message]))
+  }, [isCurrent])
+
+  useEffect(() => {
+    activeRef.current = true
+    sessionRef.current += 1
+    fetchVersionRef.current += 1
+    cursorRef.current = null
+    pagingRef.current = false
+    liveRef.current = []
+    initialAppliedRef.current = false
+    setOwner(userId)
+    setOnlineUsers([])
+    setError(null)
+    setLoadingOlder(false)
+    setHasOlder(false)
+    if (!userId) {
+      setMessages([])
       setLoading(false)
+      return () => { activeRef.current = false }
     }
-  }, [user])
 
-  // Subscribe to real-time message updates using postgres changes so any platform
-  // (website or app) inserting into lounge_messages is picked up by everyone.
-  const subscribeToMessages = useCallback(() => {
-    if (!user) return
+    const cached = messageCache.get(userId)
+    if (cached && Date.now() - cached.savedAt < CACHE_TTL) {
+      setMessages(cached.messages)
+      setLoading(false)
+    } else {
+      messageCache.delete(userId)
+      setMessages([])
+      setLoading(true)
+    }
 
-    let isMounted = true
-    let retryCount = 0
+    let mounted = true
+    let messageChannel: any
+    let presenceChannel: any
+    let messageRetry: ReturnType<typeof setTimeout> | undefined
+    let presenceRetry: ReturnType<typeof setTimeout> | undefined
+    let messageRetries = 0
+    let presenceRetries = 0
     const maxRetries = 5
-    let retryTimeout: NodeJS.Timeout | null = null
+    const stillCurrent = () => mounted && isCurrent(userId)
 
-    const setupSubscription = () => {
-      if (!isMounted) return
-
+    const scheduleMessageRetry = () => {
+      if (!stillCurrent() || messageRetry || messageRetries >= maxRetries) return
+      const delay = Math.min(1000 * Math.pow(2, messageRetries++), 10000)
+      messageRetry = setTimeout(() => { messageRetry = undefined; setupMessages() }, delay)
+    }
+    const setupMessages = () => {
+      if (!stillCurrent()) return
       try {
-        const channelName = 'global_singles_lounge_db'
-
-        if (subscriptionRef.current) {
-          supabase.removeChannel(subscriptionRef.current)
-        }
-
-        subscriptionRef.current = supabase
-          .channel(channelName)
-          .on(
-            'postgres_changes',
-            { event: 'INSERT', schema: 'public', table: 'lounge_messages' },
-            async (payload) => {
-              if (!isMounted) return
-
-              const newRow = payload.new as any
-
-              // Fetch the sender's profile to enrich the message
-              const { data: profile } = await supabase
-                .from('profiles')
-                .select('full_name, photos, main_photo_index')
-                .eq('user_id', newRow.user_id)
-                .maybeSingle()
-
-              const enrichedMessage: LoungeMessage = {
-                id: newRow.id,
-                user_id: newRow.user_id,
-                message: newRow.content,
-                message_type: 'text',
-                reported_count: 0,
-                created_at: newRow.created_at,
-                sender_name: profile?.full_name || 'Anonymous',
-                sender_image: profile?.photos?.[profile?.main_photo_index || 0] || null,
-              }
-
-              setMessages((prev) => {
-                const isDuplicate = prev.some((m) => m.id === enrichedMessage.id)
-                return isDuplicate ? prev : [...prev, enrichedMessage]
-              })
-            }
-          )
-          .subscribe((status, err) => {
-            if (err) {
-              console.log('[Lounge] Subscription error:', err?.message || JSON.stringify(err))
-            } else {
-              console.log('[Lounge] Postgres changes subscription status:', status)
-            }
-
-            if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
-              if (isMounted && retryCount < maxRetries) {
-                retryCount += 1
-                const delay = Math.min(1000 * Math.pow(2, retryCount - 1), 10000)
-                retryTimeout = setTimeout(() => {
-                  if (isMounted) setupSubscription()
-                }, delay)
-              }
-            } else if (status === 'SUBSCRIBED') {
-              retryCount = 0
-              console.log('[Lounge] Postgres changes subscription active')
-            }
-          })
-      } catch (err: any) {
-        console.error('Error subscribing to lounge messages:', err?.message || JSON.stringify(err))
-        if (isMounted && retryCount < maxRetries) {
-          retryCount += 1
-          const delay = Math.min(1000 * Math.pow(2, retryCount - 1), 10000)
-          retryTimeout = setTimeout(() => {
-            if (isMounted) setupSubscription()
-          }, delay)
-        }
+        if (messageChannel) supabase.removeChannel(messageChannel)
+        const channel = supabase.channel('global_singles_lounge_db')
+        messageChannel = channel
+        channel.on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'lounge_messages' }, async (payload) => {
+          const [message] = await enrichMessages([payload.new as MessageRow])
+          if (stillCurrent() && message) addLiveMessage(message, userId)
+        }).subscribe((status, err) => {
+          if (!stillCurrent() || channel !== messageChannel) return
+          if (err) console.log('[Lounge] Subscription error:', err.message)
+          if (status === 'SUBSCRIBED') {
+            if (messageRetry) clearTimeout(messageRetry)
+            messageRetry = undefined
+            messageRetries = 0
+            // Close the gap between the first query and subscription/reconnection.
+            fetchMessages(userId)
+          } else if (status === 'CLOSED' || status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+            scheduleMessageRetry()
+          }
+        })
+      } catch (err) {
+        console.error('Error subscribing to lounge messages:', err)
+        scheduleMessageRetry()
       }
     }
-
-    setupSubscription()
-
-    return () => {
-      isMounted = false
-      if (retryTimeout) clearTimeout(retryTimeout)
-      if (subscriptionRef.current) {
-        subscriptionRef.current.unsubscribe()
-        supabase.removeChannel(subscriptionRef.current)
-      }
-    }
-  }, [user])
-
-  // Track user presence
-  const updatePresence = useCallback(() => {
-    if (!user) return
-
-    let isMounted = true
-    let retryCount = 0
-    const maxRetries = 5
-    let retryTimeout: NodeJS.Timeout | null = null
 
     const setupPresence = async () => {
-      if (!isMounted) return
-
+      if (!stillCurrent()) return
       try {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('full_name, photos, main_photo_index')
-          .eq('user_id', user.id)
-          .maybeSingle()
-
-        const channelName = 'global_singles_lounge_presence'
-
-        // Remove old presence if it exists
-        if (presenceRef.current) {
-          presenceRef.current.untrack()
-          supabase.removeChannel(presenceRef.current)
+        const { data: profile } = await supabase.from('profiles')
+          .select('full_name, photos, main_photo_index').eq('user_id', userId).maybeSingle()
+        if (!stillCurrent()) return
+        if (presenceChannel) {
+          presenceChannel.untrack()
+          supabase.removeChannel(presenceChannel)
         }
-
-        presenceRef.current = supabase
-          .channel(channelName)
-          .on('presence', { event: 'sync' }, () => {
-            if (!isMounted) return
-
-            const presenceState = presenceRef.current?.presenceState()
-            const users: LoungeUser[] = []
-
-            Object.keys(presenceState || {}).forEach((userId) => {
-              const userPresence = presenceState[userId][0]
-              users.push({
-                user_id: userId,
-                full_name: userPresence?.full_name || 'Anonymous',
-                main_photo: userPresence?.main_photo || null,
-                last_seen: new Date().toISOString(),
-              })
+        const channel = supabase.channel('global_singles_lounge_presence')
+        presenceChannel = channel
+        channel.on('presence', { event: 'sync' }, () => {
+          if (!stillCurrent() || channel !== presenceChannel) return
+          const state = channel.presenceState() as Record<string, any[]>
+          const users = new Map<string, LoungeUser>()
+          Object.values(state).flat().forEach((presence: any) => {
+            // Presence keys identify connections, not necessarily users.
+            if (typeof presence.user_id !== 'string' || !presence.user_id) return
+            users.set(presence.user_id, {
+              user_id: presence.user_id,
+              full_name: presence.full_name || 'Anonymous',
+              main_photo: presence.main_photo || undefined,
+              last_seen: presence.last_seen || new Date().toISOString(),
             })
-
-            setOnlineUsers(users)
           })
-          .subscribe(async (status, err) => {
-            if (!isMounted) return
-
-            if (err) {
-              const errorMsg = err?.message || JSON.stringify(err)
-              console.log('[Lounge] Presence error:', errorMsg, err)
-            } else {
-              console.log('[Lounge] Presence status:', status)
-            }
-
-            if (status === 'SUBSCRIBED') {
-              retryCount = 0
-              presenceRef.current.track({
-                user_id: user.id,
-                full_name: profile?.full_name || 'User',
-                main_photo: profile?.photos?.[profile?.main_photo_index || 0] || null,
-              })
-            } else if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
-              console.log('[Lounge] Presence subscription closed/error - retrying...')
-              if (isMounted && retryCount < maxRetries) {
-                retryCount += 1
-                const delay = Math.min(1000 * Math.pow(2, retryCount - 1), 10000)
-                retryTimeout = setTimeout(() => {
-                  if (isMounted) {
-                    setupPresence()
-                  }
-                }, delay)
-              }
-            }
-          })
-      } catch (err: any) {
-        const errorMsg = err?.message || JSON.stringify(err) || 'Unknown error'
-        console.error('Error updating presence:', errorMsg, err)
-        if (isMounted && retryCount < maxRetries) {
-          retryCount += 1
-          const delay = Math.min(1000 * Math.pow(2, retryCount - 1), 10000)
-          retryTimeout = setTimeout(() => {
-            if (isMounted) {
-              setupPresence()
-            }
-          }, delay)
+          setOnlineUsers(Array.from(users.values()))
+        }).subscribe((status, err) => {
+          if (!stillCurrent() || channel !== presenceChannel) return
+          if (err) console.log('[Lounge] Presence error:', err.message)
+          if (status === 'SUBSCRIBED') {
+            presenceRetries = 0
+            channel.track({
+              user_id: userId,
+              full_name: profile?.full_name || 'User',
+              main_photo: profile?.photos?.[profile?.main_photo_index || 0] || null,
+              last_seen: new Date().toISOString(),
+            })
+          } else if ((status === 'CLOSED' || status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') && presenceRetries < maxRetries) {
+            const delay = Math.min(1000 * Math.pow(2, presenceRetries++), 10000)
+            presenceRetry = setTimeout(setupPresence, delay)
+          }
+        })
+      } catch (err) {
+        console.error('Error updating presence:', err)
+        if (stillCurrent() && presenceRetries < maxRetries) {
+          const delay = Math.min(1000 * Math.pow(2, presenceRetries++), 10000)
+          presenceRetry = setTimeout(setupPresence, delay)
         }
       }
     }
 
+    setupMessages()
+    fetchMessages(userId)
     setupPresence()
-
     return () => {
-      isMounted = false
-      if (retryTimeout) {
-        clearTimeout(retryTimeout)
-      }
-      if (presenceRef.current) {
-        presenceRef.current.untrack()
-        presenceRef.current.unsubscribe()
-        supabase.removeChannel(presenceRef.current)
-      }
-    }
-  }, [user])
-
-  // Send a message with keyword filtering and instant broadcast
-  const sendMessage = useCallback(
-    async (content: string) => {
-      if (!user || !content.trim()) return
-
-      try {
-        // Apply keyword filtering
-        let filteredContent = content
-        KEYWORD_FILTER_PATTERNS.forEach((pattern) => {
-          filteredContent = filteredContent.replace(pattern, '***')
-        })
-
-        // Insert message into database
-        const { data, error: err } = await supabase
-          .from('lounge_messages')
-          .insert({
-            user_id: user.id,
-            content: filteredContent,
-          })
-          .select()
-          .single()
-
-        if (err) throw err
-
-        // Fetch user profile for enriched message
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('full_name, photos, main_photo_index')
-          .eq('user_id', user.id)
-          .maybeSingle()
-
-        // Create enriched message for broadcast
-        const enrichedMessage = {
-          ...data,
-          user_id: data.user_id,
-          message: data.content,
-          sender_name: profile?.full_name || 'Anonymous',
-          sender_image: profile?.photos?.[profile?.main_photo_index || 0] || null,
-        }
-
-        // Add to local state optimistically — the postgres subscription will
-        // deduplicate if the DB event also arrives.
-        setMessages((prev) => {
-          const isDuplicate = prev.some((m) => m.id === enrichedMessage.id)
-          return isDuplicate ? prev : [...prev, enrichedMessage]
-        })
-        setError(null)
-      } catch (err: any) {
-        const errorMessage = err?.message || err?.error_description || 'Failed to send message'
-        console.error('Error sending message:', errorMessage, err)
-        setError(errorMessage)
-      }
-    },
-    [user]
-  )
-
-  // Report a message
-  const reportMessage = useCallback(
-    async (messageId: string, reason: string) => {
-      if (!user) return
-
-      try {
-        const { error: err } = await supabase.from('lounge_reports').insert({
-          message_id: messageId,
-          reported_by: user.id,
-          reason,
-        })
-
-        if (err) throw err
-        setError(null)
-      } catch (err: any) {
-        const errorMessage = err?.message || err?.error_description || 'Failed to report message'
-        console.error('Error reporting message:', errorMessage, err)
-        setError(errorMessage)
-      }
-    },
-    [user]
-  )
-
-  // Handle visibility changes to resubscribe if needed
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        console.log('[Lounge] Page became visible - checking subscriptions')
+      mounted = false
+      activeRef.current = false
+      if (messageRetry) clearTimeout(messageRetry)
+      if (presenceRetry) clearTimeout(presenceRetry)
+      if (messageChannel) supabase.removeChannel(messageChannel)
+      if (presenceChannel) {
+        presenceChannel.untrack()
+        supabase.removeChannel(presenceChannel)
       }
     }
+  }, [userId, isCurrent, fetchMessages, addLiveMessage])
 
-    document.addEventListener('visibilitychange', handleVisibilityChange)
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
-  }, [])
-
-  // Initialize lounge
-  useEffect(() => {
-    if (!user) {
-      setLoading(false)
-      return
+  const sendMessage = useCallback(async (content: string) => {
+    if (!userId) throw new Error('Please log in to send a message')
+    if (!content.trim()) throw new Error('Please enter a message')
+    const session = sessionRef.current
+    try {
+      let filteredContent = content
+      KEYWORD_FILTER_PATTERNS.forEach((pattern) => { filteredContent = filteredContent.replace(pattern, '***') })
+      const { data, error: err } = await supabase.from('lounge_messages')
+        .insert({ user_id: userId, content: filteredContent }).select().single()
+      if (err) throw err
+      const [message] = await enrichMessages([data as MessageRow])
+      if (message && session === sessionRef.current) addLiveMessage(message, userId)
+    } catch (err: any) {
+      console.error('Error sending message:', err)
+      throw new Error(errorText(err, 'Failed to send message'))
     }
+  }, [userId, addLiveMessage])
 
-    fetchMessages()
-    const unsubscribe = subscribeToMessages()
-    const untrackPresence = updatePresence()
-
-    return () => {
-      unsubscribe?.()
-      untrackPresence?.()
+  const reportMessage = useCallback(async (messageId: string, reason: string) => {
+    if (!userId) throw new Error('Please log in to report a message')
+    try {
+      const { error: err } = await supabase.from('lounge_reports').insert({
+        message_id: messageId, reported_by: userId, reason,
+      })
+      if (err) throw err
+    } catch (err: any) {
+      console.error('Error reporting message:', err)
+      throw new Error(errorText(err, 'Failed to report message'))
     }
-  }, [user, fetchMessages, subscribeToMessages, updatePresence])
+  }, [userId])
 
   return {
-    messages,
-    onlineUsers,
-    loading,
-    error,
+    messages: owner === userId ? messages : [],
+    onlineUsers: owner === userId ? onlineUsers : [],
+    loading: owner === userId ? loading : !!userId,
+    error: owner === userId ? error : null,
+    loadingOlder: owner === userId && loadingOlder,
+    hasOlder: owner === userId && hasOlder,
+    loadOlder,
+    retryMessages: () => { if (userId) fetchMessages(userId) },
     sendMessage,
     reportMessage,
   }

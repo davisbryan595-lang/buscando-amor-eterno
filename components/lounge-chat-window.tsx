@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useLayoutEffect, useRef } from 'react'
 import { Send, Heart } from 'lucide-react'
 import Image from 'next/image'
 import { useLounge } from '@/hooks/useLounge'
@@ -13,32 +13,56 @@ interface LoungeChatWindowProps {
 
 export default function LoungeChatWindow({ autoScroll = true }: LoungeChatWindowProps) {
   const { user } = useAuth()
-  const { messages, loading, error, sendMessage } = useLounge()
+  const { messages, loading, error, hasOlder, loadingOlder, loadOlder, retryMessages, sendMessage } = useLounge()
   const [newMessage, setNewMessage] = useState('')
   const [sendingMessage, setSendingMessage] = useState(false)
-  const messagesEndRef = useRef<HTMLDivElement>(null)
   const messagesContainerRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
+  const nearBottomRef = useRef(true)
+  const historyAnchorRef = useRef<{ id: string; top: number; firstId: string } | null>(null)
 
-  const scrollToBottom = () => {
-    if (messagesEndRef.current && autoScroll) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' })
+  useLayoutEffect(() => {
+    nearBottomRef.current = true
+    historyAnchorRef.current = null
+  }, [user?.id])
+
+  useLayoutEffect(() => {
+    const container = messagesContainerRef.current
+    if (!container) return
+    const anchor = historyAnchorRef.current
+    if (anchor && !loadingOlder) {
+      if (messages[0]?.id !== anchor.firstId) {
+        const element = Array.from(container.querySelectorAll<HTMLElement>('[data-message-id]'))
+          .find((node) => node.dataset.messageId === anchor.id)
+        if (element) container.scrollTop += element.getBoundingClientRect().top - anchor.top
+      }
+      historyAnchorRef.current = null
+    } else if (!anchor && autoScroll && nearBottomRef.current) {
+      container.scrollTop = container.scrollHeight
     }
-  }
+  }, [messages, loading, loadingOlder, autoScroll])
 
-  useEffect(() => {
-    scrollToBottom()
-  }, [messages, autoScroll])
+  const handleLoadOlder = async () => {
+    const container = messagesContainerRef.current
+    if (!container || loadingOlder) return
+    const element = Array.from(container.querySelectorAll<HTMLElement>('[data-message-id]'))
+      .find((node) => node.getBoundingClientRect().bottom >= container.getBoundingClientRect().top)
+    if (element && messages[0]) historyAnchorRef.current = {
+      id: element.dataset.messageId!, top: element.getBoundingClientRect().top, firstId: messages[0].id,
+    }
+    nearBottomRef.current = false
+    if (!await loadOlder()) historyAnchorRef.current = null
+  }
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!newMessage.trim()) return
-
+    if (!newMessage.trim() || sendingMessage) return
+    const content = newMessage
     setSendingMessage(true)
     try {
-      await sendMessage(newMessage)
-      setNewMessage('')
+      await sendMessage(content)
+      setNewMessage((current) => current === content ? '' : current)
     } catch (err: any) {
       toast.error(err.message || 'Failed to send message')
     } finally {
@@ -51,20 +75,25 @@ export default function LoungeChatWindow({ autoScroll = true }: LoungeChatWindow
       {/* Messages Container - Clean background */}
       <div
         ref={messagesContainerRef}
+        onScroll={(event) => {
+          const element = event.currentTarget
+          nearBottomRef.current = element.scrollHeight - element.scrollTop - element.clientHeight < 100
+          const anchor = historyAnchorRef.current
+          if (anchor) {
+            const node = Array.from(element.querySelectorAll<HTMLElement>('[data-message-id]'))
+              .find((item) => item.dataset.messageId === anchor.id)
+            if (node) anchor.top = node.getBoundingClientRect().top
+          }
+        }}
         className="flex-1 overflow-y-auto px-2 py-3 sm:px-4 sm:py-4 md:px-6 md:py-6 space-y-2 sm:space-y-3 lg:space-y-4 bg-card dark:bg-card"
       >
+        {error && <p role="alert" className="text-sm text-red-600">{error} <button type="button" onClick={retryMessages} className="underline">Retry loading</button></p>}
+        {hasOlder && <button type="button" disabled={loadingOlder} onClick={handleLoadOlder} className="text-sm text-primary disabled:opacity-50">{loadingOlder ? 'Loading older messages...' : 'Load older messages'}</button>}
         {loading ? (
           <div className="flex items-center justify-center h-full w-full">
             <p className="text-muted-foreground text-xs sm:text-sm md:text-base">Loading messages...</p>
           </div>
-        ) : error ? (
-          <div className="flex items-center justify-center h-full w-full px-4">
-            <div className="text-center">
-              <p className="text-foreground font-semibold mb-1 text-xs sm:text-sm md:text-base">Something went wrong</p>
-              <p className="text-muted-foreground text-xs sm:text-xs md:text-sm break-words">{error}</p>
-            </div>
-          </div>
-        ) : messages.length === 0 ? (
+        ) : messages.length === 0 && !error ? (
           <div className="flex flex-col items-center justify-center h-full w-full text-center px-3 sm:px-4">
             <Heart className="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 text-rose-300 mb-2 sm:mb-3 md:mb-4 drop-shadow-lg" fill="currentColor" />
             <p className="text-base sm:text-lg md:text-2xl font-playfair font-bold text-foreground dark:text-white mb-1 sm:mb-2">Welcome to the Lounge!</p>
@@ -77,9 +106,10 @@ export default function LoungeChatWindow({ autoScroll = true }: LoungeChatWindow
             return (
               <div
                 key={message.id}
+                data-message-id={message.id}
                 className="flex gap-1.5 sm:gap-2 md:gap-3 animate-in fade-in w-full"
                 style={{
-                  animationDelay: `${index * 50}ms`,
+                  animationDelay: `${Math.min(index * 50, 250)}ms`,
                   animationFillMode: 'backwards',
                 }}
               >
@@ -89,7 +119,7 @@ export default function LoungeChatWindow({ autoScroll = true }: LoungeChatWindow
                     <div className="relative w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 rounded-full overflow-hidden flex-shrink-0 ring-1.5 sm:ring-2 ring-rose-200">
                       <Image
                         src={message.sender_image}
-                        alt={message.sender_name}
+                        alt={message.sender_name || 'Anonymous'}
                         fill
                         className="object-cover"
                       />
@@ -111,7 +141,7 @@ export default function LoungeChatWindow({ autoScroll = true }: LoungeChatWindow
                         : 'bg-card-subtle dark:bg-card-subtle border border-rose-100/50 dark:border-rose-900/30 text-foreground dark:text-white rounded-bl-none shadow-xs sm:shadow-sm'
                     }`}
                   >
-                    <p className="text-xs sm:text-sm md:text-sm whitespace-pre-wrap break-words">{message.message || message.content}</p>
+                    <p className="text-xs sm:text-sm md:text-sm whitespace-pre-wrap break-words">{message.message}</p>
                   </div>
                   <p className="text-xs text-slate-400 dark:text-slate-500 px-1.5 sm:px-2">
                     {new Date(message.created_at).toLocaleTimeString([], {
@@ -124,7 +154,6 @@ export default function LoungeChatWindow({ autoScroll = true }: LoungeChatWindow
             )
           })
         )}
-        <div ref={messagesEndRef} />
       </div>
 
       {/* Input Form - Clean styling */}

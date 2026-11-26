@@ -1,4 +1,4 @@
-import { useCallback, useState, useEffect, useRef } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useAuth } from '@/context/auth-context'
 import { supabase } from '@/lib/supabase'
 
@@ -35,920 +35,399 @@ export interface Conversation {
 }
 
 const MESSAGES_PAGE_SIZE = 50
+const CACHE_TTL = 30_000
+
+type MessageCache = { messages: Message[]; cursor: Message | null; hasMore: boolean; fetchedAt: number }
+type UserCache = { conversations: Conversation[] | null; conversationsFetchedAt: number; messages: Map<string, MessageCache>; seenEvents: Set<string> }
+const caches = new Map<string, UserCache>()
+const getCache = (userId: string): UserCache => {
+  let cache = caches.get(userId)
+  if (!cache) {
+    cache = { conversations: null, conversationsFetchedAt: 0, messages: new Map(), seenEvents: new Set() }
+    caches.set(userId, cache)
+  }
+  return cache
+}
+
+// All hook consumers for an account share one receiving channel.
+type RealtimeEvent = 'new_message' | 'typing_indicator' | 'message_read' | 'user_status'
+type Listener = (event: RealtimeEvent, payload: any) => void
+const receivers = new Map<string, { listeners: Set<Listener>; channel: ReturnType<typeof supabase.channel> }>()
+function listen(userId: string, listener: Listener) {
+  let receiver = receivers.get(userId)
+  if (!receiver) {
+    const listeners = new Set<Listener>()
+    const channel = supabase.channel(`messages:${userId}`)
+    for (const event of ['new_message', 'typing_indicator', 'message_read', 'user_status'] as const) {
+      channel.on('broadcast', { event }, ({ payload }) => listeners.forEach(fn => fn(event, payload)))
+    }
+    channel.subscribe()
+    receiver = { listeners, channel }
+    receivers.set(userId, receiver)
+  }
+  receiver.listeners.add(listener)
+  return () => {
+    receiver!.listeners.delete(listener)
+    if (receiver!.listeners.size === 0 && receivers.get(userId) === receiver) {
+      receivers.delete(userId)
+      void supabase.removeChannel(receiver!.channel)
+    }
+  }
+}
+
+// Send to the recipient's inbox, not to a sender-specific conversation topic.
+async function broadcast(recipientId: string, event: string, payload: unknown) {
+  const channel = supabase.channel(`messages:${recipientId}`)
+  try {
+    const result = await channel.send({ type: 'broadcast', event, payload })
+    if (result !== 'ok') console.warn(`Failed to broadcast ${event}:`, result)
+  } catch (err) {
+    console.warn(`Failed to broadcast ${event}:`, err)
+  } finally {
+    await supabase.removeChannel(channel)
+  }
+}
+
+function mergeMessages(...groups: Message[][]) {
+  const byId = new Map<string, Message>()
+  groups.flat().forEach(message => byId.set(message.id, message))
+  return Array.from(byId.values()).sort((a, b) => a.created_at.localeCompare(b.created_at) || a.id.localeCompare(b.id))
+}
 
 export function useMessages() {
   const { user } = useAuth()
+  const userId: string | undefined = user?.id
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [messages, setMessages] = useState<Message[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [conversationError, setConversationError] = useState<string | null>(null)
   const [hasMoreMessages, setHasMoreMessages] = useState(true)
-
-  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const pollAttemptsRef = useRef(0)
-  const lastFetchRef = useRef(0)
+  const [typingStatus, setTypingStatus] = useState<TypingStatus | null>(null)
+  const activeUserRef = useRef(userId)
+  activeUserRef.current = userId
+  const activeConversationRef = useRef<string | null>(null)
+  const generationRef = useRef(0)
+  const pageRequestRef = useRef(false)
+  const conversationRequestRef = useRef(0)
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const isTypingRef = useRef(false)
-  const heartbeatIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
-  const onlineTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const messageOffsetRef = useRef(0)
+  const typingRecipientRef = useRef<string | null>(null)
+  const readInFlightRef = useRef(new Set<string>())
+  const readFailedRef = useRef(new Set<string>())
+  const refreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  // Define broadcastOnlineStatus early so it can be used in setupHeartbeat
-  // Online status is handled via presence in individual conversation channels
-  const broadcastOnlineStatus = useCallback(
-    async (isOnline: boolean) => {
-      if (!user) return
-
-      // Note: Online status updates are now handled per-conversation via the
-      // conversation-specific channel subscriptions. This avoids the need to
-      // create/send on channels without proper subscription, which was causing
-      // "Failed to fetch" errors in the Realtime HTTP fallback mechanism.
-    },
-    [user]
-  )
-
-  useEffect(() => {
-    if (!user) {
-      setLoading(false)
-      return
-    }
-
-    let isMounted = true
-
-    const initialize = async () => {
-      if (isMounted) {
-        await fetchConversations()
-      }
-    }
-
-    const setupHeartbeat = () => {
-      // Broadcast online status immediately
-      broadcastOnlineStatus(true)
-
-      // Set up heartbeat to send online status every 30 seconds
-      if (heartbeatIntervalRef.current) {
-        clearInterval(heartbeatIntervalRef.current)
-      }
-
-      heartbeatIntervalRef.current = setInterval(() => {
-        broadcastOnlineStatus(true)
-      }, 30000)
-
-      // Handle page visibility changes
-      const handleVisibilityChange = () => {
-        if (document.hidden) {
-          broadcastOnlineStatus(false)
-        } else {
-          broadcastOnlineStatus(true)
-        }
-      }
-
-      document.addEventListener('visibilitychange', handleVisibilityChange)
-
-      // Handle page unload - avoid sending messages during unload as network may fail
-      const handleBeforeUnload = () => {
-        // Don't attempt to send messages during unload as the network connection
-        // is already being torn down. The server will detect the disconnect automatically.
-        if (heartbeatIntervalRef.current) {
-          clearInterval(heartbeatIntervalRef.current)
-        }
-      }
-
-      window.addEventListener('beforeunload', handleBeforeUnload)
-
-      return () => {
-        document.removeEventListener('visibilitychange', handleVisibilityChange)
-        window.removeEventListener('beforeunload', handleBeforeUnload)
-        if (heartbeatIntervalRef.current) {
-          clearInterval(heartbeatIntervalRef.current)
-        }
-      }
-    }
-
-    initialize()
-    const unsubscribe = subscribeToMessages()
-    const cleanupHeartbeat = setupHeartbeat()
-
-    return () => {
-      isMounted = false
-      if (unsubscribe) {
-        unsubscribe()
-      }
-      if (cleanupHeartbeat) {
-        cleanupHeartbeat()
-      }
-      if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current)
-      }
-      if (typingTimeoutRef.current) {
-        clearTimeout(typingTimeoutRef.current)
-      }
-      if (onlineTimeoutRef.current) {
-        clearTimeout(onlineTimeoutRef.current)
-      }
-    }
-  }, [user?.id])
-
-  const fetchConversations = async () => {
-    if (!user) return
-
-    try {
-      setLoading(true)
-
-      // Fetch only the most recent message from each conversation (much faster)
-      // Instead of fetching all messages and then grouping, we fetch just the last message per conversation
-      const { data, error: err } = await supabase
-        .from('messages')
-        .select('sender_id, recipient_id, content, created_at, read, type, call_type, call_status, call_duration, call_id')
-        .or(`sender_id.eq.${user.id},recipient_id.eq.${user.id}`)
-        .order('created_at', { ascending: false })
-        .limit(100)
-
-      if (err) throw err
-
-      const conversationMap = new Map<string, any>()
-
-      // Process messages to build unique conversations with unread count
-      data?.forEach((msg: any) => {
-        const otherUserId = msg.sender_id === user.id ? msg.recipient_id : msg.sender_id
-
-        // Only keep the first (most recent) message per conversation
-        if (!conversationMap.has(otherUserId)) {
-          const isUnread = msg.recipient_id === user.id && !msg.read
-          conversationMap.set(otherUserId, {
-            id: otherUserId,
-            user_id: user.id,
-            other_user_id: otherUserId,
-            other_user_name: null,
-            other_user_image: null,
-            last_message: msg.content,
-            last_message_time: msg.created_at,
-            unread_count: isUnread ? 1 : 0,
-            is_online: false,
-          })
-        } else if (msg.recipient_id === user.id && !msg.read) {
-          // Count unread messages in this conversation
-          const conv = conversationMap.get(otherUserId)
-          conv.unread_count += 1
-        }
-      })
-
-      const convArray = Array.from(conversationMap.values())
-
-      // Fetch profile details for conversation participants in parallel
-      if (convArray.length > 0) {
-        const userIds = convArray.map((c) => c.other_user_id)
-
-        // Fetch profiles with a reasonable timeout and error handling
-        try {
-          const { data: profiles, error: profileErr } = await supabase
-            .from('profiles')
-            .select('user_id, full_name, photos, main_photo_index')
-            .in('user_id', userIds)
-
-          if (profileErr) {
-            console.warn('Profile fetch error (non-blocking):', profileErr)
-          }
-
-          profiles?.forEach((profile) => {
-            const conv = convArray.find((c) => c.other_user_id === profile.user_id)
-            if (conv) {
-              conv.other_user_name = profile.full_name
-              conv.other_user_image = profile.photos?.[profile.main_photo_index || 0] || null
-            }
-          })
-        } catch (profileErr) {
-          // If profile fetch fails, still show conversations without profile details
-          console.warn('Failed to fetch profile details (non-blocking):', profileErr)
-        }
-      }
-
-      setConversations(convArray)
-      setError(null)
-      lastFetchRef.current = Date.now()
-      pollAttemptsRef.current = 0
-    } catch (err: any) {
-      const errorMessage = err?.message || (typeof err === 'string' ? err : 'Failed to fetch conversations')
-      const errorDetails = err?.code ? ` (Code: ${err.code})` : err?.status ? ` (Status: ${err.status})` : ''
-      setError(errorMessage)
-      console.error('Error fetching conversations:', errorMessage + errorDetails, err)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const debouncedFetchConversations = useCallback(() => {
-    if (debounceTimerRef.current) {
-      clearTimeout(debounceTimerRef.current)
-    }
-    debounceTimerRef.current = setTimeout(() => {
-      fetchConversations()
-    }, 500)
+  const updateMessages = useCallback((owner: string, other: string, update: (messages: Message[]) => Message[]) => {
+    if (activeUserRef.current !== owner) return
+    const cache = getCache(owner)
+    const entry = cache.messages.get(other)
+    // Do not turn an unsolicited message into a supposedly complete cached page.
+    if (entry) entry.messages = update(entry.messages)
+    if (activeConversationRef.current === other) setMessages(prev => update(prev))
   }, [])
 
-  const subscribeToMessages = () => {
-    if (!user) return
-
-    let isMounted = true
-
+  const fetchConversations = useCallback(async () => {
+    if (!userId) return
+    const request = ++conversationRequestRef.current
+    const cache = getCache(userId)
+    if (!cache.conversations) setLoading(true)
     try {
-      const subscription = supabase
-        .channel(`messages:${user.id}`)
-        .on('broadcast', { event: 'new_message' }, (payload) => {
-          if (isMounted) {
-            const newMessage = payload.payload as Message
-
-            setMessages((prev) => {
-              const isDuplicate = prev.some(m => m.id === newMessage.id)
-              return isDuplicate ? prev : [...prev, newMessage]
-            })
-
-            // Update conversations list with new message
-            setConversations((prev) => {
-              const otherUserId = newMessage.sender_id === user.id ? newMessage.recipient_id : newMessage.sender_id
-              const updated = prev.map((conv) => {
-                if (conv.other_user_id === otherUserId) {
-                  return {
-                    ...conv,
-                    last_message: newMessage.content,
-                    last_message_time: newMessage.created_at,
-                    unread_count: newMessage.recipient_id === user.id && !newMessage.read
-                      ? conv.unread_count + 1
-                      : conv.unread_count,
-                  }
-                }
-                return conv
-              })
-
-              // If conversation doesn't exist, fetch it once to get full details
-              if (!updated.some((c) => c.other_user_id === otherUserId)) {
-                fetchConversations()
-              }
-
-              return updated
-            })
+      const { data, error: err } = await supabase.from('messages')
+        .select('sender_id, recipient_id, content, created_at, read, type, call_type, call_status, call_duration, call_id')
+        .or(`sender_id.eq.${userId},recipient_id.eq.${userId}`)
+        .order('created_at', { ascending: false }).limit(100)
+      if (err) throw err
+      const map = new Map<string, Conversation>()
+      data?.forEach((msg: any) => {
+        const other = msg.sender_id === userId ? msg.recipient_id : msg.sender_id
+        const existing = map.get(other)
+        if (!existing) map.set(other, {
+          id: other, user_id: userId, other_user_id: other, other_user_name: null,
+          other_user_image: null, last_message: msg.content, last_message_time: msg.created_at,
+          unread_count: msg.recipient_id === userId && !msg.read ? 1 : 0, is_online: false,
+        })
+        else if (msg.recipient_id === userId && !msg.read) existing.unread_count++
+      })
+      const result = Array.from(map.values())
+      if (result.length) {
+        const { data: profiles, error: profileError } = await supabase.from('profiles')
+          .select('user_id, full_name, photos, main_photo_index').in('user_id', result.map(c => c.other_user_id))
+        if (profileError) console.warn('Profile fetch error (non-blocking):', profileError)
+        profiles?.forEach(profile => {
+          const conv = map.get(profile.user_id)
+          if (conv) {
+            conv.other_user_name = profile.full_name
+            conv.other_user_image = profile.photos?.[profile.main_photo_index || 0] || null
           }
         })
-        .on('broadcast', { event: 'user_status' }, (payload) => {
-          if (isMounted) {
-            const userStatus = payload.payload
-
-            // Update conversation online status
-            setConversations((prev) =>
-              prev.map((conv) =>
-                conv.other_user_id === userStatus.user_id
-                  ? { ...conv, is_online: userStatus.is_online }
-                  : conv
-              )
-            )
-          }
-        })
-        .subscribe((status) => {
-          // Silently handle subscription status
-        })
-
-      return () => {
-        isMounted = false
-        subscription.unsubscribe()
-        supabase.removeChannel(subscription)
       }
-    } catch (err) {
-      console.warn('Failed to setup message subscription:', err)
+      if (activeUserRef.current !== userId || request !== conversationRequestRef.current) return
+      cache.conversations = result
+      cache.conversationsFetchedAt = Date.now()
+      setConversations(result)
+      setConversationError(null)
+    } catch (err: any) {
+      if (activeUserRef.current !== userId || request !== conversationRequestRef.current) return
+      setConversationError(err?.message || 'Failed to fetch conversations')
+      console.error('Error fetching conversations:', err)
+    } finally {
+      if (activeUserRef.current === userId && request === conversationRequestRef.current) setLoading(false)
+    }
+  }, [userId])
+
+  useEffect(() => {
+    activeUserRef.current = userId
+    generationRef.current++
+    activeConversationRef.current = null
+    pageRequestRef.current = false
+    setMessages([])
+    setTypingStatus(null)
+    setError(null)
+    setConversationError(null)
+    if (!userId) {
+      setConversations([])
+      setLoading(false)
       return
     }
-  }
-
-  const subscribeToConversation = useCallback(
-    (otherUserId: string) => {
-      if (!user) return
-
-      let isMounted = true
-
-      try {
-        const channel = supabase
-          .channel(`messages:${user.id}:${otherUserId}`)
-          .on('broadcast', { event: 'new_message' }, (payload) => {
-            if (isMounted) {
-              const newMessage = payload.payload as Message
-              setMessages((prevMessages) => {
-                if (prevMessages.some(msg => msg.id === newMessage.id)) {
-                  return prevMessages
-                }
-                return [...prevMessages, newMessage]
-              })
-            }
-          })
-          .on('broadcast', { event: 'user_status' }, (payload) => {
-            if (isMounted) {
-              const userStatus = payload.payload
-
-              // Update conversation online status
-              setConversations((prev) =>
-                prev.map((conv) =>
-                  conv.other_user_id === userStatus.user_id
-                    ? { ...conv, is_online: userStatus.is_online }
-                    : conv
-                )
-              )
-            }
-          })
-          .subscribe((status) => {
-            // Silently handle subscription status
-          })
-
-        return () => {
-          isMounted = false
-          channel.unsubscribe()
-          supabase.removeChannel(channel)
+    const cache = getCache(userId)
+    setConversations(cache.conversations || [])
+    setLoading(!cache.conversations)
+    if (!cache.conversations || Date.now() - cache.conversationsFetchedAt > CACHE_TTL) void fetchConversations()
+    const unsubscribe = listen(userId, (event, payload) => {
+      if (activeUserRef.current !== userId) return
+      if (event === 'typing_indicator') {
+        if (payload?.user_id === activeConversationRef.current) setTypingStatus(payload)
+      } else if (event === 'message_read') {
+        if (payload?.reader_id && payload?.message_id) {
+          updateMessages(userId, payload.reader_id, prev => prev.map(m => m.id === payload.message_id && m.sender_id === userId ? { ...m, read: true } : m))
         }
-      } catch (err) {
-        console.warn('Failed to setup conversation subscription:', err)
-        return
-      }
-    },
-    [user]
-  )
-
-  const fetchMessages = useCallback(
-    async (otherUserId: string, offset = 0) => {
-      if (!user?.id) return
-
-      try {
-        messageOffsetRef.current = offset
-
-        const timeoutPromise = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Message fetch timed out')), 30000)
-        )
-
-        const queryPromise = supabase
-          .from('messages')
-          .select('id,sender_id,recipient_id,content,read,created_at,type,call_type,call_status,call_duration,call_id')
-          .or(
-            `and(sender_id.eq.${user.id},recipient_id.eq.${otherUserId}),and(sender_id.eq.${otherUserId},recipient_id.eq.${user.id})`
-          )
-          .order('created_at', { ascending: false })
-          .range(offset, offset + MESSAGES_PAGE_SIZE - 1)
-
-        const result = await Promise.race([queryPromise, timeoutPromise])
-        const { data, error: err } = result as any
-
-        if (err) throw err
-
-        const fetchedMessages = (data as Message[]) || []
-        setHasMoreMessages(fetchedMessages.length === MESSAGES_PAGE_SIZE)
-
-        if (offset === 0) {
-          setMessages(fetchedMessages.reverse())
+      } else if (event === 'user_status') {
+        setConversations(prev => prev.map(c => c.other_user_id === payload?.user_id ? { ...c, is_online: !!payload.is_online } : c))
+      } else if (event === 'new_message') {
+        const message = payload as Message
+        if (!message?.id || (message.sender_id !== userId && message.recipient_id !== userId)) return
+        const other = message.sender_id === userId ? message.recipient_id : message.sender_id
+        const entry = cache.messages.get(other)
+        const alreadyKnown = cache.seenEvents.has(message.id) || entry?.messages.some(m => m.id === message.id) || false
+        cache.seenEvents.add(message.id)
+        if (cache.seenEvents.size > 1000) cache.seenEvents.delete(cache.seenEvents.values().next().value!)
+        updateMessages(userId, other, prev => mergeMessages(prev, [message]))
+        // A fetch may have raced this event; invalidate it before refreshing.
+        conversationRequestRef.current++
+        const current = cache.conversations
+        if (!current?.some(c => c.other_user_id === other)) {
+          void fetchConversations()
         } else {
-          setMessages((prev) => [...fetchedMessages.reverse(), ...prev])
+          const updated = current.map(c => c.other_user_id === other ? {
+            ...c,
+            ...(message.created_at >= c.last_message_time ? { last_message: message.content, last_message_time: message.created_at } : {}),
+            unread_count: c.unread_count + (!alreadyKnown && message.recipient_id === userId && !message.read ? 1 : 0),
+          } : c).sort((a, b) => b.last_message_time.localeCompare(a.last_message_time))
+          cache.conversations = updated
+          setConversations(updated)
+          setLoading(false)
         }
-        setError(null)
-      } catch (err: any) {
-        const errorMessage = err?.message || (typeof err === 'string' ? err : 'Failed to fetch messages')
-        setError(errorMessage)
-        console.error('Error fetching messages:', errorMessage, err)
       }
-    },
-    [user]
-  )
+    })
+    return () => {
+      generationRef.current++
+      conversationRequestRef.current++
+      activeUserRef.current = undefined
+      unsubscribe()
+      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current)
+      if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current)
+    }
+  }, [userId, fetchConversations, updateMessages])
 
-  const loadMoreMessages = useCallback(
-    async (otherUserId: string) => {
-      if (!hasMoreMessages) return
-      await fetchMessages(otherUserId, messageOffsetRef.current + MESSAGES_PAGE_SIZE)
-    },
-    [fetchMessages, hasMoreMessages]
-  )
-
-  const sendMessage = useCallback(
-    async (recipientId: string, content: string) => {
-      if (!user) throw new Error('No user logged in')
-
-      try {
-        // Optimistic update: add message to state immediately
-        const tempMessage: Message = {
-          id: `temp-${Date.now()}`,
-          sender_id: user.id,
-          recipient_id: recipientId,
-          content,
-          read: false,
-          created_at: new Date().toISOString(),
-        }
-
-        setMessages((prev) => [...prev, tempMessage])
-
-        // Insert into database
-        const { data, error: err } = await supabase
-          .from('messages')
-          .insert({
-            sender_id: user.id,
-            recipient_id: recipientId,
-            content,
-            read: false,
-          })
-          .select()
-          .single()
-
-        if (err) throw err
-
-        const realMessage = data as Message
-
-        // Replace temp message with real message from DB
-        setMessages((prev) =>
-          prev.map((msg) => msg.id === tempMessage.id ? realMessage : msg)
-        )
-
-        // Create notification for recipient (don't await to avoid blocking message send)
-        try {
-          supabase
-            .from('notifications')
-            .insert({
-              recipient_id: recipientId,
-              from_user_id: user.id,
-              type: 'message',
-              message_preview: content.substring(0, 50),
-            })
-            .then()
-            .catch((err) => console.warn('Failed to create message notification:', err))
-        } catch (notifErr) {
-          console.warn('Error creating notification:', notifErr)
-        }
-
-        // Broadcast to all relevant channels so subscribers get instant update
-        const conversationChannel = supabase.channel(`messages:${user.id}:${recipientId}`)
-        await conversationChannel.send({
-          type: 'broadcast',
-          event: 'new_message',
-          payload: realMessage,
-        })
-        supabase.removeChannel(conversationChannel)
-
-        const userChannel = supabase.channel(`messages:${user.id}`)
-        await userChannel.send({
-          type: 'broadcast',
-          event: 'new_message',
-          payload: realMessage,
-        })
-        supabase.removeChannel(userChannel)
-
-        return realMessage
-      } catch (err: any) {
-        // Remove optimistic message on error
-        setMessages((prev) => prev.filter((msg) => !msg.id.startsWith('temp-')))
-        const errorMessage = err?.message || (typeof err === 'string' ? err : 'Failed to send message')
-        setError(errorMessage)
-        throw err
+  const fetchMessages = useCallback(async (other: string, offset = 0) => {
+    if (!userId) return
+    const cache = getCache(userId)
+    let entry = cache.messages.get(other)
+    const initial = offset === 0
+    if (initial) {
+      activeConversationRef.current = other
+      generationRef.current++
+      pageRequestRef.current = false
+      setTypingStatus(null)
+      setMessages(entry?.messages || [])
+      setHasMoreMessages(entry?.hasMore ?? true)
+      readFailedRef.current.clear()
+      if (entry && entry.fetchedAt && Date.now() - entry.fetchedAt < CACHE_TTL) return
+      if (!entry) {
+        entry = { messages: [], cursor: null, hasMore: true, fetchedAt: 0 }
+        cache.messages.set(other, entry)
       }
-    },
-    [user]
-  )
-
-  const markAsRead = useCallback(
-    async (messageId: string, recipientId?: string) => {
-      try {
-        // Find the message to get recipient info for broadcasting
-        const message = messages.find((msg) => msg.id === messageId)
-        const targetRecipientId = recipientId || message?.sender_id
-
-        // Optimistic update: mark as read in state immediately
-        setMessages((prev) =>
-          prev.map((msg) => msg.id === messageId ? { ...msg, read: true } : msg)
-        )
-        setConversations((prev) =>
-          prev.map((conv) => ({
-            ...conv,
-            unread_count: Math.max(0, conv.unread_count - 1),
-          }))
-        )
-
-        // Update in database
-        const { error: err } = await supabase
-          .from('messages')
-          .update({ read: true })
-          .eq('id', messageId)
-
-        if (err) throw err
-
-        // Broadcast read receipt to sender
-        if (user && targetRecipientId) {
-          const readReceipt = {
-            message_id: messageId,
-            reader_id: user.id,
-            timestamp: new Date().toISOString(),
-          }
-
-          try {
-            const conversationChannel = supabase.channel(`messages:${user.id}:${targetRecipientId}`)
-            await conversationChannel.send({
-              type: 'broadcast',
-              event: 'message_read',
-              payload: readReceipt,
-            })
-            supabase.removeChannel(conversationChannel)
-
-            const userChannel = supabase.channel(`messages:${user.id}`)
-            await userChannel.send({
-              type: 'broadcast',
-              event: 'message_read',
-              payload: readReceipt,
-            })
-            supabase.removeChannel(userChannel)
-          } catch (broadcastErr) {
-            console.warn('Failed to broadcast read receipt:', broadcastErr)
-          }
-        }
-      } catch (err: any) {
-        const errorMessage = err?.message || (typeof err === 'string' ? err : 'Failed to mark message as read')
-        setError(errorMessage)
-        console.error('Error marking message as read:', errorMessage, err)
+    } else if (activeConversationRef.current !== other || pageRequestRef.current || !entry?.hasMore || !entry.cursor) return
+    const generation = generationRef.current
+    const baseline = new Map(entry?.messages.map(message => [message.id, message]))
+    pageRequestRef.current = true
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), 30_000)
+    try {
+      let query = supabase.from('messages')
+        .select('id,sender_id,recipient_id,content,read,created_at,type,call_type,call_status,call_duration,call_id')
+        .or(`and(sender_id.eq.${userId},recipient_id.eq.${other}),and(sender_id.eq.${other},recipient_id.eq.${userId})`)
+        .order('created_at', { ascending: false }).order('id', { ascending: false }).limit(MESSAGES_PAGE_SIZE).abortSignal(controller.signal)
+      if (!initial && entry?.cursor) {
+        query = query.or(`created_at.lt.${entry.cursor.created_at},and(created_at.eq.${entry.cursor.created_at},id.lt.${entry.cursor.id})`)
       }
-    },
-    [user, messages]
-  )
-
-  const initiateConversation = useCallback(
-    async (otherUserId: string) => {
-      if (!user) throw new Error('No user logged in')
-
-      try {
-        const existingConv = conversations.find((c) => c.other_user_id === otherUserId)
-        if (existingConv) {
-          return existingConv
-        }
-
-        const { error: msgErr } = await supabase
-          .from('messages')
-          .insert({
-            sender_id: user.id,
-            recipient_id: otherUserId,
-            content: '👋 Conversation started',
-            read: false,
-          })
-
-        if (msgErr) throw msgErr
-
-        await fetchConversations()
-
-        return {
-          id: otherUserId,
-          user_id: user.id,
-          other_user_id: otherUserId,
-          other_user_name: null,
-          other_user_image: null,
-          last_message: '👋 Conversation started',
-          last_message_time: new Date().toISOString(),
-          is_online: false,
-          unread_count: 0,
-        }
-      } catch (err: any) {
-        const errorMessage = err?.message || (typeof err === 'string' ? err : 'Failed to initiate conversation')
-        setError(errorMessage)
-        console.error('Error initiating conversation:', errorMessage, err)
-        throw err
+      const { data, error: err } = await query
+      if (err) throw err
+      if (activeUserRef.current !== userId || generation !== generationRef.current || activeConversationRef.current !== other) return
+      const page = (data || []) as Message[]
+      const current = cache.messages.get(other)
+      // Preserve locally received and optimistic messages while an initial refresh is in flight.
+      const changedDuringFetch = (current?.messages || []).filter(message => baseline.get(message.id) !== message)
+      const merged = mergeMessages(current?.messages || [], page, changedDuringFetch)
+      const pageCursor = page[page.length - 1]
+      const preserveCursor = !!(initial && current?.cursor && pageCursor && (current.cursor.created_at < pageCursor.created_at || (current.cursor.created_at === pageCursor.created_at && current.cursor.id < pageCursor.id)))
+      entry = {
+        messages: merged,
+        cursor: preserveCursor ? current!.cursor : pageCursor || current?.cursor || null,
+        hasMore: preserveCursor ? current!.hasMore : page.length === MESSAGES_PAGE_SIZE,
+        fetchedAt: Date.now(),
       }
-    },
-    [user, conversations]
-  )
-
-  const broadcastTyping = useCallback(
-    async (recipientId: string, isTyping: boolean) => {
-      if (!user) return
-
-      try {
-        const typingStatus: TypingStatus = {
-          user_id: user.id,
-          is_typing: isTyping,
-          timestamp: Date.now(),
-        }
-
-        const conversationChannel = supabase.channel(`messages:${user.id}:${recipientId}`)
-        await conversationChannel.send({
-          type: 'broadcast',
-          event: 'typing_indicator',
-          payload: typingStatus,
-        })
-      } catch (err: any) {
-        console.warn('Failed to broadcast typing status:', err)
+      cache.messages.set(other, entry)
+      setMessages(merged)
+      setHasMoreMessages(entry.hasMore)
+      setError(null)
+    } catch (err: any) {
+      if (activeUserRef.current === userId && generation === generationRef.current) {
+        setError(err?.message || 'Failed to fetch messages')
+        console.error('Error fetching messages:', err)
       }
-    },
-    [user]
-  )
+    } finally {
+      clearTimeout(timeout)
+      if (generation === generationRef.current) pageRequestRef.current = false
+    }
+  }, [userId])
 
-  const handleTyping = useCallback(
-    (recipientId: string) => {
-      if (!user) return
+  const loadMoreMessages = useCallback(async (other: string) => {
+    await fetchMessages(other, 1)
+  }, [fetchMessages])
 
-      // Clear existing timeout
-      if (typingTimeoutRef.current) {
-        clearTimeout(typingTimeoutRef.current)
+  const sendMessage = useCallback(async (recipientId: string, content: string) => {
+    if (!userId) throw new Error('No user logged in')
+    const temp: Message = { id: `temp-${crypto.randomUUID()}`, sender_id: userId, recipient_id: recipientId, content, read: false, created_at: new Date().toISOString() }
+    updateMessages(userId, recipientId, prev => mergeMessages(prev, [temp]))
+    try {
+      const { data, error: err } = await supabase.from('messages').insert({ sender_id: userId, recipient_id: recipientId, content, read: false }).select().single()
+      if (err) throw err
+      const message = data as Message
+      updateMessages(userId, recipientId, prev => mergeMessages(prev.filter(m => m.id !== temp.id), [message]))
+      void Promise.resolve(supabase.from('notifications').insert({ recipient_id: recipientId, from_user_id: userId, type: 'message', message_preview: content.substring(0, 50) })).then(({ error }) => { if (error) console.warn('Failed to create message notification:', error) }).catch(err => console.warn('Failed to create message notification:', err))
+      void broadcast(recipientId, 'new_message', message)
+      void fetchConversations()
+      return message
+    } catch (err: any) {
+      updateMessages(userId, recipientId, prev => prev.filter(m => m.id !== temp.id))
+      if (activeUserRef.current === userId) setError(err?.message || 'Failed to send message')
+      throw err
+    }
+  }, [userId, updateMessages, fetchConversations])
+
+  const markAsRead = useCallback(async (messageId: string, senderId?: string) => {
+    if (!userId || !senderId || readInFlightRef.current.has(messageId) || readFailedRef.current.has(messageId)) return
+    const entry = getCache(userId).messages.get(senderId)
+    const message = entry?.messages.find(m => m.id === messageId)
+    if (!message || message.read || message.recipient_id !== userId || message.sender_id !== senderId) return
+    readInFlightRef.current.add(messageId)
+    conversationRequestRef.current++
+    setLoading(false)
+    updateMessages(userId, senderId, prev => prev.map(m => m.id === messageId ? { ...m, read: true } : m))
+    const cache = getCache(userId)
+    if (cache.conversations) {
+      cache.conversations = cache.conversations.map(c => c.other_user_id === senderId ? { ...c, unread_count: Math.max(0, c.unread_count - 1) } : c)
+      setConversations(cache.conversations)
+    }
+    try {
+      const { error: err } = await supabase.from('messages').update({ read: true }).eq('id', messageId).eq('recipient_id', userId)
+      if (err) throw err
+      void broadcast(senderId, 'message_read', { message_id: messageId, reader_id: userId, timestamp: Date.now() })
+      if (activeUserRef.current === userId) {
+        if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current)
+        refreshTimerRef.current = setTimeout(() => { void fetchConversations() }, 500)
       }
-
-      // If not already typing, broadcast typing started
-      if (!isTypingRef.current) {
-        isTypingRef.current = true
-        broadcastTyping(recipientId, true)
+    } catch (err: any) {
+      readFailedRef.current.add(messageId)
+      updateMessages(userId, senderId, prev => prev.map(m => m.id === messageId ? { ...m, read: false } : m))
+      if (activeUserRef.current === userId) {
+        setError(err?.message || 'Failed to mark message as read')
+        void fetchConversations()
       }
+    } finally {
+      readInFlightRef.current.delete(messageId)
+    }
+  }, [userId, updateMessages, fetchConversations])
 
-      // Set timeout to stop typing after 3 seconds of inactivity
-      typingTimeoutRef.current = setTimeout(() => {
-        isTypingRef.current = false
-        broadcastTyping(recipientId, false)
-      }, 3000)
-    },
-    [user, broadcastTyping]
-  )
+  const initiateConversation = useCallback(async (otherUserId: string) => {
+    if (!userId) throw new Error('No user logged in')
+    const existing = getCache(userId).conversations?.find(c => c.other_user_id === otherUserId)
+    if (existing) return existing
+    const { data, error: err } = await supabase.from('messages').insert({ sender_id: userId, recipient_id: otherUserId, content: '👋 Conversation started', read: false }).select().single()
+    if (err) throw err
+    void broadcast(otherUserId, 'new_message', data)
+    await fetchConversations()
+    return { id: otherUserId, user_id: userId, other_user_id: otherUserId, other_user_name: null, other_user_image: null, last_message: '👋 Conversation started', last_message_time: new Date().toISOString(), is_online: false, unread_count: 0 }
+  }, [userId, fetchConversations])
 
-  const stopTyping = useCallback(
-    (recipientId: string) => {
-      if (typingTimeoutRef.current) {
-        clearTimeout(typingTimeoutRef.current)
+  const broadcastTyping = useCallback(async (recipientId: string, isTyping: boolean) => {
+    if (userId) await broadcast(recipientId, 'typing_indicator', { user_id: userId, is_typing: isTyping, timestamp: Date.now() })
+  }, [userId])
+  const stopTyping = useCallback((recipientId: string) => {
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current)
+    if (typingRecipientRef.current === recipientId) {
+      typingRecipientRef.current = null
+      void broadcastTyping(recipientId, false)
+    }
+  }, [broadcastTyping])
+  const handleTyping = useCallback((recipientId: string) => {
+    if (typingRecipientRef.current && typingRecipientRef.current !== recipientId) stopTyping(typingRecipientRef.current)
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current)
+    if (!typingRecipientRef.current) {
+      typingRecipientRef.current = recipientId
+      void broadcastTyping(recipientId, true)
+    }
+    typingTimeoutRef.current = setTimeout(() => stopTyping(recipientId), 3000)
+  }, [broadcastTyping, stopTyping])
+  const broadcastOnlineStatus = useCallback(async (_isOnline: boolean) => {}, [])
+  // Conversation events are delivered by the shared user inbox subscription.
+  const subscribeToConversation = useCallback((_otherUserId: string) => () => {}, [])
+
+  const logCallMessage = useCallback(async (recipientId: string, callType: 'audio' | 'video', callStatus: 'ongoing' | 'incoming' | 'missed' | 'ended' | 'rejected', callDuration?: number, callId?: string) => {
+    if (!userId) throw new Error('No user logged in')
+    if (callStatus === 'ongoing') {
+      const newCallId = callId || crypto.randomUUID()
+      const { data, error: err } = await supabase.from('messages').insert({ sender_id: userId, recipient_id: recipientId, content: `Ongoing ${callType} call`, read: true, type: 'call_log', call_type: callType, call_status: 'ongoing', call_duration: null, call_id: newCallId }).select().single()
+      if (err) throw err
+      updateMessages(userId, recipientId, prev => mergeMessages(prev, [data as Message]))
+      void broadcast(recipientId, 'new_message', data)
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(`call_${newCallId}_start`, Date.now().toString())
+        const timeout = setTimeout(() => {
+          if (localStorage.getItem(`call_${newCallId}_start`)) void logCallMessage(recipientId, callType, 'missed', undefined, newCallId).catch(console.error)
+        }, 30000)
+        localStorage.setItem(`call_${newCallId}_timeout`, timeout.toString())
       }
-      if (isTypingRef.current) {
-        isTypingRef.current = false
-        broadcastTyping(recipientId, false)
-      }
-    },
-    [broadcastTyping]
-  )
+      return newCallId
+    }
+    if (!callId || !['ended', 'missed', 'rejected'].includes(callStatus)) return
+    const duration = callDuration || 0
+    const content = callStatus === 'ended' ? `${callType} call · ${Math.floor(duration / 60)}:${String(duration % 60).padStart(2, '0')}` : callStatus === 'missed' ? `Missed ${callType} call` : `Declined ${callType} call`
+    const { data, error: err } = await supabase.from('messages').update({ call_status: callStatus, ...(callStatus === 'ended' ? { call_duration: duration } : {}), content }).eq('call_id', callId).select().single()
+    if (err) throw err
+    updateMessages(userId, recipientId, prev => mergeMessages(prev.filter(m => m.call_id !== callId), [data as Message]))
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem(`call_${callId}_start`)
+      localStorage.removeItem(`call_${callId}_timeout`)
+    }
+    if (callStatus === 'missed') {
+      void Promise.resolve(supabase.from('notifications').insert({ recipient_id: recipientId, from_user_id: userId, type: 'call_missed', call_type: callType, call_status: 'missed' })).then(({ error }) => { if (error) console.warn('Failed to create missed call notification:', error) }).catch(console.warn)
+    }
+    void broadcast(recipientId, 'new_message', data)
+    if (callStatus === 'ended' || callStatus === 'missed') void broadcast(recipientId, `call_${callStatus}`, { callId, callType, ...(callStatus === 'ended' ? { duration } : {}) })
+  }, [userId, updateMessages])
 
-  const logCallMessage = useCallback(
-    async (
-      recipientId: string,
-      callType: 'audio' | 'video',
-      callStatus: 'ongoing' | 'incoming' | 'missed' | 'ended' | 'rejected',
-      callDuration?: number,
-      callId?: string
-    ) => {
-      if (!user) throw new Error('No user logged in')
-
-      try {
-        if (callStatus === 'ongoing') {
-          // For ongoing calls, generate a new call_id and insert a new record
-          const newCallId = callId || crypto.randomUUID()
-
-          const { data, error: err } = await supabase
-            .from('messages')
-            .insert({
-              sender_id: user.id,
-              recipient_id: recipientId,
-              content: `Ongoing ${callType} call`,
-              read: true,
-              type: 'call_log',
-              call_type: callType,
-              call_status: 'ongoing',
-              call_duration: null,
-              call_id: newCallId,
-            })
-            .select()
-            .single()
-
-          if (err) throw err
-
-          const callMessage = data as Message
-          setMessages((prev) => [...prev, callMessage])
-
-          // Store call timing info for later
-          if (typeof window !== 'undefined') {
-            localStorage.setItem(`call_${newCallId}_start`, Date.now().toString())
-          }
-
-          // Broadcast the call message
-          const conversationChannel = supabase.channel(`messages:${user.id}:${recipientId}`)
-          await conversationChannel.send({
-            type: 'broadcast',
-            event: 'new_message',
-            payload: callMessage,
-          })
-          supabase.removeChannel(conversationChannel)
-
-          const userChannel = supabase.channel(`messages:${user.id}`)
-          await userChannel.send({
-            type: 'broadcast',
-            event: 'new_message',
-            payload: callMessage,
-          })
-          supabase.removeChannel(userChannel)
-
-          // Set up 30-second timeout for missed call
-          const missedCallTimeout = setTimeout(async () => {
-            if (typeof window !== 'undefined') {
-              const callStillActive = localStorage.getItem(`call_${newCallId}_start`)
-              if (callStillActive) {
-                // Call wasn't explicitly ended, mark as missed
-                await logCallMessage(recipientId, callType, 'missed', undefined, newCallId)
-              }
-            }
-          }, 30000)
-
-          // Store timeout reference for cleanup
-          if (typeof window !== 'undefined') {
-            localStorage.setItem(`call_${newCallId}_timeout`, missedCallTimeout.toString())
-          }
-
-          // Return the new call_id
-          return newCallId
-        } else if (callStatus === 'ended' && callId) {
-          // For ended calls, update the existing record with duration
-          const durationSeconds = callDuration || 0
-
-          // Update the call log with final status and duration
-          const { data, error: err } = await supabase
-            .from('messages')
-            .update({
-              call_status: 'ended',
-              call_duration: durationSeconds,
-              content: `${callType} call · ${Math.floor(durationSeconds / 60)}:${String(durationSeconds % 60).padStart(2, '0')}`,
-            })
-            .eq('call_id', callId)
-            .select()
-            .single()
-
-          if (err) throw err
-
-          const callMessage = data as Message
-
-          // Update in messages state
-          setMessages((prev) =>
-            prev.map((msg) => msg.call_id === callId ? callMessage : msg)
-          )
-
-          // Cleanup localStorage
-          if (typeof window !== 'undefined') {
-            localStorage.removeItem(`call_${callId}_start`)
-            localStorage.removeItem(`call_${callId}_timeout`)
-          }
-
-          // Broadcast the updated call message to both users
-          const conversationChannel = supabase.channel(`messages:${user.id}:${recipientId}`)
-          await conversationChannel.send({
-            type: 'broadcast',
-            event: 'new_message',
-            payload: callMessage,
-          })
-
-          const userChannel = supabase.channel(`messages:${user.id}`)
-          await userChannel.send({
-            type: 'broadcast',
-            event: 'new_message',
-            payload: callMessage,
-          })
-
-          // Broadcast call end signal so both sides end the call immediately
-          await conversationChannel.send({
-            type: 'broadcast',
-            event: 'call_ended',
-            payload: { callId, callType, duration: durationSeconds },
-          })
-
-          await userChannel.send({
-            type: 'broadcast',
-            event: 'call_ended',
-            payload: { callId, callType, duration: durationSeconds },
-          })
-          supabase.removeChannel(conversationChannel)
-          supabase.removeChannel(userChannel)
-        } else if (callStatus === 'missed' && callId) {
-          // For missed calls, update the existing record
-          const { data, error: err } = await supabase
-            .from('messages')
-            .update({
-              call_status: 'missed',
-              content: `Missed ${callType} call`,
-            })
-            .eq('call_id', callId)
-            .select()
-            .single()
-
-          if (err) throw err
-
-          const callMessage = data as Message
-
-          // Update in messages state
-          setMessages((prev) =>
-            prev.map((msg) => msg.call_id === callId ? callMessage : msg)
-          )
-
-          // Cleanup localStorage
-          if (typeof window !== 'undefined') {
-            localStorage.removeItem(`call_${callId}_start`)
-            localStorage.removeItem(`call_${callId}_timeout`)
-          }
-
-          // Create notification for missed call (don't await to avoid blocking)
-          try {
-            supabase
-              .from('notifications')
-              .insert({
-                recipient_id: recipientId,
-                from_user_id: user.id,
-                type: 'call_missed',
-                call_type: callType,
-                call_status: 'missed',
-              })
-              .then()
-              .catch((err) => console.warn('Failed to create missed call notification:', err))
-          } catch (notifErr) {
-            console.warn('Error creating missed call notification:', notifErr)
-          }
-
-          // Broadcast the updated call message
-          const conversationChannel = supabase.channel(`messages:${user.id}:${recipientId}`)
-          await conversationChannel.send({
-            type: 'broadcast',
-            event: 'new_message',
-            payload: callMessage,
-          })
-
-          const userChannel = supabase.channel(`messages:${user.id}`)
-          await userChannel.send({
-            type: 'broadcast',
-            event: 'new_message',
-            payload: callMessage,
-          })
-
-          // Broadcast missed call signal
-          await conversationChannel.send({
-            type: 'broadcast',
-            event: 'call_missed',
-            payload: { callId, callType },
-          })
-
-          await userChannel.send({
-            type: 'broadcast',
-            event: 'call_missed',
-            payload: { callId, callType },
-          })
-          supabase.removeChannel(conversationChannel)
-          supabase.removeChannel(userChannel)
-        } else if (callStatus === 'rejected' && callId) {
-          // For rejected calls, update the existing record
-          const { data, error: err } = await supabase
-            .from('messages')
-            .update({
-              call_status: 'rejected',
-              content: `Declined ${callType} call`,
-            })
-            .eq('call_id', callId)
-            .select()
-            .single()
-
-          if (err) throw err
-
-          const callMessage = data as Message
-
-          // Update in messages state
-          setMessages((prev) =>
-            prev.map((msg) => msg.call_id === callId ? callMessage : msg)
-          )
-
-          // Cleanup localStorage
-          if (typeof window !== 'undefined') {
-            localStorage.removeItem(`call_${callId}_start`)
-            localStorage.removeItem(`call_${callId}_timeout`)
-          }
-
-          // Broadcast the updated call message
-          const conversationChannel = supabase.channel(`messages:${user.id}:${recipientId}`)
-          await conversationChannel.send({
-            type: 'broadcast',
-            event: 'new_message',
-            payload: callMessage,
-          })
-          supabase.removeChannel(conversationChannel)
-
-          const userChannel = supabase.channel(`messages:${user.id}`)
-          await userChannel.send({
-            type: 'broadcast',
-            event: 'new_message',
-            payload: callMessage,
-          })
-          supabase.removeChannel(userChannel)
-        }
-      } catch (err: any) {
-        console.error('Error logging call message:', err)
-        throw err
-      }
-    },
-    [user]
-  )
-
-  return {
-    conversations,
-    messages,
-    loading,
-    error,
-    hasMoreMessages,
-    fetchConversations,
-    fetchMessages,
-    loadMoreMessages,
-    sendMessage,
-    markAsRead,
-    initiateConversation,
-    subscribeToConversation,
-    logCallMessage,
-    handleTyping,
-    stopTyping,
-    broadcastTyping,
-    broadcastOnlineStatus,
-  }
+  const scopedConversations = useMemo(() => conversations.filter(c => c.user_id === userId), [conversations, userId])
+  const scopedMessages = useMemo(() => messages.filter(m => m.sender_id === userId || m.recipient_id === userId), [messages, userId])
+  return { conversations: scopedConversations, messages: scopedMessages, loading, error, conversationError, hasMoreMessages, typingStatus, fetchConversations, fetchMessages, loadMoreMessages, sendMessage, markAsRead, initiateConversation, subscribeToConversation, logCallMessage, handleTyping, stopTyping, broadcastTyping, broadcastOnlineStatus }
 }

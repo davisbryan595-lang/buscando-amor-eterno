@@ -8,6 +8,57 @@ import { calculateCompatibilityPercentage, isOrientationCompatible } from '@/uti
 
 const FREE_DAILY_PROFILE_LIMIT = 10
 const PROFILE_FETCH_TIMEOUT_MS = 15000
+const CANDIDATE_CACHE_TTL_MS = 5 * 60 * 1000
+
+type BrowseDeck = { key: string; fetchedAt: number; profiles: BrowseProfileData[]; index: number }
+type BrowseCache = {
+  candidates?: ProfileData[]
+  fetchedAt?: number
+  pending?: Promise<ProfileData[]>
+  deck?: BrowseDeck
+  consumed: Set<string>
+  pendingActions: Set<string>
+  listeners: Set<() => void>
+  usage?: { key: string; ids: string[] }
+}
+
+// Session-only, keyed by authenticated user. The deck survives route remounts.
+const browseCache = new Map<string, BrowseCache>()
+function getBrowseCache(userId: string): BrowseCache {
+  let cache = browseCache.get(userId)
+  if (!cache) {
+    cache = { consumed: new Set(), pendingActions: new Set(), listeners: new Set() }
+    browseCache.set(userId, cache)
+  }
+  return cache
+}
+
+function loadCandidates(userId: string, force = false): Promise<ProfileData[]> {
+  const cache = getBrowseCache(userId)
+  if (cache.pending) return cache.pending
+  if (!force && cache.candidates && Date.now() - (cache.fetchedAt || 0) < CANDIDATE_CACHE_TTL_MS) {
+    return Promise.resolve(cache.candidates)
+  }
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), PROFILE_FETCH_TIMEOUT_MS)
+  const pending = (async () => {
+    try {
+      const { data, error } = await fetchBrowseProfiles(userId, controller.signal)
+      if (error) throw error
+      cache.candidates = (data as unknown as ProfileData[]) || []
+      cache.fetchedAt = Date.now()
+      return cache.candidates
+    } catch (error) {
+      if (controller.signal.aborted) throw new Error('Loading profiles timed out. Please try again.')
+      throw error
+    } finally {
+      clearTimeout(timeout)
+      cache.pending = undefined
+    }
+  })()
+  cache.pending = pending
+  return pending
+}
 
 export type BrowseProfileData = ProfileData & { compatibility: number }
 
@@ -43,126 +94,142 @@ function rankProfiles(candidates: ProfileData[], currentProfile: ProfileData | n
 export function useBrowseProfiles() {
   const { user } = useAuth()
   const { isPremium } = useSubscription()
-  const { profile: currentProfile } = useProfile()
-  const [profiles, setProfiles] = useState<BrowseProfileData[]>([])
-  const [dailyViewedProfileIds, setDailyViewedProfileIds] = useState<string[]>([])
-  const dailyViewedProfileIdsRef = useRef<string[]>([])
-  const [usageReady, setUsageReady] = useState(false)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const usageKey = user ? `browse-profile-views:${user.id}:${new Date().toISOString().slice(0, 10)}` : null
+  const userId: string | null = user?.id ?? null
+  const activeUserId = useRef(userId)
+  activeUserId.current = userId
+  const { profile: loadedProfile, loading: profileLoading } = useProfile()
+  const currentProfile = loadedProfile?.user_id === userId ? loadedProfile : null
+  const [deckState, setDeckState] = useState<{ userId: string; deck: BrowseDeck } | null>(null)
+  const [usage, setUsage] = useState<{ key: string | null; ids: string[] }>({ key: null, ids: [] })
+  const usageRef = useRef(usage)
+  const [loadState, setLoadState] = useState<{ userId: string | null; loading: boolean; error: string | null }>({ userId: null, loading: true, error: null })
+  const [refreshVersion, setRefreshVersion] = useState(0)
+  const usageKey = userId ? `browse-profile-views:${userId}:${new Date().toISOString().slice(0, 10)}` : null
+  const usageReady = usage.key === usageKey
 
   useEffect(() => {
-    if (!usageKey) {
-      dailyViewedProfileIdsRef.current = []
-      setDailyViewedProfileIds([])
-      setUsageReady(true)
-      return
-    }
-
-    setUsageReady(false)
-    try {
-      const stored = localStorage.getItem(usageKey)
-      const parsed = stored ? JSON.parse(stored) : []
-      const viewedIds = Array.isArray(parsed) ? parsed.filter((id): id is string => typeof id === 'string') : []
-      dailyViewedProfileIdsRef.current = viewedIds
-      setDailyViewedProfileIds(viewedIds)
-    } catch {
-      dailyViewedProfileIdsRef.current = []
-      setDailyViewedProfileIds([])
-    }
-    setUsageReady(true)
-  }, [usageKey])
-
-  const recordProfileView = useCallback((profileId: string) => {
-    if (!usageKey || isPremium || dailyViewedProfileIdsRef.current.includes(profileId)) return
-
-    const next = [...dailyViewedProfileIdsRef.current, profileId]
-    dailyViewedProfileIdsRef.current = next
-    localStorage.setItem(usageKey, JSON.stringify(next))
-    setDailyViewedProfileIds(next)
-  }, [isPremium, usageKey])
-
-  const dailyViewsRemaining = isPremium
-    ? Infinity
-    : Math.max(0, FREE_DAILY_PROFILE_LIMIT - dailyViewedProfileIds.length)
-
-  useEffect(() => {
-    if (!user || !usageReady) {
-      setLoading(!usageReady)
-      return
-    }
-
-    let isMounted = true
-    const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), PROFILE_FETCH_TIMEOUT_MS)
-
-    const fetchProfilesData = async () => {
+    let ids: string[] = []
+    if (usageKey) {
       try {
-        setLoading(true)
-
-        const { data, error: err } = await fetchBrowseProfiles(user.id, controller.signal)
-
-        if (!isMounted) return
-
-        if (err) throw err
-        const ranked = rankProfiles((data as ProfileData[]) || [], currentProfile)
-        const unseen = isPremium ? ranked : ranked.filter((item) => !dailyViewedProfileIdsRef.current.includes(item.user_id))
-        setProfiles(isPremium ? unseen : unseen.slice(0, dailyViewsRemaining))
-        setError(null)
-      } catch (err: any) {
-        if (isMounted) {
-          const errorMessage = controller.signal.aborted
-            ? 'Loading profiles timed out. Please try again.'
-            : err?.message || (typeof err === 'string' ? err : 'Failed to fetch profiles')
-          setError(errorMessage)
-          console.error('Error fetching profiles:', errorMessage, err)
-          setProfiles([])
-        }
-      } finally {
-        clearTimeout(timeoutId)
-        if (isMounted) {
-          setLoading(false)
-        }
+        const parsed = JSON.parse(localStorage.getItem(usageKey) || '[]')
+        ids = Array.isArray(parsed) ? parsed.filter((id): id is string => typeof id === 'string') : []
+      } catch {
+        const cachedUsage = userId ? getBrowseCache(userId).usage : undefined
+        ids = cachedUsage?.key === usageKey ? cachedUsage.ids : []
+      }
+      if (userId) {
+        const cache = getBrowseCache(userId)
+        if (cache.usage?.key === usageKey) ids = [...new Set([...ids, ...cache.usage.ids])]
+        cache.usage = { key: usageKey, ids }
       }
     }
+    const next = { key: usageKey, ids }
+    usageRef.current = next
+    setUsage(next)
+  }, [usageKey, userId])
 
-    fetchProfilesData()
+  const recordProfileView = useCallback((profileId: string) => {
+    if (!usageKey || usageRef.current.key !== usageKey || isPremium || usageRef.current.ids.includes(profileId)) return
+    const next = { key: usageKey, ids: [...usageRef.current.ids, profileId] }
+    usageRef.current = next
+    if (userId) getBrowseCache(userId).usage = { key: usageKey, ids: next.ids }
+    try { localStorage.setItem(usageKey, JSON.stringify(next.ids)) } catch { /* Keep the in-memory count. */ }
+    setUsage(next)
+  }, [isPremium, usageKey, userId])
 
-    return () => {
-      isMounted = false
-      clearTimeout(timeoutId)
-      controller.abort()
-    }
-  }, [user, currentProfile, usageReady, isPremium, usageKey])
+  const dailyViewsRemaining = isPremium ? Infinity : Math.max(0, FREE_DAILY_PROFILE_LIMIT - (usageReady ? usage.ids.length : 0))
+  // The profile snapshot controls ranking, not candidate fetching.
+  const deckKey = JSON.stringify([usageKey, isPremium, currentProfile])
 
-  const fetchProfiles = async () => {
-    if (!user || !usageReady) return
+  useEffect(() => {
+    if (!userId || !usageReady || profileLoading) return
+    let active = true
+    const cache = getBrowseCache(userId)
+    setLoadState({ userId, loading: true, error: null })
+    loadCandidates(userId).then((candidates) => {
+      if (!active) return
+      // Read the deck after the request resolves: a swipe may have completed meanwhile.
+      let deck = cache.deck
+      if (!deck || deck.key !== deckKey || deck.fetchedAt !== cache.fetchedAt) {
+        const previous = deck?.profiles[deck.index]
+        const ranked = rankProfiles(candidates, currentProfile).filter((item) => !cache.consumed.has(item.user_id))
+        const activeCard = previous && ranked.find((item) => item.user_id === previous.user_id)
+        const remaining = Math.max(0, FREE_DAILY_PROFILE_LIMIT - usageRef.current.ids.length)
+        const keepActive = activeCard && (isPremium || remaining > 0 || usageRef.current.ids.includes(activeCard.user_id))
+        const others = ranked.filter((item) => item.user_id !== (keepActive ? activeCard.user_id : null) && (isPremium || !usageRef.current.ids.includes(item.user_id)))
+        const activeCostsView = keepActive && !usageRef.current.ids.includes(activeCard.user_id) ? 1 : 0
+        const profiles = [
+          ...(keepActive ? [activeCard] : []),
+          ...(isPremium ? others : others.slice(0, Math.max(0, remaining - activeCostsView))),
+        ]
+        deck = { key: deckKey, fetchedAt: cache.fetchedAt || 0, profiles, index: 0 }
+        cache.deck = deck
+      }
+      setDeckState({ userId, deck })
+      setLoadState({ userId, loading: false, error: null })
+    }).catch((err: any) => {
+      if (!active) return
+      const message = err?.message || 'Failed to fetch profiles'
+      console.error('Error fetching profiles:', message, err)
+      setLoadState({ userId, loading: false, error: message })
+    })
+    return () => { active = false }
+  }, [userId, usageReady, profileLoading, loadedProfile, deckKey, isPremium, refreshVersion])
 
-    const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), PROFILE_FETCH_TIMEOUT_MS)
-
+  const fetchProfiles = useCallback(async () => {
+    if (!userId) return
+    const cache = getBrowseCache(userId)
+    // Invalidate the deck only after the fetch succeeds, so actions cannot rewind it.
     try {
-      setLoading(true)
-      const { data, error: err } = await fetchBrowseProfiles(user.id, controller.signal)
-
-      if (err) throw err
-      const ranked = rankProfiles((data as ProfileData[]) || [], currentProfile)
-      const unseen = isPremium ? ranked : ranked.filter((item) => !dailyViewedProfileIdsRef.current.includes(item.user_id))
-      setProfiles(isPremium ? unseen : unseen.slice(0, dailyViewsRemaining))
-      setError(null)
+      await loadCandidates(userId, true)
+      if (cache.deck) cache.deck = { ...cache.deck, key: '' }
+      if (activeUserId.current === userId) setRefreshVersion((version) => version + 1)
     } catch (err: any) {
-      const errorMessage = controller.signal.aborted
-        ? 'Loading profiles timed out. Please try again.'
-        : err?.message || (typeof err === 'string' ? err : 'Failed to fetch profiles')
-      setError(errorMessage)
-      console.error('Error fetching profiles:', errorMessage, err)
-      setProfiles([])
-    } finally {
-      clearTimeout(timeoutId)
-      setLoading(false)
+      if (activeUserId.current === userId) setLoadState({ userId, loading: false, error: err?.message || 'Failed to fetch profiles' })
     }
-  }
+  }, [userId])
+
+  useEffect(() => {
+    if (!userId) return
+    const cache = getBrowseCache(userId)
+    const update = () => {
+      if (activeUserId.current === userId && cache.deck) setDeckState({ userId, deck: cache.deck })
+    }
+    cache.listeners.add(update)
+    return () => { cache.listeners.delete(update) }
+  }, [userId])
+
+  const beginProfileAction = useCallback((profileId: string) => {
+    if (!userId) return false
+    const pending = getBrowseCache(userId).pendingActions
+    if (pending.has(profileId)) return false
+    pending.add(profileId)
+    getBrowseCache(userId).listeners.forEach((listener) => listener())
+    return true
+  }, [userId])
+  const endProfileAction = useCallback((profileId: string) => {
+    if (userId) {
+      const cache = getBrowseCache(userId)
+      cache.pendingActions.delete(profileId)
+      cache.listeners.forEach((listener) => listener())
+    }
+  }, [userId])
+
+  const advanceProfile = useCallback((profileId: string) => {
+    if (!userId) return
+    const cache = getBrowseCache(userId)
+    const deck = cache.deck
+    cache.consumed.add(profileId)
+    if (!deck || deck.profiles[deck.index]?.user_id !== profileId) return
+    cache.deck = { ...deck, index: deck.index + 1 }
+    cache.listeners.forEach((listener) => listener())
+  }, [userId])
+  const visibleDeck = deckState?.userId === userId ? deckState.deck : null
+  const profiles = visibleDeck?.profiles ?? []
+  const currentIndex = visibleDeck?.index ?? 0
+  const actionPending = !!userId && !!profiles[currentIndex] && getBrowseCache(userId).pendingActions.has(profiles[currentIndex].user_id)
+  const loading = !!userId && (!usageReady || profileLoading || loadState.userId !== userId || loadState.loading)
+  const error = loadState.userId === userId ? loadState.error : null
 
   const likeProfile = useCallback(
     async (likedUserId: string, likedProfileId?: string) => {
@@ -382,6 +449,11 @@ export function useBrowseProfiles() {
 
   return {
     profiles,
+    currentIndex,
+    advanceProfile,
+    beginProfileAction,
+    endProfileAction,
+    actionPending,
     loading,
     error,
     fetchProfiles,

@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useRef, useEffect } from 'react'
+import React, { useState, useRef, useLayoutEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/auth-context'
 import { useLounge } from '@/hooks/useLounge'
@@ -11,23 +11,62 @@ import { toast } from 'sonner'
 function LoungeChatContent() {
   const router = useRouter()
   const { user } = useAuth()
-  const { messages, onlineUsers, loading, sendMessage, reportMessage } = useLounge()
+  const { messages, onlineUsers, loading, error, hasOlder, loadingOlder, loadOlder, retryMessages, sendMessage, reportMessage } = useLounge()
   const [inputValue, setInputValue] = useState('')
+  const [sending, setSending] = useState(false)
+  const [reporting, setReporting] = useState(false)
   const [reportingMessageId, setReportingMessageId] = useState<string | null>(null)
   const [reportReason, setReportReason] = useState('')
-  const messagesEndRef = useRef<HTMLDivElement>(null)
+  const messagesContainerRef = useRef<HTMLDivElement>(null)
+  const nearBottomRef = useRef(true)
+  const historyAnchorRef = useRef<{ id: string; top: number; firstId: string } | null>(null)
 
-  // Auto-scroll to bottom on new messages
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages])
+  useLayoutEffect(() => {
+    nearBottomRef.current = true
+    historyAnchorRef.current = null
+  }, [user?.id])
+
+  useLayoutEffect(() => {
+    const container = messagesContainerRef.current
+    if (!container) return
+    const anchor = historyAnchorRef.current
+    if (anchor && !loadingOlder) {
+      if (messages[0]?.id !== anchor.firstId) {
+        const element = Array.from(container.querySelectorAll<HTMLElement>('[data-message-id]'))
+          .find((node) => node.dataset.messageId === anchor.id)
+        if (element) container.scrollTop += element.getBoundingClientRect().top - anchor.top
+      }
+      historyAnchorRef.current = null
+    } else if (!anchor && nearBottomRef.current) {
+      container.scrollTop = container.scrollHeight
+    }
+  }, [messages, loading, loadingOlder])
+
+  const handleLoadOlder = async () => {
+    const container = messagesContainerRef.current
+    if (!container || loadingOlder) return
+    const element = Array.from(container.querySelectorAll<HTMLElement>('[data-message-id]'))
+      .find((node) => node.getBoundingClientRect().bottom >= container.getBoundingClientRect().top)
+    if (element && messages[0]) historyAnchorRef.current = {
+      id: element.dataset.messageId!, top: element.getBoundingClientRect().top, firstId: messages[0].id,
+    }
+    nearBottomRef.current = false
+    if (!await loadOlder()) historyAnchorRef.current = null
+  }
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!inputValue.trim()) return
-
-    await sendMessage(inputValue)
-    setInputValue('')
+    if (!inputValue.trim() || sending) return
+    const content = inputValue
+    setSending(true)
+    try {
+      await sendMessage(content)
+      setInputValue((current) => current === content ? '' : current)
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to send message')
+    } finally {
+      setSending(false)
+    }
   }
 
   const handleReportMessage = async (messageId: string) => {
@@ -36,10 +75,18 @@ function LoungeChatContent() {
       return
     }
 
-    await reportMessage(messageId, reportReason)
-    setReportingMessageId(null)
-    setReportReason('')
-    toast.success('Message reported. Thank you for helping keep our community safe.')
+    if (reporting) return
+    setReporting(true)
+    try {
+      await reportMessage(messageId, reportReason)
+      setReportingMessageId(null)
+      setReportReason('')
+      toast.success('Message reported. Thank you for helping keep our community safe.')
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to report message')
+    } finally {
+      setReporting(false)
+    }
   }
 
   if (!user) {
@@ -190,12 +237,27 @@ function LoungeChatContent() {
       </div>
 
       {/* Messages container */}
-      <div className="flex-1 overflow-y-auto px-6 py-4 max-w-6xl mx-auto w-full relative z-10">
+      <div
+        ref={messagesContainerRef}
+        onScroll={(event) => {
+          const element = event.currentTarget
+          nearBottomRef.current = element.scrollHeight - element.scrollTop - element.clientHeight < 100
+          const anchor = historyAnchorRef.current
+          if (anchor) {
+            const node = Array.from(element.querySelectorAll<HTMLElement>('[data-message-id]'))
+              .find((item) => item.dataset.messageId === anchor.id)
+            if (node) anchor.top = node.getBoundingClientRect().top
+          }
+        }}
+        className="flex-1 overflow-y-auto px-6 py-4 max-w-6xl mx-auto w-full relative z-10"
+      >
+        {error && <p role="alert" className="text-sm text-red-600 mb-3">{error} <button type="button" onClick={retryMessages} className="underline">Retry loading</button></p>}
+        {hasOlder && <button type="button" disabled={loadingOlder} onClick={handleLoadOlder} className="text-sm text-primary mb-4 disabled:opacity-50">{loadingOlder ? 'Loading older messages...' : 'Load older messages'}</button>}
         {loading ? (
           <div className="flex items-center justify-center h-full">
             <div className="text-muted-foreground">Loading messages...</div>
           </div>
-        ) : messages.length === 0 ? (
+        ) : messages.length === 0 && !error ? (
           <div className="flex items-center justify-center h-full">
             <div className="text-center">
               <p className="text-xl font-playfair font-bold text-foreground mb-2">Welcome to the Lounge!</p>
@@ -207,6 +269,7 @@ function LoungeChatContent() {
             {messages.map((msg) => (
               <div
                 key={msg.id}
+                data-message-id={msg.id}
                 className={`flex gap-3 ${msg.message_type === 'system' ? 'justify-center' : ''}`}
               >
                 {msg.message_type !== 'system' && (
@@ -271,6 +334,7 @@ function LoungeChatContent() {
                           <div className="flex gap-2">
                             <button
                               onClick={() => handleReportMessage(msg.id)}
+                              disabled={reporting}
                               className="text-xs bg-rose-600 hover:bg-rose-700 text-white px-3 py-1 rounded transition"
                             >
                               Submit Report
@@ -292,7 +356,6 @@ function LoungeChatContent() {
                 </div>
               </div>
             ))}
-            <div ref={messagesEndRef} />
           </div>
         )}
       </div>
@@ -310,7 +373,7 @@ function LoungeChatContent() {
             />
             <button
               type="submit"
-              disabled={!inputValue.trim()}
+              disabled={sending || !inputValue.trim()}
               className="bg-gradient-to-r from-primary to-rose-600 hover:from-rose-600 hover:to-rose-700 disabled:bg-muted disabled:cursor-not-allowed text-white px-6 py-3 rounded-full transition flex items-center gap-2 font-semibold"
             >
               <Send size={18} />

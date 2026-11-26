@@ -21,11 +21,10 @@ export default function BrowsePage() {
   const { user, loading: authLoading } = useAuth()
   // Protect this route - require complete profile
   const { isLoading } = useProfileProtection(true, '/onboarding')
-  const { profiles, loading: profilesLoading, error: profilesError, likeProfile, dislikeProfile, superLikeProfile, recordProfileView, dailyViewsRemaining, freeDailyProfileLimit, isPremium } = useBrowseProfiles()
+  const { profiles, currentIndex, advanceProfile, beginProfileAction, endProfileAction, actionPending, loading: profilesLoading, error: profilesError, likeProfile, dislikeProfile, recordProfileView, dailyViewsRemaining, freeDailyProfileLimit, isPremium } = useBrowseProfiles()
   const { profile } = useProfile()
   const { notifications, dismissNotification } = useNotifications()
 
-  const [currentIndex, setCurrentIndex] = useState(0)
   const [showInfo, setShowInfo] = useState(false)
   const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | 'super' | null>(null)
   const [dragOffset, setDragOffset] = useState(0)
@@ -33,15 +32,26 @@ export default function BrowsePage() {
   const dragOffsetRef = useRef(0)
   const isDraggingRef = useRef(false)
   const [isActing, setIsActing] = useState(false)
+  const actingRef = useRef(false)
+  const actionScope = useRef(0)
+
+  useEffect(() => {
+    actionScope.current++
+    actingRef.current = false
+    setIsActing(false)
+    setShowInfo(false)
+    setSwipeDirection(null)
+    return () => { actionScope.current++ }
+  }, [user?.id])
 
   const currentProfile = profiles[currentIndex]
-  const { mutualPreferences, loading: profileLoading } = useUserProfile(
-    currentProfile?.user_id || null
+  const { mutualPreferences } = useUserProfile(
+    showInfo && !profilesLoading ? currentProfile?.user_id || null : null
   )
 
   useEffect(() => {
-    if (currentProfile) recordProfileView(currentProfile.user_id)
-  }, [currentProfile?.user_id, recordProfileView])
+    if (currentProfile && !profilesLoading) recordProfileView(currentProfile.user_id)
+  }, [currentProfile?.user_id, profilesLoading, recordProfileView])
 
   if (authLoading || isLoading || profilesLoading) {
     return (
@@ -113,8 +123,11 @@ export default function BrowsePage() {
   const hasMoreProfiles = currentIndex < profiles.length - 1
 
   const handleSwipe = async (direction: 'left' | 'right' | 'super') => {
-    if (!currentProfile || isActing) return
+    if (!currentProfile || actingRef.current || !beginProfileAction(currentProfile.user_id)) return
 
+    actingRef.current = true
+    const scope = actionScope.current
+    const profileId = currentProfile.user_id
     setIsActing(true)
     let actionSucceeded = false
     try {
@@ -128,20 +141,33 @@ export default function BrowsePage() {
     } catch (err: any) {
       const errorMessage = err instanceof Error ? err.message : JSON.stringify(err)
       console.error('Error swiping:', errorMessage)
-      toast.error(errorMessage || 'Error liking profile')
+      if (scope === actionScope.current) toast.error(errorMessage || 'Error liking profile')
     }
 
     // Animate and move to next profile if action succeeded
     if (actionSucceeded) {
-      setSwipeDirection(direction === 'left' ? 'left' : direction === 'right' ? 'right' : 'super')
+      if (scope !== actionScope.current) {
+        advanceProfile(profileId)
+        endProfileAction(profileId)
+        return
+      }
+      setSwipeDirection(direction)
       setTimeout(() => {
-        setCurrentIndex(currentIndex + 1)
+        // Commit even if the route was left during the animation.
+        advanceProfile(profileId)
+        endProfileAction(profileId)
+        if (scope !== actionScope.current) return
+        actingRef.current = false
         setSwipeDirection(null)
         setShowInfo(false)
         setIsActing(false)
       }, 300)
     } else {
-      setIsActing(false)
+      endProfileAction(profileId)
+      if (scope === actionScope.current) {
+        actingRef.current = false
+        setIsActing(false)
+      }
     }
   }
 
@@ -407,7 +433,7 @@ export default function BrowsePage() {
           <div className="flex items-center justify-center gap-6">
             <button
               onClick={() => handleSwipe('left')}
-              disabled={isActing}
+              disabled={isActing || actionPending}
               className="w-16 h-16 bg-white rounded-full shadow-lg flex items-center justify-center hover:scale-110 transition-transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
               aria-label="Pass"
             >
@@ -416,7 +442,7 @@ export default function BrowsePage() {
 
             <button
               onClick={() => handleSwipe('super')}
-              disabled={isActing}
+              disabled={isActing || actionPending}
               className="w-14 h-14 bg-white rounded-full shadow-lg flex items-center justify-center hover:scale-110 transition-transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
               aria-label="Super Like"
             >
@@ -425,7 +451,7 @@ export default function BrowsePage() {
 
             <button
               onClick={() => handleSwipe('right')}
-              disabled={isActing}
+              disabled={isActing || actionPending}
               className="w-16 h-16 bg-rose-700 rounded-full shadow-lg flex items-center justify-center hover:scale-110 transition-transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
               aria-label="Like"
             >
