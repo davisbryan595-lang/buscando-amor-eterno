@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import Navigation from '@/components/navigation'
@@ -30,6 +30,8 @@ export default function BrowsePage() {
   const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | 'super' | null>(null)
   const [dragOffset, setDragOffset] = useState(0)
   const [isDragging, setIsDragging] = useState(false)
+  const dragOffsetRef = useRef(0)
+  const isDraggingRef = useRef(false)
   const [isActing, setIsActing] = useState(false)
 
   const currentProfile = profiles[currentIndex]
@@ -129,9 +131,7 @@ export default function BrowsePage() {
     if (actionSucceeded) {
       setSwipeDirection(direction === 'left' ? 'left' : direction === 'right' ? 'right' : 'super')
       setTimeout(() => {
-        if (currentIndex < profiles.length - 1) {
-          setCurrentIndex(currentIndex + 1)
-        }
+        setCurrentIndex(currentIndex + 1)
         setSwipeDirection(null)
         setShowInfo(false)
         setIsActing(false)
@@ -141,23 +141,30 @@ export default function BrowsePage() {
     }
   }
 
-  const handleDragStart = (clientX: number) => {
+  const handleDragStart = () => {
+    dragOffsetRef.current = 0
+    isDraggingRef.current = true
+    setDragOffset(0)
     setIsDragging(true)
   }
 
   const handleDragMove = (clientX: number, startX: number) => {
-    if (!isDragging) return
+    if (!isDraggingRef.current) return
     const offset = clientX - startX
+    dragOffsetRef.current = offset
     setDragOffset(offset)
   }
 
   const handleDragEnd = () => {
-    if (!isDragging) return
+    if (!isDraggingRef.current) return
+    isDraggingRef.current = false
     setIsDragging(false)
-    
-    if (Math.abs(dragOffset) > 100) {
-      handleSwipe(dragOffset > 0 ? 'right' : 'left')
+
+    const offset = dragOffsetRef.current
+    if (Math.abs(offset) > 100) {
+      handleSwipe(offset > 0 ? 'right' : 'left')
     }
+    dragOffsetRef.current = 0
     setDragOffset(0)
   }
 
@@ -231,7 +238,7 @@ export default function BrowsePage() {
               }}
               onMouseDown={(e) => {
                 const startX = e.clientX
-                handleDragStart(startX)
+                handleDragStart()
                 const handleMouseMove = (e: MouseEvent) => handleDragMove(e.clientX, startX)
                 const handleMouseUp = () => {
                   handleDragEnd()
@@ -243,7 +250,7 @@ export default function BrowsePage() {
               }}
               onTouchStart={(e) => {
                 const startX = e.touches[0].clientX
-                handleDragStart(startX)
+                handleDragStart()
                 const handleTouchMove = (e: TouchEvent) => handleDragMove(e.touches[0].clientX, startX)
                 const handleTouchEnd = () => {
                   handleDragEnd()
