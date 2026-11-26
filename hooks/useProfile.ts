@@ -1,7 +1,6 @@
-import { useCallback, useState, useEffect } from 'react'
+import { useCallback, useEffect, useRef, useSyncExternalStore } from 'react'
 import { useAuth } from '@/context/auth-context'
 import { supabase } from '@/lib/supabase'
-import { toast } from 'sonner'
 
 export interface ProfileData {
   id: string
@@ -38,181 +37,264 @@ export interface ProfileData {
   updated_at: string
 }
 
+type ProfileSnapshot = { profile: ProfileData | null; loading: boolean; error: string | null }
+type ProfileEntry = {
+  snapshot: ProfileSnapshot
+  listeners: Set<() => void>
+  fetchedAt: number
+  revision: number
+  generation: number
+  nextMutation: number
+  appliedMutation: number
+  inFlight: Promise<void> | null
+  fetchTimeout: ReturnType<typeof setTimeout> | null
+  evictionTimeout: ReturnType<typeof setTimeout> | null
+}
+
+// Successful results (including a missing profile) are reused briefly on remount.
+const CACHE_TTL = 60_000
+const EMPTY_PROFILE: ProfileSnapshot = { profile: null, loading: true, error: null }
+const SIGNED_OUT_PROFILE: ProfileSnapshot = { profile: null, loading: false, error: null }
+const entries = new Map<string, ProfileEntry>()
+let authListenerInstalled = false
+
+function getEntry(userId: string): ProfileEntry {
+  let entry = entries.get(userId)
+  if (!entry) {
+    entry = { snapshot: EMPTY_PROFILE, listeners: new Set(), fetchedAt: 0, revision: 0, generation: 0,
+      nextMutation: 0, appliedMutation: 0, inFlight: null, fetchTimeout: null, evictionTimeout: null }
+    entries.set(userId, entry)
+    const created = entry
+    entry.evictionTimeout = setTimeout(() => {
+      if (!created.listeners.size && entries.get(userId) === created) invalidateEntry(userId, created)
+    }, CACHE_TTL)
+  }
+  return entry
+}
+
+function publish(entry: ProfileEntry, changes: Partial<ProfileSnapshot>) {
+  entry.snapshot = { ...entry.snapshot, ...changes }
+  entry.listeners.forEach(listener => listener())
+}
+
+function invalidateEntry(userId: string, entry: ProfileEntry) {
+  entry.revision++
+  entry.generation++
+  entry.inFlight = null
+  entry.fetchedAt = 0
+  if (entry.fetchTimeout) clearTimeout(entry.fetchTimeout)
+  if (entry.evictionTimeout) clearTimeout(entry.evictionTimeout)
+  entry.fetchTimeout = null
+  entry.evictionTimeout = null
+  if (entry.listeners.size) {
+    publish(entry, EMPTY_PROFILE)
+  } else {
+    entries.delete(userId)
+  }
+}
+
+function installAuthListener() {
+  if (authListenerInstalled || typeof window === 'undefined') return
+  authListenerInstalled = true
+  supabase.auth.onAuthStateChange((event, session) => {
+    if (event === 'SIGNED_OUT' || (event === 'SIGNED_IN' && session?.user)) {
+      for (const [id, entry] of entries) {
+        if (event === 'SIGNED_OUT' || id !== session?.user?.id) invalidateEntry(id, entry)
+      }
+      if (event === 'SIGNED_IN' && session?.user) {
+        const entry = entries.get(session.user.id)
+        if (entry?.listeners.size && !entry.fetchedAt) void fetchSharedProfile(session.user.id)
+      }
+    }
+  })
+}
+
+function subscribeToProfile(userId: string, listener: () => void) {
+  installAuthListener()
+  const entry = getEntry(userId)
+  if (entry.evictionTimeout) clearTimeout(entry.evictionTimeout)
+  entry.evictionTimeout = null
+  entry.listeners.add(listener)
+  return () => {
+    entry.listeners.delete(listener)
+    if (!entry.listeners.size) {
+      entry.evictionTimeout = setTimeout(() => {
+        if (!entry.listeners.size && entries.get(userId) === entry) {
+          invalidateEntry(userId, entry)
+        }
+      }, CACHE_TTL)
+    }
+  }
+}
+
+function fetchSharedProfile(userId: string): Promise<void> {
+  const entry = getEntry(userId)
+  if (entry.inFlight) return entry.inFlight
+
+  const revision = ++entry.revision
+  publish(entry, { loading: true })
+  // The timeout only stops the loading indicator; a late result can still be used.
+  entry.fetchTimeout = setTimeout(() => {
+    if (entries.get(userId) === entry && entry.revision === revision) {
+      console.warn('Profile fetch timeout - proceeding without profile data')
+      entry.fetchTimeout = null
+      entry.inFlight = null
+      publish(entry, { loading: false })
+    }
+  }, 60_000)
+
+  const request = Promise.resolve().then(async () => {
+    try {
+      const { data, error: err } = await supabase.from('profiles').select('*').eq('user_id', userId).maybeSingle()
+      if (err) throw err
+      if (data && data.user_id !== userId) throw new Error('Fetched profile does not match authenticated user')
+      if (entries.get(userId) === entry && entry.revision === revision) {
+        entry.fetchedAt = Date.now()
+        publish(entry, { profile: data as ProfileData | null, error: null })
+      }
+    } catch (err: any) {
+      if (entries.get(userId) === entry && entry.revision === revision) {
+        const errorMessage = err?.message || (typeof err === 'string' ? err : 'Failed to fetch profile')
+        publish(entry, { error: errorMessage })
+        console.error('Error fetching profile:', errorMessage, err)
+      }
+    } finally {
+      if (entries.get(userId) === entry && entry.inFlight === request) {
+        if (entry.fetchTimeout) clearTimeout(entry.fetchTimeout)
+        entry.fetchTimeout = null
+        entry.inFlight = null
+        publish(entry, { loading: false })
+      }
+    }
+  })
+  entry.inFlight = request
+  return request
+}
+
 export function useProfile() {
   const { user } = useAuth()
-  const [profile, setProfile] = useState<ProfileData | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const userId: string | null = user?.id ?? null
+  const currentUserId = useRef(userId)
+  currentUserId.current = userId
 
-  const fetchProfile = useCallback(async () => {
-    if (!user) return
-
-    try {
-      setLoading(true)
-
-      const { data, error: err } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('user_id', user.id)
-        .maybeSingle()
-
-      if (err) {
-        throw err
-      }
-
-      setProfile(data as ProfileData | null)
-      setError(null)
-    } catch (err: any) {
-      const errorMessage = err?.message || (typeof err === 'string' ? err : 'Failed to fetch profile')
-      setError(errorMessage)
-      console.error('Error fetching profile:', errorMessage, err)
-    } finally {
-      setLoading(false)
-    }
-  }, [user])
+  const subscribe = useCallback((listener: () => void) => userId ? subscribeToProfile(userId, listener) : () => {}, [userId])
+  const getSnapshot = useCallback(() => userId ? entries.get(userId)?.snapshot ?? EMPTY_PROFILE : SIGNED_OUT_PROFILE, [userId])
+  const getServerSnapshot = useCallback(() => userId ? EMPTY_PROFILE : SIGNED_OUT_PROFILE, [userId])
+  const { profile, loading, error } = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot)
 
   useEffect(() => {
-    if (!user) {
-      setLoading(false)
-      return
+    if (!userId) return
+    const entry = getEntry(userId)
+    if (!entry.fetchedAt || Date.now() - entry.fetchedAt >= CACHE_TTL) {
+      void fetchSharedProfile(userId)
     }
+  }, [userId])
 
-    let isMounted = true
-    let timeoutId: NodeJS.Timeout
+  const fetchProfile = useCallback(async () => {
+    if (!userId || currentUserId.current !== userId) return
+    await fetchSharedProfile(userId)
+  }, [userId])
 
-    const fetchProfileData = async () => {
-      try {
-        setLoading(true)
-        console.log(`Fetching profile for user: ${user.id}`)
+  const beginMutation = useCallback(() => {
+    if (!userId || currentUserId.current !== userId) throw new Error('No user logged in')
+    const entry = getEntry(userId)
+    return { entry, generation: entry.generation, mutation: ++entry.nextMutation }
+  }, [userId])
 
-        const { data, error: err } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('user_id', user.id)
-          .maybeSingle()
+  const isCurrent = useCallback((operation: ReturnType<typeof beginMutation>) =>
+    !!userId && currentUserId.current === userId && entries.get(userId) === operation.entry &&
+    operation.entry.generation === operation.generation, [userId])
 
-        if (!isMounted) return
+  const setError = useCallback((operation: ReturnType<typeof beginMutation>, message: string) => {
+    if (isCurrent(operation)) publish(operation.entry, { error: message })
+  }, [isCurrent])
 
-        if (err) {
-          console.error('Supabase error fetching profile:', err)
-          throw err
-        }
-
-        console.log('Profile fetch successful:', data ? 'profile exists' : 'no profile found')
-        setProfile(data as ProfileData | null)
-        setError(null)
-      } catch (err: any) {
-        if (isMounted) {
-          const errorMessage = err?.message || (typeof err === 'string' ? err : 'Failed to fetch profile')
-          setError(errorMessage)
-          console.error('Error fetching profile:', errorMessage, err)
-        }
-      } finally {
-        if (isMounted) {
-          setLoading(false)
-        }
-      }
+  const applyMutation = useCallback((operation: ReturnType<typeof beginMutation>, result: ProfileData) => {
+    const { entry, mutation } = operation
+    if (isCurrent(operation) && mutation > entry.appliedMutation && result?.user_id === userId) {
+      entry.appliedMutation = mutation
+      // A fetch begun before this write must not overwrite the write's result.
+      entry.revision++
+      if (entry.fetchTimeout) clearTimeout(entry.fetchTimeout)
+      entry.fetchTimeout = null
+      entry.inFlight = null
+      entry.fetchedAt = Date.now()
+      publish(entry, { profile: result, loading: false })
     }
-
-    // Set a 60-second timeout to prevent indefinite loading
-    // This is increased to accommodate slower reconnections and Supabase response times
-    timeoutId = setTimeout(() => {
-      if (isMounted) {
-        console.warn('Profile fetch timeout - proceeding without profile data')
-        setLoading(false)
-        // Don't set profile to null, keep any existing data
-      }
-    }, 60000)
-
-    fetchProfileData()
-      .then(() => {
-        if (isMounted) {
-          clearTimeout(timeoutId)
-        }
-      })
-      .catch(() => {
-        if (isMounted) {
-          clearTimeout(timeoutId)
-        }
-      })
-
-    return () => {
-      isMounted = false
-      clearTimeout(timeoutId)
-    }
-  }, [user])
+  }, [userId, isCurrent])
 
   const createProfile = useCallback(
     async (data: Partial<ProfileData>) => {
-      if (!user) throw new Error('No user logged in')
+      const operation = beginMutation()
 
       try {
         // Try insert first (faster for new profiles)
         const { data: newProfile, error: insertErr } = await supabase
           .from('profiles')
           .insert({
-            user_id: user.id,
             ...data,
+            user_id: userId,
           })
           .select()
           .single()
 
         // If insert fails with duplicate key, update instead
         if (insertErr?.code === '23505') {
+          if (!isCurrent(operation)) throw new Error('Authentication changed')
           const { data: updatedProfile, error: updateErr } = await supabase
             .from('profiles')
             .update(data)
-            .eq('user_id', user.id)
+            .eq('user_id', userId)
             .select()
             .single()
 
           if (updateErr) throw updateErr
-          setProfile(updatedProfile as ProfileData)
+          applyMutation(operation, updatedProfile as ProfileData)
           return updatedProfile as ProfileData
         }
 
         if (insertErr) throw insertErr
-        setProfile(newProfile as ProfileData)
+        applyMutation(operation, newProfile as ProfileData)
         return newProfile as ProfileData
       } catch (err: any) {
         const errorMessage = err?.message || (typeof err === 'string' ? err : 'Failed to create profile')
-        setError(errorMessage)
+        setError(operation, errorMessage)
         throw err
       }
     },
-    [user]
+    [userId, beginMutation, applyMutation, setError, isCurrent]
   )
 
   const updateProfile = useCallback(
     async (data: Partial<ProfileData>) => {
-      if (!user) throw new Error('No user logged in')
+      const operation = beginMutation()
 
       try {
         const { data: updatedProfile, error: err } = await supabase
           .from('profiles')
           .update(data)
-          .eq('user_id', user.id)
+          .eq('user_id', userId)
           .select()
           .single()
 
         if (err) throw err
-        setProfile(updatedProfile as ProfileData)
+        applyMutation(operation, updatedProfile as ProfileData)
         return updatedProfile as ProfileData
       } catch (err: any) {
         const errorMessage = err?.message || (typeof err === 'string' ? err : 'Failed to update profile')
-        setError(errorMessage)
+        setError(operation, errorMessage)
         throw err
       }
     },
-    [user]
+    [userId, beginMutation, applyMutation, setError]
   )
 
   const uploadPhoto = useCallback(
     async (file: File, index: number) => {
-      if (!user) throw new Error('No user logged in')
+      const operation = beginMutation()
 
       try {
-        const fileName = `${user.id}/${Date.now()}-${file.name}`
+        const fileName = `${userId}/${Date.now()}-${file.name}`
         const { error: uploadErr } = await supabase.storage
           .from('profile-photos')
           .upload(fileName, file, { upsert: true })
@@ -225,6 +307,7 @@ export function useProfile() {
 
         // If profile exists, update it with the new photo
         if (profile) {
+          if (!isCurrent(operation)) throw new Error('Authentication changed')
           const currentPhotos = profile.photos || []
           const newPhotos = [...currentPhotos]
           newPhotos[index] = publicUrl
@@ -234,19 +317,19 @@ export function useProfile() {
         return publicUrl
       } catch (err: any) {
         const errorMessage = err?.message || (typeof err === 'string' ? err : 'Failed to upload photo')
-        setError(errorMessage)
+        setError(operation, errorMessage)
         throw err
       }
     },
-    [user, profile, updateProfile]
+    [userId, profile, updateProfile, beginMutation, isCurrent, setError]
   )
 
   const uploadPhotoOnly = useCallback(
     async (file: File) => {
-      if (!user) throw new Error('No user logged in')
+      const operation = beginMutation()
 
       try {
-        const fileName = `${user.id}/${Date.now()}-${file.name}`
+        const fileName = `${userId}/${Date.now()}-${file.name}`
         const { error: uploadErr } = await supabase.storage
           .from('profile-photos')
           .upload(fileName, file, { upsert: true })
@@ -260,16 +343,17 @@ export function useProfile() {
         return publicUrl
       } catch (err: any) {
         const errorMessage = err?.message || (typeof err === 'string' ? err : 'Failed to upload photo')
-        setError(errorMessage)
+        setError(operation, errorMessage)
         throw err
       }
     },
-    [user]
+    [userId, beginMutation, setError]
   )
 
   const deletePhoto = useCallback(
     async (index: number) => {
       if (!profile?.photos || !profile.photos[index]) return
+      const operation = beginMutation()
 
       try {
         const newPhotos = profile.photos.filter((_, i) => i !== index)
@@ -280,11 +364,11 @@ export function useProfile() {
         } as any)
       } catch (err: any) {
         const errorMessage = err?.message || (typeof err === 'string' ? err : 'Failed to delete photo')
-        setError(errorMessage)
+        setError(operation, errorMessage)
         throw err
       }
     },
-    [user, profile, updateProfile]
+    [profile, updateProfile, beginMutation, setError]
   )
 
   const reorderPhotos = useCallback(
